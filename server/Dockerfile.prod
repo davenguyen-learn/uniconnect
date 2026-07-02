@@ -1,0 +1,36 @@
+FROM python:3.12-slim AS base
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app
+
+WORKDIR /app
+
+# Install system dependencies (e.g. for psycopg2 or postgis if needed)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# ── Dependencies layer ──
+FROM base AS deps
+
+COPY pyproject.toml ./
+# Install only production dependencies
+RUN pip install --no-cache-dir .
+
+# ── App layer ──
+FROM base AS app
+
+COPY --from=deps /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=deps /usr/local/bin /usr/local/bin
+
+COPY . .
+
+# Non-root user for security
+RUN addgroup --system app && adduser --system --ingroup app app
+USER app
+
+EXPOSE 8000
+
+# Use gunicorn with uvicorn workers for production
+CMD ["gunicorn", "app.main:app", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000"]

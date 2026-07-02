@@ -1,0 +1,55 @@
+# ── Python ──
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+
+# ── Virtual Environments ──
+.venv/
+venv/
+env/
+
+# ── Testing ──
+.pytest_cache/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+
+# ── IDE ──
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── Environment ──
+.env
+.env.local
+.env.*.local
+
+# ── Docker ──
+docker-compose.override.yml
+
+# ── Node ──
+node_modules/
+client/dist/
+client/build/
+*.tsbuildinfo
+
+# ── OS ──
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Alembic ──
+alembic/versions/__pycache__/
+
+# ── Misc ──
+*.log
+*.bak

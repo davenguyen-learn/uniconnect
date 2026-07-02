@@ -1,0 +1,151 @@
+.group-detail-page {
+  padding-top: var(--space-8);
+  padding-bottom: var(--space-8);
+}
+
+.group-detail-header {
+  padding: var(--space-6);
+  margin-bottom: var(--space-6);
+}
+
+.group-detail-header h1 {
+  margin: 0 0 var(--space-2) 0;
+  font-size: 2.5rem;
+}
+
+.group-detail-desc {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  margin: 0 0 var(--space-4) 0;
+  max-width: 800px;
+}
+
+.group-meta {
+  display: flex;
+  gap: var(--space-3);
+  color: var(--text-tertiary);
+  font-size: 0.9rem;
+}
+
+.group-tabs {
+  display: flex;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: var(--space-2);
+}
+
+.group-tab {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  font-weight: 500;
+  padding: var(--space-2) var(--space-4);
+  cursor: pointer;
+  position: relative;
+  transition: color 0.2s;
+}
+
+.group-tab:hover {
+  color: var(--text-primary);
+}
+
+.group-tab.active {
+  color: var(--primary-color);
+}
+
+.group-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: calc(-1 * var(--space-2) - 1px);
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: var(--primary-color);
+  border-radius: 2px 2px 0 0;
+}
+
+.members-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.member-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
+
+.member-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--primary-color);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1.2rem;
+}
+
+.member-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.member-name {
+  font-weight: 500;
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.member-name:hover {
+  text-decoration: underline;
+}
+
+.member-role {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  text-transform: capitalize;
+}
+
+.activities-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--space-6);
+}
+
+.documents-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: var(--space-4);
+}
+
+.document-item {
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.document-item h4 {
+  margin: 0;
+}
+
+.document-item p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.empty-state {
+  padding: var(--space-8);
+  text-align: center;
+}
