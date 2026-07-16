@@ -10,7 +10,8 @@ from app.modules.reports.schemas import ReportCreate, ReportResponse
 
 from app.modules.activities import repository as activities_repo
 from app.modules.documents import repository as documents_repo
-from app.modules.users import repository as users_repo
+from app.modules.users.models import User
+from sqlalchemy import select
 
 
 async def create_report(
@@ -24,7 +25,7 @@ async def create_report(
     elif data.target_type == "document":
         target = await documents_repo.get_document(db, data.target_id)
     elif data.target_type == "user":
-        target = await users_repo.get_user_by_id(db, data.target_id)
+        target = await db.scalar(select(User).where(User.id == data.target_id))
     else:
         raise HTTPException(status_code=400, detail="Invalid target_type")
         
