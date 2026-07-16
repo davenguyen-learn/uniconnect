@@ -993,11 +993,20 @@ async def seed():
         docs = []
 
         for i, dd in enumerate(doc_data_list):
+            if dd["file_type"] == "application/pdf":
+                file_url = "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
+            elif dd["file_type"] == "image/png":
+                file_url = "https://picsum.photos/800/600"
+            elif "wordprocessingml" in dd["file_type"]:
+                file_url = "https://calibre-ebook.com/downloads/demos/demo.docx"
+            else:
+                file_url = "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
+
             doc = Document(
                 title=dd["title"], description=dd["description"],
                 file_name=dd["file_name"], file_type=dd["file_type"],
                 file_size=dd["file_size"],
-                file_url=f"https://pub-uniconnect.r2.dev/seed/{dd['file_name']}",
+                file_url=file_url,
                 author_id=random.choice(users).id,
                 group_id=random.choice(groups).id if random.random() < 0.45 else None,
             )
