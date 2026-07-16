@@ -57,6 +57,9 @@ def create_app() -> FastAPI:
     from app.modules.interactions.router import router as interactions_router
     from app.modules.documents.router import router as documents_router
     from app.modules.chat.router import router as chat_router
+    from app.modules.notifications.router import router as notifications_router
+    from app.modules.reports.router import router as reports_router
+    from app.modules.admin.router import router as admin_router
 
     application.include_router(auth_router, prefix="/api/v1")
     application.include_router(users_router, prefix="/api/v1")
@@ -66,6 +69,9 @@ def create_app() -> FastAPI:
     application.include_router(interactions_router, prefix="/api/v1")
     application.include_router(documents_router, prefix="/api/v1")
     application.include_router(chat_router, prefix="/api/v1")
+    application.include_router(notifications_router, prefix="/api/v1")
+    application.include_router(reports_router, prefix="/api/v1")
+    application.include_router(admin_router, prefix="/api/v1")
 
 
     return application

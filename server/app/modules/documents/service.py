@@ -77,11 +77,13 @@ async def list_documents(
     db: AsyncSession,
     user_id: uuid.UUID,
     group_id: uuid.UUID | None = None,
+    search: str | None = None,
+    sort_by: str = "newest",
     limit: int = 20,
     offset: int = 0,
 ) -> DocumentListResponse:
     """List documents accessible to the user."""
-    documents, total = await repository.list_documents(db, user_id, group_id, limit, offset)
+    documents, total = await repository.list_documents(db, user_id, group_id, search, sort_by, limit, offset)
     return DocumentListResponse(
         items=[DocumentResponse.model_validate(d) for d in documents],
         total=total,

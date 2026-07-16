@@ -32,6 +32,8 @@ async def upload_document(
 @router.get("", response_model=DocumentListResponse)
 async def list_documents(
     group_id: uuid.UUID | None = Query(default=None),
+    search: str | None = Query(default=None, description="Search term for title or description"),
+    sort_by: str = Query(default="newest", regex="^(newest|oldest|most_interactions)$"),
     limit: int = Query(default=20, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
     current_user: dict = Depends(get_current_user),
@@ -39,7 +41,7 @@ async def list_documents(
 ):
     """List documents."""
     return await document_service.list_documents(
-        db, uuid.UUID(current_user["sub"]), group_id, limit, offset
+        db, uuid.UUID(current_user["sub"]), group_id, search, sort_by, limit, offset
     )
 
 

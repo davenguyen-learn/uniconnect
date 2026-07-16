@@ -15,6 +15,8 @@ from app.modules.activities.models import Activity
 from app.modules.groups.models import Group, GroupMember
 from app.modules.interactions.models import Comment, ContentLike
 from app.modules.documents.models import Document
+from app.modules.notifications.models import Notification
+from app.modules.reports.models import Report
   # noqa: F401
 
 config = context.config

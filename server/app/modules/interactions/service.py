@@ -72,8 +72,17 @@ async def create_comment(
         content=data.content,
         parent_id=data.parent_id,
     )
+    
+    # Notify target owner
+    from app.modules.notifications.service import create_interaction_notification
+    target_obj = await _validate_target(db, target_type, target_id)
+    # The target models (Activity, Document) have author_id, except Group which we aren't supporting yet
+    owner_id = getattr(target_obj, "author_id", None)
+    if owner_id:
+        title = getattr(target_obj, "title", "post")
+        await create_interaction_notification(db, user_id, owner_id, "comment", target_type, target_id, title)
+        
     return CommentResponse.model_validate(comment)
-
 
 async def list_comments(
     db: AsyncSession,
@@ -137,9 +146,18 @@ async def toggle_like(
     user_id: uuid.UUID,
 ) -> LikeResponse:
     """Toggle like on a target."""
-    await _validate_target(db, target_type, target_id)
+    target_obj = await _validate_target(db, target_type, target_id)
 
     liked = await repository.toggle_like(db, target_type, target_id, user_id)
+    
+    if liked:
+        # Notify target owner
+        from app.modules.notifications.service import create_interaction_notification
+        owner_id = getattr(target_obj, "author_id", None)
+        if owner_id:
+            title = getattr(target_obj, "title", "post")
+            await create_interaction_notification(db, user_id, owner_id, "like", target_type, target_id, title)
+            
     total = await repository.count_likes(db, target_type, target_id)
     return LikeResponse(liked=liked, total_likes=total)
 

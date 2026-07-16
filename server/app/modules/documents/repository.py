@@ -37,6 +37,8 @@ async def list_documents(
     db: AsyncSession,
     user_id: uuid.UUID,
     group_id: uuid.UUID | None = None,
+    search: str | None = None,
+    sort_by: str = "newest",
     limit: int = 20,
     offset: int = 0,
 ) -> tuple[list[Document], int]:
@@ -44,10 +46,19 @@ async def list_documents(
     List documents with access control:
     Users can see public documents (group_id is None) and documents in groups they belong to.
     """
+    from app.modules.interactions.models import Comment, ContentLike
+
     base_filter = Document.is_deleted.is_(False)
 
     if group_id:
         base_filter = (base_filter) & (Document.group_id == group_id)
+        
+    if search:
+        search_filter = or_(
+            Document.title.ilike(f"%{search}%"),
+            Document.description.ilike(f"%{search}%")
+        )
+        base_filter = (base_filter) & search_filter
 
     # Access filter: Public OR (belongs to a group the user is a member of)
     # Using a subquery for group membership
@@ -70,10 +81,31 @@ async def list_documents(
         select(Document)
         .options(joinedload(Document.author), joinedload(Document.group))
         .where(base_filter, access_filter)
-        .order_by(Document.created_at.desc())
         .limit(limit)
         .offset(offset)
     )
+    
+    if sort_by == "most_interactions":
+        comments_count = (
+            select(func.count(Comment.id))
+            .where(Comment.target_type == "document", Comment.target_id == Document.id)
+            .scalar_subquery()
+            .correlate(Document)
+        )
+        likes_count = (
+            select(func.count(ContentLike.id))
+            .where(ContentLike.target_type == "document", ContentLike.target_id == Document.id)
+            .scalar_subquery()
+            .correlate(Document)
+        )
+        interaction_count = func.coalesce(comments_count, 0) + func.coalesce(likes_count, 0)
+        q = q.order_by(interaction_count.desc(), Document.created_at.desc())
+    elif sort_by == "oldest":
+        q = q.order_by(Document.created_at.asc())
+    else:
+        # Default newest
+        q = q.order_by(Document.created_at.desc())
+
     result = await db.execute(q)
     documents = result.unique().scalars().all()
 

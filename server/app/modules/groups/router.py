@@ -46,11 +46,20 @@ async def get_my_groups(
 
 @router.get("/discover", response_model=list[GroupResponse])
 async def discover_groups(
+    search: str | None = Query(default=None, description="Search term for name or description"),
+    sort_by: str = Query(default="newest", pattern="^(newest|oldest|most_members)$"),
+    limit: int = Query(default=50, ge=1, le=100),
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """List groups the current user does not belong to."""
-    return await group_service.discover_groups(db, uuid.UUID(current_user["sub"]))
+    """Get groups the current user can join."""
+    return await group_service.discover_groups(
+        db, 
+        uuid.UUID(current_user["sub"]),
+        search=search,
+        sort_by=sort_by,
+        limit=limit
+    )
 
 
 @router.get("/{group_id}", response_model=GroupDetailResponse)

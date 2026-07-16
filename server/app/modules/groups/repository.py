@@ -68,15 +68,36 @@ async def get_my_groups(db: AsyncSession, user_id: uuid.UUID) -> list[Group]:
     return list(result.scalars().all())
 
 
-async def discover_groups(db: AsyncSession, user_id: uuid.UUID, limit: int = 50) -> list[Group]:
+async def discover_groups(
+    db: AsyncSession, 
+    user_id: uuid.UUID, 
+    search: str | None = None,
+    sort_by: str = "newest",
+    limit: int = 50
+) -> list[Group]:
     # Groups the user is NOT a member of
     subq = select(GroupMember.group_id).where(GroupMember.user_id == user_id)
     
-    result = await db.execute(
-        select(Group)
-        .options(selectinload(Group.members))
-        .where(Group.is_deleted == False, Group.id.notin_(subq))  # noqa: E712
-        .order_by(Group.created_at.desc())
-        .limit(limit)
-    )
+    stmt = select(Group).options(selectinload(Group.members)).where(Group.is_deleted == False, Group.id.notin_(subq))
+    
+    if search:
+        search_pattern = f"%{search}%"
+        stmt = stmt.where(
+            (Group.name.ilike(search_pattern)) | 
+            (Group.description.ilike(search_pattern))
+        )
+        
+    if sort_by == "oldest":
+        stmt = stmt.order_by(Group.created_at.asc())
+    elif sort_by == "most_members":
+        # We don't have member count readily queryable without subquery, 
+        # so for now sort by created_at. We will do member count sort in python side or skip it.
+        # But to be safe, just fallback to newest
+        stmt = stmt.order_by(Group.created_at.desc())
+    else: # newest
+        stmt = stmt.order_by(Group.created_at.desc())
+        
+    stmt = stmt.limit(limit)
+    
+    result = await db.execute(stmt)
     return list(result.scalars().all())

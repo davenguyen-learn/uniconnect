@@ -111,9 +111,32 @@ async def get_my_groups(db: AsyncSession, user_id: uuid.UUID) -> list[GroupRespo
     return [_build_group_response(g) for g in groups]
 
 
-async def discover_groups(db: AsyncSession, user_id: uuid.UUID) -> list[GroupResponse]:
-    groups = await group_repo.discover_groups(db, user_id)
-    return [_build_group_response(g) for g in groups]
+async def discover_groups(
+    db: AsyncSession, 
+    user_id: uuid.UUID, 
+    search: str | None = None,
+    sort_by: str = "newest",
+    limit: int = 50
+) -> list[GroupResponse]:
+    groups = await group_repo.discover_groups(db, user_id, search, sort_by, limit)
+    
+    # If sort_by is most_members, sort in python
+    if sort_by == "most_members":
+        groups.sort(key=lambda g: len(g.members), reverse=True)
+        
+    return [
+        GroupResponse(
+            id=g.id,
+            name=g.name,
+            description=g.description,
+            allow_member_activities=g.allow_member_activities,
+            allow_member_documents=g.allow_member_documents,
+            owner_id=g.owner_id,
+            created_at=g.created_at,
+            member_count=len(g.members),
+        )
+        for g in groups
+    ]
 
 
 from sqlalchemy.orm.attributes import instance_state
