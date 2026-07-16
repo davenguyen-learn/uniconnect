@@ -44,8 +44,14 @@ export const groupsApi = {
   getMyGroups: () => 
     api.get<GroupResponse[]>('/groups/my'),
 
-  discoverGroups: () => 
-    api.get<GroupResponse[]>('/groups/discover'),
+  discoverGroups: (params?: { search?: string; sort_by?: string; limit?: number }) => {
+    const query = new URLSearchParams();
+    if (params?.search) query.set('search', params.search);
+    if (params?.sort_by) query.set('sort_by', params.sort_by);
+    if (params?.limit) query.set('limit', String(params.limit));
+    const qs = query.toString();
+    return api.get<GroupResponse[]>(`/groups/discover${qs ? `?${qs}` : ''}`);
+  },
 
   getGroup: (id: string) => 
     api.get<GroupDetailResponse>(`/groups/${id}`),

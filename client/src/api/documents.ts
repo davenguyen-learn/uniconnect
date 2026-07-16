@@ -37,9 +37,11 @@ export const documentsApi = {
   uploadDocument: (formData: FormData) =>
     api.post<DocumentResponse>('/documents', formData),
 
-  listDocuments: (params?: { group_id?: string; limit?: number; offset?: number }) => {
+  listDocuments: (params?: { group_id?: string; search?: string; sort_by?: string; limit?: number; offset?: number }) => {
     const query = new URLSearchParams();
     if (params?.group_id) query.set('group_id', params.group_id);
+    if (params?.search) query.set('search', params.search);
+    if (params?.sort_by) query.set('sort_by', params.sort_by);
     if (params?.limit) query.set('limit', String(params.limit));
     if (params?.offset) query.set('offset', String(params.offset));
     const qs = query.toString();

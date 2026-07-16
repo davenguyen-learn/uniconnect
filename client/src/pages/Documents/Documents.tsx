@@ -7,19 +7,33 @@ import './Documents.css';
 export default function Documents() {
   const [documents, setDocuments] = useState<DocumentResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [sortBy, setSortBy] = useState('newest');
   const toast = useToast();
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 500);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const fetchDocuments = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await documentsApi.listDocuments({ limit: 50, offset: 0 });
+      const data = await documentsApi.listDocuments({ 
+        limit: 50, 
+        offset: 0,
+        search: debouncedSearch || undefined,
+        sort_by: sortBy
+      });
       setDocuments(data.items);
     } catch (err) {
       toast.error('Failed to load documents');
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [debouncedSearch, sortBy, toast]);
 
   useEffect(() => {
     fetchDocuments();
@@ -43,6 +57,32 @@ export default function Documents() {
         <Link to="/documents/upload" className="btn btn-primary">
           Upload Document
         </Link>
+      </div>
+
+      <div className="documents-controls glass">
+        <div className="search-box">
+          <span className="search-icon">🔍</span>
+          <input
+            type="text"
+            placeholder="Search documents by title or description..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="search-input"
+          />
+        </div>
+        <div className="sort-box">
+          <label htmlFor="sort-select">Sort by:</label>
+          <select 
+            id="sort-select" 
+            value={sortBy} 
+            onChange={(e) => setSortBy(e.target.value)}
+            className="sort-select"
+          >
+            <option value="newest">Newest first</option>
+            <option value="most_interactions">Most interactions</option>
+            <option value="oldest">Oldest first</option>
+          </select>
+        </div>
       </div>
 
       {loading ? (

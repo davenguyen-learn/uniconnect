@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import NotificationBell from '../NotificationBell/NotificationBell';
 import './Navbar.css';
 
 export default function Navbar() {
@@ -97,6 +98,7 @@ export default function Navbar() {
       </ul>
 
       <div className="navbar-actions">
+        <NotificationBell />
         <div className="navbar-user-menu" ref={dropdownRef}>
           <button
             className="navbar-avatar"
@@ -124,6 +126,19 @@ export default function Navbar() {
               >
                 Profile
               </Link>
+              {user?.role === 'admin' && (
+                <>
+                  <div className="navbar-dropdown-divider" />
+                  <Link
+                    to="/admin"
+                    className="navbar-dropdown-item"
+                    onClick={() => setDropdownOpen(false)}
+                    style={{ color: 'var(--color-accent)' }}
+                  >
+                    ⚡ Admin Panel
+                  </Link>
+                </>
+              )}
               <div className="navbar-dropdown-divider" />
               <button className="navbar-dropdown-item danger" onClick={handleLogout}>
                 Log out

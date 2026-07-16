@@ -105,11 +105,25 @@
 
 .activity-tooltip {
   font-weight: bold;
-  background: var(--color-glass);
-  color: var(--color-text-primary);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.95);
+  color: #1a1a1a;
+  border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   padding: 4px 8px;
   font-size: 0.8rem;
+  text-shadow: none;
+}
+
+/* Remove default Leaflet tooltip arrow and background to avoid conflicting styles */
+.leaflet-tooltip.activity-tooltip {
+  background-color: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  color: #1a1a1a;
+}
+.leaflet-tooltip-top.activity-tooltip::before,
+.leaflet-tooltip-bottom.activity-tooltip::before,
+.leaflet-tooltip-left.activity-tooltip::before,
+.leaflet-tooltip-right.activity-tooltip::before {
+  border-top-color: rgba(255, 255, 255, 0.95) !important;
 }

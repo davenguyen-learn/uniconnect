@@ -6,6 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../components/Toast/ToastContext';
 import LikeButton from '../../components/LikeButton/LikeButton';
 import CommentSection from '../../components/CommentSection/CommentSection';
+import { ReportModal } from '../../components/ReportModal/ReportModal';
 import './DocumentDetail.css';
 
 const COMMENT_LIMIT = 20;
@@ -19,6 +20,7 @@ export default function DocumentDetail() {
   const [document, setDocument] = useState<DocumentResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
   // Interactions state
   const [liked, setLiked] = useState(false);
@@ -155,6 +157,14 @@ export default function DocumentDetail() {
             initialLiked={liked} 
             initialCount={likeCount} 
           />
+          {!isAuthor && (
+            <button 
+              className="btn btn-secondary" 
+              onClick={() => setIsReportModalOpen(true)}
+            >
+              Report
+            </button>
+          )}
           <button 
             className="btn btn-primary" 
             onClick={handleDownload}
@@ -164,6 +174,13 @@ export default function DocumentDetail() {
           </button>
         </div>
       </div>
+
+      <ReportModal 
+        isOpen={isReportModalOpen} 
+        onClose={() => setIsReportModalOpen(false)} 
+        targetType="document" 
+        targetId={id!} 
+      />
 
       <div className="glass document-comments">
         <CommentSection

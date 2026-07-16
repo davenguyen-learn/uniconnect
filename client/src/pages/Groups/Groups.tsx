@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { groupsApi, type GroupResponse } from '../../api/groups';
 import { useToast } from '../../components/Toast/ToastContext';
@@ -13,19 +13,19 @@ export default function Groups() {
   const [myGroups, setMyGroups] = useState<GroupResponse[]>([]);
   const [discoverGroups, setDiscoverGroups] = useState<GroupResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Search and Sort
+  const [search, setSearch] = useState('');
+  const [sortBy, setSortBy] = useState('newest');
 
-  useEffect(() => {
-    loadData();
-  }, [activeTab]);
-
-  async function loadData() {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       if (activeTab === 'my') {
         const data = await groupsApi.getMyGroups();
         setMyGroups(data);
       } else {
-        const data = await groupsApi.discoverGroups();
+        const data = await groupsApi.discoverGroups({ search, sort_by: sortBy });
         setDiscoverGroups(data);
       }
     } catch (err) {
@@ -33,7 +33,19 @@ export default function Groups() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [activeTab, search, sortBy, toast]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value);
+  };
+
+  const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSortBy(e.target.value);
+  };
 
   const renderGroupCard = (group: GroupResponse) => (
     <div key={group.id} className="group-card glass" onClick={() => navigate(`/groups/${group.id}`)}>
@@ -74,6 +86,27 @@ export default function Groups() {
           Discover
         </button>
       </div>
+      
+      {activeTab === 'discover' && (
+        <div className="groups-controls glass">
+          <div className="groups-search">
+            <input 
+              type="text" 
+              placeholder="Search groups..." 
+              value={search}
+              onChange={handleSearchChange}
+              className="input-field"
+            />
+          </div>
+          <div className="groups-sort">
+            <select value={sortBy} onChange={handleSortChange} className="input-field">
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+              <option value="most_members">Most Members</option>
+            </select>
+          </div>
+        </div>
+      )}
 
       <div className="groups-grid">
         {loading ? (
@@ -95,11 +128,17 @@ export default function Groups() {
             discoverGroups.map(renderGroupCard)
           ) : (
             <div className="groups-empty glass">
-              <h3>No new groups found.</h3>
-              <p>Why not create your own group?</p>
-              <Link to="/groups/new">
-                <Button style={{marginTop: '1rem'}}>Create Group</Button>
-              </Link>
+              <h3>No groups found.</h3>
+              {search ? (
+                <p>Try adjusting your search terms.</p>
+              ) : (
+                <>
+                  <p>Why not create your own group?</p>
+                  <Link to="/groups/new">
+                    <Button style={{marginTop: '1rem'}}>Create Group</Button>
+                  </Link>
+                </>
+              )}
             </div>
           )
         )}

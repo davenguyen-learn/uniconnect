@@ -8,6 +8,7 @@ import { useToast } from '../../components/Toast/ToastContext';
 import Button from '../../components/Button/Button';
 import LikeButton from '../../components/LikeButton/LikeButton';
 import CommentSection from '../../components/CommentSection/CommentSection';
+import { ReportModal } from '../../components/ReportModal/ReportModal';
 import './ActivityDetail.css';
 
 export default function ActivityDetail() {
@@ -21,6 +22,7 @@ export default function ActivityDetail() {
   const [myRequest, setMyRequest] = useState<JoinRequestResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [requestMessage, setRequestMessage] = useState('');
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
   // Interactions state
   const [liked, setLiked] = useState(false);
@@ -201,8 +203,20 @@ export default function ActivityDetail() {
         </div>
         <div className="activity-header-actions">
           <LikeButton targetType="activities" targetId={id!} initialLiked={liked} initialCount={likeCount} />
+          {!isHost && (
+            <Button size="sm" variant="secondary" onClick={() => setIsReportModalOpen(true)}>
+              Report
+            </Button>
+          )}
         </div>
       </div>
+
+      <ReportModal 
+        isOpen={isReportModalOpen} 
+        onClose={() => setIsReportModalOpen(false)} 
+        targetType="activity" 
+        targetId={id!} 
+      />
 
       <div className="activity-content-grid">
         <div className="activity-main glass">

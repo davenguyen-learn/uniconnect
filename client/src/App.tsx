@@ -16,10 +16,16 @@ import DocumentDetail from './pages/DocumentDetail/DocumentDetail'
 import UploadDocument from './pages/UploadDocument/UploadDocument'
 import NotFound from './pages/NotFound/NotFound'
 import ProtectedRoute from './components/ProtectedRoute'
+import AdminRoute from './components/AdminRoute'
 import Chat from './pages/Chat/Chat'
 import Groups from './pages/Groups/Groups'
 import CreateGroup from './pages/Groups/CreateGroup'
 import GroupDetail from './pages/Groups/GroupDetail'
+import AdminLayout from './components/AdminLayout/AdminLayout'
+import AdminDashboard from './pages/Admin/AdminDashboard'
+import AdminUsers from './pages/Admin/AdminUsers'
+import AdminReports from './pages/Admin/AdminReports'
+import AdminContent from './pages/Admin/AdminContent'
 import './index.css'
 
 function App() {
@@ -53,6 +59,16 @@ function App() {
               </Route>
             </Route>
 
+            {/* Admin routes — separate layout */}
+            <Route element={<AdminRoute />}>
+              <Route element={<AdminLayout />}>
+                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/admin/users" element={<AdminUsers />} />
+                <Route path="/admin/reports" element={<AdminReports />} />
+                <Route path="/admin/content" element={<AdminContent />} />
+              </Route>
+            </Route>
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </ToastProvider>
@@ -62,3 +78,4 @@ function App() {
 }
 
 export default App
+
