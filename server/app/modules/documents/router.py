@@ -33,7 +33,7 @@ async def upload_document(
 async def list_documents(
     group_id: uuid.UUID | None = Query(default=None),
     search: str | None = Query(default=None, description="Search term for title or description"),
-    sort_by: str = Query(default="newest", regex="^(newest|oldest|most_interactions)$"),
+    sort_by: str = Query(default="newest", pattern="^(newest|oldest|most_interactions)$"),
     limit: int = Query(default=20, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
     current_user: dict = Depends(get_current_user),
