@@ -24,6 +24,7 @@ export default function EditActivity() {
     title: '',
     description: '',
     category: '',
+    location_name: '',
     start_time: '',
     end_time: '',
     max_participants: 10,
@@ -41,6 +42,7 @@ export default function EditActivity() {
             title: act.title,
             description: act.description || '',
             category: act.category || '',
+            location_name: act.location_name || '',
             start_time: formatForInput(act.start_time),
             end_time: formatForInput(act.end_time),
             max_participants: act.max_participants,
@@ -90,6 +92,7 @@ export default function EditActivity() {
         title: formData.title,
         description: formData.description,
         category: formData.category || undefined,
+        location_name: formData.location_name || undefined,
         start_time: start.toISOString(),
         end_time: end.toISOString(),
         max_participants: Number(formData.max_participants),
@@ -244,8 +247,22 @@ export default function EditActivity() {
             <label htmlFor="require_approval" style={{ margin: 0 }}>Require approval to join (Request to Join)</label>
           </div>
 
+          <div className="form-group">
+            <label htmlFor="location_name">Location Name</label>
+            <input
+              type="text"
+              id="location_name"
+              name="location_name"
+              className="form-input"
+              value={formData.location_name}
+              onChange={handleChange}
+              placeholder="e.g., KTX Khu A, Sân bóng, etc."
+              maxLength={100}
+            />
+          </div>
+
           <div className="form-group map-group">
-            <label>Location <span className="required">*</span></label>
+            <label>Map Location <span className="required">*</span></label>
             <LocationPicker 
               position={location} 
               onChange={(lat, lng) => setLocation([lat, lng])} 
