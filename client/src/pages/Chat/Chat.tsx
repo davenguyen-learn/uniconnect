@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, KeyboardEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import { chatApi } from '../../api/chat';
 import { useToast } from '../../components/Toast/ToastContext';
@@ -16,6 +17,7 @@ interface MessageBlock {
 }
 
 export default function Chat() {
+  const navigate = useNavigate();
   const toast = useToast();
   const [messages, setMessages] = useState<MessageBlock[]>([
     {
@@ -120,7 +122,7 @@ export default function Chat() {
                   <div className="chat-activities">
                     {msg.activities.map(act => (
                       <div key={act.id} className="chat-activity-wrapper">
-                        <ActivityCard activity={act} onClick={() => window.location.href = `/activities/${act.id}`} />
+                        <ActivityCard activity={act} onClick={() => navigate(`/activities/${act.id}`)} />
                       </div>
                     ))}
                   </div>
