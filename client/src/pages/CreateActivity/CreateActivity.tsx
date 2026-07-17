@@ -74,6 +74,7 @@ export default function CreateActivity() {
       if (customFormFields.length > 0) {
         data.custom_form = {
           title: "Join Application Form",
+          description: "Please fill out this form to join.",
           fields: customFormFields.map((f, idx) => ({
             label: f.label,
             field_type: f.field_type as any,

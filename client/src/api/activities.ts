@@ -15,6 +15,14 @@ export interface CustomForm {
   fields: FormField[];
 }
 
+export interface TrophyResponse {
+  id: string;
+  name: string;
+  description?: string;
+  icon?: string;
+  points: number;
+}
+
 export interface ActivityResponse {
   id: string;
   host_id: string;
@@ -37,6 +45,7 @@ export interface ActivityResponse {
   };
   distance_meters?: number;
   custom_form?: CustomForm | null;
+  trophy?: TrophyResponse | null;
 }
 
 export interface ActivityCreate {
@@ -51,6 +60,7 @@ export interface ActivityCreate {
   max_participants: number;
   privacy?: string;
   require_approval?: boolean;
+  custom_form?: CustomForm;
 }
 
 export interface ActivityUpdate {
