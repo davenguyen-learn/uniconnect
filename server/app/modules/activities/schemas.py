@@ -5,6 +5,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field, model_validator
 from app.modules.forms.schemas import CustomFormCreate, CustomFormResponse
+from app.modules.trophies.schemas import TrophyResponse
 
 
 class HostInfo(BaseModel):
@@ -81,7 +82,7 @@ class ActivityResponse(BaseModel):
     group: GroupInfo | None = None
     distance_meters: float | None = None
     custom_form: "CustomFormResponse | None" = None
-    trophy: "TrophyResponse | None" = None
+    trophy: TrophyResponse | None = None
 
     model_config = {"from_attributes": True}
 

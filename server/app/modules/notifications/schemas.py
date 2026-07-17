@@ -7,8 +7,8 @@ from pydantic import BaseModel, ConfigDict
 class ActorInfo(BaseModel):
     id: uuid.UUID
     username: str
-    full_name: str | None
-    avatar_url: str | None
+    full_name: str | None = None
+    avatar_url: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
