@@ -15,6 +15,7 @@ class UserInfo(BaseModel):
 
 class JoinRequestCreate(BaseModel):
     message: str | None = Field(default=None, max_length=500)
+    form_responses: dict | None = None
 
 
 class JoinRequestResponse(BaseModel):
@@ -23,6 +24,8 @@ class JoinRequestResponse(BaseModel):
     user_id: uuid.UUID
     status: str
     message: str | None
+    form_responses: dict | None = None
+    attendance_confirmed: bool = False
     responded_at: datetime | None
     created_at: datetime
     user: UserInfo | None = None

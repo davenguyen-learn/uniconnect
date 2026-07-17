@@ -1,6 +1,7 @@
 """User profile API endpoints."""
 
 from fastapi import APIRouter, Depends
+import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -28,6 +29,20 @@ async def update_my_profile(
 ):
     """Update the authenticated user's profile."""
     return await service.update_profile(db, current_user["sub"], data)
+
+
+@router.post("/me/verify")
+async def verify_account(
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Request account verification (auto-approves for now for demo purposes)."""
+    # In a real app, this would submit a request to admin panel.
+    from sqlalchemy import update
+    from app.modules.users.models import User
+    await db.execute(update(User).where(User.id == uuid.UUID(current_user["sub"])).values(is_verified=True))
+    await db.commit()
+    return {"status": "success", "message": "Account verified."}
 
 
 import uuid

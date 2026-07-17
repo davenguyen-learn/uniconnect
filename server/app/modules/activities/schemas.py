@@ -4,6 +4,7 @@ import uuid
 from datetime import datetime
 
 from pydantic import BaseModel, Field, model_validator
+from app.modules.forms.schemas import CustomFormCreate, CustomFormResponse
 
 
 class HostInfo(BaseModel):
@@ -33,6 +34,7 @@ class ActivityCreate(BaseModel):
     privacy: str = "public"
     require_approval: bool = True
     group_id: uuid.UUID | None = None
+    custom_form: "CustomFormCreate | None" = None
 
     @model_validator(mode="after")
     def validate_times(self):
@@ -76,6 +78,7 @@ class ActivityResponse(BaseModel):
     host: HostInfo | None = None
     group: GroupInfo | None = None
     distance_meters: float | None = None
+    custom_form: "CustomFormResponse | None" = None
 
     model_config = {"from_attributes": True}
 

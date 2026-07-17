@@ -18,10 +18,11 @@ L.Icon.Default.mergeOptions({
   shadowUrl,
 });
 
-// Custom icon for activities
-const activityIcon = new L.Icon({
-  iconUrl: iconUrl,
-  iconRetinaUrl: iconRetinaUrl,
+// Custom icons based on urgency
+const getIconUrl = (color: string) => `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${color}.png`;
+
+const createIcon = (color: string) => new L.Icon({
+  iconUrl: getIconUrl(color),
   shadowUrl: shadowUrl,
   iconSize: [25, 41],
   iconAnchor: [12, 41],
@@ -29,6 +30,24 @@ const activityIcon = new L.Icon({
   tooltipAnchor: [1, -34],
   shadowSize: [41, 41],
 });
+
+const icons = {
+  blue: createIcon('blue'),
+  red: createIcon('red'),
+  orange: createIcon('orange'),
+  green: createIcon('green'),
+};
+
+const getActivityIcon = (startTime: string) => {
+  const start = new Date(startTime).getTime();
+  const now = new Date().getTime();
+  const hoursUntilStart = (start - now) / (1000 * 60 * 60);
+
+  if (hoursUntilStart < 0) return icons.green; // Ongoing
+  if (hoursUntilStart < 24) return icons.red; // Urgent (starts within 24h)
+  if (hoursUntilStart < 72) return icons.orange; // Soon (starts within 3 days)
+  return icons.blue; // Normal
+};
 
 interface MapProps {
   activities: ActivityResponse[];
@@ -144,7 +163,7 @@ export default function Map({ activities, userLocation, onBoundsChange }: MapPro
           <Marker 
             key={activity.id} 
             position={[activity.latitude, activity.longitude]}
-            icon={activityIcon}
+            icon={getActivityIcon(activity.start_time)}
           >
             <Tooltip direction="top" opacity={0.9} permanent className="activity-tooltip">
               {activity.title.length > 20 ? activity.title.substring(0, 20) + '...' : activity.title}

@@ -17,6 +17,7 @@ async def search_activities_tool(
     user_id: uuid.UUID,
     category: str | None = None,
     keyword: str | None = None,
+    semantic_query: str | None = None,
     lat: float | None = None,
     lng: float | None = None,
     radius_meters: int = 10000,
@@ -64,9 +65,22 @@ async def search_activities_tool(
         distance_col = ST_Distance(Activity.location, point).label("distance_meters")
 
     query = select(Activity)
+    
+    similarity_col = None
+    if semantic_query:
+        from app.modules.chat.embeddings import generate_embedding
+        query_embedding = generate_embedding(semantic_query)
+        if query_embedding:
+            similarity_col = Activity.embedding.cosine_distance(query_embedding).label("similarity_distance")
+            query = query.add_columns(similarity_col)
+            # Only keep results with reasonable similarity if needed, or just sort by it
+            query = query.order_by(Activity.embedding.cosine_distance(query_embedding).asc())
+
     if distance_col is not None:
-        query = query.add_columns(distance_col).order_by(distance_col.asc())
-    else:
+        query = query.add_columns(distance_col)
+        if similarity_col is None:
+            query = query.order_by(distance_col.asc())
+    elif similarity_col is None:
         query = query.order_by(Activity.start_time.asc())
         
     query = query.options(joinedload(Activity.host)).where(base_filter).limit(limit)
@@ -74,30 +88,28 @@ async def search_activities_tool(
     result = await db.execute(query)
     
     activities_data = []
-    if distance_col is not None:
-        rows = result.unique().all()
-        for row in rows:
-            activity = row[0]
-            dist = row[1]
-            activities_data.append({
-                "id": str(activity.id),
-                "title": activity.title,
-                "description": activity.description,
-                "category": activity.category,
-                "start_time": activity.start_time.isoformat(),
-                "host_name": activity.host.username,
-                "distance_meters": round(dist, 2)
-            })
-    else:
-        activities = result.unique().scalars().all()
-        for activity in activities:
-            activities_data.append({
-                "id": str(activity.id),
-                "title": activity.title,
-                "description": activity.description,
-                "category": activity.category,
-                "start_time": activity.start_time.isoformat(),
-                "host_name": activity.host.username,
-            })
+    rows = result.unique().all()
+    for row in rows:
+        # row[0] is always the Activity instance when using select(Activity).add_columns(...)
+        activity = row[0] if isinstance(row, tuple) else row
+        
+        data = {
+            "id": str(activity.id),
+            "title": activity.title,
+            "description": activity.description,
+            "category": activity.category,
+            "start_time": activity.start_time.isoformat(),
+            "host_name": activity.host.username,
+        }
+        
+        # If we added columns, let's see if we can find distance or similarity
+        # Actually it's safer to just return the activity since Gemini doesn't strictly need the distance
+        # but if we want, we can extract it if distance_col was added.
+        if distance_col is not None and isinstance(row, tuple):
+            # Distance is either at index 1 or 2 depending on whether similarity_col was added
+            dist_idx = 2 if similarity_col is not None else 1
+            data["distance_meters"] = round(row[dist_idx], 2)
             
+        activities_data.append(data)
+        
     return activities_data

@@ -43,6 +43,34 @@ async def list_requests(
     return await service.list_requests(db, activity_id, current_user["sub"])
 
 
+@router.get(
+    "/activities/{activity_id}/participants",
+    response_model=list[JoinRequestResponse],
+)
+async def list_participants(
+    activity_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    """List approved participants for an activity."""
+    from sqlalchemy import select
+    from sqlalchemy.orm import joinedload
+    from app.modules.participation.models import JoinRequest, RequestStatus
+    
+    result = await db.execute(
+        select(JoinRequest)
+        .options(joinedload(JoinRequest.user))
+        .where(
+            JoinRequest.activity_id == activity_id,
+            JoinRequest.status == RequestStatus.approved
+        )
+        .order_by(JoinRequest.created_at.asc())
+    )
+    requests = result.scalars().all()
+    # Convert to response
+    from app.modules.participation.service import _to_response
+    return [_to_response(r) for r in requests]
+
+
 @router.patch(
     "/join-requests/{request_id}/approve",
     response_model=JoinRequestResponse,

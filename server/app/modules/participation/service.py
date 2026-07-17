@@ -27,6 +27,8 @@ def _to_response(jr: JoinRequest) -> JoinRequestResponse:
         user_id=jr.user_id,
         status=jr.status.value if hasattr(jr.status, 'value') else jr.status,
         message=jr.message,
+        form_responses=jr.form_responses,
+        attendance_confirmed=jr.attendance_confirmed,
         responded_at=jr.responded_at,
         created_at=jr.created_at,
         user=user_info,
@@ -60,8 +62,9 @@ async def request_to_join(
     join_request = JoinRequest(
         activity_id=activity_id,
         user_id=uid,
-        message=data.message if data else None,
-        status=RequestStatus.pending if activity.require_approval else RequestStatus.approved,
+        message=data.message,
+        form_responses=data.form_responses,
+        status=RequestStatus.approved if not activity.require_approval else RequestStatus.pending,
     )
     
     if not activity.require_approval:

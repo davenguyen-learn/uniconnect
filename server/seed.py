@@ -48,14 +48,20 @@ async def seed():
             
         print("Creating groups...")
         groups_data = [
-            ("HUST CS K65", "Group for K65 Computer Science students", users[0].id),
-            ("English Speaking Club", "Practice English together", users[1].id),
-            ("AI Research", "Discuss latest AI papers", users[2].id),
+            ("HUST CS K65", "Group for K65 Computer Science students", "Welcome to K65 CS! Here we discuss everything related to our major.", "Join our Zalo group at zalo.me/g/hustcsk65 for daily updates.", users[0].id),
+            ("English Speaking Club", "Practice English together", "Welcome to ESC. We meet every Sunday.", "Zoom link for Sunday meetings: bit.ly/esc-zoom.", users[1].id),
+            ("AI Research", "Discuss latest AI papers", "Open community for AI enthusiasts.", "Drive link to our paper repo: bit.ly/ai-papers.", users[2].id),
         ]
         
         groups = []
-        for name, desc, owner_id in groups_data:
-            group = Group(name=name, description=desc, owner_id=owner_id)
+        for name, desc, pub_desc, priv_desc, owner_id in groups_data:
+            group = Group(
+                name=name, 
+                description=desc, 
+                public_description=pub_desc,
+                private_description=priv_desc,
+                owner_id=owner_id
+            )
             db.add(group)
             groups.append(group)
             
@@ -77,31 +83,114 @@ async def seed():
         await db.commit()
         
         print("Creating activities...")
-        activities_data = [
-            ("Learn React", "Study group for ReactJS", "Study", 21.0278, 105.8342, users[0].id, groups[0].id),
-            ("Badminton Weekly", "Play badminton at Bach Khoa stadium", "Sports", 21.0051, 105.8456, users[1].id, None),
-            ("Read Attention Is All You Need", "Paper reading session", "Study", 21.0278, 105.8342, users[2].id, groups[2].id),
-            ("Coffee Talk", "Casual chat at The Coffee House", "Social", 21.0123, 105.8234, users[3].id, None),
-        ]
+        from app.modules.forms.models import CustomForm, FormField
         
-        activities = []
-        for title, desc, cat, lat, lng, host_id, group_id in activities_data:
-            start_time = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=random.randint(1, 5))
-            act = Activity(
-                title=title,
-                description=desc,
-                category=cat,
-                location=f"POINT({lng} {lat})",
-                location_name="Hanoi",
-                start_time=start_time,
-                end_time=start_time + datetime.timedelta(hours=2),
-                host_id=host_id,
-                group_id=group_id,
-                max_participants=10,
-                current_participants=1
+        act1_start = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=2)
+        act1 = Activity(
+            title="Spring Volunteer Campaign - HCMUT 2026",
+            description="""🌟 CHIẾN DỊCH XUÂN TÌNH NGUYỆN HCMUT 2026 🌟
+
+Thời gian tập trung: 5h30 sáng
+Địa điểm tập trung: Sân nhà A4, Cơ sở Dĩ An
+Vật dụng cần mang: 
+- Áo chiến dịch (hoặc áo Đoàn)
+- Bình nước cá nhân
+- Giày thể thao
+- Nón tai bèo
+
+Lịch trình dự kiến:
+- 5h30 - 6h00: Tập trung, điểm danh và chia đội
+- 6h00 - 7h00: Di chuyển đến địa bàn hoạt động
+- 7h00 - 11h30: Dọn dẹp vệ sinh khu phố, sơn sửa trường mầm non
+- 11h30 - 13h30: Ăn trưa, nghỉ ngơi
+- 13h30 - 16h00: Thăm hỏi Mẹ Việt Nam Anh Hùng
+- 16h00: Tổng kết và di chuyển về trường
+
+Liên hệ: Trưởng ban tổ chức - Đặng Hà Thành (0912345678)
+""",
+            category="Social",
+            location=f"POINT({106.802148} {10.882779})",
+            location_name="KTX ĐHQG HCM",
+            start_time=act1_start,
+            end_time=act1_start + datetime.timedelta(hours=10),
+            host_id=users[0].id,
+            group_id=groups[0].id,
+            max_participants=50,
+            current_participants=1,
+            custom_form=CustomForm(
+                title="Đăng ký tham gia Xuân Tình Nguyện",
+                description="Vui lòng điền thông tin để BTC sắp xếp công việc phù hợp.",
+                fields=[
+                    FormField(label="Họ và tên", field_type="text", is_required=True, order=0),
+                    FormField(label="MSSV", field_type="text", is_required=True, order=1),
+                    FormField(label="Có kinh nghiệm tình nguyện chưa?", field_type="boolean", is_required=False, order=2),
+                ]
             )
-            db.add(act)
-            activities.append(act)
+        )
+        db.add(act1)
+        
+        act2_start = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=1)
+        act2 = Activity(
+            title="Giải chạy bộ sinh viên - 5K Challenge",
+            description="""Thử thách chạy bộ 5K quanh khuôn viên Làng Đại học dành cho toàn thể sinh viên.
+Đích đến là Hồ Đá. Không yêu cầu kinh nghiệm, chỉ cần tinh thần thể thao!
+Nhớ mang theo nước uống và khởi động kỹ trước khi tham gia.
+
+Mỗi người hoàn thành sẽ nhận được huy chương điện tử!
+""",
+            category="Sports",
+            location=f"POINT({106.805} {10.880})",
+            location_name="Hồ Đá, Làng Đại học",
+            start_time=act2_start,
+            end_time=act2_start + datetime.timedelta(hours=3),
+            host_id=users[1].id,
+            max_participants=100,
+            current_participants=1,
+            custom_form=CustomForm(
+                title="Đăng ký giải chạy",
+                fields=[
+                    FormField(label="Size áo (S/M/L/XL)", field_type="text", is_required=True, order=0),
+                    FormField(label="Cam kết sức khỏe tốt", field_type="boolean", is_required=True, order=1)
+                ]
+            )
+        )
+        db.add(act2)
+        
+        act3_start = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=3)
+        act3 = Activity(
+            title="Read Attention Is All You Need",
+            description="Paper reading session discussing the Transformer architecture. Read the paper in advance!",
+            category="Study",
+            location=f"POINT({105.8342} {21.0278})",
+            location_name="Hanoi",
+            start_time=act3_start,
+            end_time=act3_start + datetime.timedelta(hours=2),
+            host_id=users[2].id,
+            group_id=groups[2].id,
+            max_participants=10,
+            current_participants=1
+        )
+        db.add(act3)
+        
+        activities = [act1, act2, act3]
+        
+        # Generate embeddings if available
+        try:
+            from app.modules.chat.embeddings import generate_embedding
+            for act in activities:
+                emb = await generate_embedding(f"{act.title}\n{act.description or ''}")
+                act.embedding = emb
+        except Exception as e:
+            print(f"Could not generate embeddings: {e}")
+            
+        await db.commit()
+        
+        print("Creating trophies...")
+        from app.modules.trophies.models import Trophy
+        t1 = Trophy(name="Chiến binh Mùa Hè Xanh", description="Hoàn thành xuất sắc chiến dịch tình nguyện Mùa Hè Xanh.", icon="🌟")
+        t2 = Trophy(name="Vận động viên 5K", description="Hoàn thành giải chạy bộ 5K.", icon="🏃‍♂️")
+        db.add_all([t1, t2])
+        await db.commit()
             
         await db.commit()
         for a in activities:
@@ -114,9 +203,28 @@ async def seed():
             db.add(p)
             for user in users:
                 if user.id != act.host_id and random.choice([True, False]):
-                    p = JoinRequest(activity_id=act.id, user_id=user.id, status=RequestStatus.approved)
+                    form_res = {}
+                    if act.custom_form:
+                        for field in act.custom_form.fields:
+                            if field.field_type == 'boolean':
+                                form_res[str(field.id) if field.id else field.label] = True
+                            else:
+                                form_res[str(field.id) if field.id else field.label] = "Sample response"
+                    p = JoinRequest(
+                        activity_id=act.id, 
+                        user_id=user.id, 
+                        status=RequestStatus.approved,
+                        form_responses=form_res if form_res else None
+                    )
                     db.add(p)
         
+        await db.commit()
+        
+        print("Adding user trophies...")
+        from app.modules.trophies.models import UserTrophy
+        ut1 = UserTrophy(user_id=users[0].id, trophy_id=t1.id)
+        ut2 = UserTrophy(user_id=users[1].id, trophy_id=t2.id)
+        db.add_all([ut1, ut2])
         await db.commit()
         
         print("Creating documents...")

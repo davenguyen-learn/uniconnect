@@ -42,6 +42,12 @@ def _activity_to_response(
             name=activity.group.name,
         )
 
+    custom_form_info = None
+    if getattr(activity, 'custom_form', None):
+        # We need to construct CustomFormResponse from Activity.custom_form
+        custom_form_info = activity.custom_form
+        # Due to from_attributes=True, pydantic handles the parsing automatically
+
     return ActivityResponse(
         id=activity.id,
         host_id=activity.host_id,
@@ -62,6 +68,7 @@ def _activity_to_response(
         host=host_info,
         group=group_info,
         distance_meters=distance,
+        custom_form=custom_form_info,
     )
 
 
@@ -85,6 +92,9 @@ async def create_activity(
         if group and group.owner_id != uuid.UUID(user_id) and not group.allow_member_activities:
             raise ForbiddenError("Group members are not allowed to post activities.")
 
+    embedding_text = f"{data.title}\n{data.description or ''}"
+    from app.modules.chat.embeddings import generate_embedding
+    
     activity = Activity(
         host_id=uuid.UUID(user_id),
         title=data.title,
@@ -99,7 +109,25 @@ async def create_activity(
         require_approval=data.require_approval,
         group_id=data.group_id,
         current_participants=1,  # Host is counted
+        embedding=generate_embedding(embedding_text),
     )
+    
+    if data.custom_form:
+        from app.modules.forms.models import CustomForm, FormField, FieldType
+        form_fields = []
+        for f in data.custom_form.fields:
+            form_fields.append(FormField(
+                label=f.label,
+                field_type=f.field_type,
+                is_required=f.is_required,
+                order=f.order,
+                meta_data=f.meta_data,
+            ))
+        activity.custom_form = CustomForm(
+            title=data.custom_form.title,
+            description=data.custom_form.description,
+            fields=form_fields,
+        )
 
     activity = await repository.create(db, activity)
     return _activity_to_response(activity, data.latitude, data.longitude)
@@ -165,6 +193,13 @@ async def update_activity(
         new_lat = update_data.pop("latitude", current_lat)
         new_lng = update_data.pop("longitude", current_lng)
         activity.location = f"SRID=4326;POINT({new_lng} {new_lat})"
+
+    if "title" in update_data or "description" in update_data:
+        new_title = update_data.get("title", activity.title)
+        new_desc = update_data.get("description", activity.description)
+        embedding_text = f"{new_title}\n{new_desc or ''}"
+        from app.modules.chat.embeddings import generate_embedding
+        update_data["embedding"] = generate_embedding(embedding_text)
 
     activity = await repository.update(db, activity, update_data)
 

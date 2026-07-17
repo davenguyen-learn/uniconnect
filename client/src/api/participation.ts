@@ -8,6 +8,8 @@ export interface JoinRequestResponse {
   message: string | null;
   responded_at: string | null;
   created_at: string;
+  form_responses?: Record<string, any>;
+  attendance_confirmed?: boolean;
   user?: {
     username: string;
     full_name: string | null;
@@ -16,6 +18,7 @@ export interface JoinRequestResponse {
 
 export interface JoinRequestCreate {
   message?: string;
+  form_responses?: Record<string, any>;
 }
 
 export const participationApi = {
@@ -24,6 +27,9 @@ export const participationApi = {
 
   listByActivity: (activityId: string) =>
     api.get<JoinRequestResponse[]>(`/activities/${activityId}/requests`),
+    
+  listParticipants: (activityId: string) =>
+    api.get<JoinRequestResponse[]>(`/activities/${activityId}/participants`),
 
   approve: (requestId: string) =>
     api.patch<JoinRequestResponse>(`/join-requests/${requestId}/approve`),

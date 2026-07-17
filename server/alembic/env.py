@@ -17,18 +17,24 @@ from app.modules.interactions.models import Comment, ContentLike
 from app.modules.documents.models import Document
 from app.modules.notifications.models import Notification
 from app.modules.reports.models import Report
-  # noqa: F401
-
+from app.modules.forms.models import CustomForm, FormField
+from app.modules.trophies.models import Trophy, UserTrophy
+# noqa: F401
 config = context.config
 
 # Override sqlalchemy.url with the runtime setting
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+config.set_main_option("sqlalchemy.url", str(settings.DATABASE_URL))
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 target_metadata = Base.metadata
 
+
+def include_object(object, name, type_, reflected, compare_to):
+    if type_ == "table" and name not in target_metadata.tables:
+        return False
+    return True
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode."""
@@ -38,6 +44,7 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        include_object=include_object,
     )
 
     with context.begin_transaction():
@@ -45,7 +52,11 @@ def run_migrations_offline() -> None:
 
 
 def do_run_migrations(connection):
-    context.configure(connection=connection, target_metadata=target_metadata)
+    context.configure(
+        connection=connection, 
+        target_metadata=target_metadata,
+        include_object=include_object,
+    )
     with context.begin_transaction():
         context.run_migrations()
 

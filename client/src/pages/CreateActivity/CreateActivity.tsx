@@ -24,6 +24,10 @@ export default function CreateActivity() {
   });
   
   const [location, setLocation] = useState<[number, number] | null>(null);
+  
+  // Custom Form Builder state
+  const [customFormFields, setCustomFormFields] = useState<Array<{ id: string, label: string, field_type: string, is_required: boolean }>>([]);
+  const [showFormBuilder, setShowFormBuilder] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -66,6 +70,18 @@ export default function CreateActivity() {
         latitude: location[0],
         longitude: location[1],
       };
+
+      if (customFormFields.length > 0) {
+        data.custom_form = {
+          title: "Join Application Form",
+          fields: customFormFields.map((f, idx) => ({
+            label: f.label,
+            field_type: f.field_type as any,
+            is_required: f.is_required,
+            order: idx
+          }))
+        };
+      }
 
       const newActivity = await activitiesApi.create(data);
       toast.success('Activity created successfully!');
@@ -216,6 +232,83 @@ export default function CreateActivity() {
               placeholder="e.g., KTX Khu A, Sân bóng, etc."
               maxLength={100}
             />
+          </div>
+
+          <div className="form-group">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <label style={{ margin: 0 }}>Custom Join Form</label>
+              <Button type="button" size="sm" variant="secondary" onClick={() => setShowFormBuilder(!showFormBuilder)}>
+                {showFormBuilder ? 'Hide Builder' : 'Add Form Fields'}
+              </Button>
+            </div>
+            {showFormBuilder && (
+              <div className="form-builder" style={{ padding: '16px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', marginTop: '12px' }}>
+                <p style={{ fontSize: '0.9rem', marginBottom: '12px', color: 'var(--text-secondary)' }}>
+                  Require users to fill out specific fields when joining.
+                </p>
+                {customFormFields.map((field, index) => (
+                  <div key={field.id} style={{ display: 'flex', gap: '8px', marginBottom: '8px', alignItems: 'flex-end' }}>
+                    <div style={{ flex: 1 }}>
+                      <label style={{ fontSize: '0.8rem' }}>Field Label</label>
+                      <input 
+                        type="text" 
+                        className="form-input" 
+                        value={field.label} 
+                        onChange={(e) => {
+                          const newFields = [...customFormFields];
+                          newFields[index].label = e.target.value;
+                          setCustomFormFields(newFields);
+                        }} 
+                      />
+                    </div>
+                    <div style={{ width: '120px' }}>
+                      <label style={{ fontSize: '0.8rem' }}>Type</label>
+                      <select 
+                        className="form-input" 
+                        value={field.field_type}
+                        onChange={(e) => {
+                          const newFields = [...customFormFields];
+                          newFields[index].field_type = e.target.value;
+                          setCustomFormFields(newFields);
+                        }}
+                      >
+                        <option value="text">Text</option>
+                        <option value="number">Number</option>
+                        <option value="boolean">Checkbox</option>
+                      </select>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', height: '40px', paddingBottom: '8px' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', cursor: 'pointer' }}>
+                        <input 
+                          type="checkbox" 
+                          checked={field.is_required}
+                          onChange={(e) => {
+                            const newFields = [...customFormFields];
+                            newFields[index].is_required = e.target.checked;
+                            setCustomFormFields(newFields);
+                          }}
+                        /> Req
+                      </label>
+                    </div>
+                    <Button 
+                      type="button" 
+                      variant="secondary" 
+                      onClick={() => setCustomFormFields(customFormFields.filter((_, i) => i !== index))}
+                      style={{ height: '40px' }}
+                    >
+                      X
+                    </Button>
+                  </div>
+                ))}
+                <Button 
+                  type="button" 
+                  size="sm" 
+                  onClick={() => setCustomFormFields([...customFormFields, { id: Math.random().toString(), label: '', field_type: 'text', is_required: true }])}
+                >
+                  + Add Field
+                </Button>
+              </div>
+            )}
           </div>
 
           <div className="form-group map-group">

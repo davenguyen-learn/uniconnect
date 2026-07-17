@@ -4,6 +4,7 @@ import uuid
 from geoalchemy2 import Geography
 from sqlalchemy import CheckConstraint, DateTime, Enum, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from pgvector.sqlalchemy import Vector
 
 from app.core.models import Base, PrimaryKeyMixin, SoftDeleteMixin, TimestampMixin
 
@@ -34,6 +35,9 @@ class Activity(PrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
         nullable=True,
     )
     location_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    
+    # 768 is the default dimension for Gemini embeddings (models/text-embedding-004)
+    embedding = mapped_column(Vector(768), nullable=True)
 
     start_time: Mapped[str] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
     end_time: Mapped[str] = mapped_column(DateTime(timezone=True), nullable=False)
@@ -55,7 +59,13 @@ class Activity(PrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
     group_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("groups.id", ondelete="CASCADE"), nullable=True, index=True
     )
+    
+    trophy_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("trophies.id", ondelete="SET NULL"), nullable=True, index=True
+    )
 
     # Relationships
     host = relationship("User", backref="hosted_activities", lazy="joined")
     group = relationship("Group", back_populates="activities", lazy="joined")
+    trophy = relationship("Trophy", lazy="joined")
+    custom_form = relationship("CustomForm", back_populates="activity", uselist=False, lazy="joined")

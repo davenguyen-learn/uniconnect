@@ -1,5 +1,20 @@
 import { api } from './client';
 
+export interface FormField {
+  id?: string;
+  label: string;
+  field_type: 'text' | 'number' | 'boolean' | string;
+  is_required: boolean;
+  order: number;
+}
+
+export interface CustomForm {
+  id?: string;
+  title: string | null;
+  description: string | null;
+  fields: FormField[];
+}
+
 export interface ActivityResponse {
   id: string;
   host_id: string;
@@ -21,6 +36,7 @@ export interface ActivityResponse {
     full_name: string | null;
   };
   distance_meters?: number;
+  custom_form?: CustomForm | null;
 }
 
 export interface ActivityCreate {

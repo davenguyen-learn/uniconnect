@@ -22,6 +22,10 @@ search_tool = {
             "parameters": {
                 "type": "OBJECT",
                 "properties": {
+                    "semantic_query": {
+                        "type": "STRING",
+                        "description": "A natural language query representing the semantic meaning of the user's request (e.g. 'activities that grant extracurricular points' or 'events for people without vehicles'). Use this for complex matching.",
+                    },
                     "category": {
                         "type": "STRING",
                         "description": "The category of the activity (e.g. sports, academics, social, tech). If not specified, leave empty.",
@@ -97,6 +101,7 @@ async def handle_chat(
                 args = function_call.args
                 category = args.get("category")
                 keyword = args.get("keyword")
+                semantic_query = args.get("semantic_query")
                 radius_meters = args.get("radius_meters", 10000)
                 limit = args.get("limit", 5)
 
@@ -106,6 +111,7 @@ async def handle_chat(
                     user_id=user_id,
                     category=category,
                     keyword=keyword,
+                    semantic_query=semantic_query,
                     lat=user_lat,
                     lng=user_lng,
                     radius_meters=radius_meters,

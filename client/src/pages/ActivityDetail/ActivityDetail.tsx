@@ -19,9 +19,11 @@ export default function ActivityDetail() {
 
   const [activity, setActivity] = useState<ActivityResponse | null>(null);
   const [requests, setRequests] = useState<JoinRequestResponse[]>([]);
+  const [participants, setParticipants] = useState<JoinRequestResponse[]>([]);
   const [myRequest, setMyRequest] = useState<JoinRequestResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [requestMessage, setRequestMessage] = useState('');
+  const [formResponses, setFormResponses] = useState<Record<string, any>>({});
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
   // Interactions state
@@ -61,6 +63,14 @@ export default function ActivityDetail() {
         }
       }
 
+      // Fetch participants list for everyone
+      try {
+        const parts = await participationApi.listParticipants(id!);
+        setParticipants(parts);
+      } catch {
+        // ignore
+      }
+
       // Load interactions data
       try {
         const [likeStatus, commentsData] = await Promise.all([
@@ -91,6 +101,9 @@ export default function ActivityDetail() {
       const data: JoinRequestCreate = {};
       if (requestMessage.trim()) {
         data.message = requestMessage.trim();
+      }
+      if (Object.keys(formResponses).length > 0) {
+        data.form_responses = formResponses;
       }
       const req = await participationApi.requestToJoin(id, data);
       setMyRequest(req);
@@ -245,6 +258,41 @@ export default function ActivityDetail() {
               </span>
             </div>
           </div>
+
+          {participants.length > 0 && (
+            <div className="participants-section" style={{ marginTop: '24px' }}>
+              <h3>Participants</h3>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
+                <div 
+                  className="participant-avatar host"
+                  style={{ 
+                    padding: '8px 12px', 
+                    backgroundColor: 'var(--primary-color)', 
+                    color: '#fff', 
+                    borderRadius: '20px',
+                    fontSize: '0.9rem' 
+                  }}
+                  title="Host"
+                >
+                  ⭐ @{activity.host?.username}
+                </div>
+                {participants.filter(p => p.user?.username !== activity.host?.username).map(p => (
+                  <div 
+                    key={p.id} 
+                    className="participant-avatar"
+                    style={{ 
+                      padding: '8px 12px', 
+                      backgroundColor: 'rgba(255,255,255,0.1)', 
+                      borderRadius: '20px',
+                      fontSize: '0.9rem' 
+                    }}
+                  >
+                    @{p.user?.username}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="activity-sidebar glass">
@@ -336,6 +384,36 @@ export default function ActivityDetail() {
               ) : (
                 <form onSubmit={handleJoinRequest} className="join-form">
                   <h3>{activity.require_approval ? 'Request to Join' : 'Join Activity'}</h3>
+                  
+                  {activity.custom_form && activity.custom_form.fields.length > 0 && (
+                    <div className="custom-form-fields" style={{ marginBottom: '16px', padding: '12px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}>
+                      <h4 style={{ marginBottom: '12px' }}>{activity.custom_form.title || 'Required Information'}</h4>
+                      {activity.custom_form.description && <p style={{ fontSize: '0.9rem', marginBottom: '12px', color: 'var(--text-secondary)' }}>{activity.custom_form.description}</p>}
+                      
+                      {activity.custom_form.fields.map(field => (
+                        <div key={field.id} style={{ marginBottom: '12px' }}>
+                          <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem' }}>
+                            {field.label} {field.is_required && <span className="required">*</span>}
+                          </label>
+                          {field.field_type === 'boolean' ? (
+                            <input 
+                              type="checkbox" 
+                              required={field.is_required}
+                              onChange={(e) => setFormResponses(prev => ({ ...prev, [field.id!]: e.target.checked }))}
+                            />
+                          ) : (
+                            <input 
+                              type={field.field_type === 'number' ? 'number' : 'text'}
+                              className="form-input"
+                              required={field.is_required}
+                              onChange={(e) => setFormResponses(prev => ({ ...prev, [field.id!]: field.field_type === 'number' ? Number(e.target.value) : e.target.value }))}
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
                   {activity.require_approval && (
                     <>
                       <p className="join-hint">

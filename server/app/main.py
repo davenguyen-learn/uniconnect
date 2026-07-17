@@ -60,6 +60,7 @@ def create_app() -> FastAPI:
     from app.modules.notifications.router import router as notifications_router
     from app.modules.reports.router import router as reports_router
     from app.modules.admin.router import router as admin_router
+    from app.modules.trophies.router import router as trophies_router
 
     application.include_router(auth_router, prefix="/api/v1")
     application.include_router(users_router, prefix="/api/v1")
@@ -72,6 +73,7 @@ def create_app() -> FastAPI:
     application.include_router(notifications_router, prefix="/api/v1")
     application.include_router(reports_router, prefix="/api/v1")
     application.include_router(admin_router, prefix="/api/v1")
+    application.include_router(trophies_router, prefix="/api/v1")
 
 
     return application

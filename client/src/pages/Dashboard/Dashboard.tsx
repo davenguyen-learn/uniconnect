@@ -20,6 +20,9 @@ export default function Dashboard() {
   const [radius, setRadius] = useState<number>(50000);
   const [freeToJoin, setFreeToJoin] = useState(false);
   const [category, setCategory] = useState<string | undefined>(undefined);
+  const [timeRange, setTimeRange] = useState<string>('All');
+  
+  const timeRanges = ['All', 'Today', 'This Week', 'This Month'];
 
   // Debounced search
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -84,6 +87,24 @@ export default function Dashboard() {
 
   const categories = ['All', 'Study', 'Sports', 'Social', 'Gaming', 'Food'];
 
+  const now = new Date();
+  const filteredActivities = activities.filter(a => {
+    if (timeRange === 'All') return true;
+    const start = new Date(a.start_time);
+    if (timeRange === 'Today') {
+      return start.toDateString() === now.toDateString();
+    }
+    if (timeRange === 'This Week') {
+      const diff = start.getTime() - now.getTime();
+      return diff >= 0 && diff <= 7 * 24 * 60 * 60 * 1000;
+    }
+    if (timeRange === 'This Month') {
+      const diff = start.getTime() - now.getTime();
+      return diff >= 0 && diff <= 30 * 24 * 60 * 60 * 1000;
+    }
+    return true;
+  });
+
   return (
     <div className="dashboard-page">
       <div className="dashboard-sidebar glass">
@@ -142,17 +163,30 @@ export default function Dashboard() {
               </div>
             ))}
           </div>
+
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', paddingBottom: '4px', width: '100%' }}>
+            {timeRanges.map(t => (
+              <div 
+                key={t}
+                className={`filter-pill ${timeRange === t ? 'active' : ''}`}
+                onClick={() => setTimeRange(t)}
+                style={{ backgroundColor: timeRange === t ? 'var(--primary-color)' : 'transparent', borderColor: 'var(--primary-color)' }}
+              >
+                {t}
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="activity-list" style={{ marginTop: '16px' }}>
           {loading ? (
             <div className="activity-list-loading">Loading activities...</div>
-          ) : activities.length === 0 ? (
+          ) : filteredActivities.length === 0 ? (
             <div className="activity-list-empty">
               No activities found nearby. Try creating one!
             </div>
           ) : (
-            activities.map(a => (
+            filteredActivities.map(a => (
               <div 
                 key={a.id} 
                 className="activity-list-item" 
@@ -180,7 +214,7 @@ export default function Dashboard() {
       
       <div className="dashboard-map-container">
         <Map 
-          activities={activities} 
+          activities={filteredActivities} 
           userLocation={userLocation} 
           onBoundsChange={handleBoundsChange} 
         />
