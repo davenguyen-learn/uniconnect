@@ -103,7 +103,7 @@ async def lock_and_increment_participants(
     result = await db.execute(
         select(Activity)
         .where(Activity.id == activity_id)
-        .with_for_update()
+        .with_for_update(of=Activity)
     )
     activity = result.scalar_one()
 
