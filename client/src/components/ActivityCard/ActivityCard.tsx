@@ -11,7 +11,7 @@ export default function ActivityCard({ activity, onClick }: ActivityCardProps) {
     <div className="activity-card-ui" onClick={onClick}>
       <div className="activity-card-header">
         <span className="activity-card-category">{activity.category || 'General'}</span>
-        {activity.distance_meters !== undefined && (
+        {typeof activity.distance_meters === 'number' && (
           <span className="activity-card-distance">
             {(activity.distance_meters / 1000).toFixed(1)} km
           </span>
