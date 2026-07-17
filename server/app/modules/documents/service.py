@@ -167,6 +167,10 @@ async def get_download_url(
         if not await is_member(db, doc.group_id, user_id):
             raise ForbiddenError("You must be a member of this group to download this document.")
 
+    # If the file_url is already an absolute URL (e.g., from seed data), return it directly
+    if doc.file_url.startswith("http://") or doc.file_url.startswith("https://"):
+        return {"url": doc.file_url}
+
     # If public and we have a public URL configured, return it directly
     if not doc.group_id and storage_service.public_url:
         return {"url": storage_service.get_public_url(doc.file_url)}
