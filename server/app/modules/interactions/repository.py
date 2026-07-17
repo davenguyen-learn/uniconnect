@@ -39,7 +39,7 @@ async def create_comment(
         )
         .where(Comment.id == comment.id)
     )
-    return result.scalar_one()
+    return result.unique().scalar_one()
 
 
 async def get_comment_by_id(db: AsyncSession, comment_id: uuid.UUID) -> Comment | None:
@@ -52,7 +52,7 @@ async def get_comment_by_id(db: AsyncSession, comment_id: uuid.UUID) -> Comment 
         )
         .where(Comment.id == comment_id)
     )
-    return result.scalar_one_or_none()
+    return result.unique().scalar_one_or_none()
 
 
 async def list_comments(
