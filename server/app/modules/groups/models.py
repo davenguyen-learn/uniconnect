@@ -18,25 +18,25 @@ class Group(PrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
 
     name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True, index=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    public_description: Mapped[str | None] = mapped_column(Text, nullable=True)
     private_description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    require_approval: Mapped[bool] = mapped_column(
-        default=True, server_default="true", nullable=False
-    )
+    allow_member_activities: Mapped[bool] = mapped_column(default=True, server_default="true")
+    allow_member_documents: Mapped[bool] = mapped_column(default=True, server_default="true")
+    require_approval: Mapped[bool] = mapped_column(default=True, server_default="true", nullable=False)
     
     owner_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
-    )
-    allow_member_activities: Mapped[bool] = mapped_column(
-        default=True, server_default="true", nullable=False
-    )
-    allow_member_documents: Mapped[bool] = mapped_column(
-        default=True, server_default="true", nullable=False
     )
 
     # Relationships
     owner = relationship("User", backref="owned_groups", lazy="joined")
     members = relationship("GroupMember", back_populates="group", cascade="all, delete-orphan")
     activities = relationship("Activity", back_populates="group")
+    
+    custom_form_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("custom_forms.id", ondelete="SET NULL"), nullable=True
+    )
+    custom_form = relationship("CustomForm", lazy="joined")
 
 
 class GroupMember(PrimaryKeyMixin, TimestampMixin, Base):

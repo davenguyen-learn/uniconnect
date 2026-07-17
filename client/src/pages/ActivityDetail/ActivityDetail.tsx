@@ -296,6 +296,24 @@ export default function ActivityDetail() {
         </div>
 
         <div className="activity-sidebar glass">
+          {activity.trophy && (
+            <div className="trophy-section" style={{ marginBottom: '24px', textAlign: 'center', padding: '16px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px' }}>
+              <h3 style={{ margin: '0 0 12px 0', fontSize: '1.2rem', color: 'var(--text-color)' }}>Earn a Trophy!</h3>
+              <div style={{ fontSize: '3.5rem', margin: '8px 0', filter: 'drop-shadow(0 0 10px rgba(255,215,0,0.5))' }}>
+                {activity.trophy.icon || '🏆'}
+              </div>
+              <h4 style={{ margin: '8px 0', color: 'var(--primary-color)', fontSize: '1.1rem' }}>{activity.trophy.name}</h4>
+              {activity.trophy.description && (
+                <p style={{ fontSize: '0.9rem', color: 'var(--text-color)', opacity: 0.8, margin: '8px 0' }}>
+                  {activity.trophy.description}
+                </p>
+              )}
+              <div style={{ marginTop: '12px', fontWeight: 'bold', display: 'inline-block', padding: '4px 12px', background: 'rgba(255,215,0,0.2)', color: '#FFD700', borderRadius: '20px', fontSize: '0.85rem' }}>
+                +{activity.trophy.points} Points
+              </div>
+            </div>
+          )}
+
           {isHost ? (
             <div className="host-management">
               <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
@@ -395,7 +413,7 @@ export default function ActivityDetail() {
                           <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem' }}>
                             {field.label} {field.is_required && <span className="required">*</span>}
                           </label>
-                          {field.field_type === 'boolean' ? (
+                          {field.field_type === 'checkbox' ? (
                             <input 
                               type="checkbox" 
                               required={field.is_required}

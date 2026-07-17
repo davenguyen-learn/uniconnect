@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import ForeignKey, Integer, String
+from sqlalchemy import ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.models import Base, PrimaryKeyMixin, TimestampMixin
@@ -9,8 +9,9 @@ class Trophy(PrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "trophies"
 
     name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True, index=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
     points: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    icon_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    icon: Mapped[str | None] = mapped_column(String(50), nullable=True)
     
     # The organization or verified user who created this trophy
     creator_id: Mapped[uuid.UUID] = mapped_column(

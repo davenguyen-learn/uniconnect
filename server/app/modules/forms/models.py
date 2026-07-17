@@ -18,14 +18,6 @@ class FieldType(str, enum.Enum):
 class CustomForm(PrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "custom_forms"
 
-    # A form can belong to an activity OR a group
-    activity_id: Mapped[uuid.UUID | None] = mapped_column(
-        ForeignKey("activities.id", ondelete="CASCADE"), nullable=True, index=True
-    )
-    group_id: Mapped[uuid.UUID | None] = mapped_column(
-        ForeignKey("groups.id", ondelete="CASCADE"), nullable=True, index=True
-    )
-
     title: Mapped[str | None] = mapped_column(String(200), nullable=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
@@ -36,8 +28,7 @@ class CustomForm(PrimaryKeyMixin, TimestampMixin, Base):
         order_by="FormField.order",
         lazy="joined"
     )
-    activity = relationship("Activity", back_populates="custom_form")
-    group = relationship("Group", backref="custom_forms")
+    activity = relationship("Activity", back_populates="custom_form", uselist=False)
 
 
 class FormField(PrimaryKeyMixin, Base):

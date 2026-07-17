@@ -198,7 +198,21 @@ export default function GroupDetail() {
       <div className="group-content">
         {activeTab === 'about' && (
           <div className="group-members-section glass">
-            <h2>Members</h2>
+            {group.public_description && (
+              <div style={{ marginBottom: '24px' }}>
+                <h3>About Us</h3>
+                <p style={{ whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>{group.public_description}</p>
+              </div>
+            )}
+            
+            {isMember && group.private_description && (
+              <div style={{ marginBottom: '24px', padding: '16px', background: 'rgba(var(--primary-color-rgb), 0.1)', borderLeft: '4px solid var(--primary-color)', borderRadius: '4px' }}>
+                <h3 style={{ marginTop: 0 }}>Member Only Info</h3>
+                <p style={{ whiteSpace: 'pre-wrap', margin: 0, lineHeight: 1.6 }}>{group.private_description}</p>
+              </div>
+            )}
+
+            <h3>Members ({group.members.length})</h3>
             <div className="members-list">
               {group.members.map(member => (
                 <div key={member.user_id} className="member-item">

@@ -34,6 +34,8 @@ class ActivityCreate(BaseModel):
     privacy: str = "public"
     require_approval: bool = True
     group_id: uuid.UUID | None = None
+    trophy_id: uuid.UUID | None = None
+    custom_form_id: uuid.UUID | None = None
     custom_form: "CustomFormCreate | None" = None
 
     @model_validator(mode="after")
@@ -79,6 +81,7 @@ class ActivityResponse(BaseModel):
     group: GroupInfo | None = None
     distance_meters: float | None = None
     custom_form: "CustomFormResponse | None" = None
+    trophy: "TrophyResponse | None" = None
 
     model_config = {"from_attributes": True}
 

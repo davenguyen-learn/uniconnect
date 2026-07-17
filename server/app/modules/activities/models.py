@@ -60,6 +60,10 @@ class Activity(PrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
         ForeignKey("groups.id", ondelete="CASCADE"), nullable=True, index=True
     )
     
+    custom_form_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("custom_forms.id", ondelete="SET NULL"), nullable=True
+    )
+    
     trophy_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("trophies.id", ondelete="SET NULL"), nullable=True, index=True
     )

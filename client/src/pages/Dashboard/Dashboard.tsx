@@ -10,23 +10,23 @@ import L from 'leaflet';
 export default function Dashboard() {
   const toast = useToast();
   const navigate = useNavigate();
-  
+
   const [activities, setActivities] = useState<ActivityResponse[]>([]);
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [loading, setLoading] = useState(true);
-  
+
   // Filter states
   const [searchQuery, setSearchQuery] = useState('');
   const [radius, setRadius] = useState<number>(50000);
   const [freeToJoin, setFreeToJoin] = useState(false);
   const [category, setCategory] = useState<string | undefined>(undefined);
   const [timeRange, setTimeRange] = useState<string>('All');
-  
+
   const timeRanges = ['All', 'Today', 'This Week', 'This Month'];
 
   // Debounced search
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchQuery);
@@ -61,10 +61,10 @@ export default function Dashboard() {
   async function fetchNearby(lat: number, lng: number) {
     try {
       setLoading(true);
-      const query: NearbyQuery = { 
-        lat, 
-        lng, 
-        radius, 
+      const query: NearbyQuery = {
+        lat,
+        lng,
+        radius,
         limit: 50,
         search: debouncedSearch || undefined,
         free_to_join: freeToJoin ? true : undefined,
@@ -115,23 +115,23 @@ export default function Dashboard() {
           </Link>
         </div>
         <p className="dashboard-subtitle">Find activities happening near you.</p>
-        
+
         <div className="filters-section" style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px', maxWidth: '100%', boxSizing: 'border-box' }}>
-          <Input 
-            placeholder="Search activities..." 
+          <Input
+            placeholder="Search activities..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
-          
+
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-            <select 
-              value={radius} 
+            <select
+              value={radius}
               onChange={(e) => setRadius(Number(e.target.value))}
               style={{
                 padding: '8px',
                 borderRadius: '8px',
                 border: '1px solid rgba(255,255,255,0.1)',
-                background: 'rgba(255,255,255,0.05)',
+                background: 'black',
                 color: 'inherit',
                 outline: 'none'
               }}
@@ -141,10 +141,10 @@ export default function Dashboard() {
               <option value={25000}>Within 25 km</option>
               <option value={50000}>Within 50 km</option>
             </select>
-            
+
             <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '0.9rem' }}>
-              <input 
-                type="checkbox" 
+              <input
+                type="checkbox"
                 checked={freeToJoin}
                 onChange={(e) => setFreeToJoin(e.target.checked)}
               />
@@ -154,7 +154,7 @@ export default function Dashboard() {
 
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', paddingBottom: '4px', width: '100%' }}>
             {categories.map(c => (
-              <div 
+              <div
                 key={c}
                 className={`filter-pill ${category === c || (c === 'All' && !category) ? 'active' : ''}`}
                 onClick={() => setCategory(c === 'All' ? undefined : c)}
@@ -166,7 +166,7 @@ export default function Dashboard() {
 
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', paddingBottom: '4px', width: '100%' }}>
             {timeRanges.map(t => (
-              <div 
+              <div
                 key={t}
                 className={`filter-pill ${timeRange === t ? 'active' : ''}`}
                 onClick={() => setTimeRange(t)}
@@ -187,9 +187,9 @@ export default function Dashboard() {
             </div>
           ) : (
             filteredActivities.map(a => (
-              <div 
-                key={a.id} 
-                className="activity-list-item" 
+              <div
+                key={a.id}
+                className="activity-list-item"
                 onClick={() => navigate(`/activities/${a.id}`)}
                 style={{ cursor: 'pointer' }}
               >
@@ -211,12 +211,12 @@ export default function Dashboard() {
           )}
         </div>
       </div>
-      
+
       <div className="dashboard-map-container">
-        <Map 
-          activities={filteredActivities} 
-          userLocation={userLocation} 
-          onBoundsChange={handleBoundsChange} 
+        <Map
+          activities={filteredActivities}
+          userLocation={userLocation}
+          onBoundsChange={handleBoundsChange}
         />
       </div>
     </div>

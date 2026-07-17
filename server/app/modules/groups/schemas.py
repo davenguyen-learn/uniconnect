@@ -3,6 +3,7 @@ import uuid
 from pydantic import BaseModel, Field
 
 from app.modules.groups.models import GroupRole
+from app.modules.forms.schemas import CustomFormCreate, CustomFormResponse
 
 
 class GroupMemberResponse(BaseModel):
@@ -21,12 +22,15 @@ class GroupMemberResponse(BaseModel):
 class GroupBase(BaseModel):
     name: str = Field(..., max_length=100)
     description: str | None = None
+    public_description: str | None = None
+    private_description: str | None = None
     allow_member_activities: bool = True
     allow_member_documents: bool = True
+    require_approval: bool = True
 
 
 class GroupCreate(GroupBase):
-    pass
+    custom_form: CustomFormCreate | None = None
 
 
 class GroupUpdate(BaseModel):
@@ -48,3 +52,4 @@ class GroupResponse(GroupBase):
 
 class GroupDetailResponse(GroupResponse):
     members: list[GroupMemberResponse] = []
+    custom_form: CustomFormResponse | None = None

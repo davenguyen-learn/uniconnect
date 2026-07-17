@@ -156,9 +156,6 @@ export default function Map({ activities, userLocation, onBoundsChange }: MapPro
           </Marker>
         )}
 
-        {/* Recenter Button */}
-        <RecenterButton userLocation={userLocation} />
-
         {activities.map((activity) => (
           <Marker 
             key={activity.id} 
@@ -204,6 +201,28 @@ export default function Map({ activities, userLocation, onBoundsChange }: MapPro
           </Marker>
         ))}
       </MapContainer>
+      <RecenterButton userLocation={userLocation} />
+      
+      {/* Legend */}
+      <div style={{ position: 'absolute', bottom: '20px', left: '20px', zIndex: 1000, background: 'rgba(255,255,255,0.9)', padding: '10px', borderRadius: '8px', boxShadow: '0 2px 6px rgba(0,0,0,0.3)', fontSize: '0.85rem' }}>
+        <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#333' }}>Legend</h4>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+          <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png" alt="Red" style={{ width: '12px' }} />
+          <span style={{ color: '#333' }}>Starts &lt; 24h (Urgent)</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+          <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png" alt="Orange" style={{ width: '12px' }} />
+          <span style={{ color: '#333' }}>Starts &lt; 3 days</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+          <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png" alt="Blue" style={{ width: '12px' }} />
+          <span style={{ color: '#333' }}>Normal</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png" alt="Green" style={{ width: '12px' }} />
+          <span style={{ color: '#333' }}>Ongoing</span>
+        </div>
+      </div>
     </div>
   );
 }

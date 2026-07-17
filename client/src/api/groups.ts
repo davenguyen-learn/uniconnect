@@ -13,8 +13,11 @@ export interface GroupMemberResponse {
 export interface GroupBase {
   name: string;
   description?: string;
+  public_description?: string;
+  private_description?: string;
   allow_member_activities?: boolean;
   allow_member_documents?: boolean;
+  require_approval?: boolean;
 }
 
 export interface GroupCreate extends GroupBase {
@@ -32,6 +35,7 @@ export interface GroupResponse extends GroupBase {
 
 export interface GroupDetailResponse extends GroupResponse {
   members: GroupMemberResponse[];
+  custom_form?: any;
 }
 
 export const groupsApi = {
@@ -56,8 +60,8 @@ export const groupsApi = {
   getGroup: (id: string) => 
     api.get<GroupDetailResponse>(`/groups/${id}`),
 
-  joinGroup: (id: string) => 
-    api.post(`/groups/${id}/join`),
+  joinGroup: (id: string, payload?: { form_responses?: Record<string, any> }) => 
+    api.post(`/groups/${id}/join`, payload),
 
   leaveGroup: (id: string) => 
     api.post(`/groups/${id}/leave`),

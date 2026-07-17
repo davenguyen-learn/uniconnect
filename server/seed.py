@@ -6,11 +6,13 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
 from app.core.config import settings
 from app.core.security import hash_password
-from app.modules.users.models import User, UserRole
-from app.modules.groups.models import Group, GroupMember, GroupRole
-from app.modules.activities.models import Activity
+from app.modules.users.models import User, UserRole, UserFollow
+from app.modules.activities.models import Activity, ActivityPrivacy
+from app.modules.groups.models import Group, GroupMember, GroupRole, GroupJoinRequest
 from app.modules.participation.models import JoinRequest, RequestStatus
 from app.modules.documents.models import Document
+from app.modules.forms.models import CustomForm, FormField
+from app.modules.trophies.models import Trophy, UserTrophy
 
 async def seed():
     engine = create_async_engine(settings.DATABASE_URL, echo=True)
@@ -123,7 +125,7 @@ Liên hệ: Trưởng ban tổ chức - Đặng Hà Thành (0912345678)
                 fields=[
                     FormField(label="Họ và tên", field_type="text", is_required=True, order=0),
                     FormField(label="MSSV", field_type="text", is_required=True, order=1),
-                    FormField(label="Có kinh nghiệm tình nguyện chưa?", field_type="boolean", is_required=False, order=2),
+                    FormField(label="Có kinh nghiệm tình nguyện chưa?", field_type="checkbox", is_required=False, order=2),
                 ]
             )
         )
@@ -150,7 +152,7 @@ Mỗi người hoàn thành sẽ nhận được huy chương điện tử!
                 title="Đăng ký giải chạy",
                 fields=[
                     FormField(label="Size áo (S/M/L/XL)", field_type="text", is_required=True, order=0),
-                    FormField(label="Cam kết sức khỏe tốt", field_type="boolean", is_required=True, order=1)
+                    FormField(label="Cam kết sức khỏe tốt", field_type="checkbox", is_required=True, order=1)
                 ]
             )
         )
@@ -187,8 +189,8 @@ Mỗi người hoàn thành sẽ nhận được huy chương điện tử!
         
         print("Creating trophies...")
         from app.modules.trophies.models import Trophy
-        t1 = Trophy(name="Chiến binh Mùa Hè Xanh", description="Hoàn thành xuất sắc chiến dịch tình nguyện Mùa Hè Xanh.", icon="🌟")
-        t2 = Trophy(name="Vận động viên 5K", description="Hoàn thành giải chạy bộ 5K.", icon="🏃‍♂️")
+        t1 = Trophy(name="Chiến binh Mùa Hè Xanh", description="Hoàn thành xuất sắc chiến dịch tình nguyện Mùa Hè Xanh.", icon="🌟", creator_id=users[0].id)
+        t2 = Trophy(name="Vận động viên 5K", description="Hoàn thành giải chạy bộ 5K.", icon="🏃‍♂️", creator_id=users[0].id)
         db.add_all([t1, t2])
         await db.commit()
             

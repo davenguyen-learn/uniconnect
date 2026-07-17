@@ -19,6 +19,8 @@ from app.modules.notifications.models import Notification
 from app.modules.reports.models import Report
 from app.modules.forms.models import CustomForm, FormField
 from app.modules.trophies.models import Trophy, UserTrophy
+from app.modules.participation.models import JoinRequest
+from app.modules.groups.models import GroupJoinRequest
 # noqa: F401
 config = context.config
 

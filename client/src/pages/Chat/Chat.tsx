@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, KeyboardEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { chatApi } from '../../api/chat';
 import { useToast } from '../../components/Toast/ToastContext';
 import { ApiRequestError } from '../../api/client';
@@ -116,7 +117,7 @@ export default function Chat() {
               </div>
               <div className="chat-content">
                 <div className="chat-bubble">
-                  <ReactMarkdown>{msg.content}</ReactMarkdown>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
                 </div>
                 {msg.activities && msg.activities.length > 0 && (
                   <div className="chat-activities">
