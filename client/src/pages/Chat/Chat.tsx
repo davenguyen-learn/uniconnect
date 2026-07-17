@@ -46,9 +46,27 @@ export default function Chat() {
     setLoading(true);
 
     try {
+      let lat: number | undefined;
+      let lng: number | undefined;
+      
+      try {
+        if ('geolocation' in navigator) {
+          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 3000 });
+          });
+          lat = position.coords.latitude;
+          lng = position.coords.longitude;
+        }
+      } catch (geoErr) {
+        console.warn("Could not get geolocation:", geoErr);
+        // We will just proceed without coordinates if the user denies or it times out
+      }
+
       // Build request payload (convert MessageBlock to ChatMessage)
       const payload = {
-        messages: newMessages.map(m => ({ role: m.role, content: m.content }))
+        messages: newMessages.map(m => ({ role: m.role, content: m.content })),
+        user_lat: lat,
+        user_lng: lng
       };
       
       const response = await chatApi.chatWithBot(payload);
