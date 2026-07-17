@@ -200,8 +200,8 @@ export default function Map({ activities, userLocation, onBoundsChange }: MapPro
             </Popup>
           </Marker>
         ))}
+        <RecenterButton userLocation={userLocation} />
       </MapContainer>
-      <RecenterButton userLocation={userLocation} />
       
       {/* Legend */}
       <div style={{ position: 'absolute', bottom: '20px', left: '20px', zIndex: 1000, background: 'rgba(255,255,255,0.9)', padding: '10px', borderRadius: '8px', boxShadow: '0 2px 6px rgba(0,0,0,0.3)', fontSize: '0.85rem' }}>
