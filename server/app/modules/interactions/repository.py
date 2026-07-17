@@ -33,7 +33,10 @@ async def create_comment(
     # Reload with user relationship
     result = await db.execute(
         select(Comment)
-        .options(joinedload(Comment.user))
+        .options(
+            joinedload(Comment.user),
+            joinedload(Comment.replies)
+        )
         .where(Comment.id == comment.id)
     )
     return result.scalar_one()
@@ -43,7 +46,10 @@ async def get_comment_by_id(db: AsyncSession, comment_id: uuid.UUID) -> Comment 
     """Fetch a single comment by ID."""
     result = await db.execute(
         select(Comment)
-        .options(joinedload(Comment.user))
+        .options(
+            joinedload(Comment.user),
+            joinedload(Comment.replies)
+        )
         .where(Comment.id == comment_id)
     )
     return result.scalar_one_or_none()
