@@ -75,6 +75,7 @@
   display: flex;
   gap: var(--space-4);
   flex-wrap: wrap;
+  flex-direction: column;
 }
 
 .stat-box {
