@@ -147,7 +147,7 @@ export default function ActivityDetail() {
     if (!id) return;
     const confirm = window.confirm('Are you sure you want to delete this activity?');
     if (!confirm) return;
-    
+
     try {
       await activitiesApi.delete(id);
       toast.success('Activity deleted');
@@ -197,7 +197,7 @@ export default function ActivityDetail() {
         <div className="category-badge">{activity.category || 'General'}</div>
         <h1 className="activity-title">{activity.title}</h1>
         <div className="activity-meta">
-          <span>Hosted by <Link to={`/profile/${activity.host_id}`} style={{color: 'inherit', textDecoration: 'underline'}}>@{activity.host?.username}</Link></span>
+          <span>Hosted by <Link to={`/profile/${activity.host_id}`} style={{ color: 'inherit', textDecoration: 'underline' }}>@{activity.host?.username}</Link></span>
           <span className="meta-dot">•</span>
           <span>{new Date(activity.start_time).toLocaleString()}</span>
         </div>
@@ -211,11 +211,11 @@ export default function ActivityDetail() {
         </div>
       </div>
 
-      <ReportModal 
-        isOpen={isReportModalOpen} 
-        onClose={() => setIsReportModalOpen(false)} 
-        targetType="activity" 
-        targetId={id!} 
+      <ReportModal
+        isOpen={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
+        targetType="activity"
+        targetId={id!}
       />
 
       <div className="activity-content-grid">
@@ -251,17 +251,17 @@ export default function ActivityDetail() {
           {isHost ? (
             <div className="host-management">
               <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-                <Button 
-                  variant="secondary" 
-                  fullWidth 
+                <Button
+                  variant="secondary"
+                  fullWidth
                   onClick={() => navigate(`/activities/${id}/edit`)}
                 >
                   Edit
                 </Button>
-                <Button 
-                  fullWidth 
+                <Button
+                  fullWidth
                   onClick={handleDeleteActivity}
-                  style={{ backgroundColor: 'rgba(239, 68, 68, 0.2)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.3)' }}
+                  style={{ backgroundColor: 'rgba(239, 68, 68, 0.2)' }}
                 >
                   Delete
                 </Button>
@@ -281,16 +281,16 @@ export default function ActivityDetail() {
                         <p className="request-message">"{req.message}"</p>
                       )}
                       <div className="request-actions">
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           onClick={() => handleRespond(req.id, 'approved')}
                           disabled={isFull}
                         >
                           Approve
                         </Button>
-                        <Button 
-                          size="sm" 
-                          variant="secondary" 
+                        <Button
+                          size="sm"
+                          variant="secondary"
                           onClick={() => handleRespond(req.id, 'declined')}
                         >
                           Decline
@@ -310,9 +310,9 @@ export default function ActivityDetail() {
                     {myRequest.status.toUpperCase()}
                   </div>
                   {myRequest.status === 'pending' && (
-                    <Button 
-                      variant="secondary" 
-                      fullWidth 
+                    <Button
+                      variant="secondary"
+                      fullWidth
                       className="mt-4"
                       onClick={handleCancelRequest}
                     >
@@ -322,9 +322,9 @@ export default function ActivityDetail() {
                   {myRequest.status === 'approved' && (
                     <>
                       <p className="success-message mt-4">You're in! Check the exact location on the map.</p>
-                      <Button 
-                        variant="secondary" 
-                        fullWidth 
+                      <Button
+                        variant="secondary"
+                        fullWidth
                         className="mt-4"
                         onClick={handleLeaveActivity}
                       >
@@ -350,9 +350,9 @@ export default function ActivityDetail() {
                       />
                     </>
                   )}
-                  <Button 
-                    type="submit" 
-                    fullWidth 
+                  <Button
+                    type="submit"
+                    fullWidth
                     disabled={isFull}
                   >
                     {isFull ? 'Activity Full' : (activity.require_approval ? 'Send Request' : 'Join Activity')}
