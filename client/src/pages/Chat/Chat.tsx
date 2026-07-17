@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, KeyboardEvent } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { chatApi } from '../../api/chat';
 import { useToast } from '../../components/Toast/ToastContext';
 import { ApiRequestError } from '../../api/client';
@@ -95,7 +96,7 @@ export default function Chat() {
               </div>
               <div className="chat-content">
                 <div className="chat-bubble">
-                  {msg.content}
+                  <ReactMarkdown>{msg.content}</ReactMarkdown>
                 </div>
                 {msg.activities && msg.activities.length > 0 && (
                   <div className="chat-activities">
