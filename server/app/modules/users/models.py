@@ -2,6 +2,7 @@ import enum
 import uuid
 
 from sqlalchemy import Boolean, Enum, String, Text, ForeignKey
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.models import Base, PrimaryKeyMixin, TimestampMixin
@@ -40,6 +41,8 @@ class User(PrimaryKeyMixin, TimestampMixin, Base):
     is_verified: Mapped[bool] = mapped_column(
         Boolean, default=False, server_default="false", nullable=False
     )
+
+    interests: Mapped[list | None] = mapped_column(JSONB, nullable=True)
 
     # Relationships
     following = relationship(

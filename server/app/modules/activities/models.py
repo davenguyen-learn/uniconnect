@@ -7,6 +7,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from pgvector.sqlalchemy import Vector
 
 from app.core.models import Base, PrimaryKeyMixin, SoftDeleteMixin, TimestampMixin
+import app.modules.trophies.models  # noqa: F401
+import app.modules.forms.models  # noqa: F401
+
 
 
 class ActivityPrivacy(str, enum.Enum):
@@ -27,6 +30,7 @@ class Activity(PrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
     )
     title: Mapped[str] = mapped_column(String(150), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    private_description: Mapped[str | None] = mapped_column(Text, nullable=True)
     category: Mapped[str | None] = mapped_column(String(50), nullable=True, index=True)
 
     # PostGIS geography column — uses SRID 4326 (WGS 84)

@@ -132,6 +132,7 @@ async def find_within_radius(
     category: str | None = None,
     search: str | None = None,
     free_to_join: bool | None = None,
+    days_ahead: int | None = None,
     limit: int = 20,
     offset: int = 0,
     followed_user_ids: list[uuid.UUID] | None = None,
@@ -141,6 +142,7 @@ async def find_within_radius(
     Returns a list of (Activity, distance_meters) tuples and total count.
     """
     from app.modules.groups.models import GroupMember
+    from datetime import timedelta
 
     now = datetime.now(timezone.utc)
     point = ST_SetSRID(ST_MakePoint(lng, lat), 4326)
@@ -167,6 +169,9 @@ async def find_within_radius(
         base_filter = and_(base_filter, or_(Activity.title.ilike(f"%{search}%"), Activity.description.ilike(f"%{search}%")))
     if free_to_join is True:
         base_filter = and_(base_filter, Activity.require_approval == False)
+    if days_ahead is not None:
+        deadline = now + timedelta(days=days_ahead)
+        base_filter = and_(base_filter, Activity.start_time >= now, Activity.start_time <= deadline)
 
     # Count
     count_q = select(func.count()).select_from(Activity).where(base_filter)

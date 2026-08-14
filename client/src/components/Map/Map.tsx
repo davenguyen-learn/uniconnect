@@ -18,41 +18,69 @@ L.Icon.Default.mergeOptions({
   shadowUrl,
 });
 
-// Custom icons based on urgency
-const getIconUrl = (color: string) => `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${color}.png`;
+// Custom DivIcon markers based on urgency
+type UrgencyLevel = 'urgent' | 'soon' | 'normal' | 'ongoing';
 
-const createIcon = (color: string) => new L.Icon({
-  iconUrl: getIconUrl(color),
-  shadowUrl: shadowUrl,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  tooltipAnchor: [1, -34],
-  shadowSize: [41, 41],
-});
-
-const icons = {
-  blue: createIcon('blue'),
-  red: createIcon('red'),
-  orange: createIcon('orange'),
-  green: createIcon('green'),
-};
-
-const getActivityIcon = (startTime: string) => {
+const getUrgencyLevel = (startTime: string): UrgencyLevel => {
   const start = new Date(startTime).getTime();
   const now = new Date().getTime();
   const hoursUntilStart = (start - now) / (1000 * 60 * 60);
 
-  if (hoursUntilStart < 0) return icons.green; // Ongoing
-  if (hoursUntilStart < 24) return icons.red; // Urgent (starts within 24h)
-  if (hoursUntilStart < 72) return icons.orange; // Soon (starts within 3 days)
-  return icons.blue; // Normal
+  if (hoursUntilStart < 0) return 'ongoing';
+  if (hoursUntilStart < 24) return 'urgent';
+  if (hoursUntilStart < 72) return 'soon';
+  return 'normal';
+};
+
+const urgencyColors: Record<UrgencyLevel, string> = {
+  urgent: '#ef4444',
+  soon: '#f97316',
+  normal: '#6366f1',
+  ongoing: '#22c55e',
+};
+
+const getTimeLabel = (startTime: string): string => {
+  const start = new Date(startTime).getTime();
+  const now = new Date().getTime();
+  const diffMs = start - now;
+
+  if (diffMs < 0) return 'Bây giờ';
+  const hours = Math.floor(diffMs / (1000 * 60 * 60));
+  if (hours < 1) {
+    const mins = Math.floor(diffMs / (1000 * 60));
+    return `${mins} phút`;
+  }
+  if (hours < 24) return `${hours} giờ`;
+  const days = Math.floor(hours / 24);
+  return `${days} ngày`;
+};
+
+const createDivIcon = (urgency: UrgencyLevel) => {
+  const color = urgencyColors[urgency];
+  const pulseClass = urgency === 'urgent' ? 'marker-pulse' : '';
+
+  return L.divIcon({
+    className: `custom-marker-wrapper`,
+    html: `
+      <div class="custom-marker marker-${urgency} ${pulseClass}">
+        <div class="marker-pin" style="background: ${color}; border-color: ${color};">
+          <div class="marker-dot"></div>
+        </div>
+        <div class="marker-shadow-dot"></div>
+      </div>
+    `,
+    iconSize: [30, 42],
+    iconAnchor: [15, 42],
+    popupAnchor: [0, -42],
+    tooltipAnchor: [0, -42],
+  });
 };
 
 interface MapProps {
   activities: ActivityResponse[];
   userLocation: [number, number] | null;
   onBoundsChange?: (bounds: L.LatLngBounds) => void;
+  userInterests?: string[];
 }
 
 // Component to handle map movement/bounds changes
@@ -94,23 +122,14 @@ function RecenterButton({ userLocation }: { userLocation: [number, number] | nul
   if (!userLocation) return null;
 
   return (
-    <div style={{ position: 'absolute', bottom: '20px', right: '20px', zIndex: 1000 }}>
+    <div className="recenter-btn-wrapper">
       <Button 
         onClick={(e) => {
           e.stopPropagation();
           map.flyTo(userLocation, 13);
         }}
-        style={{
-          borderRadius: '50%',
-          width: '40px',
-          height: '40px',
-          padding: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-        }}
-        title="Recenter to my location"
+        className="recenter-btn"
+        title="Quay lại vị trí của tôi"
       >
         📍
       </Button>
@@ -118,22 +137,33 @@ function RecenterButton({ userLocation }: { userLocation: [number, number] | nul
   );
 }
 
-// User location marker icon (red dot)
-const userIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
+// User location marker icon (pulsing blue dot)
+const userLocationIcon = L.divIcon({
+  className: 'custom-marker-wrapper',
+  html: `
+    <div class="user-location-marker">
+      <div class="user-location-pulse"></div>
+      <div class="user-location-dot"></div>
+    </div>
+  `,
+  iconSize: [20, 20],
+  iconAnchor: [10, 10],
+  popupAnchor: [0, -10],
 });
 
-export default function Map({ activities, userLocation, onBoundsChange }: MapProps) {
+export default function Map({ activities, userLocation, onBoundsChange, userInterests }: MapProps) {
   // Default to a central location (e.g., somewhere in US or Europe) if no location
   const center: [number, number] = userLocation || [40.7128, -74.0060]; // Default NYC
 
+  const isMatchingInterest = (category: string | null): boolean => {
+    if (!userInterests || userInterests.length === 0 || !category) return false;
+    return userInterests.some(interest => 
+      interest.toLowerCase() === category.toLowerCase()
+    );
+  };
+
   return (
-    <div className="map-wrapper" style={{ position: 'relative' }}>
+    <div className="map-wrapper">
       <MapContainer
         center={center}
         zoom={13}
@@ -151,78 +181,72 @@ export default function Map({ activities, userLocation, onBoundsChange }: MapPro
 
         {/* User Location Marker */}
         {userLocation && (
-          <Marker position={userLocation} icon={userIcon} zIndexOffset={1000}>
-            <Popup>You are here</Popup>
+          <Marker position={userLocation} icon={userLocationIcon} zIndexOffset={1000}>
+            <Popup>Bạn ở đây</Popup>
           </Marker>
         )}
 
-        {activities.map((activity) => (
-          <Marker 
-            key={activity.id} 
-            position={[activity.latitude, activity.longitude]}
-            icon={getActivityIcon(activity.start_time)}
-          >
-            <Tooltip direction="top" opacity={0.9} permanent className="activity-tooltip">
-              {activity.title.length > 20 ? activity.title.substring(0, 20) + '...' : activity.title}
-            </Tooltip>
-            <Popup className="custom-popup">
-              <div className="activity-popup">
-                <div className="popup-header">
-                  <span className="popup-category">{activity.category || 'General'}</span>
-                  {activity.distance_meters !== undefined && (
-                    <span className="popup-distance">
-                      {(activity.distance_meters / 1000).toFixed(1)} km
-                    </span>
-                  )}
-                </div>
-                
-                <h3 className="popup-title">{activity.title}</h3>
-                <p className="popup-time">
-                  {new Date(activity.start_time).toLocaleString([], {
-                    month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-                  })}
-                </p>
-                
-                <div className="popup-host">
-                  Host: @{activity.host?.username}
-                </div>
-                
-                <div className="popup-participants">
-                  {activity.current_participants} / {activity.max_participants} joined
-                </div>
+        {activities.map((activity) => {
+          const urgency = getUrgencyLevel(activity.start_time);
+          const matchesInterest = isMatchingInterest(activity.category);
+          const timeLabel = getTimeLabel(activity.start_time);
 
-                <div className="popup-actions">
-                  <Link to={`/activities/${activity.id}`}>
-                    <Button size="sm" fullWidth>View Details</Button>
-                  </Link>
+          return (
+            <Marker 
+              key={activity.id} 
+              position={[activity.latitude, activity.longitude]}
+              icon={createDivIcon(urgency)}
+              zIndexOffset={matchesInterest ? 500 : 0}
+            >
+              <Tooltip 
+                direction="top" 
+                opacity={0.95} 
+                permanent 
+                className={`activity-tooltip ${matchesInterest ? 'tooltip-match' : ''}`}
+              >
+                <span className="tooltip-time-badge">{timeLabel}</span>
+                {matchesInterest && <span className="tooltip-star">⭐</span>}
+                {' '}
+                {activity.title.length > 18 ? activity.title.substring(0, 18) + '...' : activity.title}
+              </Tooltip>
+              <Popup className="custom-popup">
+                <div className="activity-popup">
+                  <div className="popup-header">
+                    <span className="popup-category">{activity.category || 'Chung'}</span>
+                    {activity.distance_meters !== undefined && (
+                      <span className="popup-distance">
+                        {(activity.distance_meters / 1000).toFixed(1)} km
+                      </span>
+                    )}
+                  </div>
+                  
+                  <h3 className="popup-title">{activity.title}</h3>
+                  <p className="popup-time">
+                    {new Date(activity.start_time).toLocaleString([], {
+                      month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                    })}
+                  </p>
+                  
+                  <div className="popup-host">
+                    Người tổ chức: @{activity.host?.username}
+                  </div>
+                  
+                  <div className="popup-participants">
+                    {activity.current_participants} / {activity.max_participants} người tham gia
+                  </div>
+
+                  <div className="popup-actions">
+                    <Link to={`/activities/${activity.id}`}>
+                      <Button size="sm" fullWidth>Xem chi tiết</Button>
+                    </Link>
+                  </div>
                 </div>
-              </div>
-            </Popup>
-          </Marker>
-        ))}
+              </Popup>
+            </Marker>
+          );
+        })}
         <RecenterButton userLocation={userLocation} />
       </MapContainer>
-      
-      {/* Legend */}
-      <div style={{ position: 'absolute', bottom: '20px', left: '20px', zIndex: 1000, background: 'rgba(255,255,255,0.9)', padding: '10px', borderRadius: '8px', boxShadow: '0 2px 6px rgba(0,0,0,0.3)', fontSize: '0.85rem' }}>
-        <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#333' }}>Legend</h4>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-          <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png" alt="Red" style={{ width: '12px' }} />
-          <span style={{ color: '#333' }}>Starts &lt; 24h (Urgent)</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-          <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png" alt="Orange" style={{ width: '12px' }} />
-          <span style={{ color: '#333' }}>Starts &lt; 3 days</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-          <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png" alt="Blue" style={{ width: '12px' }} />
-          <span style={{ color: '#333' }}>Normal</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png" alt="Green" style={{ width: '12px' }} />
-          <span style={{ color: '#333' }}>Ongoing</span>
-        </div>
-      </div>
     </div>
   );
 }

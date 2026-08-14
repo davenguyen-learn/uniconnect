@@ -33,19 +33,19 @@ export const ReportModal: React.FC<ReportModalProps> = ({
         reason,
         description
       });
-      toast.success('Report submitted successfully. Thank you for your feedback.');
+      toast.success('Đã gửi báo cáo thành công. Cảm ơn bạn đã phản hồi.');
       onClose();
     } catch (err: any) {
-      toast.error(err.response?.data?.detail || 'Failed to submit report');
+      toast.error(err.response?.data?.detail || 'Không thể gửi báo cáo');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const getTargetName = () => {
-    if (targetType === 'activity') return 'Activity';
-    if (targetType === 'document') return 'Document';
-    return 'User';
+    if (targetType === 'activity') return 'Hoạt động';
+    if (targetType === 'document') return 'Tài liệu';
+    return 'Người dùng';
   };
 
   return (
@@ -54,29 +54,29 @@ export const ReportModal: React.FC<ReportModalProps> = ({
         <button className="report-modal-close" onClick={onClose}>
           &times;
         </button>
-        <h2 className="report-modal-title">Report {getTargetName()}</h2>
+        <h2 className="report-modal-title">Báo cáo {getTargetName()}</h2>
         <form onSubmit={handleSubmit} className="report-form">
           <div className="form-group">
-            <label className="form-label">Reason</label>
+            <label className="form-label">Lý do</label>
             <select
               className="input-field"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               required
             >
-              <option value="spam">Spam</option>
-              <option value="inappropriate">Inappropriate Content</option>
-              <option value="harassment">Harassment</option>
-              <option value="other">Other</option>
+              <option value="spam">Spam (Thư rác)</option>
+              <option value="inappropriate">Nội dung không phù hợp</option>
+              <option value="harassment">Quấy rối</option>
+              <option value="other">Khác</option>
             </select>
           </div>
           <div className="form-group">
-            <label className="form-label">Additional Details</label>
+            <label className="form-label">Thông tin bổ sung</label>
             <textarea
               className="input-field textarea-field"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Please provide more details to help us understand the issue..."
+              placeholder="Vui lòng cung cấp thêm thông tin để giúp chúng tôi hiểu rõ hơn vấn đề..."
               rows={4}
             />
           </div>
@@ -87,14 +87,14 @@ export const ReportModal: React.FC<ReportModalProps> = ({
               onClick={onClose}
               disabled={isSubmitting}
             >
-              Cancel
+              Hủy
             </button>
             <button
               type="submit"
               className="btn btn-danger"
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Submitting...' : 'Submit Report'}
+              {isSubmitting ? 'Đang gửi...' : 'Gửi báo cáo'}
             </button>
           </div>
         </form>

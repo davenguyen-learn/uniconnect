@@ -90,7 +90,7 @@ export default function LocationPicker({ position, onChange }: LocationPickerPro
         )}
       </MapContainer>
       <div className="location-picker-hint">
-        Click on the map to place a pin
+        Nhấp vào bản đồ để thả ghim
       </div>
     </div>
   );

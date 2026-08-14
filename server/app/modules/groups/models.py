@@ -6,11 +6,19 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.models import Base, PrimaryKeyMixin, SoftDeleteMixin, TimestampMixin
+import app.modules.activities.models  # noqa: F401
+import app.modules.forms.models  # noqa: F401
+
 
 
 class GroupRole(str, enum.Enum):
     admin = "admin"
     member = "member"
+
+
+class GroupPrivacy(str, enum.Enum):
+    public = "public"
+    private = "private"
 
 
 class Group(PrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
@@ -23,6 +31,12 @@ class Group(PrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
     allow_member_activities: Mapped[bool] = mapped_column(default=True, server_default="true")
     allow_member_documents: Mapped[bool] = mapped_column(default=True, server_default="true")
     require_approval: Mapped[bool] = mapped_column(default=True, server_default="true", nullable=False)
+    
+    privacy: Mapped[GroupPrivacy] = mapped_column(
+        Enum(GroupPrivacy, name="group_privacy", create_constraint=True),
+        default=GroupPrivacy.public,
+        server_default=GroupPrivacy.public.value,
+    )
     
     owner_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True

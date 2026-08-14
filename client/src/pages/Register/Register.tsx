@@ -24,13 +24,13 @@ export default function Register() {
 
   function validate(): boolean {
     const errs: Record<string, string> = {};
-    if (!form.email) errs.email = 'Email is required';
-    if (!form.username) errs.username = 'Username is required';
-    else if (form.username.length < 3) errs.username = 'At least 3 characters';
+    if (!form.email) errs.email = 'Vui lòng nhập Email';
+    if (!form.username) errs.username = 'Vui lòng nhập tên người dùng';
+    else if (form.username.length < 3) errs.username = 'Ít nhất 3 ký tự';
     else if (!/^[a-zA-Z0-9_]+$/.test(form.username))
-      errs.username = 'Only letters, numbers, and underscores';
-    if (!form.password) errs.password = 'Password is required';
-    else if (form.password.length < 8) errs.password = 'At least 8 characters';
+      errs.username = 'Chỉ bao gồm chữ cái, số, và dấu gạch dưới';
+    if (!form.password) errs.password = 'Vui lòng nhập mật khẩu';
+    else if (form.password.length < 8) errs.password = 'Ít nhất 8 ký tự';
     setErrors(errs);
     return Object.keys(errs).length === 0;
   }
@@ -49,7 +49,7 @@ export default function Register() {
       if (err instanceof ApiRequestError) {
         setServerError(err.message);
       } else {
-        setServerError('Something went wrong. Please try again.');
+        setServerError('Đã xảy ra lỗi. Vui lòng thử lại.');
       }
     } finally {
       setLoading(false);
@@ -69,8 +69,8 @@ export default function Register() {
             <span className="auth-logo-icon">U</span>
             UniConnect
           </Link>
-          <h1 className="auth-title">Create your account</h1>
-          <p className="auth-subtitle">Join your campus community</p>
+          <h1 className="auth-title">Tạo tài khoản</h1>
+          <p className="auth-subtitle">Tham gia cộng đồng trường học của bạn</p>
         </div>
 
         {serverError && <div className="auth-error">{serverError}</div>}
@@ -86,39 +86,39 @@ export default function Register() {
             autoFocus
           />
           <Input
-            label="Username"
+            label="Tên người dùng (Username)"
             placeholder="johndoe"
             value={form.username}
             onChange={(e) => update('username', e.target.value)}
             error={errors.username}
           />
           <Input
-            label="Password"
+            label="Mật khẩu"
             type="password"
-            placeholder="At least 8 characters"
+            placeholder="Ít nhất 8 ký tự"
             value={form.password}
             onChange={(e) => update('password', e.target.value)}
             error={errors.password}
           />
           <Input
-            label="Full Name"
-            placeholder="John Doe (optional)"
+            label="Họ và tên"
+            placeholder="John Doe (không bắt buộc)"
             value={form.full_name}
             onChange={(e) => update('full_name', e.target.value)}
           />
           <Input
-            label="University"
-            placeholder="Your university (optional)"
+            label="Trường đại học"
+            placeholder="Trường đại học của bạn (không bắt buộc)"
             value={form.university}
             onChange={(e) => update('university', e.target.value)}
           />
           <Button type="submit" fullWidth loading={loading} size="lg">
-            Create Account
+            Tạo tài khoản
           </Button>
         </form>
 
         <div className="auth-footer">
-          Already have an account? <Link to="/login">Log in</Link>
+          Đã có tài khoản? <Link to="/login">Đăng nhập</Link>
         </div>
       </div>
     </div>

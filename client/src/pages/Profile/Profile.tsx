@@ -46,7 +46,7 @@ export default function Profile() {
         setFollowStatus(status);
       }
     } catch {
-      toast.error('Failed to load profile');
+      toast.error('Không thể tải hồ sơ');
     } finally {
       setLoading(false);
     }
@@ -60,12 +60,12 @@ export default function Profile() {
       setProfile(updated);
       setEditing(false);
       await refreshUser();
-      toast.success('Profile updated');
+      toast.success('Đã cập nhật hồ sơ');
     } catch (err) {
       if (err instanceof ApiRequestError) {
-        toast.error('Update failed', err.message);
+        toast.error('Cập nhật thất bại', err.message);
       } else {
-        toast.error('Something went wrong');
+        toast.error('Đã xảy ra lỗi');
       }
     } finally {
       setSaving(false);
@@ -83,7 +83,7 @@ export default function Profile() {
           is_following: false, 
           followers_count: Math.max(0, prev.followers_count - 1) 
         } : null);
-        toast.success('Unfollowed');
+        toast.success('Đã bỏ theo dõi');
       } else {
         await usersApi.followUser(id);
         setFollowStatus(prev => prev ? { 
@@ -91,10 +91,10 @@ export default function Profile() {
           is_following: true, 
           followers_count: prev.followers_count + 1 
         } : null);
-        toast.success('Followed');
+        toast.success('Đã theo dõi');
       }
     } catch {
-      toast.error('Failed to update follow status');
+      toast.error('Không thể cập nhật trạng thái theo dõi');
     } finally {
       setFollowLoading(false);
     }
@@ -104,9 +104,9 @@ export default function Profile() {
     return (
       <div className="container profile-container">
         <div className="profile-card glass">
-          <div className="skeleton" style={{ width: '80px', height: '80px', borderRadius: '50%' }} />
-          <div className="skeleton" style={{ width: '200px', height: '24px', marginTop: '16px' }} />
-          <div className="skeleton" style={{ width: '150px', height: '16px', marginTop: '8px' }} />
+          <div className="skeleton profile-skeleton-avatar" />
+          <div className="skeleton profile-skeleton-name" />
+          <div className="skeleton profile-skeleton-email" />
         </div>
       </div>
     );
@@ -131,77 +131,76 @@ export default function Profile() {
 
             {profile.university && (
               <div className="profile-detail">
-                <span className="profile-detail-label">University</span>
+                <span className="profile-detail-label">Trường đại học</span>
                 <span>{profile.university}</span>
               </div>
             )}
 
             {profile.bio && (
-              <div className="profile-detail">
-                <span className="profile-detail-label">Bio</span>
-                <span>{profile.bio}</span>
+              <div className="profile-detail" style={{ marginTop: 'var(--space-2)' }}>
+                <span className="text-pre-wrap">{profile.bio}</span>
               </div>
             )}
 
             {!isOwnProfile && followStatus && (
-              <div className="profile-detail" style={{ display: 'flex', gap: '16px' }}>
+              <div className="profile-detail profile-follow-stats">
                 <div>
-                  <strong>{followStatus.followers_count}</strong> Followers
+                  <strong>{followStatus.followers_count}</strong> Người theo dõi
                 </div>
                 <div>
-                  <strong>{followStatus.following_count}</strong> Following
+                  <strong>{followStatus.following_count}</strong> Đang theo dõi
                 </div>
               </div>
             )}
 
             <div className="profile-detail">
-              <span className="profile-detail-label">Member since</span>
-              <span>{new Date(profile.created_at).toLocaleDateString('en-US', {
+              <span className="profile-detail-label">Thành viên từ</span>
+              <span>{new Date(profile.created_at).toLocaleDateString('vi-VN', {
                 month: 'long', year: 'numeric'
               })}</span>
             </div>
 
             {isOwnProfile ? (
-              <Button variant="secondary" onClick={() => setEditing(true)} style={{ marginTop: 'var(--space-6)' }}>
-                Edit Profile
+              <Button variant="secondary" onClick={() => setEditing(true)} className="profile-action-btn">
+                Chỉnh sửa hồ sơ
               </Button>
             ) : (
               <Button 
                 variant={followStatus?.is_following ? "secondary" : "primary"} 
                 onClick={handleFollowToggle} 
                 loading={followLoading}
-                style={{ marginTop: 'var(--space-6)' }}
+                className="profile-action-btn"
               >
-                {followStatus?.is_following ? 'Unfollow' : 'Follow'}
+                {followStatus?.is_following ? 'Bỏ theo dõi' : 'Theo dõi'}
               </Button>
             )}
           </div>
         ) : (
           <form className="profile-form animate-fade-in" onSubmit={handleSave}>
             <Input
-              label="Full Name"
+              label="Họ và tên"
               value={form.full_name || ''}
               onChange={(e) => setForm({ ...form, full_name: e.target.value })}
-              placeholder="Your full name"
+              placeholder="Họ và tên của bạn"
             />
             <Input
-              label="University"
+              label="Trường đại học"
               value={form.university || ''}
               onChange={(e) => setForm({ ...form, university: e.target.value })}
-              placeholder="Your university"
+              placeholder="Trường đại học của bạn"
             />
             <Textarea
-              label="Bio"
+              label="Tiểu sử"
               value={form.bio || ''}
               onChange={(e) => setForm({ ...form, bio: e.target.value })}
-              placeholder="Tell us about yourself"
+              placeholder="Giới thiệu về bản thân bạn"
             />
             <div className="profile-form-actions">
               <Button variant="ghost" type="button" onClick={() => setEditing(false)}>
-                Cancel
+                Hủy
               </Button>
               <Button type="submit" loading={saving}>
-                Save Changes
+                Lưu thay đổi
               </Button>
             </div>
           </form>

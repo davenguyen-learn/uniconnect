@@ -2,7 +2,7 @@ from datetime import datetime
 import uuid
 from pydantic import BaseModel, Field
 
-from app.modules.groups.models import GroupRole
+from app.modules.groups.models import GroupRole, GroupPrivacy
 from app.modules.forms.schemas import CustomFormCreate, CustomFormResponse
 
 
@@ -27,6 +27,7 @@ class GroupBase(BaseModel):
     allow_member_activities: bool = True
     allow_member_documents: bool = True
     require_approval: bool = True
+    privacy: str = "public"
 
 
 class GroupCreate(GroupBase):
@@ -36,8 +37,12 @@ class GroupCreate(GroupBase):
 class GroupUpdate(BaseModel):
     name: str | None = Field(None, max_length=100)
     description: str | None = None
+    public_description: str | None = None
+    private_description: str | None = None
     allow_member_activities: bool | None = None
     allow_member_documents: bool | None = None
+    require_approval: bool | None = None
+    privacy: str | None = None
 
 
 class GroupResponse(GroupBase):

@@ -7,6 +7,7 @@ export interface UserProfile {
   full_name: string | null;
   bio: string | null;
   university: string | null;
+  interests?: string[];
   role: string;
   created_at: string;
 }
@@ -15,6 +16,7 @@ export interface UserUpdate {
   full_name?: string;
   bio?: string;
   university?: string;
+  interests?: string[];
 }
 
 export interface FollowStatus {

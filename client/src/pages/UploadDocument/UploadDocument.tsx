@@ -47,10 +47,10 @@ export default function UploadDocument() {
       formData.append('file', file);
       
       const doc = await documentsApi.uploadDocument(formData);
-      toast.success('Document uploaded successfully');
+      toast.success('Tải tài liệu lên thành công');
       navigate(`/documents/${doc.id}`);
     } catch (err: any) {
-      toast.error(err?.details || err?.message || 'Failed to upload document');
+      toast.error(err?.details || err?.message || 'Không thể tải tài liệu lên');
     } finally {
       setUploading(false);
     }
@@ -59,51 +59,51 @@ export default function UploadDocument() {
   return (
     <div className="upload-container">
       <div className="glass upload-card">
-        <h1 className="gradient-text">Upload Document</h1>
-        <p className="subtitle">Share files with the community</p>
+        <h1 className="brutalist-highlight">Tải tài liệu lên</h1>
+        <p className="subtitle">Chia sẻ tệp với cộng đồng</p>
 
         <form onSubmit={handleSubmit} className="upload-form">
           <div className="form-group">
-            <label htmlFor="title">Title *</label>
+            <label htmlFor="title">Tiêu đề *</label>
             <input
               id="title"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="E.g., CS101 Midterm Notes"
+              placeholder="Ví dụ: Ghi chú thi giữa kỳ CS101"
               required
               maxLength={200}
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="description">Description (Optional)</label>
+            <label htmlFor="description">Mô tả (Không bắt buộc)</label>
             <textarea
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Add some context about this document..."
+              placeholder="Thêm một số ngữ cảnh về tài liệu này..."
               rows={3}
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="groupId">Visibility / Group</label>
+            <label htmlFor="groupId">Quyền riêng tư / Nhóm</label>
             <select
               id="groupId"
               value={groupId}
               onChange={(e) => setGroupId(e.target.value)}
               className="form-select"
             >
-              <option value="">Public (Anyone can view)</option>
+              <option value="">Công khai (Bất kỳ ai cũng có thể xem)</option>
               {myGroups.map(g => (
-                <option key={g.id} value={g.id}>Group: {g.name}</option>
+                <option key={g.id} value={g.id}>Nhóm: {g.name}</option>
               ))}
             </select>
           </div>
 
           <div className="form-group">
-            <label htmlFor="file">File *</label>
+            <label htmlFor="file">Tệp *</label>
             <input
               id="file"
               type="file"
@@ -115,7 +115,7 @@ export default function UploadDocument() {
               required
               accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.ppt,.pptx,.xls,.xlsx"
             />
-            <small className="help-text">Max size: 10MB. Allowed: PDF, Word, Excel, PPT, Images.</small>
+            <small className="help-text">Kích thước tối đa: 10MB. Cho phép: PDF, Word, Excel, PPT, Hình ảnh.</small>
           </div>
 
           <div className="form-actions">
@@ -125,14 +125,14 @@ export default function UploadDocument() {
               onClick={() => navigate(-1)}
               disabled={uploading}
             >
-              Cancel
+              Hủy
             </button>
             <button 
               type="submit" 
               className="btn btn-primary"
               disabled={uploading || !title.trim() || !file}
             >
-              {uploading ? 'Uploading...' : 'Upload'}
+              {uploading ? 'Đang tải lên...' : 'Tải lên'}
             </button>
           </div>
         </form>

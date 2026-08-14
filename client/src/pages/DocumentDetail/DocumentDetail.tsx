@@ -50,7 +50,7 @@ export default function DocumentDetail() {
       setCommentHasMore(commentsData.has_more);
       setCommentOffset(0);
     } catch (err: any) {
-      toast.error('Failed to load document');
+      toast.error('Không thể tải tài liệu');
       navigate('/documents');
     } finally {
       setLoading(false);
@@ -71,7 +71,7 @@ export default function DocumentDetail() {
       setCommentHasMore(data.has_more);
       setCommentOffset(newOffset);
     } catch {
-      toast.error('Failed to load older comments');
+      toast.error('Không thể tải các bình luận cũ hơn');
     }
   };
 
@@ -95,20 +95,20 @@ export default function DocumentDetail() {
       const { url } = await documentsApi.getDownloadUrl(id);
       window.open(url, '_blank');
     } catch {
-      toast.error('Failed to get download link');
+      toast.error('Không thể lấy link tải xuống');
     } finally {
       setDownloading(false);
     }
   };
 
   const handleDelete = async () => {
-    if (!id || !window.confirm('Are you sure you want to delete this document?')) return;
+    if (!id || !window.confirm('Bạn có chắc chắn muốn xóa tài liệu này không?')) return;
     try {
       await documentsApi.deleteDocument(id);
-      toast.success('Document deleted');
+      toast.success('Đã xóa tài liệu');
       navigate('/documents');
     } catch {
-      toast.error('Failed to delete document');
+      toast.error('Không thể xóa tài liệu');
     }
   };
 
@@ -120,7 +120,7 @@ export default function DocumentDetail() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  if (loading) return <div className="loading-state">Loading document...</div>;
+  if (loading) return <div className="loading-state">Đang tải tài liệu...</div>;
   if (!document) return null;
 
   const isAuthor = user?.id === document.author_id;
@@ -130,15 +130,15 @@ export default function DocumentDetail() {
       <div className="glass document-detail-card">
         <div className="document-header">
           <div className="document-title-row">
-            <h1 className="gradient-text">{document.title}</h1>
+            <h1 className="brutalist-highlight">{document.title}</h1>
             {isAuthor && (
-              <button onClick={handleDelete} className="btn btn-danger btn-sm">Delete</button>
+              <button onClick={handleDelete} className="btn btn-danger btn-sm">Xóa</button>
             )}
           </div>
           
           <div className="document-meta">
-            <span className="doc-author">By <Link to={`/profile/${document.author_id}`} style={{color: 'inherit', textDecoration: 'underline'}}>@{document.author?.username}</Link></span>
-            <span className="doc-date">{new Date(document.created_at).toLocaleDateString()}</span>
+            <span className="doc-author">Bởi <Link to={`/profile/${document.author_id}`} style={{color: 'inherit', textDecoration: 'underline'}}>@{document.author?.username}</Link></span>
+            <span className="doc-date">{new Date(document.created_at).toLocaleDateString('vi-VN')}</span>
             <span className="doc-size">{formatFileSize(document.file_size)}</span>
             <span className="doc-type">{document.file_name.split('.').pop()?.toUpperCase()}</span>
           </div>
@@ -162,7 +162,7 @@ export default function DocumentDetail() {
               className="btn btn-secondary" 
               onClick={() => setIsReportModalOpen(true)}
             >
-              Report
+              Báo cáo
             </button>
           )}
           <button 
@@ -170,7 +170,7 @@ export default function DocumentDetail() {
             onClick={handleDownload}
             disabled={downloading}
           >
-            {downloading ? 'Preparing...' : 'Download Document'}
+            {downloading ? 'Đang chuẩn bị...' : 'Tải tài liệu xuống'}
           </button>
         </div>
       </div>

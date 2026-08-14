@@ -28,6 +28,7 @@ export interface ActivityResponse {
   host_id: string;
   title: string;
   description: string | null;
+  private_description?: string | null;
   category: string | null;
   latitude: number;
   longitude: number;
@@ -51,6 +52,7 @@ export interface ActivityResponse {
 export interface ActivityCreate {
   title: string;
   description?: string;
+  private_description?: string;
   category?: string;
   latitude: number;
   longitude: number;
@@ -66,6 +68,7 @@ export interface ActivityCreate {
 export interface ActivityUpdate {
   title?: string;
   description?: string;
+  private_description?: string;
   category?: string;
   latitude?: number;
   longitude?: number;
@@ -84,6 +87,7 @@ export interface NearbyQuery {
   category?: string;
   search?: string;
   free_to_join?: boolean;
+  days_ahead?: number;
   limit?: number;
   offset?: number;
 }
@@ -126,8 +130,9 @@ export const activitiesApi = {
     if (params.category) query.set('category', params.category);
     if (params.search) query.set('search', params.search);
     if (params.free_to_join) query.set('free_to_join', 'true');
+    if (params.days_ahead) query.set('days_ahead', String(params.days_ahead));
     if (params.limit) query.set('limit', String(params.limit));
-    if (params.offset) query.set('offset', String(params.offset));
+    if (params.offset !== undefined) query.set('offset', String(params.offset));
     return api.get<PaginatedActivities>(`/activities/nearby?${query}`);
   },
 

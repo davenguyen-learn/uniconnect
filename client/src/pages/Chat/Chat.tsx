@@ -6,7 +6,6 @@ import { chatApi } from '../../api/chat';
 import { useToast } from '../../components/Toast/ToastContext';
 import { ApiRequestError } from '../../api/client';
 import Button from '../../components/Button/Button';
-import Input from '../../components/Input/Input';
 import ActivityCard from '../../components/ActivityCard/ActivityCard';
 import { type ActivityResponse } from '../../api/activities';
 import './Chat.css';
@@ -23,7 +22,7 @@ export default function Chat() {
   const [messages, setMessages] = useState<MessageBlock[]>([
     {
       role: 'model',
-      content: 'Hello! I am your UniConnect AI assistant. I can help you find interesting activities around campus based on your preferences. Try asking me "What tech events are happening nearby?"'
+      content: 'Xin chào! Tôi là trợ lý AI UniConnect của bạn. Tôi có thể giúp bạn tìm các hoạt động thú vị xung quanh khuôn viên trường dựa trên sở thích của bạn. Hãy thử hỏi tôi "Có sự kiện công nghệ nào đang diễn ra gần đây không?"'
     }
   ]);
   const [inputValue, setInputValue] = useState('');
@@ -84,9 +83,9 @@ export default function Chat() {
       ]);
     } catch (err) {
       if (err instanceof ApiRequestError) {
-        toast.error('AI Error', err.message);
+        toast.error('Lỗi AI', err.message);
       } else {
-        toast.error('Failed to communicate with AI');
+        toast.error('Không thể giao tiếp với AI');
       }
       // Remove the user message if it failed completely
       setMessages(messages);
@@ -95,8 +94,9 @@ export default function Chat() {
     }
   };
 
-  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
       handleSend();
     }
   };
@@ -105,8 +105,8 @@ export default function Chat() {
     <div className="container chat-container">
       <div className="chat-card glass">
         <div className="chat-header">
-          <h2>AI Discovery Assistant</h2>
-          <p>Ask me anything about activities and events.</p>
+          <h2>Trợ lý khám phá AI</h2>
+          <p>Hỏi tôi bất cứ điều gì về các hoạt động và sự kiện.</p>
         </div>
         
         <div className="chat-messages">
@@ -146,15 +146,17 @@ export default function Chat() {
         </div>
         
         <div className="chat-input-area">
-          <Input 
+          <textarea
+            className="input-field chat-textarea"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Type a message..."
+            placeholder="Tìm kiếm hoạt động..."
             disabled={loading}
+            rows={2}
           />
-          <Button onClick={handleSend} disabled={!inputValue.trim() || loading}>
-            Send
+          <Button onClick={handleSend} disabled={!inputValue.trim() || loading} className="chat-send-btn">
+            Gửi
           </Button>
         </div>
       </div>

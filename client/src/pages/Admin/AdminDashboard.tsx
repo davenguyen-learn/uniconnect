@@ -43,7 +43,7 @@ export default function AdminDashboard() {
     return (
       <div className="admin-dashboard">
         <div className="admin-page-header">
-          <h1 className="admin-page-title">Dashboard</h1>
+          <h1 className="admin-page-title">Bảng điều khiển</h1>
           <p className="admin-page-desc">Tổng quan hệ thống</p>
         </div>
         <div className="admin-stats-grid">
@@ -59,18 +59,18 @@ export default function AdminDashboard() {
   }
 
   const statCards = [
-    { label: 'Tổng Users', value: stats?.total_users ?? 0, icon: '👥', color: '#6c5ce7' },
-    { label: 'Tổng Activities', value: stats?.total_activities ?? 0, icon: '🎯', color: '#00b894' },
-    { label: 'Tổng Documents', value: stats?.total_documents ?? 0, icon: '📄', color: '#0984e3' },
-    { label: 'Tổng Reports', value: stats?.total_reports ?? 0, icon: '🚩', color: '#e17055' },
-    { label: 'Reports Pending', value: stats?.pending_reports ?? 0, icon: '⏳', color: '#fdcb6e' },
-    { label: 'Users mới (tuần)', value: stats?.new_users_this_week ?? 0, icon: '✨', color: '#a29bfe' },
+    { label: 'Tổng số người dùng', value: stats?.total_users ?? 0, icon: '👥', color: '#6c5ce7' },
+    { label: 'Tổng số hoạt động', value: stats?.total_activities ?? 0, icon: '🎯', color: '#00b894' },
+    { label: 'Tổng số tài liệu', value: stats?.total_documents ?? 0, icon: '📄', color: '#0984e3' },
+    { label: 'Tổng số báo cáo', value: stats?.total_reports ?? 0, icon: '🚩', color: '#e17055' },
+    { label: 'Báo cáo chờ xử lý', value: stats?.pending_reports ?? 0, icon: '⏳', color: '#fdcb6e' },
+    { label: 'Người dùng mới (tuần)', value: stats?.new_users_this_week ?? 0, icon: '✨', color: '#a29bfe' },
   ];
 
   return (
     <div className="admin-dashboard">
       <div className="admin-page-header">
-        <h1 className="admin-page-title">Dashboard</h1>
+        <h1 className="admin-page-title">Bảng điều khiển</h1>
         <p className="admin-page-desc">Tổng quan hệ thống UniConnect</p>
       </div>
 
@@ -95,7 +95,7 @@ export default function AdminDashboard() {
       {/* Recent Reports */}
       <div className="admin-section">
         <div className="admin-section-header">
-          <h2 className="admin-section-title">🚩 Reports chờ xử lý</h2>
+          <h2 className="admin-section-title">🚩 Báo cáo chờ xử lý</h2>
           <Link to="/admin/reports" className="admin-section-link">
             Xem tất cả →
           </Link>
@@ -104,18 +104,18 @@ export default function AdminDashboard() {
         {recentReports.length === 0 ? (
           <div className="admin-empty-state">
             <span className="admin-empty-icon">✅</span>
-            <p>Không có report nào cần xử lý!</p>
+            <p>Không có báo cáo nào cần xử lý!</p>
           </div>
         ) : (
           <div className="admin-table-wrap">
             <table className="admin-table">
               <thead>
                 <tr>
-                  <th>Reporter</th>
+                  <th>Người báo cáo</th>
                   <th>Loại</th>
                   <th>Lý do</th>
                   <th>Thời gian</th>
-                  <th>Actions</th>
+                  <th>Thao tác</th>
                 </tr>
               </thead>
               <tbody>

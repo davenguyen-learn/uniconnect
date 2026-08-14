@@ -1,0 +1,38 @@
+.create-group-page {
+  padding-top: var(--space-8);
+  max-width: 650px;
+}
+
+.create-group-card {
+  padding: var(--space-8);
+}
+
+.create-group-title {
+  margin: 0 0 var(--space-6) 0;
+}
+
+.create-group-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.create-group-checkboxes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.create-group-actions {
+  display: flex;
+  gap: var(--space-4);
+  margin-top: var(--space-5);
+  justify-content: flex-end;
+}
+
+.form-builder-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}

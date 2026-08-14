@@ -83,8 +83,8 @@ export default function AdminReports() {
   return (
     <div className="admin-dashboard">
       <div className="admin-page-header">
-        <h1 className="admin-page-title">🚩 Quản lý Reports</h1>
-        <p className="admin-page-desc">Tổng cộng {total} reports</p>
+        <h1 className="admin-page-title">🚩 Quản lý báo cáo</h1>
+        <p className="admin-page-desc">Tổng cộng {total} báo cáo</p>
       </div>
 
       {/* Filters */}
@@ -94,10 +94,10 @@ export default function AdminReports() {
           value={statusFilter}
           onChange={e => setStatusFilter(e.target.value)}
         >
-          <option value="">Tất cả status</option>
-          <option value="pending">Pending</option>
-          <option value="resolved">Resolved</option>
-          <option value="dismissed">Dismissed</option>
+          <option value="">Tất cả trạng thái</option>
+          <option value="pending">Đang chờ xử lý</option>
+          <option value="resolved">Đã giải quyết</option>
+          <option value="dismissed">Đã bỏ qua</option>
         </select>
         <select
           className="admin-filter-select"
@@ -105,9 +105,9 @@ export default function AdminReports() {
           onChange={e => setTypeFilter(e.target.value)}
         >
           <option value="">Tất cả loại</option>
-          <option value="activity">Activity</option>
-          <option value="document">Document</option>
-          <option value="user">User</option>
+          <option value="activity">Hoạt động</option>
+          <option value="document">Tài liệu</option>
+          <option value="user">Người dùng</option>
         </select>
       </div>
 
@@ -116,13 +116,13 @@ export default function AdminReports() {
         <table className="admin-table">
           <thead>
             <tr>
-              <th>Reporter</th>
+              <th>Người báo cáo</th>
               <th>Loại</th>
               <th>Lý do</th>
               <th>Mô tả</th>
-              <th>Status</th>
+              <th>Trạng thái</th>
               <th>Thời gian</th>
-              <th>Actions</th>
+              <th>Thao tác</th>
             </tr>
           </thead>
           <tbody>
@@ -137,7 +137,7 @@ export default function AdminReports() {
             ) : reports.length === 0 ? (
               <tr>
                 <td colSpan={7} style={{ textAlign: 'center', padding: 'var(--space-8)', color: 'var(--color-text-tertiary)' }}>
-                  Không có report nào
+                  Không có báo cáo nào
                 </td>
               </tr>
             ) : (
@@ -172,13 +172,13 @@ export default function AdminReports() {
                           className="admin-btn admin-btn-success"
                           onClick={() => openActionModal(report.id, 'resolved')}
                         >
-                          ✓ Resolve
+                          ✓ Giải quyết
                         </button>
                         <button
                           className="admin-btn admin-btn-muted"
                           onClick={() => openActionModal(report.id, 'dismissed')}
                         >
-                          ✕ Dismiss
+                          ✕ Bỏ qua
                         </button>
                       </div>
                     ) : (
@@ -222,16 +222,16 @@ export default function AdminReports() {
         <div className="admin-modal-overlay" onClick={() => setModalOpen(false)}>
           <div className="admin-modal" onClick={e => e.stopPropagation()}>
             <h3 className="admin-modal-title">
-              {modalAction === 'resolved' ? '✓ Resolve Report' : '✕ Dismiss Report'}
+              {modalAction === 'resolved' ? '✓ Giải quyết báo cáo' : '✕ Bỏ qua báo cáo'}
             </h3>
             <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)', marginBottom: 'var(--space-4)' }}>
               {modalAction === 'resolved'
-                ? 'Report sẽ được đánh dấu là đã xử lý.'
-                : 'Report sẽ bị bỏ qua. Nội dung không vi phạm.'}
+                ? 'Báo cáo sẽ được đánh dấu là đã xử lý.'
+                : 'Báo cáo sẽ bị bỏ qua. Nội dung không vi phạm.'}
             </p>
             <textarea
               className="admin-modal-textarea"
-              placeholder="Ghi chú admin (tuỳ chọn)..."
+              placeholder="Ghi chú của quản trị viên (không bắt buộc)..."
               value={adminNote}
               onChange={e => setAdminNote(e.target.value)}
             />
@@ -240,7 +240,7 @@ export default function AdminReports() {
                 className="admin-modal-btn admin-modal-btn-cancel"
                 onClick={() => setModalOpen(false)}
               >
-                Huỷ
+                Hủy
               </button>
               <button
                 className="admin-modal-btn admin-modal-btn-confirm"

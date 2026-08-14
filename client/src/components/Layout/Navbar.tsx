@@ -56,7 +56,7 @@ export default function Navbar() {
             className={({ isActive }) => `navbar-link ${isActive ? 'active' : ''}`}
             onClick={() => setMenuOpen(false)}
           >
-            Discover
+            Khám phá
           </NavLink>
         </li>
         <li>
@@ -65,7 +65,7 @@ export default function Navbar() {
             className={({ isActive }) => `navbar-link ${isActive ? 'active' : ''}`}
             onClick={() => setMenuOpen(false)}
           >
-            AI Chat
+            Chat AI
           </NavLink>
         </li>
         <li>
@@ -74,7 +74,7 @@ export default function Navbar() {
             className={({ isActive }) => `navbar-link ${isActive ? 'active' : ''}`}
             onClick={() => setMenuOpen(false)}
           >
-            Groups
+            Nhóm
           </NavLink>
         </li>
         <li>
@@ -83,7 +83,7 @@ export default function Navbar() {
             className={({ isActive }) => `navbar-link ${isActive ? 'active' : ''}`}
             onClick={() => setMenuOpen(false)}
           >
-            My Activities
+            Hoạt động của tôi
           </NavLink>
         </li>
         <li>
@@ -92,7 +92,7 @@ export default function Navbar() {
             className={({ isActive }) => `navbar-link ${isActive ? 'active' : ''}`}
             onClick={() => setMenuOpen(false)}
           >
-            Documents
+            Tài liệu
           </NavLink>
         </li>
       </ul>
@@ -124,7 +124,7 @@ export default function Navbar() {
                 className="navbar-dropdown-item"
                 onClick={() => setDropdownOpen(false)}
               >
-                Profile
+                Hồ sơ
               </Link>
               {user?.role === 'admin' && (
                 <>
@@ -133,15 +133,14 @@ export default function Navbar() {
                     to="/admin"
                     className="navbar-dropdown-item"
                     onClick={() => setDropdownOpen(false)}
-                    style={{ color: 'var(--color-accent)' }}
                   >
-                    ⚡ Admin Panel
+                    Trang Quản trị
                   </Link>
                 </>
               )}
               <div className="navbar-dropdown-divider" />
-              <button className="navbar-dropdown-item danger" onClick={handleLogout}>
-                Log out
+              <button className="navbar-dropdown-item" onClick={handleLogout}>
+                Đăng xuất
               </button>
             </div>
           )}

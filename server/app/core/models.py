@@ -54,3 +54,17 @@ class PrimaryKeyMixin:
         default=uuid.uuid4,
         server_default=func.gen_random_uuid(),
     )
+
+
+# Automatically pre-load all model classes into Base registry
+import app.modules.users.models  # noqa: F401, E402
+import app.modules.trophies.models  # noqa: F401, E402
+import app.modules.forms.models  # noqa: F401, E402
+import app.modules.activities.models  # noqa: F401, E402
+import app.modules.groups.models  # noqa: F401, E402
+import app.modules.participation.models  # noqa: F401, E402
+import app.modules.interactions.models  # noqa: F401, E402
+import app.modules.documents.models  # noqa: F401, E402
+import app.modules.notifications.models  # noqa: F401, E402
+import app.modules.reports.models  # noqa: F401, E402
+

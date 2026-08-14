@@ -550,13 +550,46 @@
 }
 
 .admin-modal-btn-confirm {
-  background: var(--gradient-accent);
+  background: var(--solid-accent);
   color: white;
 }
 
 .admin-modal-btn-confirm:hover {
   opacity: 0.9;
   box-shadow: var(--shadow-glow);
+}
+
+.admin-modal-btn-danger {
+  background: var(--color-error);
+  color: white;
+}
+
+.admin-modal-btn-danger:hover {
+  opacity: 0.9;
+}
+
+.admin-table-empty {
+  text-align: center;
+  padding: var(--space-8);
+  color: var(--color-text-tertiary);
+}
+
+.admin-table-skeleton {
+  width: 80%;
+  height: 14px;
+}
+
+.admin-deleted-row {
+  opacity: 0.5;
+}
+
+.admin-modal-desc {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.admin-text-xs {
+  font-size: var(--font-size-xs);
 }
 
 /* ── Responsive ── */

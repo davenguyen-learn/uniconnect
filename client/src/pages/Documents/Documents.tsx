@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { documentsApi, type DocumentResponse } from '../../api/documents';
 import { useToast } from '../../components/Toast/ToastContext';
+import Button from '../../components/Button/Button';
+import CollectionLayout from '../../components/Layout/CollectionLayout';
 import './Documents.css';
 
 export default function Documents() {
@@ -21,15 +23,15 @@ export default function Documents() {
   const fetchDocuments = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await documentsApi.listDocuments({ 
-        limit: 50, 
+      const data = await documentsApi.listDocuments({
+        limit: 50,
         offset: 0,
         search: debouncedSearch || undefined,
         sort_by: sortBy
       });
       setDocuments(data.items);
-    } catch (err) {
-      toast.error('Failed to load documents');
+    } catch {
+      toast.error('Không thể tải tài liệu');
     } finally {
       setLoading(false);
     }
@@ -47,76 +49,54 @@ export default function Documents() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
+  const sortOptions = [
+    { label: 'Mới nhất', value: 'newest' },
+    { label: 'Nhiều tương tác nhất', value: 'most_interactions' },
+    { label: 'Cũ nhất', value: 'oldest' },
+  ];
+
   return (
-    <div className="documents-page">
-      <div className="documents-header">
-        <div>
-          <h1 className="gradient-text">Documents</h1>
-          <p className="subtitle">Discover shared files and resources</p>
-        </div>
-        <Link to="/documents/upload" className="btn btn-primary">
-          Upload Document
+    <CollectionLayout
+      title="Tài liệu"
+      action={
+        <Link to="/documents/upload">
+          <Button>Tải tài liệu lên</Button>
         </Link>
-      </div>
-
-      <div className="documents-controls glass">
-        <div className="search-box">
-          <span className="search-icon">🔍</span>
-          <input
-            type="text"
-            placeholder="Search documents by title or description..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="search-input"
-          />
-        </div>
-        <div className="sort-box">
-          <label htmlFor="sort-select">Sort by:</label>
-          <select 
-            id="sort-select" 
-            value={sortBy} 
-            onChange={(e) => setSortBy(e.target.value)}
-            className="sort-select"
-          >
-            <option value="newest">Newest first</option>
-            <option value="most_interactions">Most interactions</option>
-            <option value="oldest">Oldest first</option>
-          </select>
-        </div>
-      </div>
-
-      {loading ? (
-        <div className="loading-state">Loading documents...</div>
-      ) : documents.length === 0 ? (
-        <div className="empty-state glass">
-          <div className="empty-icon">📁</div>
-          <h3>No documents yet</h3>
-          <p>Be the first to share a document with the community.</p>
-          <Link to="/documents/upload" className="btn btn-primary">
-            Upload Document
-          </Link>
-        </div>
-      ) : (
-        <div className="documents-grid">
-          {documents.map((doc) => (
-            <Link to={`/documents/${doc.id}`} key={doc.id} className="document-card glass">
-              <div className="document-icon">
-                {doc.file_type.includes('pdf') ? '📄' :
-                 doc.file_type.includes('image') ? '🖼️' :
-                 doc.file_type.includes('word') ? '📝' : '📁'}
-              </div>
-              <div className="document-content">
-                <h3 className="document-title">{doc.title}</h3>
-                {doc.description && <p className="document-desc">{doc.description}</p>}
-                <div className="document-meta">
-                  <span className="doc-author">By {doc.author?.full_name || doc.author?.username}</span>
-                  <span className="doc-size">{formatFileSize(doc.file_size)}</span>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      )}
-    </div>
+      }
+      searchPlaceholder="Tìm kiếm tài liệu theo tiêu đề hoặc mô tả..."
+      searchValue={search}
+      onSearchChange={setSearch}
+      sortOptions={sortOptions}
+      sortValue={sortBy}
+      onSortChange={setSortBy}
+      loading={loading}
+      loadingMessage="Đang tải tài liệu..."
+      isEmpty={documents.length === 0}
+      emptyTitle="Chưa có tài liệu nào"
+      emptyMessage="Hãy là người đầu tiên chia sẻ tài liệu với cộng đồng."
+      emptyAction={
+        <Link to="/documents/upload">
+          <Button>Tải tài liệu lên</Button>
+        </Link>
+      }
+    >
+      {documents.map((doc) => (
+        <Link to={`/documents/${doc.id}`} key={doc.id} className="document-card glass">
+          <div className="document-icon">
+            {doc.file_type.includes('pdf') ? '📄' :
+              doc.file_type.includes('image') ? '🖼️' :
+                doc.file_type.includes('word') ? '📝' : '📁'}
+          </div>
+          <div className="document-content">
+            <h3 className="document-title">{doc.title}</h3>
+            {doc.description && <p className="document-desc">{doc.description}</p>}
+            <div className="document-meta">
+              <span className="doc-author">Bởi {doc.author?.full_name || doc.author?.username}</span>
+              <span className="doc-size">{formatFileSize(doc.file_size)}</span>
+            </div>
+          </div>
+        </Link>
+      ))}
+    </CollectionLayout>
   );
 }

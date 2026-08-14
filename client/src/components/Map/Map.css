@@ -103,8 +103,125 @@
   margin-top: var(--space-2);
 }
 
+/* ─── Custom DivIcon Markers ─── */
+.custom-marker-wrapper {
+  background: none !important;
+  border: none !important;
+}
+
+.custom-marker {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.marker-pin {
+  width: 24px;
+  height: 24px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s ease;
+}
+
+.custom-marker:hover .marker-pin {
+  transform: rotate(-45deg) scale(1.15);
+}
+
+.marker-dot {
+  width: 8px;
+  height: 8px;
+  background: white;
+  border-radius: 50%;
+  transform: rotate(45deg);
+}
+
+.marker-shadow-dot {
+  width: 10px;
+  height: 4px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 50%;
+  margin-top: 2px;
+}
+
+/* Pulse animation for urgent markers (< 24h) */
+.marker-pulse::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: -1px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.3);
+  animation: marker-pulse-anim 2s ease-out infinite;
+  z-index: -1;
+}
+
+@keyframes marker-pulse-anim {
+  0% {
+    transform: scale(0.8);
+    opacity: 1;
+  }
+  70% {
+    transform: scale(2);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+/* ─── User Location Marker ─── */
+.user-location-marker {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+}
+
+.user-location-dot {
+  width: 12px;
+  height: 12px;
+  background: #3b82f6;
+  border: 2px solid white;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(59, 130, 246, 0.5);
+  z-index: 2;
+}
+
+.user-location-pulse {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background: rgba(59, 130, 246, 0.25);
+  border-radius: 50%;
+  animation: user-pulse 2.5s ease-out infinite;
+  z-index: 1;
+}
+
+@keyframes user-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(3);
+    opacity: 0;
+  }
+}
+
+/* ─── Tooltip Styles ─── */
 .activity-tooltip {
-  font-weight: bold;
+  font-weight: 600;
   background: rgba(255, 255, 255, 0.95);
   color: #1a1a1a;
   border: 1px solid rgba(0, 0, 0, 0.1);
@@ -126,4 +243,124 @@
 .leaflet-tooltip-left.activity-tooltip::before,
 .leaflet-tooltip-right.activity-tooltip::before {
   border-top-color: rgba(255, 255, 255, 0.95) !important;
+}
+
+/* Tooltip time badge */
+.tooltip-time-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: rgba(0, 0, 0, 0.08);
+  color: #555;
+  padding: 1px 5px;
+  border-radius: 4px;
+  margin-right: 3px;
+  vertical-align: middle;
+}
+
+.tooltip-star {
+  font-size: 0.75rem;
+  vertical-align: middle;
+}
+
+/* Tooltip matching user interests — golden highlight */
+.leaflet-tooltip.tooltip-match {
+  background: linear-gradient(135deg, #fff8e1 0%, #ffe082 100%);
+  border: 1.5px solid #ffc107;
+  color: #5d4037;
+  box-shadow: 0 0 12px rgba(255, 193, 7, 0.4), 0 4px 12px rgba(0, 0, 0, 0.15);
+  font-weight: 700;
+}
+
+.leaflet-tooltip-top.tooltip-match::before {
+  border-top-color: #ffe082 !important;
+}
+
+/* ─── Map Legend ─── */
+.map-legend {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  padding: 12px 14px;
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+  font-size: 0.82rem;
+  color: #333;
+}
+
+.map-legend-title {
+  margin: 0 0 8px 0;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #222;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+
+.legend-item:last-child {
+  margin-bottom: 0;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legend-dot-match {
+  background: linear-gradient(135deg, #ffc107, #ff9800);
+  box-shadow: 0 0 6px rgba(255, 193, 7, 0.5);
+}
+
+.legend-dot--urgent {
+  background: var(--color-urgency-urgent);
+  box-shadow: 0 0 6px var(--color-urgency-urgent);
+}
+
+.legend-dot--soon {
+  background: var(--color-urgency-soon);
+}
+
+.legend-dot--normal {
+  background: var(--color-urgency-normal);
+}
+
+.legend-dot--ongoing {
+  background: var(--color-urgency-ongoing);
+}
+
+/* Recenter Button */
+.recenter-btn-wrapper {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+}
+
+.recenter-btn {
+  border-radius: 50% !important;
+  width: 48px;
+  height: 48px;
+  padding: 0 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  background: #ffffff !important;
+  border: 3px solid #000 !important;
+  box-shadow: 4px 4px 0px 0px #000 !important;
+}
+
+.recenter-btn:active {
+  transform: translate(4px, 4px) !important;
+  box-shadow: 0px 0px 0px 0px #000 !important;
 }

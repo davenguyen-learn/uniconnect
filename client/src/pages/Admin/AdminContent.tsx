@@ -10,8 +10,8 @@ export default function AdminContent() {
   return (
     <div className="admin-dashboard">
       <div className="admin-page-header">
-        <h1 className="admin-page-title">📄 Quản lý Nội dung</h1>
-        <p className="admin-page-desc">Quản lý activities và documents trong hệ thống</p>
+        <h1 className="admin-page-title">📄 Quản lý nội dung</h1>
+        <p className="admin-page-desc">Quản lý hoạt động và tài liệu trong hệ thống</p>
       </div>
 
       {/* Tabs */}
@@ -20,13 +20,13 @@ export default function AdminContent() {
           className={`admin-tab ${tab === 'activities' ? 'active' : ''}`}
           onClick={() => setTab('activities')}
         >
-          🎯 Activities
+          🎯 Hoạt động
         </button>
         <button
           className={`admin-tab ${tab === 'documents' ? 'active' : ''}`}
           onClick={() => setTab('documents')}
         >
-          📄 Documents
+          📄 Tài liệu
         </button>
       </div>
 
@@ -97,7 +97,7 @@ function ActivitiesTab() {
         <input
           type="text"
           className="admin-search-input"
-          placeholder="🔍 Tìm kiếm activity..."
+          placeholder="🔍 Tìm kiếm hoạt động..."
           value={search}
           onChange={e => setSearch(e.target.value)}
         />
@@ -107,13 +107,13 @@ function ActivitiesTab() {
         <table className="admin-table">
           <thead>
             <tr>
-              <th>Title</th>
-              <th>Host</th>
-              <th>Category</th>
-              <th>Participants</th>
-              <th>Privacy</th>
+              <th>Tiêu đề</th>
+              <th>Người tổ chức</th>
+              <th>Danh mục</th>
+              <th>Người tham gia</th>
+              <th>Quyền riêng tư</th>
               <th>Thời gian</th>
-              <th>Actions</th>
+              <th>Thao tác</th>
             </tr>
           </thead>
           <tbody>
@@ -121,14 +121,14 @@ function ActivitiesTab() {
               Array.from({ length: 5 }).map((_, i) => (
                 <tr key={i}>
                   {Array.from({ length: 7 }).map((__, j) => (
-                    <td key={j}><div className="skeleton" style={{ width: '80%', height: 14 }} /></td>
+                    <td key={j}><div className="skeleton admin-table-skeleton" /></td>
                   ))}
                 </tr>
               ))
             ) : activities.length === 0 ? (
               <tr>
-                <td colSpan={7} style={{ textAlign: 'center', padding: 'var(--space-8)', color: 'var(--color-text-tertiary)' }}>
-                  Không tìm thấy activity nào
+                <td colSpan={7} className="admin-table-empty">
+                  Không tìm thấy hoạt động nào
                 </td>
               </tr>
             ) : (
@@ -151,7 +151,7 @@ function ActivitiesTab() {
                       {act.privacy}
                     </span>
                   </td>
-                  <td className="admin-cell-muted" style={{ fontSize: 'var(--font-size-xs)' }}>
+                  <td className="admin-cell-muted admin-text-xs">
                     {formatDate(act.start_time)}
                   </td>
                   <td>
@@ -159,7 +159,7 @@ function ActivitiesTab() {
                       className="admin-btn admin-btn-danger"
                       onClick={() => setDeleteId(act.id)}
                     >
-                      🗑 Xoá
+                      🗑 Xóa
                     </button>
                   </td>
                 </tr>
@@ -195,20 +195,19 @@ function ActivitiesTab() {
       {deleteId && (
         <div className="admin-modal-overlay" onClick={() => setDeleteId(null)}>
           <div className="admin-modal" onClick={e => e.stopPropagation()}>
-            <h3 className="admin-modal-title">⚠️ Xác nhận xoá Activity</h3>
-            <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>
-              Activity sẽ bị soft-delete và không hiển thị cho người dùng nữa. Hành động này có thể được khôi phục trong database.
+            <h3 className="admin-modal-title">⚠️ Xác nhận xóa hoạt động</h3>
+            <p className="admin-modal-desc">
+              Hoạt động sẽ bị ẩn và không hiển thị cho người dùng nữa. Hành động này có thể được khôi phục trong cơ sở dữ liệu.
             </p>
             <div className="admin-modal-actions">
               <button className="admin-modal-btn admin-modal-btn-cancel" onClick={() => setDeleteId(null)}>
-                Huỷ
+                Hủy
               </button>
               <button
-                className="admin-modal-btn admin-modal-btn-confirm"
-                style={{ background: 'var(--color-error)' }}
+                className="admin-modal-btn admin-modal-btn-danger"
                 onClick={() => handleDelete(deleteId)}
               >
-                Xoá
+                Xóa
               </button>
             </div>
           </div>
@@ -285,7 +284,7 @@ function DocumentsTab() {
         <input
           type="text"
           className="admin-search-input"
-          placeholder="🔍 Tìm kiếm document..."
+          placeholder="🔍 Tìm kiếm tài liệu..."
           value={search}
           onChange={e => setSearch(e.target.value)}
         />
@@ -295,13 +294,13 @@ function DocumentsTab() {
         <table className="admin-table">
           <thead>
             <tr>
-              <th>Title</th>
-              <th>Author</th>
-              <th>File</th>
-              <th>Size</th>
-              <th>Status</th>
+              <th>Tiêu đề</th>
+              <th>Tác giả</th>
+              <th>Tệp</th>
+              <th>Kích thước</th>
+              <th>Trạng thái</th>
               <th>Ngày tạo</th>
-              <th>Actions</th>
+              <th>Thao tác</th>
             </tr>
           </thead>
           <tbody>
@@ -309,19 +308,19 @@ function DocumentsTab() {
               Array.from({ length: 5 }).map((_, i) => (
                 <tr key={i}>
                   {Array.from({ length: 7 }).map((__, j) => (
-                    <td key={j}><div className="skeleton" style={{ width: '80%', height: 14 }} /></td>
+                    <td key={j}><div className="skeleton admin-table-skeleton" /></td>
                   ))}
                 </tr>
               ))
             ) : documents.length === 0 ? (
               <tr>
-                <td colSpan={7} style={{ textAlign: 'center', padding: 'var(--space-8)', color: 'var(--color-text-tertiary)' }}>
-                  Không tìm thấy document nào
+                <td colSpan={7} className="admin-table-empty">
+                  Không tìm thấy tài liệu nào
                 </td>
               </tr>
             ) : (
               documents.map(doc => (
-                <tr key={doc.id} style={doc.is_deleted ? { opacity: 0.5 } : {}}>
+                <tr key={doc.id} className={doc.is_deleted ? 'admin-deleted-row' : ''}>
                   <td>
                     <span className="admin-user-cell-name">{doc.title}</span>
                   </td>
@@ -340,7 +339,7 @@ function DocumentsTab() {
                         className="admin-btn admin-btn-danger"
                         onClick={() => setDeleteId(doc.id)}
                       >
-                        🗑 Xoá
+                        🗑 Xóa
                       </button>
                     )}
                   </td>
@@ -377,20 +376,19 @@ function DocumentsTab() {
       {deleteId && (
         <div className="admin-modal-overlay" onClick={() => setDeleteId(null)}>
           <div className="admin-modal" onClick={e => e.stopPropagation()}>
-            <h3 className="admin-modal-title">⚠️ Xác nhận xoá Document</h3>
-            <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>
-              Document sẽ bị soft-delete. File vẫn còn trên storage nhưng sẽ không hiển thị cho người dùng.
+            <h3 className="admin-modal-title">⚠️ Xác nhận xóa tài liệu</h3>
+            <p className="admin-modal-desc">
+              Tài liệu sẽ bị ẩn. Tệp vẫn còn trên hệ thống lưu trữ nhưng sẽ không hiển thị cho người dùng.
             </p>
             <div className="admin-modal-actions">
               <button className="admin-modal-btn admin-modal-btn-cancel" onClick={() => setDeleteId(null)}>
-                Huỷ
+                Hủy
               </button>
               <button
-                className="admin-modal-btn admin-modal-btn-confirm"
-                style={{ background: 'var(--color-error)' }}
+                className="admin-modal-btn admin-modal-btn-danger"
                 onClick={() => handleDelete(deleteId)}
               >
-                Xoá
+                Xóa
               </button>
             </div>
           </div>

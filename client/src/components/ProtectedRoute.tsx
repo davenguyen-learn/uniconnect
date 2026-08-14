@@ -7,13 +7,7 @@ export default function ProtectedRoute() {
 
   if (isLoading) {
     return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh',
-        background: 'var(--color-bg-primary)',
-      }}>
+      <div className="loading-screen">
         <div className="spinner" />
       </div>
     );

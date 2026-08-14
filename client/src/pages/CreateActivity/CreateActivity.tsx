@@ -14,6 +14,7 @@ export default function CreateActivity() {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
+    private_description: '',
     category: '',
     location_name: '',
     start_time: '',
@@ -43,7 +44,7 @@ export default function CreateActivity() {
     e.preventDefault();
     
     if (!location) {
-      toast.error('Please select a location on the map');
+      toast.error('Vui lòng chọn vị trí trên bản đồ');
       return;
     }
 
@@ -51,7 +52,7 @@ export default function CreateActivity() {
     const end = new Date(formData.end_time);
 
     if (end <= start) {
-      toast.error('End time must be after start time');
+      toast.error('Thời gian kết thúc phải sau thời gian bắt đầu');
       return;
     }
 
@@ -60,6 +61,7 @@ export default function CreateActivity() {
       const data: ActivityCreate = {
         title: formData.title,
         description: formData.description,
+        private_description: formData.private_description || undefined,
         category: formData.category || undefined,
         location_name: formData.location_name || undefined,
         start_time: start.toISOString(),
@@ -85,10 +87,10 @@ export default function CreateActivity() {
       }
 
       const newActivity = await activitiesApi.create(data);
-      toast.success('Activity created successfully!');
+      toast.success('Đã tạo hoạt động thành công!');
       navigate(`/activities/${newActivity.id}`);
     } catch (error) {
-      toast.error('Failed to create activity');
+      toast.error('Không thể tạo hoạt động');
     } finally {
       setLoading(false);
     }
@@ -97,12 +99,12 @@ export default function CreateActivity() {
   return (
     <div className="create-activity-page">
       <div className="create-activity-container glass">
-        <h1 className="create-activity-title">Host an Activity</h1>
-        <p className="create-activity-subtitle">Create a new event and invite others to join.</p>
+        <h1 className="create-activity-title">Tổ chức hoạt động</h1>
+        <p className="create-activity-subtitle">Tạo sự kiện mới và mời những người khác tham gia.</p>
 
         <form onSubmit={handleSubmit} className="create-activity-form">
           <div className="form-group">
-            <label htmlFor="title">Title <span className="required">*</span></label>
+            <label htmlFor="title">Tiêu đề <span className="required">*</span></label>
             <input
               type="text"
               id="title"
@@ -111,13 +113,13 @@ export default function CreateActivity() {
               value={formData.title}
               onChange={handleChange}
               required
-              placeholder="e.g., Weekend Hackathon or Basketball Pickup"
+              placeholder="Ví dụ: Cùng nhau học tập tại KTX"
               maxLength={100}
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="description">Description <span className="required">*</span></label>
+            <label htmlFor="description">Mô tả <span className="required">*</span></label>
             <textarea
               id="description"
               name="description"
@@ -125,14 +127,14 @@ export default function CreateActivity() {
               value={formData.description}
               onChange={handleChange}
               required
-              placeholder="Tell people what this is about..."
+              placeholder="Cho mọi người biết sự kiện này về điều gì..."
               rows={4}
             />
           </div>
 
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="category">Category</label>
+              <label htmlFor="category">Danh mục</label>
               <input
                 list="categories"
                 id="category"
@@ -140,7 +142,7 @@ export default function CreateActivity() {
                 className="form-input"
                 value={formData.category}
                 onChange={handleChange}
-                placeholder="Select or type a category"
+                placeholder="Chọn hoặc nhập danh mục"
                 maxLength={50}
               />
               <datalist id="categories">
@@ -153,7 +155,7 @@ export default function CreateActivity() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="max_participants">Max Participants <span className="required">*</span></label>
+              <label htmlFor="max_participants">Số người tham gia tối đa <span className="required">*</span></label>
               <input
                 type="number"
                 id="max_participants"
@@ -170,7 +172,7 @@ export default function CreateActivity() {
 
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="start_time">Start Time <span className="required">*</span></label>
+              <label htmlFor="start_time">Thời gian bắt đầu <span className="required">*</span></label>
               <input
                 type="datetime-local"
                 id="start_time"
@@ -183,7 +185,7 @@ export default function CreateActivity() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="end_time">End Time <span className="required">*</span></label>
+              <label htmlFor="end_time">Thời gian kết thúc <span className="required">*</span></label>
               <input
                 type="datetime-local"
                 id="end_time"
@@ -197,7 +199,7 @@ export default function CreateActivity() {
           </div>
 
           <div className="form-group">
-            <label htmlFor="privacy">Privacy</label>
+            <label htmlFor="privacy">Quyền riêng tư</label>
             <select
               id="privacy"
               name="privacy"
@@ -205,12 +207,27 @@ export default function CreateActivity() {
               value={formData.privacy}
               onChange={handleChange}
             >
-              <option value="public">Public (Visible to everyone)</option>
-              <option value="private">Private (Invite only or hidden)</option>
+              <option value="public">Công khai (Mọi người đều có thể thấy)</option>
+              <option value="private">Riêng tư (Chỉ dành cho người được mời hoặc ẩn)</option>
             </select>
           </div>
 
-          <div className="form-group checkbox-group" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {formData.privacy === 'private' && (
+            <div className="form-group private-field-callout">
+              <label htmlFor="private_description">Mô tả riêng tư (Chỉ dành cho thành viên) 🔒</label>
+              <textarea
+                id="private_description"
+                name="private_description"
+                className="form-input"
+                value={formData.private_description}
+                onChange={handleChange}
+                placeholder="Hướng dẫn bí mật, link Zoom, hoặc địa chỉ chính xác (chỉ được tiết lộ cho người tham gia được phê duyệt)..."
+                rows={3}
+              />
+            </div>
+          )}
+
+          <div className="form-group checkbox-group">
             <input
               type="checkbox"
               id="require_approval"
@@ -218,11 +235,11 @@ export default function CreateActivity() {
               checked={formData.require_approval}
               onChange={handleChange}
             />
-            <label htmlFor="require_approval" style={{ margin: 0 }}>Require approval to join (Request to Join)</label>
+            <label htmlFor="require_approval">Yêu cầu phê duyệt để tham gia (Yêu cầu tham gia)</label>
           </div>
 
           <div className="form-group">
-            <label htmlFor="location_name">Location Name</label>
+            <label htmlFor="location_name">Tên địa điểm</label>
             <input
               type="text"
               id="location_name"
@@ -230,27 +247,27 @@ export default function CreateActivity() {
               className="form-input"
               value={formData.location_name}
               onChange={handleChange}
-              placeholder="e.g., KTX Khu A, Sân bóng, etc."
+              placeholder="Ví dụ: KTX Khu A, Sân bóng, v.v."
               maxLength={100}
             />
           </div>
 
           <div className="form-group">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <label style={{ margin: 0 }}>Custom Join Form</label>
+            <div className="form-builder-toggle">
+              <label>Biểu mẫu tham gia tùy chỉnh</label>
               <Button type="button" size="sm" variant="secondary" onClick={() => setShowFormBuilder(!showFormBuilder)}>
-                {showFormBuilder ? 'Hide Builder' : 'Add Form Fields'}
+                {showFormBuilder ? 'Ẩn công cụ tạo biểu mẫu' : 'Thêm trường biểu mẫu'}
               </Button>
             </div>
             {showFormBuilder && (
-              <div className="form-builder" style={{ padding: '16px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', marginTop: '12px' }}>
-                <p style={{ fontSize: '0.9rem', marginBottom: '12px', color: 'var(--text-secondary)' }}>
-                  Require users to fill out specific fields when joining.
+              <div className="form-builder-container">
+                <p className="form-builder-hint">
+                  Yêu cầu người dùng điền các trường cụ thể khi tham gia.
                 </p>
                 {customFormFields.map((field, index) => (
-                  <div key={field.id} style={{ display: 'flex', gap: '8px', marginBottom: '8px', alignItems: 'flex-end' }}>
-                    <div style={{ flex: 1 }}>
-                      <label style={{ fontSize: '0.8rem' }}>Field Label</label>
+                  <div key={field.id} className="form-builder-row">
+                    <div className="form-builder-row__field">
+                      <label className="form-builder-label">Nhãn trường</label>
                       <input 
                         type="text" 
                         className="form-input" 
@@ -262,8 +279,8 @@ export default function CreateActivity() {
                         }} 
                       />
                     </div>
-                    <div style={{ width: '120px' }}>
-                      <label style={{ fontSize: '0.8rem' }}>Type</label>
+                    <div className="form-builder-row__type--wide">
+                      <label className="form-builder-label">Loại</label>
                       <select 
                         className="form-input" 
                         value={field.field_type}
@@ -273,13 +290,13 @@ export default function CreateActivity() {
                           setCustomFormFields(newFields);
                         }}
                       >
-                        <option value="text">Text</option>
-                        <option value="number">Number</option>
-                        <option value="boolean">Checkbox</option>
+                        <option value="text">Văn bản</option>
+                        <option value="number">Số</option>
+                        <option value="boolean">Hộp kiểm</option>
                       </select>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', height: '40px', paddingBottom: '8px' }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', cursor: 'pointer' }}>
+                    <div className="form-builder-row__req">
+                      <label className="form-builder-req-label">
                         <input 
                           type="checkbox" 
                           checked={field.is_required}
@@ -288,14 +305,13 @@ export default function CreateActivity() {
                             newFields[index].is_required = e.target.checked;
                             setCustomFormFields(newFields);
                           }}
-                        /> Req
+                        /> Bắt buộc
                       </label>
                     </div>
                     <Button 
                       type="button" 
                       variant="secondary" 
                       onClick={() => setCustomFormFields(customFormFields.filter((_, i) => i !== index))}
-                      style={{ height: '40px' }}
                     >
                       X
                     </Button>
@@ -306,27 +322,27 @@ export default function CreateActivity() {
                   size="sm" 
                   onClick={() => setCustomFormFields([...customFormFields, { id: Math.random().toString(), label: '', field_type: 'text', is_required: true }])}
                 >
-                  + Add Field
+                  + Thêm trường
                 </Button>
               </div>
             )}
           </div>
 
           <div className="form-group map-group">
-            <label>Map Location <span className="required">*</span></label>
+            <label>Vị trí trên bản đồ <span className="required">*</span></label>
             <LocationPicker 
               position={location} 
               onChange={(lat, lng) => setLocation([lat, lng])} 
             />
-            {!location && <span className="error-text mt-1 text-sm block">Please click on the map to set a location.</span>}
+            {!location && <span className="error-text mt-1 text-sm block">Vui lòng nhấp vào bản đồ để chọn vị trí.</span>}
           </div>
 
           <div className="form-actions">
             <Button type="button" variant="secondary" onClick={() => navigate(-1)}>
-              Cancel
+              Hủy
             </Button>
             <Button type="submit" disabled={loading || !location}>
-              {loading ? 'Creating...' : 'Create Activity'}
+              {loading ? 'Đang tạo...' : 'Tạo hoạt động'}
             </Button>
           </div>
         </form>

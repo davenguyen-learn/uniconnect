@@ -18,10 +18,12 @@ export interface GroupBase {
   allow_member_activities?: boolean;
   allow_member_documents?: boolean;
   require_approval?: boolean;
+  privacy?: 'public' | 'private';
 }
 
 export interface GroupCreate extends GroupBase {
-  name: string; // making it required here
+  name: string;
+  custom_form?: any;
 }
 
 export interface GroupUpdate extends GroupBase {}

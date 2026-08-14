@@ -25,6 +25,7 @@ def _activity_to_response(
     lat: float,
     lng: float,
     distance: float | None = None,
+    private_description: str | None = None,
 ) -> ActivityResponse:
     """Convert an Activity model to a response schema."""
     host_info = None
@@ -54,6 +55,7 @@ def _activity_to_response(
         group_id=getattr(activity, 'group_id', None),
         title=activity.title,
         description=activity.description,
+        private_description=private_description,
         category=activity.category,
         latitude=lat,
         longitude=lng,
@@ -99,6 +101,7 @@ async def create_activity(
         host_id=uuid.UUID(user_id),
         title=data.title,
         description=data.description,
+        private_description=data.private_description,
         category=data.category,
         location=f"SRID=4326;POINT({data.longitude} {data.latitude})",
         location_name=data.location_name,
@@ -130,7 +133,7 @@ async def create_activity(
         )
 
     activity = await repository.create(db, activity)
-    return _activity_to_response(activity, data.latitude, data.longitude)
+    return _activity_to_response(activity, data.latitude, data.longitude, private_description=data.private_description)
 
 
 async def get_activity(
@@ -158,7 +161,24 @@ async def get_activity(
     if not is_host:
         lat, lng = obfuscate_coordinates(lat, lng)
 
-    return _activity_to_response(activity, lat, lng)
+    # Only reveal private_description to host or approved participants
+    revealed_private_desc = None
+    if is_host:
+        revealed_private_desc = activity.private_description
+    elif user_id:
+        from app.modules.participation.models import JoinRequest, RequestStatus
+        from sqlalchemy import select, and_
+        result = await db.execute(
+            select(JoinRequest).where(and_(
+                JoinRequest.activity_id == activity_id,
+                JoinRequest.user_id == uuid.UUID(user_id),
+                JoinRequest.status == RequestStatus.approved,
+            ))
+        )
+        if result.scalar_one_or_none():
+            revealed_private_desc = activity.private_description
+
+    return _activity_to_response(activity, lat, lng, private_description=revealed_private_desc)
 
 
 async def update_activity(
@@ -301,6 +321,7 @@ async def discover_nearby(
         category=query.category,
         search=query.search,
         free_to_join=query.free_to_join,
+        days_ahead=query.days_ahead,
         limit=query.limit,
         offset=query.offset,
         followed_user_ids=followed_user_ids,

@@ -65,7 +65,7 @@ async def get_my_groups(db: AsyncSession, user_id: uuid.UUID) -> list[Group]:
         .where(GroupMember.user_id == user_id, Group.is_deleted == False)  # noqa: E712
         .order_by(Group.name)
     )
-    return list(result.scalars().all())
+    return list(result.unique().scalars().all())
 
 
 async def discover_groups(
@@ -100,4 +100,5 @@ async def discover_groups(
     stmt = stmt.limit(limit)
     
     result = await db.execute(stmt)
-    return list(result.scalars().all())
+    return list(result.unique().scalars().all())
+

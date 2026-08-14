@@ -31,14 +31,14 @@ export default function AdminLayout() {
             <span className="admin-logo-icon">⚡</span>
             <div>
               <div className="admin-logo-text">UniConnect</div>
-              <div className="admin-logo-sub">Admin Panel</div>
+              <div className="admin-logo-sub">Trang Quản trị</div>
             </div>
           </Link>
         </div>
 
         <nav className="admin-nav">
           <div className="admin-nav-section">
-            <span className="admin-nav-label">Main</span>
+            <span className="admin-nav-label">Chính</span>
             <NavLink
               to="/admin"
               end
@@ -46,19 +46,19 @@ export default function AdminLayout() {
               onClick={() => setSidebarOpen(false)}
             >
               <span className="admin-nav-icon">📊</span>
-              Dashboard
+              Tổng quan
             </NavLink>
           </div>
 
           <div className="admin-nav-section">
-            <span className="admin-nav-label">Management</span>
+            <span className="admin-nav-label">Quản lý</span>
             <NavLink
               to="/admin/users"
               className={({ isActive }) => `admin-nav-link ${isActive ? 'active' : ''}`}
               onClick={() => setSidebarOpen(false)}
             >
               <span className="admin-nav-icon">👥</span>
-              Users
+              Người dùng
             </NavLink>
             <NavLink
               to="/admin/reports"
@@ -66,7 +66,7 @@ export default function AdminLayout() {
               onClick={() => setSidebarOpen(false)}
             >
               <span className="admin-nav-icon">🚩</span>
-              Reports
+              Báo cáo
             </NavLink>
             <NavLink
               to="/admin/content"
@@ -74,19 +74,19 @@ export default function AdminLayout() {
               onClick={() => setSidebarOpen(false)}
             >
               <span className="admin-nav-icon">📄</span>
-              Content
+              Nội dung
             </NavLink>
           </div>
 
           <div className="admin-nav-section">
-            <span className="admin-nav-label">Quick Links</span>
+            <span className="admin-nav-label">Liên kết</span>
             <Link
               to="/dashboard"
               className="admin-nav-link"
               onClick={() => setSidebarOpen(false)}
             >
               <span className="admin-nav-icon">🏠</span>
-              Back to App
+              Về ứng dụng
             </Link>
           </div>
         </nav>
@@ -96,10 +96,10 @@ export default function AdminLayout() {
             <div className="admin-user-avatar">{initials}</div>
             <div className="admin-user-details">
               <div className="admin-user-name">{user?.full_name || user?.username}</div>
-              <div className="admin-user-role">Administrator</div>
+              <div className="admin-user-role">Quản trị viên</div>
             </div>
           </div>
-          <button className="admin-logout-btn" onClick={handleLogout} title="Logout">
+          <button className="admin-logout-btn" onClick={handleLogout} title="Đăng xuất">
             🚪
           </button>
         </div>

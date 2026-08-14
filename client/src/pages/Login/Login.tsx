@@ -21,8 +21,8 @@ export default function Login() {
 
   function validate(): boolean {
     const errs: Record<string, string> = {};
-    if (!form.email) errs.email = 'Email is required';
-    if (!form.password) errs.password = 'Password is required';
+    if (!form.email) errs.email = 'Vui lòng nhập Email';
+    if (!form.password) errs.password = 'Vui lòng nhập mật khẩu';
     setErrors(errs);
     return Object.keys(errs).length === 0;
   }
@@ -41,7 +41,7 @@ export default function Login() {
       if (err instanceof ApiRequestError) {
         setServerError(err.message);
       } else {
-        setServerError('Something went wrong. Please try again.');
+        setServerError('Đã xảy ra lỗi. Vui lòng thử lại.');
       }
     } finally {
       setLoading(false);
@@ -61,8 +61,8 @@ export default function Login() {
             <span className="auth-logo-icon">U</span>
             UniConnect
           </Link>
-          <h1 className="auth-title">Welcome back</h1>
-          <p className="auth-subtitle">Log in to your account</p>
+          <h1 className="auth-title">Chào mừng trở lại</h1>
+          <p className="auth-subtitle">Đăng nhập vào tài khoản của bạn</p>
         </div>
 
         {serverError && <div className="auth-error">{serverError}</div>}
@@ -78,20 +78,20 @@ export default function Login() {
             autoFocus
           />
           <Input
-            label="Password"
+            label="Mật khẩu"
             type="password"
-            placeholder="Your password"
+            placeholder="Mật khẩu của bạn"
             value={form.password}
             onChange={(e) => update('password', e.target.value)}
             error={errors.password}
           />
           <Button type="submit" fullWidth loading={loading} size="lg">
-            Log in
+            Đăng nhập
           </Button>
         </form>
 
         <div className="auth-footer">
-          Don't have an account? <Link to="/register">Sign up</Link>
+          Bạn chưa có tài khoản? <Link to="/register">Đăng ký</Link>
         </div>
       </div>
     </div>

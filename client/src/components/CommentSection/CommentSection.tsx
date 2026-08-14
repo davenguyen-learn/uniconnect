@@ -41,11 +41,11 @@ function CommentItem({ comment, currentUserId, onReply, onDelete, onUpdate, isRe
       <div className="comment-body">
         <div className="comment-header">
           <span className="comment-author">
-            {comment.is_deleted ? 'Deleted' : `@${comment.user?.username || 'unknown'}`}
+            {comment.is_deleted ? 'Đã xóa' : `@${comment.user?.username || 'ẩn danh'}`}
           </span>
           <span className="comment-time">
             {timeAgo}
-            {wasEdited && !comment.is_deleted && <span className="comment-edited"> (edited)</span>}
+            {wasEdited && !comment.is_deleted && <span className="comment-edited"> (đã chỉnh sửa)</span>}
           </span>
         </div>
 
@@ -61,10 +61,10 @@ function CommentItem({ comment, currentUserId, onReply, onDelete, onUpdate, isRe
             />
             <div className="comment-edit-actions">
               <button className="comment-btn comment-btn-save" onClick={handleSaveEdit}>
-                Save
+                Lưu
               </button>
               <button className="comment-btn comment-btn-cancel" onClick={handleCancelEdit}>
-                Cancel
+                Hủy
               </button>
             </div>
           </div>
@@ -76,16 +76,16 @@ function CommentItem({ comment, currentUserId, onReply, onDelete, onUpdate, isRe
           <div className="comment-actions">
             {!isReply && (
               <button className="comment-btn" onClick={() => onReply(comment.id)}>
-                Reply
+                Trả lời
               </button>
             )}
             {isAuthor && (
               <>
                 <button className="comment-btn" onClick={() => setEditing(true)}>
-                  Edit
+                  Chỉnh sửa
                 </button>
                 <button className="comment-btn comment-btn-danger" onClick={() => onDelete(comment.id)}>
-                  Delete
+                  Xóa
                 </button>
               </>
             )}
@@ -149,7 +149,7 @@ export default function CommentSection({
       setNewComment('');
       onRefresh();
     } catch {
-      toast.error('Failed to post comment');
+      toast.error('Không thể đăng bình luận');
     } finally {
       setSubmitting(false);
     }
@@ -169,20 +169,20 @@ export default function CommentSection({
       setReplyingTo(null);
       onRefresh();
     } catch {
-      toast.error('Failed to post reply');
+      toast.error('Không thể đăng phản hồi');
     } finally {
       setSubmitting(false);
     }
   }
 
   async function handleDelete(commentId: string) {
-    if (!window.confirm('Delete this comment?')) return;
+    if (!window.confirm('Bạn có chắc muốn xóa bình luận này?')) return;
     try {
       await interactionsApi.deleteComment(commentId);
       onRefresh();
-      toast.success('Comment deleted');
+      toast.success('Đã xóa bình luận');
     } catch {
-      toast.error('Failed to delete comment');
+      toast.error('Không thể xóa bình luận');
     }
   }
 
@@ -191,7 +191,7 @@ export default function CommentSection({
       await interactionsApi.updateComment(commentId, { content });
       onRefresh();
     } catch {
-      toast.error('Failed to update comment');
+      toast.error('Không thể cập nhật bình luận');
     }
   }
 
@@ -203,7 +203,7 @@ export default function CommentSection({
   return (
     <div className="comment-section">
       <h3 className="comment-section-title">
-        Comments
+        Bình luận
         <span className="comment-count-badge">{total}</span>
       </h3>
 
@@ -216,7 +216,7 @@ export default function CommentSection({
           <textarea
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
-            placeholder="Write a comment..."
+            placeholder="Viết bình luận..."
             className="comment-input"
             rows={3}
             maxLength={1000}
@@ -232,7 +232,7 @@ export default function CommentSection({
               disabled={!newComment.trim() || submitting}
               id="comment-submit-btn"
             >
-              {submitting ? 'Posting...' : 'Post'}
+              {submitting ? 'Đang đăng...' : 'Đăng'}
             </button>
           </div>
         </div>
@@ -241,7 +241,7 @@ export default function CommentSection({
       {/* Comment list */}
       <div className="comment-list">
         {comments.length === 0 ? (
-          <p className="comment-empty">No comments yet. Be the first to comment!</p>
+          <p className="comment-empty">Chưa có bình luận nào. Hãy là người đầu tiên bình luận!</p>
         ) : (
           <>
             {comments.map((comment) => (
@@ -260,7 +260,7 @@ export default function CommentSection({
                     <textarea
                       value={replyContent}
                       onChange={(e) => setReplyContent(e.target.value)}
-                      placeholder={`Reply to @${comment.user?.username || 'unknown'}...`}
+                      placeholder={`Trả lời @${comment.user?.username || 'ẩn danh'}...`}
                       className="comment-input reply-input"
                       rows={2}
                       maxLength={1000}
@@ -272,14 +272,14 @@ export default function CommentSection({
                         className="comment-btn comment-btn-cancel"
                         onClick={() => setReplyingTo(null)}
                       >
-                        Cancel
+                        Hủy
                       </button>
                       <button
                         type="submit"
                         className="comment-submit-btn reply-submit-btn"
                         disabled={!replyContent.trim() || submitting}
                       >
-                        Reply
+                        Trả lời
                       </button>
                     </div>
                   </form>
@@ -289,7 +289,7 @@ export default function CommentSection({
 
             {hasMore && (
               <button className="comment-load-more" onClick={onLoadMore} id="load-more-comments">
-                Load more comments
+                Tải thêm bình luận
               </button>
             )}
           </>
@@ -307,14 +307,14 @@ function getTimeAgo(dateStr: string): string {
   const diffMs = now.getTime() - date.getTime();
   const diffMins = Math.floor(diffMs / 60000);
 
-  if (diffMins < 1) return 'just now';
-  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffMins < 1) return 'vừa xong';
+  if (diffMins < 60) return `${diffMins} phút trước`;
 
   const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffHours < 24) return `${diffHours} giờ trước`;
 
   const diffDays = Math.floor(diffHours / 24);
-  if (diffDays < 7) return `${diffDays}d ago`;
+  if (diffDays < 7) return `${diffDays} ngày trước`;
 
-  return date.toLocaleDateString();
+  return date.toLocaleDateString('vi-VN');
 }

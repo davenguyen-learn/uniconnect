@@ -82,9 +82,9 @@ export default function NotificationBell() {
       <button 
         className="notification-bell" 
         onClick={() => setIsOpen(!isOpen)}
-        aria-label="Notifications"
+        aria-label="Thông báo"
       >
-        <span className="bell-icon">🔔</span>
+        <img src="https://cdn-icons-png.flaticon.com/512/3602/3602123.png" alt="Thông báo" className="bell-icon" style={{ width: '24px', height: '24px', display: 'block' }} />
         {unreadCount > 0 && (
           <span className="notification-badge">
             {unreadCount > 99 ? '99+' : unreadCount}
@@ -95,17 +95,17 @@ export default function NotificationBell() {
       {isOpen && (
         <div className="notification-dropdown">
           <div className="notification-header">
-            <h3>Notifications</h3>
+            <h3>Thông báo</h3>
             {unreadCount > 0 && (
               <button className="mark-all-btn" onClick={handleMarkAllRead}>
-                Mark all read
+                Đánh dấu đã đọc tất cả
               </button>
             )}
           </div>
           
           <div className="notification-list">
             {notifications.length === 0 ? (
-              <div className="notification-empty">No notifications yet</div>
+              <div className="notification-empty">Chưa có thông báo nào</div>
             ) : (
               notifications.map(notification => (
                 <div 

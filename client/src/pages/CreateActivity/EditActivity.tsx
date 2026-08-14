@@ -74,7 +74,7 @@ export default function EditActivity() {
     if (!id) return;
     
     if (!location) {
-      toast.error('Please select a location on the map');
+      toast.error('Vui lòng chọn vị trí trên bản đồ');
       return;
     }
 
@@ -82,7 +82,7 @@ export default function EditActivity() {
     const end = new Date(formData.end_time);
 
     if (end <= start) {
-      toast.error('End time must be after start time');
+      toast.error('Thời gian kết thúc phải sau thời gian bắt đầu');
       return;
     }
 
@@ -103,13 +103,13 @@ export default function EditActivity() {
       };
 
       await activitiesApi.update(id, data);
-      toast.success('Activity updated successfully!');
+      toast.success('Đã cập nhật hoạt động thành công!');
       navigate(`/activities/${id}`);
     } catch (error: any) {
       if (error.response?.data?.error?.message) {
         toast.error(error.response.data.error.message);
       } else {
-        toast.error('Failed to update activity');
+        toast.error('Không thể cập nhật hoạt động');
       }
     } finally {
       setLoading(false);
@@ -117,18 +117,18 @@ export default function EditActivity() {
   };
 
   if (initialLoading) {
-    return <div className="create-activity-page">Loading...</div>;
+    return <div className="create-activity-page">Đang tải...</div>;
   }
 
   return (
     <div className="create-activity-page">
       <div className="create-activity-container glass">
-        <h1 className="create-activity-title">Edit Activity</h1>
-        <p className="create-activity-subtitle">Update your event details.</p>
+        <h1 className="create-activity-title">Chỉnh sửa hoạt động</h1>
+        <p className="create-activity-subtitle">Cập nhật thông tin chi tiết về sự kiện của bạn.</p>
 
         <form onSubmit={handleSubmit} className="create-activity-form">
           <div className="form-group">
-            <label htmlFor="title">Title <span className="required">*</span></label>
+            <label htmlFor="title">Tiêu đề <span className="required">*</span></label>
             <input
               type="text"
               id="title"
@@ -137,13 +137,13 @@ export default function EditActivity() {
               value={formData.title}
               onChange={handleChange}
               required
-              placeholder="e.g., Weekend Hackathon or Basketball Pickup"
+              placeholder="Ví dụ: Cùng nhau học tập tại KTX"
               maxLength={100}
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="description">Description <span className="required">*</span></label>
+            <label htmlFor="description">Mô tả <span className="required">*</span></label>
             <textarea
               id="description"
               name="description"
@@ -151,14 +151,14 @@ export default function EditActivity() {
               value={formData.description}
               onChange={handleChange}
               required
-              placeholder="Tell people what this is about..."
+              placeholder="Cho mọi người biết sự kiện này về điều gì..."
               rows={4}
             />
           </div>
 
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="category">Category</label>
+              <label htmlFor="category">Danh mục</label>
               <input
                 list="categories"
                 id="category"
@@ -166,7 +166,7 @@ export default function EditActivity() {
                 className="form-input"
                 value={formData.category}
                 onChange={handleChange}
-                placeholder="Select or type a category"
+                placeholder="Chọn hoặc nhập danh mục"
                 maxLength={50}
               />
               <datalist id="categories">
@@ -179,7 +179,7 @@ export default function EditActivity() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="max_participants">Max Participants <span className="required">*</span></label>
+              <label htmlFor="max_participants">Số người tham gia tối đa <span className="required">*</span></label>
               <input
                 type="number"
                 id="max_participants"
@@ -196,7 +196,7 @@ export default function EditActivity() {
 
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="start_time">Start Time <span className="required">*</span></label>
+              <label htmlFor="start_time">Thời gian bắt đầu <span className="required">*</span></label>
               <input
                 type="datetime-local"
                 id="start_time"
@@ -209,7 +209,7 @@ export default function EditActivity() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="end_time">End Time <span className="required">*</span></label>
+              <label htmlFor="end_time">Thời gian kết thúc <span className="required">*</span></label>
               <input
                 type="datetime-local"
                 id="end_time"
@@ -223,7 +223,7 @@ export default function EditActivity() {
           </div>
 
           <div className="form-group">
-            <label htmlFor="privacy">Privacy</label>
+            <label htmlFor="privacy">Quyền riêng tư</label>
             <select
               id="privacy"
               name="privacy"
@@ -231,12 +231,12 @@ export default function EditActivity() {
               value={formData.privacy}
               onChange={handleChange}
             >
-              <option value="public">Public (Visible to everyone)</option>
-              <option value="private">Private (Invite only or hidden)</option>
+              <option value="public">Công khai (Mọi người đều có thể thấy)</option>
+              <option value="private">Riêng tư (Chỉ dành cho người được mời hoặc ẩn)</option>
             </select>
           </div>
 
-          <div className="form-group checkbox-group" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="form-group checkbox-group">
             <input
               type="checkbox"
               id="require_approval"
@@ -244,11 +244,11 @@ export default function EditActivity() {
               checked={formData.require_approval}
               onChange={handleChange}
             />
-            <label htmlFor="require_approval" style={{ margin: 0 }}>Require approval to join (Request to Join)</label>
+            <label htmlFor="require_approval">Yêu cầu phê duyệt để tham gia (Yêu cầu tham gia)</label>
           </div>
 
           <div className="form-group">
-            <label htmlFor="location_name">Location Name</label>
+            <label htmlFor="location_name">Tên địa điểm</label>
             <input
               type="text"
               id="location_name"
@@ -256,26 +256,26 @@ export default function EditActivity() {
               className="form-input"
               value={formData.location_name}
               onChange={handleChange}
-              placeholder="e.g., KTX Khu A, Sân bóng, etc."
+              placeholder="Ví dụ: KTX Khu A, Sân bóng, v.v."
               maxLength={100}
             />
           </div>
 
           <div className="form-group map-group">
-            <label>Map Location <span className="required">*</span></label>
+            <label>Vị trí trên bản đồ <span className="required">*</span></label>
             <LocationPicker 
               position={location} 
               onChange={(lat, lng) => setLocation([lat, lng])} 
             />
-            {!location && <span className="error-text mt-1 text-sm block">Please click on the map to set a location.</span>}
+            {!location && <span className="error-text mt-1 text-sm block">Vui lòng nhấp vào bản đồ để chọn vị trí.</span>}
           </div>
 
           <div className="form-actions">
             <Button type="button" variant="secondary" onClick={() => navigate(-1)}>
-              Cancel
+              Hủy
             </Button>
             <Button type="submit" disabled={loading || !location}>
-              {loading ? 'Saving...' : 'Save Changes'}
+              {loading ? 'Đang lưu...' : 'Lưu thay đổi'}
             </Button>
           </div>
         </form>

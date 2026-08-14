@@ -35,6 +35,7 @@ async def discover_nearby(
     lng: float = Query(ge=-180, le=180),
     radius: int = Query(default=5000, ge=100, le=50000),
     category: str | None = Query(default=None),
+    days_ahead: int | None = Query(default=None, ge=1, le=365),
     limit: int = Query(default=20, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
     current_user: dict = Depends(get_current_user),
@@ -42,7 +43,8 @@ async def discover_nearby(
 ):
     """Discover activities within a radius of a geographic point."""
     query = NearbyQuery(
-        lat=lat, lng=lng, radius=radius, category=category, limit=limit, offset=offset
+        lat=lat, lng=lng, radius=radius, category=category,
+        days_ahead=days_ahead, limit=limit, offset=offset
     )
     return await service.discover_nearby(db, query, current_user["sub"])
 

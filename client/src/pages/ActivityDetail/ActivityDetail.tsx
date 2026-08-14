@@ -87,7 +87,7 @@ export default function ActivityDetail() {
         // Non-critical: interactions data failed to load
       }
     } catch (error) {
-      toast.error('Failed to load activity details');
+      toast.error('Không thể tải chi tiết hoạt động');
       navigate('/dashboard');
     } finally {
       setLoading(false);
@@ -108,13 +108,13 @@ export default function ActivityDetail() {
       const req = await participationApi.requestToJoin(id, data);
       setMyRequest(req);
       if (activity?.require_approval) {
-        toast.success('Join request sent successfully!');
+        toast.success('Đã gửi yêu cầu tham gia thành công!');
       } else {
-        toast.success('Successfully joined the activity!');
+        toast.success('Đã tham gia hoạt động thành công!');
         loadData(); // Refresh to update participant count
       }
     } catch (error) {
-      toast.error('Failed to send request. The activity might be full.');
+      toast.error('Không thể gửi yêu cầu. Hoạt động có thể đã đầy.');
     }
   }
 
@@ -123,9 +123,9 @@ export default function ActivityDetail() {
     try {
       await participationApi.cancel(myRequest.id);
       setMyRequest(null);
-      toast.success('Request cancelled');
+      toast.success('Đã hủy yêu cầu');
     } catch (error) {
-      toast.error('Failed to cancel request');
+      toast.error('Không thể hủy yêu cầu');
     }
   }
 
@@ -136,11 +136,11 @@ export default function ActivityDetail() {
       } else {
         await participationApi.decline(requestId);
       }
-      toast.success(`Request ${status}`);
+      toast.success(`Yêu cầu đã được ${status === 'approved' ? 'phê duyệt' : 'từ chối'}`);
       // Refresh data to update participant count and remove request from list
       loadData();
     } catch (error) {
-      toast.error(`Failed to ${status} request`);
+      toast.error(`Không thể ${status === 'approved' ? 'phê duyệt' : 'từ chối'} yêu cầu`);
     }
   }
 
@@ -149,24 +149,24 @@ export default function ActivityDetail() {
     try {
       await participationApi.leaveActivity(id);
       setMyRequest(null);
-      toast.success('You have left the activity');
+      toast.success('Bạn đã rời khỏi hoạt động');
       loadData(); // Refresh participant count
     } catch (error) {
-      toast.error('Failed to leave activity');
+      toast.error('Không thể rời khỏi hoạt động');
     }
   }
 
   async function handleDeleteActivity() {
     if (!id) return;
-    const confirm = window.confirm('Are you sure you want to delete this activity?');
+    const confirm = window.confirm('Bạn có chắc chắn muốn xóa hoạt động này?');
     if (!confirm) return;
 
     try {
       await activitiesApi.delete(id);
-      toast.success('Activity deleted');
+      toast.success('Đã xóa hoạt động');
       navigate('/dashboard');
     } catch (error) {
-      toast.error('Failed to delete activity');
+      toast.error('Không thể xóa hoạt động');
     }
   }
 
@@ -179,7 +179,7 @@ export default function ActivityDetail() {
       setCommentHasMore(data.has_more);
       setCommentOffset(0);
     } catch {
-      toast.error('Failed to refresh comments');
+      toast.error('Không thể tải lại bình luận');
     }
   }, [id]);
 
@@ -193,12 +193,12 @@ export default function ActivityDetail() {
       setCommentHasMore(data.has_more);
       setCommentOffset(newOffset);
     } catch {
-      toast.error('Failed to load more comments');
+      toast.error('Không thể tải thêm bình luận');
     }
   }
 
   if (loading || !activity) {
-    return <div className="activity-detail-loading">Loading...</div>;
+    return <div className="activity-detail-loading">Đang tải...</div>;
   }
 
   const isHost = user?.id === activity.host_id;
@@ -207,18 +207,18 @@ export default function ActivityDetail() {
   return (
     <div className="activity-detail-container">
       <div className="activity-header glass">
-        <div className="category-badge">{activity.category || 'General'}</div>
+        <div className="category-badge">{activity.category || 'Chung'}</div>
         <h1 className="activity-title">{activity.title}</h1>
         <div className="activity-meta">
-          <span>Hosted by <Link to={`/profile/${activity.host_id}`} style={{ color: 'inherit', textDecoration: 'underline' }}>@{activity.host?.username}</Link></span>
+          <span>Được tổ chức bởi <Link to={`/profile/${activity.host_id}`} className="activity-host-link">@{activity.host?.username}</Link></span>
           <span className="meta-dot">•</span>
-          <span>{new Date(activity.start_time).toLocaleString()}</span>
+          <span>{new Date(activity.start_time).toLocaleString('vi-VN')}</span>
         </div>
         <div className="activity-header-actions">
           <LikeButton targetType="activities" targetId={id!} initialLiked={liked} initialCount={likeCount} />
           {!isHost && (
             <Button size="sm" variant="secondary" onClick={() => setIsReportModalOpen(true)}>
-              Report
+              Báo cáo
             </Button>
           )}
         </div>
@@ -233,45 +233,51 @@ export default function ActivityDetail() {
 
       <div className="activity-content-grid">
         <div className="activity-main glass">
-          <h3>Description</h3>
+          <h3>Mô tả</h3>
           <p className="activity-description">{activity.description}</p>
+
+          {activity.private_description ? (
+            <div className="callout">
+              <h4>
+                🔓 Nội dung dành cho thành viên
+              </h4>
+              <p className="text-pre-wrap">{activity.private_description}</p>
+            </div>
+          ) : activity.privacy === 'private' && !isHost && (
+            <div className="callout callout--muted">
+              🔒 Thông tin riêng tư (Chỉ được tiết lộ cho người tổ chức và người tham gia được phê duyệt)
+            </div>
+          )}
 
           <div className="activity-stats">
             <div className="stat-box">
-              <span className="stat-label">Location</span>
-              <span className="stat-value" style={{ wordBreak: 'break-word' }}>{activity.location_name || 'TBD'}</span>
+              <span className="stat-label">Địa điểm</span>
+              <span className="stat-value">{activity.location_name || 'TBD'}</span>
             </div>
             <div className="stat-box">
-              <span className="stat-label">Participants</span>
+              <span className="stat-label">Người tham gia</span>
               <span className="stat-value">
                 {activity.current_participants} / {activity.max_participants}
               </span>
             </div>
             <div className="stat-box">
-              <span className="stat-label">Privacy</span>
+              <span className="stat-label">Quyền riêng tư</span>
               <span className="stat-value">{activity.privacy}</span>
             </div>
             <div className="stat-box">
-              <span className="stat-label">Status</span>
+              <span className="stat-label">Trạng thái</span>
               <span className="stat-value">
-                {isFull ? 'Full' : 'Open'}
+                {isFull ? 'Đã đầy' : 'Đang mở'}
               </span>
             </div>
           </div>
 
           {participants.length > 0 && (
-            <div className="participants-section" style={{ marginTop: '24px' }}>
-              <h3>Participants</h3>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
+            <div className="participants-section">
+              <h3>Người tham gia</h3>
+              <div className="participants-list">
                 <div 
-                  className="participant-avatar host"
-                  style={{ 
-                    padding: '8px 12px', 
-                    backgroundColor: 'var(--primary-color)', 
-                    color: '#fff', 
-                    borderRadius: '20px',
-                    fontSize: '0.9rem' 
-                  }}
+                  className="participant-chip participant-chip--host"
                   title="Host"
                 >
                   ⭐ @{activity.host?.username}
@@ -279,13 +285,7 @@ export default function ActivityDetail() {
                 {participants.filter(p => p.user?.username !== activity.host?.username).map(p => (
                   <div 
                     key={p.id} 
-                    className="participant-avatar"
-                    style={{ 
-                      padding: '8px 12px', 
-                      backgroundColor: 'rgba(255,255,255,0.1)', 
-                      borderRadius: '20px',
-                      fontSize: '0.9rem' 
-                    }}
+                    className="participant-chip"
                   >
                     @{p.user?.username}
                   </div>
@@ -297,51 +297,51 @@ export default function ActivityDetail() {
 
         <div className="activity-sidebar glass">
           {activity.trophy && (
-            <div className="trophy-section" style={{ marginBottom: '24px', textAlign: 'center', padding: '16px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px' }}>
-              <h3 style={{ margin: '0 0 12px 0', fontSize: '1.2rem', color: 'var(--text-color)' }}>Earn a Trophy!</h3>
-              <div style={{ fontSize: '3.5rem', margin: '8px 0', filter: 'drop-shadow(0 0 10px rgba(255,215,0,0.5))' }}>
+            <div className="trophy-card">
+              <h3 className="trophy-card__title">Kiếm cúp!</h3>
+              <div className="trophy-card__icon">
                 {activity.trophy.icon || '🏆'}
               </div>
-              <h4 style={{ margin: '8px 0', color: 'var(--primary-color)', fontSize: '1.1rem' }}>{activity.trophy.name}</h4>
+              <h4 className="trophy-card__name">{activity.trophy.name}</h4>
               {activity.trophy.description && (
-                <p style={{ fontSize: '0.9rem', color: 'var(--text-color)', opacity: 0.8, margin: '8px 0' }}>
+                <p className="trophy-card__description">
                   {activity.trophy.description}
                 </p>
               )}
-              <div style={{ marginTop: '12px', fontWeight: 'bold', display: 'inline-block', padding: '4px 12px', background: 'rgba(255,215,0,0.2)', color: '#FFD700', borderRadius: '20px', fontSize: '0.85rem' }}>
-                +{activity.trophy.points} Points
+              <div className="trophy-card__points">
+                +{activity.trophy.points} Điểm
               </div>
             </div>
           )}
 
           {isHost ? (
             <div className="host-management">
-              <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+              <div className="host-actions">
                 <Button
                   variant="secondary"
                   fullWidth
                   onClick={() => navigate(`/activities/${id}/edit`)}
                 >
-                  Edit
+                  Chỉnh sửa
                 </Button>
                 <Button
                   fullWidth
                   onClick={handleDeleteActivity}
-                  style={{ backgroundColor: 'rgba(239, 68, 68, 0.2)' }}
+                  className="btn-danger-subtle"
                 >
-                  Delete
+                  Xóa
                 </Button>
               </div>
 
-              <h3>Join Requests</h3>
+              <h3>Yêu cầu tham gia</h3>
               {requests.length === 0 ? (
-                <p className="no-requests">No pending requests.</p>
+                <p className="no-requests">Không có yêu cầu đang chờ xử lý.</p>
               ) : (
                 <div className="request-list">
                   {requests.map((req) => (
                     <div key={req.id} className="request-item">
                       <div className="request-user">
-                        <strong>@{req.user?.username}</strong> wants to join
+                        <strong>@{req.user?.username}</strong> muốn tham gia
                       </div>
                       {req.message && (
                         <p className="request-message">"{req.message}"</p>
@@ -352,14 +352,14 @@ export default function ActivityDetail() {
                           onClick={() => handleRespond(req.id, 'approved')}
                           disabled={isFull}
                         >
-                          Approve
+                          Phê duyệt
                         </Button>
                         <Button
                           size="sm"
                           variant="secondary"
                           onClick={() => handleRespond(req.id, 'declined')}
                         >
-                          Decline
+                          Từ chối
                         </Button>
                       </div>
                     </div>
@@ -371,7 +371,7 @@ export default function ActivityDetail() {
             <div className="participant-actions">
               {myRequest ? (
                 <div className="my-request-status">
-                  <h3>Your Request</h3>
+                  <h3>Yêu cầu của bạn</h3>
                   <div className={`status-badge ${myRequest.status}`}>
                     {myRequest.status.toUpperCase()}
                   </div>
@@ -382,35 +382,35 @@ export default function ActivityDetail() {
                       className="mt-4"
                       onClick={handleCancelRequest}
                     >
-                      Cancel Request
+                      Hủy yêu cầu
                     </Button>
                   )}
                   {myRequest.status === 'approved' && (
                     <>
-                      <p className="success-message mt-4">You're in! Check the exact location on the map.</p>
+                      <p className="success-message mt-4">Bạn đã tham gia! Kiểm tra vị trí chính xác trên bản đồ.</p>
                       <Button
                         variant="secondary"
                         fullWidth
                         className="mt-4"
                         onClick={handleLeaveActivity}
                       >
-                        Leave Activity
+                        Rời khỏi hoạt động
                       </Button>
                     </>
                   )}
                 </div>
               ) : (
                 <form onSubmit={handleJoinRequest} className="join-form">
-                  <h3>{activity.require_approval ? 'Request to Join' : 'Join Activity'}</h3>
+                  <h3>{activity.require_approval ? 'Yêu cầu tham gia' : 'Tham gia hoạt động'}</h3>
                   
                   {activity.custom_form && activity.custom_form.fields.length > 0 && (
-                    <div className="custom-form-fields" style={{ marginBottom: '16px', padding: '12px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}>
-                      <h4 style={{ marginBottom: '12px' }}>{activity.custom_form.title || 'Required Information'}</h4>
-                      {activity.custom_form.description && <p style={{ fontSize: '0.9rem', marginBottom: '12px', color: 'var(--text-secondary)' }}>{activity.custom_form.description}</p>}
+                    <div className="custom-form-section">
+                      <h4>{activity.custom_form.title || 'Thông tin bắt buộc'}</h4>
+                      {activity.custom_form.description && <p className="custom-form-hint">{activity.custom_form.description}</p>}
                       
                       {activity.custom_form.fields.map(field => (
-                        <div key={field.id} style={{ marginBottom: '12px' }}>
-                          <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem' }}>
+                        <div key={field.id} className="custom-form-field">
+                          <label className="custom-form-field-label">
                             {field.label} {field.is_required && <span className="required">*</span>}
                           </label>
                           {field.field_type === 'checkbox' ? (
@@ -435,12 +435,12 @@ export default function ActivityDetail() {
                   {activity.require_approval && (
                     <>
                       <p className="join-hint">
-                        Let the host know why you want to join (optional).
+                        Hãy cho người tổ chức biết lý do bạn muốn tham gia (không bắt buộc).
                       </p>
                       <textarea
                         value={requestMessage}
                         onChange={(e) => setRequestMessage(e.target.value)}
-                        placeholder="Hi! I'd love to join because..."
+                        placeholder="Xin chào! Tôi rất muốn tham gia vì..."
                         className="form-input"
                         rows={4}
                       />
@@ -451,7 +451,7 @@ export default function ActivityDetail() {
                     fullWidth
                     disabled={isFull}
                   >
-                    {isFull ? 'Activity Full' : (activity.require_approval ? 'Send Request' : 'Join Activity')}
+                    {isFull ? 'Hoạt động đã đầy' : (activity.require_approval ? 'Gửi yêu cầu' : 'Tham gia hoạt động')}
                   </Button>
                 </form>
               )}

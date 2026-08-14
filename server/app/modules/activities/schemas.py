@@ -25,6 +25,7 @@ class GroupInfo(BaseModel):
 class ActivityCreate(BaseModel):
     title: str = Field(min_length=1, max_length=150)
     description: str | None = Field(default=None, max_length=2000)
+    private_description: str | None = Field(default=None, max_length=2000)
     category: str | None = Field(default=None, max_length=50)
     latitude: float = Field(ge=-90, le=90)
     longitude: float = Field(ge=-180, le=180)
@@ -49,6 +50,7 @@ class ActivityCreate(BaseModel):
 class ActivityUpdate(BaseModel):
     title: str | None = Field(default=None, min_length=1, max_length=150)
     description: str | None = Field(default=None, max_length=2000)
+    private_description: str | None = Field(default=None, max_length=2000)
     category: str | None = Field(default=None, max_length=50)
     latitude: float | None = Field(default=None, ge=-90, le=90)
     longitude: float | None = Field(default=None, ge=-180, le=180)
@@ -67,6 +69,7 @@ class ActivityResponse(BaseModel):
     group_id: uuid.UUID | None
     title: str
     description: str | None
+    private_description: str | None = None
     category: str | None
     latitude: float
     longitude: float
@@ -94,6 +97,7 @@ class NearbyQuery(BaseModel):
     category: str | None = None
     search: str | None = None
     free_to_join: bool | None = None
+    days_ahead: int | None = Field(default=None, ge=1, le=365)
     limit: int = Field(default=20, ge=1, le=100)
     offset: int = Field(default=0, ge=0)
 

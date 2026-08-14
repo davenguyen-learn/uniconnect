@@ -6,21 +6,21 @@ import './Landing.css';
 const FEATURES = [
   {
     icon: '📍',
-    title: 'Discover Nearby',
+    title: 'Khám phá xung quanh',
     description:
-      'Find activities happening around you with real-time map discovery. Filter by category, distance, and availability.',
+      'Tìm kiếm các hoạt động đang diễn ra xung quanh bạn trên bản đồ theo thời gian thực. Lọc theo danh mục, khoảng cách và thời gian.',
   },
   {
     icon: '⚡',
-    title: 'Create Instantly',
+    title: 'Tạo hoạt động nhanh chóng',
     description:
-      'Organize study sessions, sports matches, or social meetups in seconds. Set location, time, and capacity with a tap.',
+      'Tổ chức các buổi học nhóm, trận đấu thể thao, hoặc giao lưu chỉ trong vài giây. Thiết lập địa điểm, thời gian và số lượng người chỉ với vài thao tác.',
   },
   {
     icon: '🤝',
-    title: 'Connect & Join',
+    title: 'Kết nối & Tham gia',
     description:
-      'Request to join activities that interest you. Hosts approve participants to build the right group for every occasion.',
+      'Yêu cầu tham gia các hoạt động mà bạn quan tâm. Người tổ chức sẽ duyệt người tham gia để tạo nhóm phù hợp nhất.',
   },
 ];
 
@@ -43,10 +43,10 @@ export default function Landing() {
         </Link>
         <div className="landing-nav-links">
           <Link to="/login">
-            <Button variant="ghost" size="sm">Log in</Button>
+            <Button variant="ghost" size="sm">Đăng nhập</Button>
           </Link>
           <Link to="/register">
-            <Button variant="primary" size="sm">Get Started</Button>
+            <Button variant="primary" size="sm">Bắt đầu</Button>
           </Link>
         </div>
       </nav>
@@ -55,25 +55,25 @@ export default function Landing() {
       <section className="landing-hero">
         <div className="landing-badge">
           <span className="landing-badge-dot" />
-          Built for university communities
+          Dành riêng cho cộng đồng sinh viên
         </div>
         <h1>
-          Discover what's happening{' '}
-          <span className="gradient-text">around campus</span>
+          Khám phá những điều thú vị{' '}
+          <span className="brutalist-highlight">xung quanh trường học</span>
         </h1>
         <p className="landing-hero-sub">
-          Find and join study groups, sports matches, and social events near you.
-          Create your own activities and build your campus network.
+          Tìm và tham gia các nhóm học tập, trận thể thao, và sự kiện xã hội gần bạn.
+          Tạo hoạt động riêng và xây dựng mạng lưới quan hệ trong trường.
         </p>
         <div className="landing-hero-actions">
           <Link to="/register">
             <Button variant="primary" size="lg">
-              Start Exploring
+              Bắt đầu khám phá
             </Button>
           </Link>
           <Link to="/login">
             <Button variant="secondary" size="lg">
-              I have an account
+              Tôi đã có tài khoản
             </Button>
           </Link>
         </div>
@@ -82,9 +82,9 @@ export default function Landing() {
       {/* Features */}
       <section className="landing-features">
         <div className="landing-features-header">
-          <h2>Everything you need to connect</h2>
+          <h2>Mọi thứ bạn cần để kết nối</h2>
           <p>
-            Simple, fast, and designed for campus life.
+            Đơn giản, nhanh chóng, và được thiết kế cho cuộc sống sinh viên.
           </p>
         </div>
         <div className="landing-features-grid">
@@ -101,11 +101,11 @@ export default function Landing() {
       {/* CTA */}
       <section className="landing-cta">
         <div className="landing-cta-inner">
-          <h2>Ready to connect?</h2>
-          <p>Join your campus community in under a minute.</p>
+          <h2>Bạn đã sẵn sàng kết nối?</h2>
+          <p>Tham gia cộng đồng sinh viên trong chưa đầy một phút.</p>
           <Link to="/register">
             <Button variant="primary" size="lg">
-              Create your account
+              Tạo tài khoản
             </Button>
           </Link>
         </div>
@@ -113,7 +113,7 @@ export default function Landing() {
 
       {/* Footer */}
       <footer className="landing-footer">
-        <p>© {new Date().getFullYear()} UniConnect. A student project exploring location-aware social discovery.</p>
+        <p>© {new Date().getFullYear()} UniConnect. Một dự án sinh viên nhằm khám phá cộng đồng qua mạng lưới vị trí.</p>
       </footer>
     </div>
   );

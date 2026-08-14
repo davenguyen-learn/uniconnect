@@ -69,17 +69,19 @@ async def get_group(
     db: AsyncSession = Depends(get_db),
 ):
     """Get details of a specific group."""
-    return await group_service.get_group(db, group_id)
+    return await group_service.get_group(db, group_id, user_id=uuid.UUID(current_user["sub"]))
 
 
 @router.post("/{group_id}/join", status_code=status.HTTP_204_NO_CONTENT)
 async def join_group(
     group_id: uuid.UUID,
+    payload: dict | None = None,
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Join a group."""
-    await group_service.join_group(db, group_id, uuid.UUID(current_user["sub"]))
+    form_responses = payload.get("form_responses") if payload else None
+    await group_service.join_group(db, group_id, uuid.UUID(current_user["sub"]), form_responses=form_responses)
 
 
 @router.post("/{group_id}/leave", status_code=status.HTTP_204_NO_CONTENT)

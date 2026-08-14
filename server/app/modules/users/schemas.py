@@ -13,6 +13,7 @@ class UserProfile(BaseModel):
     full_name: str | None
     bio: str | None
     university: str | None
+    interests: list[str] | None = None
     role: str
     created_at: datetime
 
@@ -23,6 +24,7 @@ class UserUpdate(BaseModel):
     full_name: str | None = Field(default=None, max_length=100)
     bio: str | None = Field(default=None, max_length=1000)
     university: str | None = Field(default=None, max_length=150)
+    interests: list[str] | None = None
 
 
 class UserFollowResponse(BaseModel):

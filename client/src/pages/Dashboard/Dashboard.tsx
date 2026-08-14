@@ -2,14 +2,18 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { activitiesApi, type ActivityResponse, type NearbyQuery } from '../../api/activities';
 import { useToast } from '../../components/Toast/ToastContext';
+import { useAuth } from '../../contexts/AuthContext';
 import Map from '../../components/Map/Map';
 import Input from '../../components/Input/Input';
 import './Dashboard.css';
 import L from 'leaflet';
 
+const PAGE_SIZE = 15;
+
 export default function Dashboard() {
   const toast = useToast();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [activities, setActivities] = useState<ActivityResponse[]>([]);
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
@@ -20,9 +24,23 @@ export default function Dashboard() {
   const [radius, setRadius] = useState<number>(50000);
   const [freeToJoin, setFreeToJoin] = useState(false);
   const [category, setCategory] = useState<string | undefined>(undefined);
-  const [timeRange, setTimeRange] = useState<string>('All');
+  const [daysAhead, setDaysAhead] = useState<number | undefined>(undefined);
+  const [showFilters, setShowFilters] = useState(false);
 
-  const timeRanges = ['All', 'Today', 'This Week', 'This Month'];
+  // Pagination states
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  const daysOptions = [
+    { label: 'Tất cả', value: undefined },
+    { label: '1 ngày', value: 1 },
+    { label: '3 ngày', value: 3 },
+    { label: '7 ngày', value: 7 },
+    { label: '14 ngày', value: 14 },
+    { label: '30 ngày', value: 30 },
+  ];
 
   // Debounced search
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -33,6 +51,11 @@ export default function Dashboard() {
     }, 500);
     return () => clearTimeout(timer);
   }, [searchQuery]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, radius, freeToJoin, category, daysAhead]);
 
   // Get user location on mount
   useEffect(() => {
@@ -56,7 +79,7 @@ export default function Dashboard() {
     if (userLocation) {
       fetchNearby(userLocation[0], userLocation[1]);
     }
-  }, [userLocation, debouncedSearch, radius, freeToJoin, category]);
+  }, [userLocation, debouncedSearch, radius, freeToJoin, category, daysAhead, page]);
 
   async function fetchNearby(lat: number, lng: number) {
     try {
@@ -65,136 +88,119 @@ export default function Dashboard() {
         lat,
         lng,
         radius,
-        limit: 50,
+        limit: PAGE_SIZE,
+        offset: (page - 1) * PAGE_SIZE,
         search: debouncedSearch || undefined,
         free_to_join: freeToJoin ? true : undefined,
-        category: category !== 'All' ? category : undefined
+        category: category !== 'All' ? category : undefined,
+        days_ahead: daysAhead,
       };
       const response = await activitiesApi.nearby(query);
       setActivities(response.items);
+      setTotal(response.total);
     } catch (err) {
-      toast.error('Failed to fetch nearby activities');
+      toast.error('Không thể tải các hoạt động gần đây');
     } finally {
       setLoading(false);
     }
   }
 
-  // When map moves, we could re-fetch based on map center
   function handleBoundsChange(_bounds: L.LatLngBounds) {
     // For MVP, we'll just fetch based on initial location to avoid spamming the API.
-    // In a real app, we'd debounce this and fetch using map center.
   }
 
   const categories = ['All', 'Study', 'Sports', 'Social', 'Gaming', 'Food'];
 
-  const now = new Date();
-  const filteredActivities = activities.filter(a => {
-    if (timeRange === 'All') return true;
-    const start = new Date(a.start_time);
-    if (timeRange === 'Today') {
-      return start.toDateString() === now.toDateString();
-    }
-    if (timeRange === 'This Week') {
-      const diff = start.getTime() - now.getTime();
-      return diff >= 0 && diff <= 7 * 24 * 60 * 60 * 1000;
-    }
-    if (timeRange === 'This Month') {
-      const diff = start.getTime() - now.getTime();
-      return diff >= 0 && diff <= 30 * 24 * 60 * 60 * 1000;
-    }
-    return true;
-  });
-
   return (
     <div className="dashboard-page">
       <div className="dashboard-sidebar glass">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-          <h2>Discover</h2>
-          <Link to="/activities/new" className="btn btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}>
-            + Create
+        <div className="dashboard-header">
+          <h2>Khám phá</h2>
+          <Link to="/activities/new" className="btn btn-primary btn-sm">
+            Tạo mới
           </Link>
         </div>
-        <p className="dashboard-subtitle">Find activities happening near you.</p>
-
-        <div className="filters-section" style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px', maxWidth: '100%', boxSizing: 'border-box' }}>
-          <Input
-            placeholder="Search activities..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-            <select
-              value={radius}
-              onChange={(e) => setRadius(Number(e.target.value))}
-              style={{
-                padding: '8px',
-                borderRadius: '8px',
-                border: '1px solid rgba(255,255,255,0.1)',
-                background: 'black',
-                color: 'inherit',
-                outline: 'none'
-              }}
-            >
-              <option value={5000}>Within 5 km</option>
-              <option value={10000}>Within 10 km</option>
-              <option value={25000}>Within 25 km</option>
-              <option value={50000}>Within 50 km</option>
-            </select>
-
-            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '0.9rem' }}>
-              <input
-                type="checkbox"
-                checked={freeToJoin}
-                onChange={(e) => setFreeToJoin(e.target.checked)}
+        <div className="filters-section">
+          <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+            <div style={{ flex: 1 }}>
+              <Input
+                placeholder="Tìm kiếm hoạt động..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
-              Free to join
-            </label>
+            </div>
+            <button
+              className="btn btn-secondary"
+              onClick={() => setShowFilters(!showFilters)}
+              style={{ whiteSpace: 'nowrap' }}
+            >
+              {showFilters ? 'Ẩn bộ lọc' : 'Bộ lọc'}
+            </button>
           </div>
 
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', paddingBottom: '4px', width: '100%' }}>
-            {categories.map(c => (
-              <div
-                key={c}
-                className={`filter-pill ${category === c || (c === 'All' && !category) ? 'active' : ''}`}
-                onClick={() => setCategory(c === 'All' ? undefined : c)}
+          {showFilters && (
+            <div className="filters-grid" style={{ marginTop: 'var(--space-3)' }}>
+              <select
+                value={radius}
+                onChange={(e) => setRadius(Number(e.target.value))}
+                className="form-select"
               >
-                {c}
-              </div>
-            ))}
-          </div>
+                <option value={5000}>Trong bán kính 5 km</option>
+                <option value={10000}>Trong bán kính 10 km</option>
+                <option value={25000}>Trong bán kính 25 km</option>
+                <option value={50000}>Trong bán kính 50 km</option>
+              </select>
 
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', paddingBottom: '4px', width: '100%' }}>
-            {timeRanges.map(t => (
-              <div
-                key={t}
-                className={`filter-pill ${timeRange === t ? 'active' : ''}`}
-                onClick={() => setTimeRange(t)}
-                style={{ backgroundColor: timeRange === t ? 'var(--primary-color)' : 'transparent', borderColor: 'var(--primary-color)' }}
+              <select
+                value={category || 'All'}
+                onChange={(e) => setCategory(e.target.value === 'All' ? undefined : e.target.value)}
+                className="form-select"
               >
-                {t}
-              </div>
-            ))}
-          </div>
+                <option value="All">Tất cả danh mục</option>
+                {categories.filter(c => c !== 'All').map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+
+              <select
+                value={daysAhead !== undefined ? String(daysAhead) : 'all'}
+                onChange={(e) => setDaysAhead(e.target.value === 'all' ? undefined : Number(e.target.value))}
+                className="form-select"
+              >
+                <option value="all">Bất kỳ lúc nào</option>
+                {daysOptions.filter(opt => opt.value !== undefined).map(opt => (
+                  <option key={opt.label} value={opt.value}>Trong vòng {opt.label}</option>
+                ))}
+              </select>
+
+              <label className="filter-checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={freeToJoin}
+                  onChange={(e) => setFreeToJoin(e.target.checked)}
+                />
+                Tham gia miễn phí
+              </label>
+            </div>
+          )}
         </div>
 
-        <div className="activity-list" style={{ marginTop: '16px' }}>
+        <div className="activity-list">
           {loading ? (
-            <div className="activity-list-loading">Loading activities...</div>
-          ) : filteredActivities.length === 0 ? (
+            <div className="activity-list-loading">Đang tải hoạt động...</div>
+          ) : activities.length === 0 ? (
             <div className="activity-list-empty">
-              No activities found nearby. Try creating one!
+              Không tìm thấy hoạt động nào gần đây. Hãy thử tạo một hoạt động!
             </div>
           ) : (
-            filteredActivities.map(a => (
+            activities.map(a => (
               <div
                 key={a.id}
                 className="activity-list-item"
                 onClick={() => navigate(`/activities/${a.id}`)}
-                style={{ cursor: 'pointer' }}
               >
                 <div className="activity-list-item-header">
-                  <span className="activity-category">{a.category || 'General'}</span>
+                  <span className="activity-category">{a.category || 'Chung'}</span>
                   {a.distance_meters !== undefined && (
                     <span className="activity-distance">
                       {(a.distance_meters / 1000).toFixed(1)} km
@@ -203,20 +209,70 @@ export default function Dashboard() {
                 </div>
                 <h4>{a.title}</h4>
                 <div className="activity-list-item-footer">
-                  <span>{new Date(a.start_time).toLocaleDateString()}</span>
-                  <span>{a.current_participants}/{a.max_participants} joined</span>
+                  <span>{new Date(a.start_time).toLocaleDateString('vi-VN')}</span>
+                  <span>{a.current_participants}/{a.max_participants} người tham gia</span>
                 </div>
               </div>
             ))
           )}
         </div>
+
+        {/* Pagination */}
+        {total > PAGE_SIZE && (
+          <div className="pagination">
+            <button
+              className="pagination-btn"
+              disabled={page <= 1}
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+            >
+              ‹ Trước
+            </button>
+            <div className="pagination-pages">
+              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                let pageNum: number;
+                if (totalPages <= 5) {
+                  pageNum = i + 1;
+                } else if (page <= 3) {
+                  pageNum = i + 1;
+                } else if (page >= totalPages - 2) {
+                  pageNum = totalPages - 4 + i;
+                } else {
+                  pageNum = page - 2 + i;
+                }
+                return (
+                  <button
+                    key={pageNum}
+                    className={`pagination-page ${page === pageNum ? 'active' : ''}`}
+                    onClick={() => setPage(pageNum)}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+            </div>
+            <button
+              className="pagination-btn"
+              disabled={page >= totalPages}
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            >
+              Tiếp ›
+            </button>
+          </div>
+        )}
+
+        {!loading && total > 0 && (
+          <div className="pagination-info">
+            Hiển thị {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, total)} trên {total}
+          </div>
+        )}
       </div>
 
       <div className="dashboard-map-container">
         <Map
-          activities={filteredActivities}
+          activities={activities}
           userLocation={userLocation}
           onBoundsChange={handleBoundsChange}
+          userInterests={(user as any)?.interests}
         />
       </div>
     </div>

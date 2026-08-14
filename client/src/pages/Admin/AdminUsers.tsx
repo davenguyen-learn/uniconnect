@@ -69,7 +69,7 @@ export default function AdminUsers() {
   return (
     <div className="admin-dashboard">
       <div className="admin-page-header">
-        <h1 className="admin-page-title">👥 Quản lý Users</h1>
+        <h1 className="admin-page-title">👥 Quản lý người dùng</h1>
         <p className="admin-page-desc">Tổng cộng {total} người dùng</p>
       </div>
 
@@ -78,7 +78,7 @@ export default function AdminUsers() {
         <input
           type="text"
           className="admin-search-input"
-          placeholder="🔍 Tìm kiếm username, email, tên..."
+          placeholder="🔍 Tìm kiếm tên người dùng, email, tên..."
           value={search}
           onChange={e => setSearch(e.target.value)}
         />
@@ -87,19 +87,19 @@ export default function AdminUsers() {
           value={roleFilter}
           onChange={e => setRoleFilter(e.target.value)}
         >
-          <option value="">Tất cả roles</option>
-          <option value="student">Student</option>
-          <option value="moderator">Moderator</option>
-          <option value="admin">Admin</option>
+          <option value="">Tất cả vai trò</option>
+          <option value="student">Sinh viên</option>
+          <option value="moderator">Người điều hành</option>
+          <option value="admin">Quản trị viên</option>
         </select>
         <select
           className="admin-filter-select"
           value={statusFilter}
           onChange={e => setStatusFilter(e.target.value)}
         >
-          <option value="">Tất cả status</option>
-          <option value="true">Active</option>
-          <option value="false">Inactive</option>
+          <option value="">Tất cả trạng thái</option>
+          <option value="true">Hoạt động</option>
+          <option value="false">Ngừng hoạt động</option>
         </select>
       </div>
 
@@ -108,13 +108,13 @@ export default function AdminUsers() {
         <table className="admin-table">
           <thead>
             <tr>
-              <th>User</th>
+              <th>Người dùng</th>
               <th>Email</th>
-              <th>University</th>
-              <th>Role</th>
-              <th>Status</th>
+              <th>Trường đại học</th>
+              <th>Vai trò</th>
+              <th>Trạng thái</th>
               <th>Ngày tạo</th>
-              <th>Actions</th>
+              <th>Thao tác</th>
             </tr>
           </thead>
           <tbody>
@@ -129,7 +129,7 @@ export default function AdminUsers() {
             ) : users.length === 0 ? (
               <tr>
                 <td colSpan={7} style={{ textAlign: 'center', padding: 'var(--space-8)', color: 'var(--color-text-tertiary)' }}>
-                  Không tìm thấy user nào
+                  Không tìm thấy người dùng nào
                 </td>
               </tr>
             ) : (
@@ -152,7 +152,7 @@ export default function AdminUsers() {
                   </td>
                   <td>
                     <span className={`admin-badge admin-badge-${user.is_active ? 'active' : 'inactive'}`}>
-                      {user.is_active ? 'Active' : 'Inactive'}
+                      {user.is_active ? 'Hoạt động' : 'Ngừng hoạt động'}
                     </span>
                   </td>
                   <td className="admin-cell-muted">{formatDate(user.created_at)}</td>
@@ -164,15 +164,15 @@ export default function AdminUsers() {
                         onChange={e => handleRoleChange(user.id, e.target.value)}
                         style={{ padding: '4px 28px 4px 8px', fontSize: 'var(--font-size-xs)' }}
                       >
-                        <option value="student">Student</option>
-                        <option value="moderator">Moderator</option>
-                        <option value="admin">Admin</option>
+                        <option value="student">Sinh viên</option>
+                        <option value="moderator">Người điều hành</option>
+                        <option value="admin">Quản trị viên</option>
                       </select>
                       <button
                         className={`admin-btn ${user.is_active ? 'admin-btn-danger' : 'admin-btn-success'}`}
                         onClick={() => handleStatusToggle(user.id, user.is_active)}
                       >
-                        {user.is_active ? 'Ban' : 'Unban'}
+                        {user.is_active ? 'Cấm' : 'Bỏ cấm'}
                       </button>
                     </div>
                   </td>

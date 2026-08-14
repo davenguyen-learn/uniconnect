@@ -10,7 +10,7 @@ export default function ActivityCard({ activity, onClick }: ActivityCardProps) {
   return (
     <div className="activity-card-ui" onClick={onClick}>
       <div className="activity-card-header">
-        <span className="activity-card-category">{activity.category || 'General'}</span>
+        <span className="activity-card-category">{activity.category || 'Chung'}</span>
         {typeof activity.distance_meters === 'number' && (
           <span className="activity-card-distance">
             {(activity.distance_meters / 1000).toFixed(1)} km
@@ -20,7 +20,7 @@ export default function ActivityCard({ activity, onClick }: ActivityCardProps) {
       <h4 className="activity-card-title">{activity.title}</h4>
       <div className="activity-card-footer">
         <span>{new Date(activity.start_time).toLocaleDateString()}</span>
-        <span>{activity.current_participants}/{activity.max_participants} joined</span>
+        <span>{activity.current_participants}/{activity.max_participants} người tham gia</span>
       </div>
     </div>
   );
