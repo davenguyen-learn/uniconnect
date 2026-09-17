@@ -1,159 +1,275 @@
-"""Chat service using Google GenAI and Function Calling."""
+"""Chat Agent Service with Tool Execution Guards and 3-Level Fallback."""
 
 import uuid
-import json
+import asyncio
+import logging
+from datetime import datetime, timezone
 from google import genai
 from google.genai import types
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.modules.chat.schemas import ChatMessage, ChatResponse
-from app.modules.chat.tools import search_activities_tool
-from app.modules.activities.service import _activity_to_response
-from app.modules.activities.repository import get_by_id, get_coordinates_from_db
-from app.modules.activities.spatial import obfuscate_coordinates
+from app.modules.chat.schemas import (
+    ChatMessage,
+    ChatRequest,
+    ChatResponse,
+    ChatEventCardItem,
+)
+from app.modules.chat.tools import (
+    search_activities_tool,
+    get_user_schedule_tool,
+    search_groups_tool,
+)
+from app.modules.chat.fallback import generate_deterministic_fallback
+from app.modules.chat.provider import CHAT_TOOLS, SYSTEM_INSTRUCTION, get_model_candidates
 
-# Tool declarations for Gemini
-search_tool = {
-    "function_declarations": [
-        {
-            "name": "search_activities",
-            "description": "Search for university activities and events based on user preferences. Use this when the user asks for recommendations or wants to find activities.",
-            "parameters": {
-                "type": "OBJECT",
-                "properties": {
-                    "semantic_query": {
-                        "type": "STRING",
-                        "description": "A natural language query representing the semantic meaning of the user's request (e.g. 'activities that grant extracurricular points' or 'events for people without vehicles'). Use this for complex matching.",
-                    },
-                    "category": {
-                        "type": "STRING",
-                        "description": "The category of the activity (e.g. sports, academics, social, tech). If not specified, leave empty.",
-                    },
-                    "keyword": {
-                        "type": "STRING",
-                        "description": "A search term or keyword to match against activity title and description.",
-                    },
-                    "radius_meters": {
-                        "type": "INTEGER",
-                        "description": "Search radius in meters. Default is 10000 (10km).",
-                    },
-                    "limit": {
-                        "type": "INTEGER",
-                        "description": "Max number of activities to return. Default is 5.",
-                    }
-                },
-            },
-        }
-    ]
-}
+logger = logging.getLogger(__name__)
+
+# Tool Execution Guards (LOCK 8)
+MAX_TOOL_ROUNDS = 3
+MAX_TOOL_CALLS_PER_REQUEST = 6
+TOOL_TIMEOUT_SECONDS = 5.0
+
+DEFAULT_SUGGESTIONS = [
+    "Cuối tuần này có hoạt động CTXH nào không?",
+    "Kiểm tra xem lịch thứ 7 của mình có trống không?",
+    "CLB nào đang tuyển thành viên mới?",
+]
 
 
 async def handle_chat(
     db: AsyncSession,
-    user_id: uuid.UUID,
-    messages: list[ChatMessage],
+    user_id: uuid.UUID | None,
+    request: ChatRequest,
     user_lat: float | None = None,
     user_lng: float | None = None,
 ) -> ChatResponse:
-    """Process a chat using Gemini and execute tool calls if necessary."""
-    if not settings.GEMINI_API_KEY:
-        return ChatResponse(reply="AI features are currently disabled. Please configure GEMINI_API_KEY.")
-
-    client = genai.Client(api_key=settings.GEMINI_API_KEY)
+    """
+    Orchestrates user prompt, Gemini function calling with execution guards,
+    and automatic 3-level fallback.
+    """
+    conversation_id = request.conversation_id or str(uuid.uuid4())
     
-    # We use gemini-2.5-flash which is great for fast function calling
-    model_name = "gemini-2.5-flash"
+    # Extract latest user message
+    latest_user_text = ""
+    if request.message:
+        latest_user_text = request.message.strip()
+    elif request.messages and len(request.messages) > 0:
+        latest_user_text = request.messages[-1].content.strip()
 
-    system_instruction = (
-        "You are UniConnect's AI Assistant. Your goal is to help university students discover "
-        "relevant activities. Be concise, friendly, and helpful. "
-        "When users ask for activity recommendations, ALWAYS use the 'search_activities' tool to fetch real data. "
-        "Do not invent activities. Only recommend the ones returned by the tool."
-    )
+    lat = request.user_lat if request.user_lat is not None else user_lat
+    lng = request.user_lng if request.user_lng is not None else user_lng
 
-    # Convert messages to Gemini format
-    gemini_contents = []
-    for msg in messages:
-        # Assuming role is 'user' or 'model'
+    # If Gemini API key is not configured, directly execute Level 2 Fallback
+    if not settings.GEMINI_API_KEY:
+        logger.info("GEMINI_API_KEY not set. Using deterministic fallback.")
+        return await generate_deterministic_fallback(
+            db=db,
+            user_id=user_id,
+            conversation_id=conversation_id,
+            user_message=latest_user_text,
+            user_lat=lat,
+            user_lng=lng,
+        )
+
+    # Initialize Gemini client
+    try:
+        client = genai.Client(api_key=settings.GEMINI_API_KEY)
+    except Exception as e:
+        logger.warning(f"Failed to initialize Gemini Client: {e}")
+        return await generate_deterministic_fallback(
+            db=db,
+            user_id=user_id,
+            conversation_id=conversation_id,
+            user_message=latest_user_text,
+            user_lat=lat,
+            user_lng=lng,
+        )
+
+    # Convert request messages to Gemini Content
+    gemini_contents: list[types.Content] = []
+    if request.messages and len(request.messages) > 0:
+        for m in request.messages[-6:]:  # Keep last 6 messages within request session boundary
+            role = "user" if m.role in ("user", "human") else "model"
+            gemini_contents.append(
+                types.Content(role=role, parts=[types.Part.from_text(text=m.content)])
+            )
+    else:
         gemini_contents.append(
-            types.Content(role=msg.role, parts=[types.Part.from_text(text=msg.content)])
+            types.Content(role="user", parts=[types.Part.from_text(text=latest_user_text)])
         )
 
-    # First turn: call the model
-    response = client.models.generate_content(
-        model=model_name,
-        contents=gemini_contents,
-        config=types.GenerateContentConfig(
-            system_instruction=system_instruction,
-            tools=[search_tool],
-            temperature=0.7,
-        )
-    )
+    model_candidates = get_model_candidates()
+    collected_cards: list[ChatEventCardItem] = []
+    total_tool_calls = 0
+    final_reply_text = ""
 
-    recommended_activities = []
+    # Attempt Level 1: Gemini Provider Loop
+    try:
+        used_model = model_candidates[0]
+        response = None
 
-    # If the model decides to call a tool
-    if response.function_calls:
-        for function_call in response.function_calls:
-            if function_call.name == "search_activities":
-                # Extract arguments
-                args = function_call.args
-                category = args.get("category")
-                keyword = args.get("keyword")
-                semantic_query = args.get("semantic_query")
-                radius_meters = args.get("radius_meters", 10000)
-                limit = args.get("limit", 5)
-
-                # Execute our internal DB function
-                tool_results = await search_activities_tool(
-                    db=db,
-                    user_id=user_id,
-                    category=category,
-                    keyword=keyword,
-                    semantic_query=semantic_query,
-                    lat=user_lat,
-                    lng=user_lng,
-                    radius_meters=radius_meters,
-                    limit=limit
-                )
-                
-                # Fetch full Activity models to return in the API response
-                for act_data in tool_results:
-                    act_model = await get_by_id(db, uuid.UUID(act_data["id"]))
-                    if act_model:
-                        coords = await get_coordinates_from_db(db, act_model.id)
-                        lat, lng = coords if coords else (0, 0)
-                        lat, lng = obfuscate_coordinates(lat, lng)
-                        
-                        dist = act_data.get("distance_meters")
-                        act_resp = _activity_to_response(act_model, lat, lng, distance=dist)
-                        recommended_activities.append(act_resp)
-
-                # Send tool response back to the model
-                tool_part = types.Part.from_function_response(
-                    name="search_activities",
-                    response={"activities": tool_results}
-                )
-                
-                # Append model's function call and our response to history
-                gemini_contents.append(response.candidates[0].content)
-                gemini_contents.append(
-                    types.Content(role="user", parts=[tool_part])
-                )
-
-                # Second turn: get final answer
+        for model_name in model_candidates:
+            try:
                 response = client.models.generate_content(
                     model=model_name,
                     contents=gemini_contents,
                     config=types.GenerateContentConfig(
-                        system_instruction=system_instruction,
-                        tools=[search_tool],
+                        system_instruction=SYSTEM_INSTRUCTION,
+                        tools=[CHAT_TOOLS],
                         temperature=0.7,
+                    ),
+                )
+                used_model = model_name
+                break
+            except Exception as e:
+                logger.warning(f"Model {model_name} invocation failed: {e}")
+                continue
+
+        if not response:
+            raise RuntimeError("All Gemini model candidates failed.")
+
+        # Tool calling loop with guards
+        current_round = 0
+        while response and response.function_calls and current_round < MAX_TOOL_ROUNDS:
+            current_round += 1
+            tool_parts: list[types.Part] = []
+
+            for function_call in response.function_calls:
+                total_tool_calls += 1
+                if total_tool_calls > MAX_TOOL_CALLS_PER_REQUEST:
+                    logger.warning("Exceeded MAX_TOOL_CALLS_PER_REQUEST guard.")
+                    break
+
+                func_name = function_call.name
+                func_args = function_call.args or {}
+                logger.info(f"Executing tool: {func_name} with args: {func_args}")
+
+                try:
+                    if func_name == "search_activities":
+                        tool_result = await asyncio.wait_for(
+                            search_activities_tool(
+                                db=db,
+                                user_id=user_id,
+                                keyword=func_args.get("keyword"),
+                                category=func_args.get("category"),
+                                is_social_work=func_args.get("is_social_work"),
+                                exclude_user_busy_times=func_args.get("exclude_user_busy_times", True),
+                                lat=lat,
+                                lng=lng,
+                                radius_meters=func_args.get("radius_meters", 25000),
+                                limit=func_args.get("limit", 4),
+                            ),
+                            timeout=TOOL_TIMEOUT_SECONDS,
+                        )
+                        # Extract cards for UI rendering
+                        for item in tool_result.items:
+                            collected_cards.append(
+                                ChatEventCardItem(
+                                    activity_id=item.activity_id,
+                                    title=item.title,
+                                    start_time=item.start_time,
+                                    end_time=item.end_time,
+                                    location_name=item.location_name,
+                                    social_work_days=item.social_work_days,
+                                    distance_meters=item.distance_meters,
+                                    distance_status=item.distance_status,
+                                    conflict_status=item.conflict_status,
+                                    registration_status=item.registration_status,
+                                    eligibility_status=item.eligibility_status,
+                                )
+                            )
+                        tool_payload = tool_result.model_dump()
+
+                    elif func_name == "get_user_schedule":
+                        if user_id:
+                            tool_result = await asyncio.wait_for(
+                                get_user_schedule_tool(
+                                    db=db,
+                                    user_id=user_id,
+                                    days_ahead=func_args.get("days_ahead", 7),
+                                ),
+                                timeout=TOOL_TIMEOUT_SECONDS,
+                            )
+                            tool_payload = tool_result.model_dump()
+                        else:
+                            tool_payload = {"busy_slots": [], "total_busy_slots": 0}
+
+                    elif func_name == "search_groups":
+                        tool_result = await asyncio.wait_for(
+                            search_groups_tool(
+                                db=db,
+                                user_id=user_id,
+                                keyword=func_args.get("keyword"),
+                                limit=func_args.get("limit", 4),
+                            ),
+                            timeout=TOOL_TIMEOUT_SECONDS,
+                        )
+                        tool_payload = tool_result.model_dump()
+
+                    else:
+                        tool_payload = {"error": f"Unknown tool name: {func_name}"}
+
+                except asyncio.TimeoutError:
+                    logger.warning(f"Tool {func_name} timed out after {TOOL_TIMEOUT_SECONDS}s")
+                    tool_payload = {"error": "Tool execution timed out."}
+                except Exception as tool_err:
+                    logger.warning(f"Tool {func_name} execution error: {tool_err}")
+                    tool_payload = {"error": f"Tool execution failed: {str(tool_err)}"}
+
+                tool_parts.append(
+                    types.Part.from_function_response(
+                        name=func_name,
+                        response=tool_payload,
                     )
                 )
 
-    return ChatResponse(
-        reply=response.text or "I couldn't generate a response.",
-        recommended_activities=recommended_activities if recommended_activities else None
-    )
+            # Append model's thought & our tool response to contents
+            if response.candidates and response.candidates[0].content:
+                gemini_contents.append(response.candidates[0].content)
+            gemini_contents.append(types.Content(role="user", parts=tool_parts))
+
+            # Synthesize final natural response
+            try:
+                response = client.models.generate_content(
+                    model=used_model,
+                    contents=gemini_contents,
+                    config=types.GenerateContentConfig(
+                        system_instruction=SYSTEM_INSTRUCTION,
+                        temperature=0.7,
+                    ),
+                )
+            except Exception as synth_err:
+                logger.warning(f"Synthesis step failed with {used_model}: {synth_err}")
+                break
+
+        final_reply_text = (response.text if response and response.text else "").strip()
+        if not final_reply_text:
+            if collected_cards:
+                final_reply_text = f"UniConnect đã tìm thấy {len(collected_cards)} hoạt động phù hợp với bạn bên dưới:"
+            else:
+                final_reply_text = "Mình đã kiểm tra thông tin cho bạn rồi nhé!"
+
+        chat_msg = ChatMessage(
+            role="assistant",
+            content=final_reply_text,
+            cards=collected_cards if collected_cards else None,
+        )
+
+        return ChatResponse(
+            conversation_id=conversation_id,
+            message=chat_msg,
+            reply=chat_msg.content,
+            suggestions=DEFAULT_SUGGESTIONS,
+        )
+
+    except Exception as gemini_err:
+        logger.error(f"Gemini provider error, executing Level 2 fallback: {gemini_err}", exc_info=True)
+        return await generate_deterministic_fallback(
+            db=db,
+            user_id=user_id,
+            conversation_id=conversation_id,
+            user_message=latest_user_text,
+            user_lat=lat,
+            user_lng=lng,
+        )

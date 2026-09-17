@@ -10,7 +10,6 @@ from app.modules.users.models import User, UserRole, UserFollow
 from app.modules.activities.models import Activity, ActivityPrivacy
 from app.modules.groups.models import Group, GroupMember, GroupRole, GroupJoinRequest
 from app.modules.participation.models import JoinRequest, RequestStatus
-from app.modules.documents.models import Document
 from app.modules.forms.models import CustomForm, FormField
 from app.modules.trophies.models import Trophy, UserTrophy
 
@@ -21,7 +20,7 @@ async def seed():
     async with async_session() as db:
         print("Clearing existing data...")
         from sqlalchemy import text
-        await db.execute(text("TRUNCATE TABLE join_requests, activities, documents, group_members, groups, user_follows, users CASCADE"))
+        await db.execute(text("TRUNCATE TABLE join_requests, activities, group_members, groups, user_follows, users CASCADE"))
         await db.commit()
 
         print("Creating users...")
@@ -227,28 +226,6 @@ Mỗi người hoàn thành sẽ nhận được huy chương điện tử!
         ut1 = UserTrophy(user_id=users[0].id, trophy_id=t1.id)
         ut2 = UserTrophy(user_id=users[1].id, trophy_id=t2.id)
         db.add_all([ut1, ut2])
-        await db.commit()
-        
-        print("Creating documents...")
-        docs_data = [
-            ("React Cheat Sheet", "Very useful", "react_cheat_sheet.pdf", "application/pdf", 10240, users[0].id, groups[0].id),
-            ("AI Syllabus", "Course syllabus for this semester", "syllabus.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", 20480, users[2].id, groups[2].id),
-            ("Public Event Poster", "Poster for our upcoming event", "poster.jpg", "image/jpeg", 512000, users[3].id, None),
-        ]
-        
-        for title, desc, fname, ftype, fsize, auth_id, group_id in docs_data:
-            doc = Document(
-                title=title,
-                description=desc,
-                file_name=fname,
-                file_type=ftype,
-                file_size=fsize,
-                file_url=f"https://example.com/seed/{fname}",
-                author_id=auth_id,
-                group_id=group_id
-            )
-            db.add(doc)
-            
         await db.commit()
         
         print("Seeding completed successfully!")

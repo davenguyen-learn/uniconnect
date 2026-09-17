@@ -64,7 +64,7 @@ import app.modules.activities.models  # noqa: F401, E402
 import app.modules.groups.models  # noqa: F401, E402
 import app.modules.participation.models  # noqa: F401, E402
 import app.modules.interactions.models  # noqa: F401, E402
-import app.modules.documents.models  # noqa: F401, E402
 import app.modules.notifications.models  # noqa: F401, E402
 import app.modules.reports.models  # noqa: F401, E402
+import app.modules.calendar.models  # noqa: F401, E402
 

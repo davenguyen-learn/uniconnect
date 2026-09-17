@@ -1,0 +1,75 @@
+\documentclass[a4paper]{article}
+\usepackage{longtable}
+\usepackage{hcmut}
+\usepackage{float}
+\usepackage{xltabular}
+\usepackage{enumitem}
+\usepackage{indentfirst}
+\usepackage[most]{tcolorbox}
+\usepackage[numbers,sort&compress]{natbib}
+
+
+\renewcommand{\listfigurename}{Danh mục hình ảnh}
+\renewcommand{\listtablename}{Danh sách bảng biểu}
+\renewcommand{\bibname}{Tài liệu tham khảo}
+
+\tcbuselibrary{listings}
+
+\newtcblisting{mycode}[2][]{
+    arc=2mm,
+    breakable,
+    enhanced,
+    listing only,
+    listing options={
+        style=tcblatex,
+        language={#2}, % Thêm ngoặc nhọn ở đây để an toàn hơn
+        breaklines=true,
+        basicstyle=\small\ttfamily,
+        showstringspaces=false,
+        commentstyle=\color{gray},
+        keywordstyle=\color{blue},
+        stringstyle=\color{orange},
+        % Giữ lại literate để vẽ sơ đồ cây không bị lỗi
+        literate={├}{{\textsf{+}}}1 {─}{{\textsf{-}}}1 {└}{{\textsf{L}}}1 {│}{{\textsf{|}}}1
+    },
+    title=#1,
+    colback=gray!5!white,
+    colframe=blue!75!black,
+    fonttitle=\bfseries,
+    drop shadow
+}
+\setlength{\parindent}{1cm}
+\tolerance=1
+\emergencystretch=\maxdimen
+\hyphenpenalty=10000
+\hbadness=10000
+\begin{document}
+
+\include{Sections/0.1-Title}
+\include{Sections/0.2-Loi-cam-doan}
+\include{Sections/0.3-Loi-cam-on}
+\include{Sections/0.4-Tom-tat-de-tai}
+\include{Sections/0.5-Muc-luc}
+\include{Sections/0.6-Danh-muc-hinh-anh}
+\include{Sections/0.7-Danh-muc-bang-bieu}
+
+\include{Sections/1-Tong-quan-de-tai}
+
+\include{Sections/2-Co-so-ly-thuyet}
+
+\include{Sections/3-Phan-tich-cac-he-thong-lien-quan}
+
+\include{Sections/4-Cong-nghe-su-dung}
+
+\include{Sections/5-Phan-tich-va-thiet-ke-he-thong}
+
+\include{Sections/6-Hien-thuc-backend}
+
+\include{Sections/7-Hien-thuc-chatbot}
+
+\include{Sections/8-Ket-luan}
+
+\bibliographystyle{ieeetr} 
+\bibliography{tai-lieu}
+
+\end{document}

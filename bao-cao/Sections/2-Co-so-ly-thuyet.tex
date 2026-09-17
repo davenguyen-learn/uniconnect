@@ -1,0 +1,126 @@
+\section{Cơ sở lý thuyết}
+\subsection{Dịch vụ dựa trên vị trí (Location-Based Services - LBS)}
+\subsubsection{Khái niệm và mô hình mạng xã hội cục bộ (Hyper-local)}
+
+Dịch vụ dựa trên vị trí (LBS) là một kiến trúc phần mềm tích hợp khả năng xử lý thông tin địa lý nhằm cung cấp các dịch vụ hoặc nội dung chuyên biệt cho người dùng dựa trên tọa độ thực tế của họ tại một thời điểm nhất định. Trong khuôn khổ của đề tài, LBS không chỉ dừng lại ở việc xác định vị trí tĩnh mà được nâng cấp thành mô hình Mạng xã hội cục bộ (Hyper-local Social Network).
+
+Mô hình này dịch chuyển trọng tâm của sự tương tác từ "đồ thị mối quan hệ ảo" (vốn không biên giới) sang "đồ thị không gian thực". Hệ thống sẽ xem tọa độ địa lý của người dùng là một biến số động, liên tục thay đổi và sử dụng biến số này làm bộ lọc tiên quyết để phân phối luồng dữ liệu. Việc giới hạn không gian tương tác trong một bán kính cụ thể giúp cô đặc mật độ thông tin, tăng xác suất chuyển hóa từ các tương tác trực tuyến sang các hoạt động giao lưu, học tập ngoài đời thực của sinh viên.
+
+\subsubsection{Biểu diễn dữ liệu không gian trong kiến trúc máy tính}
+
+Dữ liệu không gian (Spatial Data) biểu diễn vị trí địa lý của các thực thể trên bề mặt Trái Đất. Trong các hệ thống công nghệ thông tin, mô hình tọa độ phổ biến nhất là Hệ tọa độ địa lý WGS 84 (World Geodetic System 1984), sử dụng hai thông số cơ bản\cite{national1984department}:
+
+\begin{itemize}
+    \item Kinh độ (Longitude - $\lambda$): Đo lường vị trí theo hướng Đông - Tây so với kinh tuyến gốc (Greenwich), có giá trị dao động từ $-180^\circ$ đến $+180^\circ$.
+    \item Vĩ độ (Latitude - $\phi$): Đo lường vị trí theo hướng Bắc - Nam so với đường xích đạo, có giá trị dao động từ $-90^\circ$ đến $+90^\circ$.
+\end{itemize}
+
+Để máy tính có thể lưu trữ và truyền tải dữ liệu này giữa Client (React.js) và Server (Python) một cách đồng bộ, cấu trúc định dạng GeoJSON chuẩn hóa được áp dụng\cite{butler2016geojson}. Một điểm vị trí (Point) hoặc một vùng không gian hoạt động (Polygon) sẽ được mã hóa dưới dạng các cặp giá trị số thực [longitude, latitude]. Tầng cơ sở dữ liệu sẽ chịu trách nhiệm chuyển đổi các cặp số thực này thành các đối tượng hình học (Geometry) hoặc địa lý (Geography) để thực thi các phép toán không gian.
+
+\subsubsection{Cơ chế xử lý và tối ưu hóa toán học khoảng cách địa lý trong PostgreSQL}
+
+Để thực thi các truy vấn không gian trong bán kính xác định cho hàng vạn sinh viên cùng lúc, hệ thống không áp dụng các công thức lượng giác cầu truyền thống (như Haversine) một cách tuần tự do chi phí tính toán các hàm số lượng giác (sin, cos, acos) trên tầng CPU là cực kỳ lớn. Thay vào đó, hệ quản trị cơ sở dữ liệu PostgreSQL tối ưu hóa quy trình này bằng các cơ chế hình học máy tính chuyên sâu thông qua hai hướng tiếp cận kỹ thuật\cite{orlandini2024postgresql}:
+
+Đại số hóa không gian 3 chiều (Giải pháp mã hóa Cube):
+
+Khi sử dụng module dữ liệu không gian mặc định, PostgreSQL dịch chuyển bài toán tính toán trên mặt cầu về không gian Euclid 3 chiều. Hệ thống tự động chuyển đổi cặp tọa độ Địa lý $(\text{Kinh độ } \lambda, \text{Vĩ độ } \phi)$ thành một điểm có tọa độ không gian Descarte 3 chiều $(x, y, z)$ nằm trên một khối lập phương giả định bao quanh Trái Đất theo công thức:
+
+$$x = R \cdot \cos(\phi) \cdot \cos(\lambda)$$
+
+$$y = R \cdot \cos(\phi) \cdot \sin(\lambda)$$
+
+$$z = R \cdot \sin(\phi)$$
+
+Khi thực hiện câu lệnh tìm kiếm các đối tượng xung quanh, thay vì tính toán cung tròn phức tạp, PostgreSQL tiến hành tính toán khoảng cách đường thẳng xuyên lòng đất giữa hai điểm (độ dài dây cung $C$) bằng công thức Pytago 3D với chi phí máy tính cực thấp:
+
+$$C = \sqrt{\Delta x^2 + \Delta y^2 + \Delta z^2}$$
+
+Sau khi có độ dài dây cung $C$, hệ thống mới thực hiện một phép tính đại số duy nhất để quy đổi ngược lại thành chiều dài cung tròn thực tế ($d$) trên bề mặt Trái Đất:
+
+$$d = 2R \cdot \arcsin\left(\frac{C}{2R}\right)$$
+
+Cơ chế này giúp loại bỏ hoàn toàn việc phải gọi hàng loạt hàm lượng giác phức tạp cho từng dòng dữ liệu khi quét bảng (Table scan), giúp tăng tốc độ truy vấn lên gấp nhiều lần.
+
+Mô hình toán học Elipsoid chính xác cao (Giải pháp PostGIS):
+
+Trong trường hợp hệ thống yêu cầu độ chính xác tuyệt đối, các hàm định vị cao cấp trong PostgreSQL sẽ áp dụng thuật toán hình học lặp (Vincenty's formulae)\cite{vincenty1975direct}. Thuật toán này không coi Trái Đất là một hình cầu phẳng đều, mà coi là một hình elipsoid có độ dẹt ở hai cực (chuẩn WGS 84). Thuật toán sẽ tính toán các đường trắc địa trên mặt cong elip bằng phương pháp thiết lập chuỗi số lặp cho đến khi độ sai số đạt mức dưới $0.5$ milimet, đảm bảo tính chính xác tối đa cho các dịch vụ định vị không gian.
+
+\subsection{Kỹ thuật nhúng dữ liệu văn bản (Text Embedding)}
+\subsubsection{Bản chất của Vector Embedding}
+
+Trong kỷ nguyên xử lý ngôn ngữ tự nhiên (NLP) hiện đại, văn bản được biểu diễn dưới dạng các vector liên tục đa chiều trong không gian số thực $\mathbb{R}^d$ (thường gọi là Dense Vectors). Khác với các phương pháp truyền thống dựa trên tần suất từ vựng, Embedding cho phép lượng hóa các đặc trưng ngữ nghĩa. Các văn bản có nội dung hoặc ngữ cảnh tương đồng sẽ được ánh xạ vào các điểm nằm gần nhau trong không gian toán học đa chiều.Đối với UniConnect, việc nhúng hồ sơ sinh viên và mô tả hoạt động thành vector giúp hệ thống "hiểu" được sự liên quan giữa các thực thể mà không cần sự trùng khớp tuyệt đối về mặt từ khóa.
+
+\subsubsection{Đo lường độ tương đồng trong không gian đa chiều}
+
+Để xác định mức độ phù hợp giữa người dùng và các sự kiện, hệ thống áp dụng các phép toán đo lường khoảng cách giữa các đầu mút vector\cite{cha2007comprehensive}.
+
+\textbf{a. Độ tương đồng Cosine (Cosine Similarity):}
+
+Đo lường góc giữa hai vector $\mathbf{A}$ và $\mathbf{B}$. Đây là phép đo phổ biến nhất vì nó tập trung vào hướng (ngữ nghĩa) thay vì độ dài của văn bản:
+
+\begin{equation}\text{similarity}(\mathbf{A}, \mathbf{B}) = \frac{\mathbf{A} \cdot \mathbf{B}}{|\mathbf{A}| |\mathbf{B}|} = \frac{\sum_{i=1}^{n} A_i B_i}{\sqrt{\sum_{i=1}^{n} A_i^2} \cdot \sqrt{\sum_{i=1}^{n} B_i^2}}\end{equation}
+
+\textbf{b. Khoảng cách Euclid (L2 Distance):}
+
+Đo khoảng cách thẳng giữa hai điểm trong không gian đa chiều, thường được sử dụng trong các bài toán phân cụm:
+
+\begin{equation}d(\mathbf{A}, \mathbf{B}) = \sqrt{\sum_{i=1}^{n} (A_i - B_i)^2}\end{equation}
+
+\subsection{Kỹ thuật lập chỉ mục Vector (Vector Indexing)}
+
+Việc tính toán khoảng cách giữa một truy vấn và toàn bộ cơ sở dữ liệu (Brute-force) có độ phức tạp $\mathcal{O}(N \cdot d)$, gây tắc nghẽn khi dữ liệu lớn. Hệ thống UniConnect áp dụng các thuật toán lập chỉ mục tìm kiếm hàng xóm gần nhất xấp xỉ (Approximate Nearest Neighbor - ANN).
+
+\subsubsection{Thuật toán IVFFlat (Inverted File with Flat Compression)}
+
+IVFFlat hoạt động dựa trên cơ chế phân cụm (Clustering). Không gian vector được chia thành $k$ cụm dựa trên thuật toán K-means với tâm cụm $C$:
+
+\begin{equation}C = \frac{1}{|X|} \sum_{x \in X} x\end{equation}
+
+Khi truy vấn, hệ thống chỉ quét qua các cụm gần nhất, giúp giảm đáng kể số lượng phép tính\cite{sivic2003video}.
+
+\subsubsection{Thuật toán HNSW (Hierarchical Navigable Small World)}
+
+HNSW là thuật toán dựa trên đồ thị phân tầng, cho phép tìm kiếm với độ phức tạp xấp xỉ $\mathcal{O}(\log N)$\cite{malkov2018efficient}.Cấu trúc này cho phép hệ thống nhanh chóng thu hẹp vùng tìm kiếm ở các tầng cao (links thưa thớt) và tìm kiếm chính xác ở tầng thấp nhất (links dày đặc), đảm bảo tốc độ phản hồi thời gian thực cho tính năng gợi ý kết nối.
+
+\subsubsection{So sánh và ứng dụng trong UniConnect}
+
+Để tối ưu cho đề tài, chúng ta có thể so sánh hai thuật toán này như sau:
+
+\begin{itemize}
+    \item Tốc độ: HNSW nhanh hơn IVFFlat trong quá trình truy vấn thực tế.
+
+    \item Độ chính xác: HNSW ổn định hơn, ít khi bị bỏ lỡ kết quả tốt nhất.
+    
+    \item Tài nguyên: IVFFlat nhẹ hơn, phù hợp cho máy chủ có RAM hạn chế.
+\end{itemize}
+
+Lựa chọn: Với quy mô một mạng xã hội sinh viên cần sự phản hồi tức thì khi người dùng lướt bản đồ hoặc hỏi chatbot, HNSW là sự lựa chọn tối ưu để đảm bảo trải nghiệm không bị trễ.
+
+\subsection{Kiến trúc tạo văn bản tăng cường truy xuất (RAG)}
+
+Trong các hệ thống AI truyền thống, các Mô hình ngôn ngữ lớn (LLM) thường gặp phải hiện tượng "ảo giác" (hallucination) – tức là trả lời rất tự tin nhưng thông tin lại không có thực hoặc đã lỗi thời. Để giải quyết vấn đề này trong môi trường học đường yêu cầu tính chính xác cao, UniConnect áp dụng kiến trúc RAG\cite{lewis2020retrieval}.
+
+Về bản chất, RAG cung cấp cho AI một "cuốn sách giáo khoa" (dữ liệu nội bộ của hệ thống) để nó tra cứu trước khi đưa ra câu trả lời cho sinh viên.
+
+\subsubsection{Quy trình vận hành của mô hình RAG}
+
+Quy trình xử lý một câu hỏi của sinh viên thông qua RAG được chia làm 3 giai đoạn chính:
+
+\begin{enumerate}
+    \item Giai đoạn Truy xuất (Retrieval):
+    Khi sinh viên nhập một câu hỏi (ví dụ: "Chiều nay có nhóm nào đá bóng không?"), hệ thống không đưa thẳng câu hỏi này cho AI. Trước tiên, câu hỏi được chuyển đổi thành một vector truy vấn. Hệ thống sử dụng tìm kiếm vector trên PostgreSQL để quét trong cơ sở dữ liệu và tìm ra các mẩu tin liên quan nhất (thông tin về các trận bóng, thời gian, địa điểm cụ thể).
+    
+    \item Giai đoạn Tăng cường (Augmentation):
+    Sau khi tìm được dữ liệu thực tế, hệ thống sẽ đóng gói dữ liệu đó cùng với câu hỏi gốc của sinh viên vào một cấu trúc gọi là "Prompt ngữ cảnh". Lúc này, thông tin thô từ cơ sở dữ liệu được trình bày lại một cách mạch lạc để chuẩn bị đưa vào mô hình ngôn ngữ.
+    
+    \item Giai đoạn Sinh văn bản (Generation):
+    Mô hình AI sẽ đọc "Prompt ngữ cảnh" bao gồm: [Câu hỏi của sinh viên] + [Dữ liệu thực tế từ hệ thống]. Nhiệm vụ của AI lúc này chỉ là tổng hợp lại thông tin một cách tự nhiên và chính xác. Kết quả trả về sẽ là một câu trả lời thân thiện nhưng cực kỳ sát thực tế thay vì những câu trả lời chung chung.
+\end{enumerate}
+
+\subsubsection{Ưu điểm của RAG trong hệ thống UniConnect}
+
+Tính cập nhật tức thì: AI không cần phải được huấn luyện lại mỗi khi có sự kiện mới. Chỉ cần dữ liệu được lưu vào PostgreSQL, Chatbot sẽ "biết" và phản hồi được ngay.
+
+Độ tin cậy cao: AI bị bắt buộc phải trả lời dựa trên các tài liệu tìm thấy. Nếu hệ thống không tìm thấy hoạt động nào phù hợp, AI sẽ báo là "Không tìm thấy" thay vì tự bịa ra thông tin.
+
+Tiết kiệm tài nguyên: Thay vì phải thuê các dịch vụ AI đắt đỏ để huấn luyện riêng cho trường học, UniConnect chỉ cần sử dụng API có sẵn kết hợp với bộ máy tìm kiếm vector nội bộ để đạt được hiệu quả tương đương.

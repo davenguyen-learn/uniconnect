@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Users } from 'lucide-react';
 import { adminApi, type AdminUserItem } from '../../api/admin';
 import './AdminDashboard.css';
 
@@ -69,7 +70,9 @@ export default function AdminUsers() {
   return (
     <div className="admin-dashboard">
       <div className="admin-page-header">
-        <h1 className="admin-page-title">👥 Quản lý người dùng</h1>
+        <h1 className="admin-page-title" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <Users size={28} /> Quản lý người dùng
+        </h1>
         <p className="admin-page-desc">Tổng cộng {total} người dùng</p>
       </div>
 
@@ -78,7 +81,7 @@ export default function AdminUsers() {
         <input
           type="text"
           className="admin-search-input"
-          placeholder="🔍 Tìm kiếm tên người dùng, email, tên..."
+          placeholder="Tìm kiếm tên người dùng, email, tên..."
           value={search}
           onChange={e => setSearch(e.target.value)}
         />
@@ -89,6 +92,7 @@ export default function AdminUsers() {
         >
           <option value="">Tất cả vai trò</option>
           <option value="student">Sinh viên</option>
+          <option value="edu_org">Tổ chức uy tín</option>
           <option value="moderator">Người điều hành</option>
           <option value="admin">Quản trị viên</option>
         </select>
@@ -165,6 +169,7 @@ export default function AdminUsers() {
                         style={{ padding: '4px 28px 4px 8px', fontSize: 'var(--font-size-xs)' }}
                       >
                         <option value="student">Sinh viên</option>
+                        <option value="edu_org">Tổ chức uy tín</option>
                         <option value="moderator">Người điều hành</option>
                         <option value="admin">Quản trị viên</option>
                       </select>

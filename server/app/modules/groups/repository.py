@@ -1,10 +1,19 @@
+from datetime import datetime, timezone
 import uuid
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 
-from app.modules.groups.models import Group, GroupMember
+from app.modules.groups.models import (
+    Group,
+    GroupMember,
+    GroupJoinRequest,
+    ActivityCoHost,
+    ActivityCoHostInvitation,
+)
+from app.modules.activities.models import Activity
+from app.modules.participation.models import JoinRequest
 
 
 async def create_group(db: AsyncSession, group: Group) -> Group:
@@ -101,4 +110,135 @@ async def discover_groups(
     
     result = await db.execute(stmt)
     return list(result.unique().scalars().all())
+
+
+async def get_group_stats(db: AsyncSession, group_id: uuid.UUID) -> tuple[int, int, float]:
+    """
+    Server-derived group stats:
+    1. member_count = COUNT(GroupMember WHERE group_id == :id)
+    2. total_activities_count = COUNT(DISTINCT eligible activities where group is Lead Host or Accepted Co-Host, end_time < now)
+    3. total_ctxh_contributed = SUM(distinct Activity.social_work_days) for eligible activities with confirmed attendance.
+    """
+    now = datetime.now(timezone.utc)
+
+    # 1. Member count (Active confirmed members)
+    mem_stmt = select(func.count(GroupMember.id)).where(GroupMember.group_id == group_id)
+    mem_res = await db.execute(mem_stmt)
+    member_count = mem_res.scalar() or 0
+
+    # 2. Subquery for distinct completed activities where group is Lead Host or Accepted Co-Host
+    lead_acts = select(Activity.id).where(
+        Activity.group_id == group_id,
+        Activity.is_deleted.is_(False),
+        Activity.end_time < now,
+    )
+    cohost_acts = (
+        select(ActivityCoHost.activity_id)
+        .join(Activity, Activity.id == ActivityCoHost.activity_id)
+        .where(
+            ActivityCoHost.group_id == group_id,
+            Activity.is_deleted.is_(False),
+            Activity.end_time < now,
+        )
+    )
+    eligible_act_ids_subq = lead_acts.union(cohost_acts).subquery()
+
+    # Total activities count
+    act_count_stmt = select(func.count()).select_from(eligible_act_ids_subq)
+    act_count_res = await db.execute(act_count_stmt)
+    total_activities_count = act_count_res.scalar() or 0
+
+    # 3. Total CTXH contributed: Each eligible activity is counted at most once if it has confirmed attendance
+    confirmed_acts_subq = (
+        select(Activity.id, Activity.social_work_days)
+        .join(JoinRequest, JoinRequest.activity_id == Activity.id)
+        .where(
+            Activity.id.in_(select(eligible_act_ids_subq.c.id)),
+            JoinRequest.attendance_confirmed.is_(True),
+            Activity.social_work_days.is_not(None),
+        )
+        .distinct()
+        .subquery()
+    )
+    ctxh_stmt = select(func.coalesce(func.sum(confirmed_acts_subq.c.social_work_days), 0.0))
+    ctxh_res = await db.execute(ctxh_stmt)
+    total_ctxh_contributed = float(ctxh_res.scalar() or 0.0)
+
+    return member_count, total_activities_count, total_ctxh_contributed
+
+
+async def get_group_members_paginated(
+    db: AsyncSession, group_id: uuid.UUID, limit: int = 20, offset: int = 0
+) -> tuple[list[GroupMember], int]:
+    count_stmt = select(func.count(GroupMember.id)).where(GroupMember.group_id == group_id)
+    count_res = await db.execute(count_stmt)
+    total = count_res.scalar() or 0
+
+    stmt = (
+        select(GroupMember)
+        .options(joinedload(GroupMember.user))
+        .where(GroupMember.group_id == group_id)
+        .order_by(GroupMember.created_at.asc())
+        .limit(limit)
+        .offset(offset)
+    )
+    res = await db.execute(stmt)
+    return list(res.scalars().all()), total
+
+
+async def get_group_join_requests(
+    db: AsyncSession, group_id: uuid.UUID, status: str = "pending", limit: int = 20, offset: int = 0
+) -> tuple[list[GroupJoinRequest], int]:
+    count_stmt = select(func.count(GroupJoinRequest.id)).where(
+        GroupJoinRequest.group_id == group_id, GroupJoinRequest.status == status
+    )
+    count_res = await db.execute(count_stmt)
+    total = count_res.scalar() or 0
+
+    stmt = (
+        select(GroupJoinRequest)
+        .options(joinedload(GroupJoinRequest.user))
+        .where(GroupJoinRequest.group_id == group_id, GroupJoinRequest.status == status)
+        .order_by(GroupJoinRequest.created_at.desc())
+        .limit(limit)
+        .offset(offset)
+    )
+    res = await db.execute(stmt)
+    return list(res.scalars().all()), total
+
+
+async def get_cohost_invitations_for_group(
+    db: AsyncSession, group_id: uuid.UUID, status: str | None = None, limit: int = 20, offset: int = 0
+) -> tuple[list[ActivityCoHostInvitation], int]:
+    stmt = (
+        select(ActivityCoHostInvitation)
+        .options(
+            joinedload(ActivityCoHostInvitation.activity),
+            joinedload(ActivityCoHostInvitation.host_group),
+            joinedload(ActivityCoHostInvitation.invited_group),
+        )
+        .where(ActivityCoHostInvitation.invited_group_id == group_id)
+    )
+    if status:
+        stmt = stmt.where(ActivityCoHostInvitation.status == status)
+
+    count_stmt = select(func.count(ActivityCoHostInvitation.id)).where(
+        ActivityCoHostInvitation.invited_group_id == group_id
+    )
+    if status:
+        count_stmt = count_stmt.where(ActivityCoHostInvitation.status == status)
+
+    count_res = await db.execute(count_stmt)
+    total = count_res.scalar() or 0
+
+    stmt = stmt.order_by(ActivityCoHostInvitation.created_at.desc()).limit(limit).offset(offset)
+    res = await db.execute(stmt)
+    return list(res.scalars().all()), total
+
+
+async def count_accepted_cohosts(db: AsyncSession, activity_id: uuid.UUID) -> int:
+    stmt = select(func.count(ActivityCoHost.id)).where(ActivityCoHost.activity_id == activity_id)
+    res = await db.execute(stmt)
+    return res.scalar() or 0
+
 

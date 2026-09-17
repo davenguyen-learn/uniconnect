@@ -9,7 +9,19 @@ from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.core.exceptions import ForbiddenError, NotFoundError
 from app.modules.groups import service as group_service
-from app.modules.groups.schemas import GroupCreate, GroupDetailResponse, GroupResponse, GroupUpdate
+from app.modules.groups.schemas import (
+    GroupCreate,
+    GroupDetailResponse,
+    GroupResponse,
+    GroupUpdate,
+    GroupStatsResponse,
+    GroupMemberResponse,
+    GroupJoinRequestResponse,
+    JoinRequestActionRequest,
+    CoHostInvitationResponse,
+    CoHostActionRequest,
+    CoHostInvitationCreate,
+)
 
 router = APIRouter(prefix="/groups", tags=["groups"])
 
@@ -122,28 +134,82 @@ async def get_group_activities(
     )
 
 
-@router.get("/{group_id}/documents")
-async def get_group_documents(
+# ── Phase 8 Endpoints ──
+
+@router.get("/{group_id}/stats", response_model=GroupStatsResponse)
+async def get_group_stats(
+    group_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    """Public stats for Club Showcase: 100% server-derived with deduplicated aggregates."""
+    return await group_service.get_group_stats_service(db, group_id)
+
+
+@router.get("/{group_id}/members", response_model=list[GroupMemberResponse])
+async def list_group_members(
     group_id: uuid.UUID,
     limit: int = Query(default=20, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """List documents belonging to a specific group (members only)."""
-    from app.modules.groups.repository import get_group_by_id, is_member
-    from app.modules.documents.service import list_documents
+    """Paginated list of active group members."""
+    return await group_service.get_group_members_service(db, group_id, limit=limit, offset=offset)
 
-    user_id = uuid.UUID(current_user["sub"])
 
-    group = await get_group_by_id(db, group_id)
-    if not group:
-        raise NotFoundError("Group not found.")
-
-    if not await is_member(db, group_id, user_id):
-        raise ForbiddenError("You must be a member of this group to view its documents.")
-
-    return await list_documents(
-        db, user_id=user_id, group_id=group_id,
-        limit=limit, offset=offset,
+@router.get("/{group_id}/join-requests", response_model=list[GroupJoinRequestResponse])
+async def list_join_requests(
+    group_id: uuid.UUID,
+    status: str = Query(default="pending", pattern="^(pending|approved|rejected)$"),
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Management only: List join requests for club owner/admin."""
+    return await group_service.list_group_join_requests(
+        db, group_id, uuid.UUID(current_user["sub"]), status=status, limit=limit, offset=offset
     )
+
+
+@router.post("/{group_id}/join-requests/{request_id}/action", response_model=GroupJoinRequestResponse)
+async def action_join_request_endpoint(
+    group_id: uuid.UUID,
+    request_id: uuid.UUID,
+    data: JoinRequestActionRequest,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """State machine transition: pending -> approved | rejected (owner/admin only)."""
+    return await group_service.action_join_request(
+        db, group_id, request_id, uuid.UUID(current_user["sub"]), data.action
+    )
+
+
+@router.get("/{group_id}/co-host-invitations", response_model=list[CoHostInvitationResponse])
+async def list_cohost_invitations(
+    group_id: uuid.UUID,
+    status: str | None = Query(default=None, pattern="^(pending|accepted|declined)$"),
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Management only: BCN inbox for co-host invitations."""
+    return await group_service.list_cohost_invitations(
+        db, group_id, uuid.UUID(current_user["sub"]), status=status, limit=limit, offset=offset
+    )
+
+
+@router.post("/co-host-invitations/{invitation_id}/respond", response_model=CoHostInvitationResponse)
+async def respond_cohost_invitation_endpoint(
+    invitation_id: uuid.UUID,
+    data: CoHostActionRequest,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Atomic acceptance or decline with MAX_COHOSTS limit and transactional consistency."""
+    return await group_service.respond_cohost_invitation(
+        db, invitation_id, uuid.UUID(current_user["sub"]), data.action
+    )
+

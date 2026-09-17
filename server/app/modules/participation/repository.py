@@ -21,7 +21,7 @@ async def create(db: AsyncSession, join_request: JoinRequest) -> JoinRequest:
         .options(joinedload(JoinRequest.user))
         .where(JoinRequest.id == join_request.id)
     )
-    return result.scalar_one()
+    return result.unique().scalar_one()
 
 
 async def get_by_id(db: AsyncSession, request_id: uuid.UUID) -> JoinRequest | None:
@@ -31,7 +31,7 @@ async def get_by_id(db: AsyncSession, request_id: uuid.UUID) -> JoinRequest | No
         .options(joinedload(JoinRequest.user), joinedload(JoinRequest.activity))
         .where(JoinRequest.id == request_id)
     )
-    return result.scalar_one_or_none()
+    return result.unique().scalar_one_or_none()
 
 
 async def get_active_request(
@@ -47,7 +47,7 @@ async def get_active_request(
             )
         )
     )
-    return result.scalar_one_or_none()
+    return result.unique().scalar_one_or_none()
 
 
 async def list_by_activity(
@@ -105,7 +105,7 @@ async def lock_and_increment_participants(
         .where(Activity.id == activity_id)
         .with_for_update(of=Activity)
     )
-    activity = result.scalar_one()
+    activity = result.unique().scalar_one()
 
     activity.current_participants += 1
     await db.flush()

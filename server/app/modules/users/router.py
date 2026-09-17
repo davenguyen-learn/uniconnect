@@ -1,13 +1,18 @@
-"""User profile API endpoints."""
-
-from fastapi import APIRouter, Depends
 import uuid
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.modules.users import service
-from app.modules.users.schemas import UserProfile, UserUpdate
+from app.modules.users.schemas import (
+    UserProfile,
+    UserUpdate,
+    UserFollowResponse,
+    FollowStatusResponse,
+    MyUserStatsResponse,
+    PublicUserStatsResponse,
+)
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -45,9 +50,14 @@ async def verify_account(
     return {"status": "success", "message": "Account verified."}
 
 
-import uuid
-from fastapi import Query
-from app.modules.users.schemas import UserFollowResponse, FollowStatusResponse
+@router.get("/me/stats", response_model=MyUserStatsResponse)
+async def get_my_stats(
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get the authenticated user's detailed recognition & CTXH stats."""
+    return await service.get_user_stats(db, uuid.UUID(current_user["sub"]), is_self=True)
+
 
 @router.get("/{user_id}", response_model=UserProfile)
 async def get_user_profile(
@@ -56,6 +66,16 @@ async def get_user_profile(
 ):
     """Get a user's profile."""
     return await service.get_profile(db, str(user_id))
+
+
+@router.get("/{user_id}/stats", response_model=PublicUserStatsResponse)
+async def get_user_public_stats(
+    user_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    """Get a user's public recognition stats."""
+    return await service.get_user_stats(db, user_id, is_self=False)
+
 
 
 @router.post("/{user_id}/follow")

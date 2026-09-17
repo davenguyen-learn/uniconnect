@@ -1,0 +1,41 @@
+\section{KẾT LUẬN VÀ HƯỚNG PHÁT TRIỂN}
+
+\subsection{Kết quả đạt được}
+Sau một thời gian nghiên cứu và hiện thực, đồ án đã hoàn thành các mục tiêu đề ra cho hệ thống Backend của UniConnect:
+\begin{itemize}
+    \item Xây dựng thành công hệ thống API với FastAPI và PostgreSQL.
+    \item Tích hợp thành công kỹ thuật RAG và Vector Search để xử lý tri thức nội bộ.
+    \item Hiện thực hóa cơ chế gợi ý cá nhân hóa dựa trên dữ liệu mạng xã hội.
+    \item Đóng gói và hệ thống linh hoạt thông qua Docker.
+\end{itemize}
+
+\subsection{Hạn chế của đồ án}
+\begin{enumerate}
+
+    \item Hệ thống hiện tại mới tập trung vào phần xử lý logic Backend, chưa có giao diện người dùng cuối hoàn chỉnh.
+    \item Độ trễ của chatbot vẫn phụ thuộc vào tốc độ phản hồi của API bên thứ ba (Gemini).
+\end{enumerate}
+
+\subsection{Hướng phát triển tương lai}
+Dựa trên những kết quả đã đạt được và những hạn chế còn tồn tại, dự án đề xuất các hướng phát triển tiếp theo nhằm hoàn thiện và đưa ứng dụng vào sử dụng thực tế:
+
+\begin{enumerate}[leftmargin=*]
+\item \textbf{Phát triển đa nền tảng (Frontend Development):}
+Xây dựng giao diện người dùng hoàn chỉnh trên nền tảng Web (ReactJS) và Di động (Flutter) để tận dụng tối đa các API bản đồ và Chatbot đã hiện thực.
+
+\item \textbf{Nâng cao quy trình Kiểm thử (Advanced Testing):}
+\begin{itemize}
+    \item Automated Testing: Triển khai bộ kiểm thử tự động toàn diện bao gồm Unit Test (kiểm thử đơn vị cho các hàm logic), Integration Test (kiểm thử tích hợp giữa Backend và Database) sử dụng thư viện \texttt{pytest}.
+    \item Performance \& Load Testing: Thực hiện kiểm thử áp lực bằng công cụ \texttt{Locust} hoặc \texttt{JMeter} để đánh giá khả năng chịu tải của hệ thống khi có hàng nghìn sinh viên truy cập cùng lúc, đặc biệt là các truy vấn Vector Search và dữ liệu không gian.
+\end{itemize}
+
+\item \textbf{Triển khai và Vận hành (Production Deployment):}
+\begin{itemize}
+    \item CI/CD Pipeline: Thiết lập quy trình tích hợp và triển khai tự động (GitHub Actions hoặc GitLab CI) để tự động hóa việc kiểm thử và đóng gói Docker Image mỗi khi có thay đổi mã nguồn.
+    \item Cloud Infrastructure: Triển khai hệ thống lên các nền tảng điện toán đám mây (AWS, Google Cloud hoặc Azure) sử dụng Kubernetes (K8s) để đảm bảo tính sẵn sàng cao (High Availability) và khả năng tự động mở rộng (Auto-scaling).
+    \item Monitoring: Tích hợp các công cụ giám sát như \texttt{Prometheus} và \texttt{Grafana} để theo dõi hiệu năng hệ thống và sức khỏe của các container theo thời gian thực.
+\end{itemize}
+
+\item \textbf{Tối ưu hóa Trí tuệ nhân tạo:} 
+Nâng cấp khả năng của Trợ lý AI bằng cách triển khai kỹ thuật \textit{Fine-tuning} mô hình hoặc áp dụng các phương pháp \textit{Re-ranking} sau khi truy xuất Vector để tăng độ chính xác của câu trả lời.
+\end{enumerate}

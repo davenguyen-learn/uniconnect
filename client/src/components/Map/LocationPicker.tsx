@@ -48,7 +48,8 @@ function RecenterAutomatically({ lat, lng }: { lat: number; lng: number }) {
 }
 
 export default function LocationPicker({ position, onChange }: LocationPickerProps) {
-  const [initialCenter, setInitialCenter] = useState<[number, number]>([40.7128, -74.0060]);
+  // Default to Dinh Độc Lập (TP. Hồ Chí Minh)
+  const [initialCenter, setInitialCenter] = useState<[number, number]>([10.7769, 106.6953]);
   const [hasLocated, setHasLocated] = useState(false);
 
   useEffect(() => {
@@ -68,17 +69,31 @@ export default function LocationPicker({ position, onChange }: LocationPickerPro
 
   const center = position || initialCenter;
 
+  const cartoApiKey = import.meta.env.VITE_CARTO_API_KEY;
+
+  const tileLayerConfig = cartoApiKey
+    ? {
+        url: `https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=${cartoApiKey}`,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        className: '',
+      }
+    : {
+        url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        className: 'modern-map-tiles',
+      };
+
   return (
     <div className="location-picker-wrapper">
       <MapContainer
         center={center}
         zoom={14}
         scrollWheelZoom={true}
-        className="leaflet-container"
+        className={`leaflet-container ${tileLayerConfig.className}`}
       >
         <TileLayer
-          attribution='&copy; OpenStreetMap contributors &copy; CARTO'
-          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+          attribution={tileLayerConfig.attribution}
+          url={tileLayerConfig.url}
         />
         
         {hasLocated && !position && <RecenterAutomatically lat={initialCenter[0]} lng={initialCenter[1]} />}

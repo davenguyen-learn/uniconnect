@@ -1,4 +1,5 @@
 import { api } from './client';
+import type { ConflictInfo } from './calendar';
 
 export interface FormField {
   id?: string;
@@ -47,6 +48,10 @@ export interface ActivityResponse {
   distance_meters?: number;
   custom_form?: CustomForm | null;
   trophy?: TrophyResponse | null;
+  social_work_days?: number | null;
+  conflict_info?: ConflictInfo | null;
+  attendance_mode?: 'manual' | 'auto' | 'qr_code';
+  check_in_radius?: number;
 }
 
 export interface ActivityCreate {
@@ -62,7 +67,11 @@ export interface ActivityCreate {
   max_participants: number;
   privacy?: string;
   require_approval?: boolean;
+  social_work_days?: number | null;
   custom_form?: CustomForm;
+  trophy_id?: string | null;
+  attendance_mode?: 'manual' | 'auto' | 'qr_code';
+  check_in_radius?: number;
 }
 
 export interface ActivityUpdate {
@@ -78,6 +87,10 @@ export interface ActivityUpdate {
   max_participants?: number;
   privacy?: string;
   require_approval?: boolean;
+  social_work_days?: number | null;
+  trophy_id?: string | null;
+  attendance_mode?: 'manual' | 'auto' | 'qr_code';
+  check_in_radius?: number;
 }
 
 export interface NearbyQuery {
@@ -90,6 +103,7 @@ export interface NearbyQuery {
   days_ahead?: number;
   limit?: number;
   offset?: number;
+  include_conflicts?: boolean;
 }
 
 export interface PaginatedActivities {
@@ -113,11 +127,12 @@ export const activitiesApi = {
   delete: (id: string) =>
     api.delete<void>(`/activities/${id}`),
 
-  list: (params?: { limit?: number; offset?: number; category?: string }) => {
+  list: (params?: { limit?: number; offset?: number; category?: string; include_conflicts?: boolean }) => {
     const query = new URLSearchParams();
     if (params?.limit) query.set('limit', String(params.limit));
     if (params?.offset) query.set('offset', String(params.offset));
     if (params?.category) query.set('category', params.category);
+    if (params?.include_conflicts) query.set('include_conflicts', 'true');
     return api.get<PaginatedActivities>(`/activities?${query}`);
   },
 
@@ -133,6 +148,7 @@ export const activitiesApi = {
     if (params.days_ahead) query.set('days_ahead', String(params.days_ahead));
     if (params.limit) query.set('limit', String(params.limit));
     if (params.offset !== undefined) query.set('offset', String(params.offset));
+    if (params.include_conflicts) query.set('include_conflicts', 'true');
     return api.get<PaginatedActivities>(`/activities/nearby?${query}`);
   },
 
@@ -149,4 +165,27 @@ export const activitiesApi = {
     if (params?.offset) query.set('offset', String(params.offset));
     return api.get<PaginatedActivities>(`/activities/mine?${query}`);
   },
+
+  getCheckInCode: (activityId: string) =>
+    api.get<{
+      check_in_code: string;
+      rotating_token: string;
+      expires_in_seconds: number;
+      check_in_radius: number;
+    }>(`/activities/${activityId}/check-in-code`),
+
+  checkIn: (activityId: string, data: { code: string; latitude?: number; longitude?: number; accuracy?: number }) =>
+    api.post<{
+      message: string;
+      attendance_confirmed: boolean;
+      trophy_awarded: boolean;
+      already_confirmed?: boolean;
+    }>(`/activities/${activityId}/check-in`, data),
+
+  updateAttendance: (activityId: string, userId: string, attended: boolean) =>
+    api.patch<{
+      message: string;
+      attendance_confirmed: boolean;
+      trophy_awarded: boolean;
+    }>(`/activities/${activityId}/participants/${userId}/attendance`, { attended }),
 };

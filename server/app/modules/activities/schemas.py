@@ -6,6 +6,7 @@ from datetime import datetime
 from pydantic import BaseModel, Field, model_validator
 from app.modules.forms.schemas import CustomFormCreate, CustomFormResponse
 from app.modules.trophies.schemas import TrophyResponse
+from app.modules.calendar.schemas import ConflictInfo
 
 
 class HostInfo(BaseModel):
@@ -35,8 +36,11 @@ class ActivityCreate(BaseModel):
     max_participants: int = Field(gt=0, le=1000)
     privacy: str = "public"
     require_approval: bool = True
+    social_work_days: float | None = Field(default=None, ge=0)
     group_id: uuid.UUID | None = None
     trophy_id: uuid.UUID | None = None
+    attendance_mode: str = "manual"
+    check_in_radius: int = Field(default=300, ge=50, le=5000)
     custom_form_id: uuid.UUID | None = None
     custom_form: "CustomFormCreate | None" = None
 
@@ -60,7 +64,11 @@ class ActivityUpdate(BaseModel):
     max_participants: int | None = Field(default=None, gt=0, le=1000)
     privacy: str | None = None
     require_approval: bool | None = None
+    social_work_days: float | None = Field(default=None, ge=0)
     group_id: uuid.UUID | None = None
+    trophy_id: uuid.UUID | None = None
+    attendance_mode: str | None = None
+    check_in_radius: int | None = Field(default=None, ge=50, le=5000)
 
 
 class ActivityResponse(BaseModel):
@@ -80,12 +88,16 @@ class ActivityResponse(BaseModel):
     current_participants: int
     privacy: str
     require_approval: bool
+    attendance_mode: str = "manual"
+    check_in_radius: int = 300
+    social_work_days: float | None = None
     created_at: datetime
     host: HostInfo | None = None
     group: GroupInfo | None = None
     distance_meters: float | None = None
     custom_form: "CustomFormResponse | None" = None
     trophy: TrophyResponse | None = None
+    conflict_info: ConflictInfo | None = None
 
     model_config = {"from_attributes": True}
 

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Users, Calendar, Plus, Compass, ArrowRight } from 'lucide-react';
 import { groupsApi, type GroupResponse } from '../../api/groups';
 import { useToast } from '../../components/Toast/ToastContext';
 import Button from '../../components/Button/Button';
@@ -43,8 +44,8 @@ export default function Groups() {
   const currentGroups = activeTab === 'my' ? myGroups : discoverGroups;
 
   const tabs = [
-    { id: 'my', label: 'Nhóm của tôi', count: myGroups.length },
-    { id: 'discover', label: 'Khám phá' },
+    { id: 'my', label: 'CLB của tôi', count: myGroups.length },
+    { id: 'discover', label: 'Khám phá CLB' },
   ];
 
   const sortOptions = [
@@ -55,36 +56,45 @@ export default function Groups() {
 
   return (
     <CollectionLayout
-      title="Nhóm"
+      title="Câu lạc bộ & Cộng đồng"
       action={
         <Link to="/groups/new">
-          <Button>Tạo Nhóm</Button>
+          <Button>
+            <Plus className="w-4 h-4 mr-1.5" />
+            Tạo CLB mới
+          </Button>
         </Link>
       }
       tabs={tabs}
       activeTab={activeTab}
       onTabChange={(tabId) => setActiveTab(tabId as 'my' | 'discover')}
-      searchPlaceholder={activeTab === 'discover' ? 'Tìm kiếm nhóm theo tên...' : undefined}
+      searchPlaceholder={activeTab === 'discover' ? 'Tìm kiếm câu lạc bộ theo tên...' : undefined}
       searchValue={activeTab === 'discover' ? search : undefined}
       onSearchChange={activeTab === 'discover' ? setSearch : undefined}
       sortOptions={activeTab === 'discover' ? sortOptions : undefined}
       sortValue={activeTab === 'discover' ? sortBy : undefined}
       onSortChange={activeTab === 'discover' ? setSortBy : undefined}
       loading={loading}
-      loadingMessage="Đang tải danh sách nhóm..."
+      loadingMessage="Đang tải danh sách câu lạc bộ..."
       isEmpty={currentGroups.length === 0}
-      emptyTitle={activeTab === 'my' ? "Bạn chưa tham gia nhóm nào." : "Không tìm thấy nhóm nào."}
+      emptyTitle={activeTab === 'my' ? "Bạn chưa tham gia câu lạc bộ nào." : "Không tìm thấy câu lạc bộ nào."}
       emptyMessage={
         activeTab === 'my'
-          ? 'Hãy sang mục Khám phá để tìm các nhóm thú vị và tham gia nhé!'
-          : 'Thử tìm kiếm bằng từ khóa khác hoặc tạo nhóm của riêng bạn.'
+          ? 'Hãy sang mục Khám phá để tìm các câu lạc bộ ngoại khóa thú vị và tham gia nhé!'
+          : 'Thử tìm kiếm bằng từ khóa khác hoặc đăng ký thành lập câu lạc bộ của riêng bạn.'
       }
       emptyAction={
         activeTab === 'my' ? (
-          <Button variant="secondary" onClick={() => setActiveTab('discover')}>Khám phá nhóm</Button>
+          <Button variant="secondary" onClick={() => setActiveTab('discover')}>
+            <Compass className="w-4 h-4 mr-1.5" />
+            Khám phá câu lạc bộ
+          </Button>
         ) : (
           <Link to="/groups/new">
-            <Button>Tạo Nhóm</Button>
+            <Button>
+              <Plus className="w-4 h-4 mr-1.5" />
+              Tạo CLB mới
+            </Button>
           </Link>
         )
       }
@@ -96,15 +106,30 @@ export default function Groups() {
           onClick={() => navigate(`/groups/${group.id}`)}
         >
           <div className="group-card-header">
-            <h3 className="group-card-title">{group.name}</h3>
-            <span className="group-card-members">{group.member_count} thành viên</span>
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold flex items-center justify-center text-sm shadow-sm shrink-0">
+                {group.name.charAt(0).toUpperCase()}
+              </div>
+              <h3 className="group-card-title">{group.name}</h3>
+            </div>
+            <span className="group-card-members flex items-center gap-1">
+              <Users className="w-3.5 h-3.5" />
+              {group.member_count}
+            </span>
           </div>
           <p className="group-card-desc">{group.description || 'Không có mô tả.'}</p>
-          <div className="group-card-footer">
-            <span>Tạo ngày {new Date(group.created_at).toLocaleDateString('vi-VN')}</span>
+          <div className="group-card-footer flex items-center justify-between text-xs text-slate-400 mt-auto pt-3 border-t border-slate-100 dark:border-slate-800">
+            <span className="flex items-center gap-1">
+              <Calendar className="w-3.5 h-3.5" />
+              {new Date(group.created_at).toLocaleDateString('vi-VN')}
+            </span>
+            <span className="flex items-center gap-0.5 text-indigo-600 dark:text-indigo-400 font-semibold group-hover:translate-x-0.5 transition">
+              Chi tiết <ArrowRight className="w-3.5 h-3.5" />
+            </span>
           </div>
         </div>
       ))}
     </CollectionLayout>
   );
 }
+

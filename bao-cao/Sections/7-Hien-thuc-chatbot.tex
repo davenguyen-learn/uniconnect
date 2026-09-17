@@ -1,0 +1,54 @@
+\section{Hiện thực hệ thống trợ lý AI}
+
+Hệ thống Trợ lý AI được xây dựng dựa trên kiến trúc RAG (Retrieval-Augmented Generation) nâng cao. Điểm khác biệt cốt lõi là khả năng kết hợp giữa tri thức từ kho học liệu và dữ liệu hành vi của người dùng trong mạng xã hội để đưa ra các phản hồi cá nhân hóa.
+
+\subsection{Kiến trúc Hybrid Context (Ngữ cảnh hỗn hợp)}
+
+Để đưa ra các gợi ý chính xác, hệ thống tổng hợp ngữ cảnh từ ba nguồn dữ liệu chính:
+\begin{enumerate}
+    \item Internal Knowledge: Các tài liệu học tập, quy định nhà trường từ bảng Resource thông qua truy vấn Vector.
+
+    \item User Activity: Lịch sử tham gia các sự kiện, sở thích và các hoạt động mà người dùng đã tương tác trong quá khứ.
+    
+    \item Social Context: Các hoạt động nổi bật từ những người dùng mà chủ thể đang theo dõi (Followings), giúp gợi ý các xu hướng đang được quan tâm trong cộng đồng hẹp của người dùng.
+\end{enumerate}
+
+\subsection{Hiện thực luồng xử lý gợi ý cá nhân hóa}
+
+Khi người dùng yêu cầu gợi ý hoặc hỏi về các hoạt động sắp tới, hệ thống thực hiện các bước sau:
+\begin{enumerate}
+    \item Phân tích sở thích: Dựa trên các từ khóa của các hoạt động người dùng đã tham gia để tạo "Profile sở thích" tạm thời.
+
+    \item Lọc cộng đồng: Ưu tiên hiển thị các hoạt động có sự tham gia của bạn bè (những người người dùng follow) để tăng khả năng tương tác xã hội.
+    
+    \item Kiểm tra tính liên quan: Sử dụng AI để so sánh nội dung hoạt động mới với sở thích của người dùng, đảm bảo các gợi ý mang tính hữu ích cao nhất.
+\end{enumerate}
+
+\subsection{Hiện thực gợi ý tài liệu}
+
+Hệ thống gợi ý tài liệu không chỉ lưu trữ các tệp tin đơn thuần mà còn thực hiện phân tích nội dung để tìm ra mối liên hệ giữa các học liệu, từ đó gợi ý các tài liệu liên quan đến chủ đề mà người dùng đang quan tâm.
+
+\subsubsection{Quy trình xử lý và Vector hóa tài liệu (Pipeline)}
+
+Khi một tài liệu (PDF, Docx, Text) được tải lên hệ thống, quy trình xử lý hậu kỳ (Background Task) được thực hiện qua các giai đoạn sau:
+
+\begin{enumerate}
+    \item Text Extraction: Trích xuất văn bản thô từ tệp tin đã tải lên.
+
+    \item Text Chunking: Chia nhỏ văn bản thành các đoạn (chunks) có độ dài cố định (ví dụ: 500-1000 ký tự) kèm theo một phần gối đầu (overlap) để đảm bảo không mất ngữ cảnh giữa các đoạn.
+    
+    \item Vectorization (Embedding): Sử dụng mô hình ngôn ngữ để chuyển hóa từng đoạn văn bản thành các Vector số thực.
+    
+    \item Indexing: Lưu trữ các đoạn văn bản cùng Vector tương ứng vào bảng Resource với chỉ mục IVFFlat hoặc HNSW trong PostgreSQL để tăng tốc độ tìm kiếm.
+\end{enumerate}
+
+\subsubsection{Cơ chế gợi ý tài liệu}
+
+Khi người dùng đang xem một tài liệu cụ thể, hệ thống sẽ tự động tìm kiếm các tài liệu khác có nội dung tương đồng. Thuật toán được thực hiện bằng cách lấy Vector trung bình của tài liệu hiện tại và thực hiện truy vấn "Top-K" lân cận trong không gian Vector.
+\begin{itemize}
+    \item Đầu vào: Vector đặc trưng của tài liệu hiện tại.
+
+    \item Xử lý: Truy vấn SQL sử dụng toán tử <-> (Euclidean distance) hoặc <=> (Cosine distance) trên cột embedding.
+    
+    \item Đầu ra: Danh sách các tài liệu có độ tương đồng cao nhất nhưng không trùng lặp với tài liệu đang xem.
+\end{itemize}

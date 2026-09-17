@@ -23,6 +23,18 @@ async def get_current_user(
     return payload
 
 
+async def get_optional_current_user(
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+) -> dict | None:
+    """Extract current user if Bearer token present, else return None without raising error."""
+    if not credentials:
+        return None
+    try:
+        return decode_access_token(credentials.credentials)
+    except Exception:
+        return None
+
+
 def require_role(*allowed_roles: str):
     """Factory returning a dependency that checks if the user has an allowed role."""
 

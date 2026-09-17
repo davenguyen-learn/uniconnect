@@ -33,7 +33,7 @@ class StorageService:
             endpoint_url=self.endpoint_url,
         )
 
-    async def upload_file(self, file_obj: BinaryIO, filename: str, content_type: str, folder: str = "documents") -> str:
+    async def upload_file(self, file_obj: BinaryIO, filename: str, content_type: str, folder: str = "uploads") -> str:
         """
         Upload a file to the storage bucket.
         Returns the object key (path in bucket).

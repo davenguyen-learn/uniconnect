@@ -9,6 +9,7 @@ export interface UserProfile {
   university: string | null;
   interests?: string[];
   role: string;
+  is_verified?: boolean;
   created_at: string;
 }
 
@@ -31,13 +32,33 @@ export interface UserFollowResponse {
   has_more: boolean;
 }
 
+export interface PublicUserStats {
+  user_id: string;
+  total_ctxh_days: number;
+  total_attended_activities: number;
+  total_trophies_count: number;
+  total_trophy_points: number;
+  rank_title: string;
+}
+
+export interface MyUserStats extends PublicUserStats {
+  target_ctxh_days: number;
+  ctxh_completion_percent: number;
+  remaining_ctxh_days: number;
+  is_target_reached: boolean;
+}
+
 export const usersApi = {
   getMe: () => api.get<UserProfile>('/users/me'),
+
+  getMyStats: () => api.get<MyUserStats>('/users/me/stats'),
 
   updateMe: (data: UserUpdate) =>
     api.patch<UserProfile>('/users/me', data),
 
   getUser: (userId: string) => api.get<UserProfile>(`/users/${userId}`),
+
+  getUserStats: (userId: string) => api.get<PublicUserStats>(`/users/${userId}/stats`),
   
   followUser: (userId: string) => api.post(`/users/${userId}/follow`),
   
@@ -51,3 +72,4 @@ export const usersApi = {
   getFollowing: (userId: string, params?: { limit?: number; offset?: number }) => 
     api.get<UserFollowResponse>(`/users/${userId}/following?limit=${params?.limit || 20}&offset=${params?.offset || 0}`),
 };
+

@@ -1,0 +1,232 @@
+/* ── Floating Gradient Orb Button (Accessibility >= 44x44px) ── */
+.floating-ai-orb {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.floating-ai-orb:hover {
+  transform: scale(1.08);
+}
+
+.floating-ai-orb:active {
+  transform: scale(0.95);
+}
+
+.orb-core {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #ec4899 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.5), 0 0 15px rgba(236, 72, 153, 0.3);
+  position: relative;
+  z-index: 2;
+}
+
+.orb-pulse-ring {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.4) 0%, transparent 70%);
+  animation: orb-pulse 2.8s infinite cubic-bezier(0.25, 1, 0.5, 1);
+  z-index: 1;
+}
+
+.orb-pulse-ring--delay {
+  animation-delay: 1.4s;
+}
+
+@keyframes orb-pulse {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+}
+
+/* Reduced motion accessibility check */
+@media (prefers-reduced-motion: reduce) {
+  .orb-pulse-ring {
+    animation: none;
+    display: none;
+  }
+  .floating-ai-orb:hover {
+    transform: none;
+  }
+}
+
+.orb-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background: #10b981;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 9999px;
+  border: 2px solid var(--surface-primary);
+  z-index: 3;
+}
+
+/* ── Floating Glassmorphism Chat Window ── */
+.floating-ai-window {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 400px;
+  max-width: calc(100vw - 32px);
+  height: 590px;
+  max-height: calc(100vh - 80px);
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 1000;
+  box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  background: var(--surface-primary);
+}
+
+.floating-ai-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--surface-secondary);
+  flex-shrink: 0;
+}
+
+.floating-ai-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ── Quick Prompt Chips ── */
+.floating-ai-chips {
+  padding: 8px 14px;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex-shrink: 0;
+  border-top: 1px solid var(--border-color);
+  background: var(--surface-secondary);
+}
+
+.floating-ai-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.ai-prompt-chip {
+  padding: 6px 12px;
+  border-radius: 9999px;
+  background: var(--surface-primary);
+  border: 1px solid var(--border-color);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.ai-prompt-chip:hover:not(:disabled) {
+  background: #4f46e5;
+  color: #ffffff;
+  border-color: #4f46e5;
+}
+
+.ai-prompt-chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Footer Input Bar ── */
+.floating-ai-footer {
+  padding: 12px 14px;
+  border-top: 1px solid var(--border-color);
+  background: var(--surface-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.ai-chat-input {
+  flex: 1;
+  border: 1px solid var(--border-color);
+  background: var(--surface-secondary);
+  color: var(--text-primary);
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.ai-chat-input:focus {
+  border-color: #4f46e5;
+}
+
+.ai-send-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: #4f46e5;
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.ai-send-btn:hover:not(:disabled) {
+  background: #4338ca;
+}
+
+.ai-send-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── Mobile View: Bottom Sheet (< 640px) ── */
+@media (max-width: 640px) {
+  .floating-ai-window {
+    bottom: 0;
+    right: 0;
+    left: 0;
+    width: 100vw;
+    max-width: 100vw;
+    height: 85vh;
+    max-height: 85vh;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+}

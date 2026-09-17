@@ -4,6 +4,7 @@ import { activitiesApi, type ActivityResponse } from '../../api/activities';
 import { useToast } from '../../components/Toast/ToastContext';
 import Button from '../../components/Button/Button';
 import CollectionLayout from '../../components/Layout/CollectionLayout';
+import ActivityCard from '../../components/ActivityCard/ActivityCard';
 import './MyActivities.css';
 
 export default function MyActivities() {
@@ -61,28 +62,9 @@ export default function MyActivities() {
         ) : undefined
       }
     >
-      <div className="activities-grid">
-        {activities.map(activity => (
-          <div key={activity.id} className="activity-card glass">
-            <div className="card-header">
-              <span className="category">{activity.category || 'Chung'}</span>
-              <span className={`privacy ${activity.privacy}`}>{activity.privacy}</span>
-            </div>
-            <h3>{activity.title}</h3>
-            <p className="time">
-              {new Date(activity.start_time).toLocaleDateString('vi-VN')} lúc {new Date(activity.start_time).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})}
-            </p>
-            <div className="stats">
-              <span>{activity.current_participants}/{activity.max_participants} người tham gia</span>
-            </div>
-            <div className="card-actions">
-              <Link to={`/activities/${activity.id}`}>
-                <Button size="sm" fullWidth>Quản lý</Button>
-              </Link>
-            </div>
-          </div>
-        ))}
-      </div>
+      {activities.map(activity => (
+        <ActivityCard key={activity.id} activity={activity} />
+      ))}
     </CollectionLayout>
   );
 }

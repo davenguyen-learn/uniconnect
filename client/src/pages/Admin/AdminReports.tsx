@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { AlertTriangle } from 'lucide-react';
 import { adminApi, type AdminReportItem } from '../../api/admin';
 import './AdminDashboard.css';
 
@@ -83,7 +84,9 @@ export default function AdminReports() {
   return (
     <div className="admin-dashboard">
       <div className="admin-page-header">
-        <h1 className="admin-page-title">🚩 Quản lý báo cáo</h1>
+        <h1 className="admin-page-title" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <AlertTriangle size={28} /> Quản lý báo cáo
+        </h1>
         <p className="admin-page-desc">Tổng cộng {total} báo cáo</p>
       </div>
 
@@ -106,7 +109,6 @@ export default function AdminReports() {
         >
           <option value="">Tất cả loại</option>
           <option value="activity">Hoạt động</option>
-          <option value="document">Tài liệu</option>
           <option value="user">Người dùng</option>
         </select>
       </div>

@@ -1,0 +1,171 @@
+\section{Phân tích các hệ thống liên quan}
+
+\subsection{Lĩnh vực kết nối hoạt động}
+
+Trong mảng kết nối sinh viên ngoài đời thực dựa trên vị trí và nhu cầu, hiện có ba đại diện lớn thống lĩnh thị trường với các phương thức tiếp cận khác nhau: Facebook (Cộng đồng), Whoo (Vị trí) và WeGoWhere (Mở đăng ký và mời tham gia).
+
+\subsubsection{Facebook Groups và Facebook Events (Cộng đồng truyền thống)}
+
+Facebook hiện là nền tảng phổ biến nhất được các câu lạc bộ (CLB) và sinh viên sử dụng để tổ chức phong trào\cite{lampe2006face}.
+
+Cách thức hoạt động: 
+
+\begin{itemize}
+    \item Facebook Groups: Hoạt động dựa trên mô hình diễn đàn. Quản trị viên tạo nhóm (ví dụ: "Cộng đồng Sinh viên Trường X"), thành viên đăng bài viết (post) để mời học nhóm, tìm bạn cùng phòng hoặc thông báo hoạt động. Sự tương tác dựa trên thuật toán dòng thời gian (Newsfeed).
+    
+    \item Facebook Events: Cho phép người dùng khởi tạo trang sự kiện riêng biệt với tiêu đề, thời gian, địa điểm và mô tả. Hệ thống gửi thông báo mời bạn bè hoặc thành viên nhóm tham gia. Người dùng phản hồi bằng cách nhấn "Tham gia" hoặc "Quan tâm".
+\end{itemize}
+
+Hạn chế cốt lõi: 
+
+\begin{itemize}
+    \item Nhiễu dữ liệu: Thông tin tham gia học tập thường bị "chôn vùi" bởi các bài đăng giải trí hoặc quảng cáo.
+
+    \item Thiếu tính bản đồ: Sinh viên phải đọc nội dung văn bản để biết địa điểm, không có giao diện trực quan để xem nhanh các hoạt động đang diễn ra xung quanh khuôn viên trường (Campus) theo thời gian thực.
+    
+    \item Kết nối thụ động: Phải có mối quan hệ bạn bè hoặc cùng tham gia nhóm thì mới nhận được thông tin sự kiện.
+\end{itemize}
+
+\subsubsection{Ứng dụng bản đồ vị trí Whoo (Mạng xã hội định vị)}
+
+Whoo (kế thừa triết lý của Zenly) là ứng dụng đại diện cho trào lưu kết nối dựa trên tọa độ GPS thời gian thực\cite{tang2010putting}.
+
+Cách thức hoạt động: 
+
+\begin{itemize}
+    \item Giao diện chính là một bản đồ số (Map-centric). Mỗi người dùng sau khi kết bạn sẽ hiển thị dưới dạng một biểu tượng (Avatar) tại vị trí thực tế của họ.
+
+    \item Ứng dụng cung cấp các chỉ số phụ như: mức pin điện thoại của bạn bè, thời gian họ đã ở một địa điểm, và tốc độ di chuyển.
+    
+    \item Người dùng tương tác bằng cách gửi biểu tượng cảm xúc (emoji) hoặc tin nhắn trực tiếp vào tọa độ của bạn mình trên bản đồ.
+\end{itemize}
+
+Hạn chế cốt lõi:
+
+\begin{itemize}
+    \item Mục đích đơn nhất: Whoo chỉ giải quyết bài toán "Theo dõi vị trí" (Social Tracking). Nó không có tính năng khởi tạo sự kiện, tổ chức hay tha gia thảo luận chuyên đề.
+
+    \item Phạm vi khép kín: Chỉ những người đã là bạn bè mới thấy nhau. Sinh viên không thể dùng Whoo để tìm kiếm những người bạn mới có cùng sở thích học thuật trong trường.
+
+\end{itemize}
+
+\subsubsection{Ứng dụng kết nối sự kiện WeGoWhere}
+
+Đây là hệ thống có mô hình nghiệp vụ gần nhất với phần "Hoạt động" của UniConnect, tập trung vào việc ghép cặp người dùng cho các kế hoạch ngắn hạn\cite{sarker2021finding}.
+
+Cách thức hoạt động:
+\begin{itemize}
+    \item Người dùng tạo một "Kèo" (Hangout) với các thông tin: Chủ đề (Ăn uống, Thể thao, Boardgame), Địa điểm và Thời gian cụ thể.
+
+    \item Hệ thống hiển thị các kèo này dưới dạng danh sách hoặc các điểm pin trên bản đồ cho những người ở gần.
+    
+    \item Người dùng có thể yêu cầu "Join" (Tham gia). Sau khi chủ kèo đồng ý, một nhóm chat riêng sẽ được tạo ra để các thành viên bàn bạc chi tiết.
+\end{itemize}
+
+Hạn chế cốt lõi: 
+\begin{itemize}
+    \item Định hướng thương mại: Ứng dụng tập trung nhiều vào các địa điểm ăn uống, giải trí có liên kết quảng cáo.
+
+    \item Thiếu ngữ cảnh học đường: Không có sự phân hóa theo chuyên ngành, lớp học hay các hoạt động tình nguyện đặc thù của sinh viên.
+    
+    \item Thiếu tính thông minh: Việc kết nối hoàn toàn dựa trên bộ lọc thủ công của người dùng, không có hệ thống gợi ý tự động (Recommendation Engine) dựa trên sở thích sâu hay tài liệu học thuật chung.
+\end{itemize}
+
+\subsubsection{So sánh các hệ thống kết nối hoạt động}
+
+\begin{table}[htbp]
+\centering
+\caption{So sánh chuyên sâu UniConnect với các hệ thống kết nối hoạt động}
+\label{tab:so-sanh-hoat-dong-chi-tiet}
+\small
+\begin{tabular}{|l|>{\raggedright\arraybackslash}p{2.3cm}|>{\raggedright\arraybackslash}p{2.3cm}|>{\raggedright\arraybackslash}p{2.3cm}|>{\raggedright\arraybackslash}p{2.8cm}|}
+\hline
+\textbf{Tiêu chí} & \textbf{Facebook Groups/Events} & \textbf{Whoo (Vị trí)} & \textbf{WeGoWhere (Rủ rê)} & \textbf{UniConnect} \\ \hline
+\textbf{Giao diện chủ đạo} & Dòng thời gian (Timeline) & Bản đồ số (Map-centric) & Danh sách \& Bản đồ & \textbf{Bản đồ số đa lớp (Layered Map)} \\ \hline
+\textbf{Đối tượng kết nối} & Mối quan hệ/Nhóm sẵn có & Bạn bè đã kết bạn & Người lạ dựa trên địa điểm & \textbf{Cộng đồng sinh viên cùng trường/ngành} \\ \hline
+\textbf{Tính Real-time} & Thấp (thông tin dễ bị trôi) & Rất cao (tọa độ liên tục) & Cao (theo thời gian sự kiện) & \textbf{Rất cao (Sự kiện \& Trạng thái SV)} \\ \hline
+\textbf{Lọc đối tượng} & Theo thành viên nhóm & Không có & Theo độ tuổi/giới tính & \textbf{Theo chuyên ngành, kỹ năng, khóa học} \\ \hline
+\textbf{Định vị không gian} & Chỉ hiển thị địa chỉ văn bản & Tọa độ cá nhân 24/7 & Điểm ghim sự kiện giải trí & \textbf{Vùng không gian học thuật (Campus zones)} \\ \hline
+\textbf{Gợi ý thông minh} & Dựa trên hành vi quảng cáo & Không có & Thủ công dựa trên khoảng cách & \textbf{AI gợi ý theo độ tương đồng sở thích (Vector)} \\ \hline
+\textbf{Quyền riêng tư} & Tùy chỉnh theo quyền của Group & Chia sẻ vị trí tuyệt đối & Công khai cho người tham gia & \textbf{Ẩn danh/Hiện diện tùy chọn theo khu vực} \\ \hline
+\end{tabular}
+\end{table}
+
+\subsection{Lĩnh vực diễn đàn và kho học liệu}
+
+Trong mảng hỗ trợ học thuật, sinh viên hiện nay thường phải luân chuyển giữa nhiều nền tảng khác nhau để vừa tìm kiếm tài liệu, vừa giải đáp thắc mắc. Tuy nhiên, mỗi hệ thống lại bộc lộ những rào cản nhất định về tính cục bộ và sự tương tác.
+
+\subsubsection{Diễn đàn Hỏi - Đáp Stack Overflow}
+
+Stack Overflow là mạng lưới Q\&A (Hỏi - Đáp) lớn nhất thế giới dành cho lập trình viên và sinh viên kỹ thuật\cite{mamykina2011design}.
+
+Cách thức hoạt động: Hệ thống vận hành dựa trên sự đóng góp của cộng đồng. Khi một người đặt câu hỏi, các thành viên khác sẽ cung cấp câu trả lời. Điểm đặc trưng nhất là cơ chế đánh giá uy tín (Reputation) và bình chọn (Vote). Những câu trả lời chính xác, chất lượng sẽ được cộng đồng đẩy lên đầu, giúp người sau tiết kiệm thời gian tra cứu.
+
+Hạn chế:
+
+\begin{itemize}
+    \item Tính học thuật quá cao: Stack Overflow có quy tắc kiểm duyệt cực kỳ khắt khe. Sinh viên mới bắt đầu thường gặp khó khăn trong việc đặt câu hỏi đúng quy chuẩn và dễ bị khóa bài hoặc đánh giá thấp.
+
+    \item Thiếu tính địa phương: Các vấn đề mang tính đặc thù của một môn học tại một trường đại học cụ thể (ví dụ: "Cách ôn tập môn Giải tích của thầy A") không thể tìm thấy trên đây.
+    
+    \item Không quản lý tài liệu: Hệ thống chỉ tập trung vào văn bản hỏi đáp, không hỗ trợ lưu trữ và tổ chức các tệp tin bài giảng hay đề thi cũ một cách có hệ thống.
+\end{itemize}
+
+\subsubsection{Nền tảng chia sẻ tài liệu Studocu} 
+
+Studocu là một thư viện số khổng lồ, nơi sinh viên trên toàn thế giới chia sẻ ghi chép và đề thi\cite{manca2020snss}.
+
+Cách thức hoạt động: Hệ thống cho phép người dùng tải lên tài liệu và phân loại chúng theo từng trường đại học, khóa học hoặc mã môn học. Sinh viên khác có thể tìm kiếm và xem trực tuyến hoặc tải về để tham khảo.
+
+Hạn chế:
+
+\begin{itemize}
+    \item Tính tương tác tĩnh: Đây thuần túy là một kho chứa (Repository). Người dùng thường chỉ vào khi cần tìm tài liệu và rời đi ngay sau đó, không có sự thảo luận hay giải đáp thắc mắc phát sinh trong quá trình học tập.
+
+    \item Sự gắn kết thấp: Sinh viên không thể biết ai đang cùng đọc tài liệu đó với mình để có thể bắt cặp học nhóm hoặc trao đổi trực tiếp.
+\end{itemize}
+
+\subsubsection{Hệ thống trao đổi trực tuyến Discord}
+
+Discord đã chuyển mình từ một ứng dụng cho game thủ thành một công cụ học tập nhóm cực kỳ phổ biến\cite{williams2024discord}.
+
+Cách thức hoạt động: Sinh viên xây dựng các "Máy chủ" (Servers) riêng cho từng lớp hoặc khoa, chia nhỏ thành các "Kênh" (Channels) theo chủ đề. Việc trao đổi diễn ra thời gian thực qua tin nhắn văn bản, gọi thoại hoặc chia sẻ màn hình (Stream).
+
+Hạn chế: 
+\begin{itemize}
+    \item Thất lạc dữ liệu: Các tệp tin tài liệu gửi trong khung chat sẽ sớm bị trôi mất theo dòng hội thoại và rất khó để tổ chức lại thành một kho học liệu có cấu trúc lâu dài.
+
+    \item Tính khép kín: Nếu không có đường dẫn mời (Invite link), sinh viên bên ngoài rất khó để tiếp cận được các nguồn tri thức hoặc các nhóm học tập chất lượng đang tồn tại xung quanh mình.
+\end{itemize}
+
+\subsubsection{So sánh các hệ thống diễn đàn và kho học liệu}
+
+\begin{table}[htbp]
+\centering
+\caption{So sánh chuyên sâu UniConnect với các hệ thống học thuật}
+\label{tab:so-sanh-hoc-thuat-chi-tiet}
+\small
+\begin{tabular}{|l|>{\raggedright\arraybackslash}p{2.5cm}|>{\raggedright\arraybackslash}p{2.5cm}|>{\raggedright\arraybackslash}p{2.5cm}|>{\raggedright\arraybackslash}p{2.8cm}|}
+\hline
+\textbf{Tiêu chí} & \textbf{Stack Overflow} & \textbf{Studocu} & \textbf{Discord} & \textbf{UniConnect} \\ \hline
+\textbf{Hình thức dữ liệu} & Văn bản Hỏi \& Đáp chuyên sâu & Tệp tin (PDF, Doc, Slide) & Luồng chat không cấu trúc & \textbf{Đa phương thức (Q\&A, File, Chat, AI)} \\ \hline
+\textbf{Tổ chức nội dung} & Gắn thẻ (Tagging) hệ thống & Phân loại theo trường tĩnh & Theo kênh (Channels) rời rạc & \textbf{Gắn liền với hoạt động và môn học thực tế} \\ \hline
+\textbf{Tính cục bộ} & Toàn cầu (Global) & Theo trường (Tĩnh) & Theo Server khép kín & \textbf{Thời gian thực tại khuôn viên (Campus)} \\ \hline
+\textbf{Khả năng tra cứu} & Rất mạnh (SEO/Keywords) & Mạnh (Tìm theo mã môn) & Kém (dễ bị trôi tin nhắn) & \textbf{Mạnh (Tìm kiếm ngữ nghĩa RAG/Vector)} \\ \hline
+\textbf{Tương tác thực tế} & Chỉ trao đổi trực tuyến & Gần như không có & Trao đổi thoại/chat online & \textbf{Rủ học nhóm/Trao đổi trực tiếp tại chỗ} \\ \hline
+\textbf{Cơ chế kiểm duyệt} & Cộng đồng bình chọn khắt khe & Kiểm duyệt bản quyền file & Quản trị viên (Manual) & \textbf{AI tự động lọc \& Admin hậu kiểm} \\ \hline
+\textbf{Hỗ trợ cá nhân} & OverflowAI (Tổng hợp) & Không có & Không (Phụ thuộc Bot bên thứ 3) & \textbf{Trợ lý AI thấu hiểu ngữ cảnh nội bộ} \\ \hline
+\end{tabular}
+\end{table}
+
+\subsection{Kết luận chương}
+
+Thông qua quá trình khảo sát và phân tích chuyên sâu các hệ thống liên quan, có thể thấy rằng dù thị trường mạng xã hội và các nền tảng học thuật hiện nay rất phát triển, nhưng trải nghiệm dành riêng cho cộng đồng sinh viên vẫn tồn tại những đứt gãy lớn. Các hệ thống hiện tại thường rơi vào một trong hai cực: hoặc quá rộng lớn, đa mục đích dẫn đến nhiễu thông tin (Facebook, Stack Overflow), hoặc quá đơn nhất về tính năng dẫn đến thiếu sự gắn kết (Whoo, Studocu).
+
+Việc so sánh chi tiết trên hai phương diện chủ đạo đã giúp đề tài rút ra những định hướng quan trọng cho việc xây dựng UniConnect:
+
+Về tính kết nối: UniConnect không chỉ kế thừa khả năng hiển thị trực quan của bản đồ số từ các ứng dụng như Whoo hay WeGoWhere, mà còn nâng cấp nó thành một "bản đồ hoạt động học đường". Hệ thống tập trung vào việc hiển thị các thực thể có ý nghĩa đối với sinh viên (nhóm học tập, sự kiện CLB, người dùng cùng chuyên ngành) để tạo ra các tương tác thực tế ngay tại khuôn viên trường.
+
+Về tính học thuật: Thay vì xây dựng một kho lưu trữ tĩnh như Studocu hay một diễn đàn hỏi đáp phi tập trung như Stack Overflow, UniConnect tích hợp cả hai yếu tố này vào trong từng hoạt động cụ thể. Điều này giúp tri thức được lưu chuyển và thảo luận ngay tại thời điểm người dùng cần nhất.
+
+Về tính đột phá công nghệ: Điểm khác biệt lớn nhất giúp UniConnect vượt qua các hệ thống hiện hành chính là việc ứng dụng trí tuệ nhân tạo thông qua kỹ thuật tìm kiếm vector và kiến trúc RAG. Đây là công cụ đắc lực giúp cá nhân hóa trải nghiệm, gợi ý chính xác những gì sinh viên cần dựa trên sở thích và ngữ cảnh thực tế mà không phụ thuộc vào các bộ lọc thủ công rườm rà.

@@ -1,0 +1,90 @@
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--bottom-nav-height, 56px);
+  background-color: var(--color-bg-primary);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid var(--color-glass-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 var(--space-2);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  z-index: var(--z-sticky);
+  user-select: none;
+}
+
+/* Hide on Desktop & Tablet */
+@media (min-width: 768px) {
+  .bottom-nav {
+    display: none !important;
+  }
+}
+
+.bottom-nav__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  height: 100%;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  font-size: 0.6875rem;
+  font-weight: var(--font-weight-medium);
+  transition: all var(--transition-fast);
+  gap: 2px;
+  min-height: 44px;
+}
+
+.bottom-nav__icon {
+  flex-shrink: 0;
+  transition: transform var(--transition-fast);
+}
+
+.bottom-nav__item:hover {
+  color: var(--color-text-primary);
+}
+
+.bottom-nav__item--active {
+  color: var(--color-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.bottom-nav__item--active .bottom-nav__icon {
+  transform: translateY(-1px);
+}
+
+/* Central Floating Action Button (FAB) */
+.bottom-nav__fab-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  text-decoration: none;
+  position: relative;
+}
+
+.bottom-nav__fab {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(47, 39, 206, 0.4);
+  transform: translateY(-8px);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  border: 3px solid var(--color-bg-primary);
+}
+
+.bottom-nav__fab:hover,
+.bottom-nav__fab:active {
+  transform: translateY(-10px) scale(1.05);
+  box-shadow: 0 6px 18px rgba(47, 39, 206, 0.5);
+}

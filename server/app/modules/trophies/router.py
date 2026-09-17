@@ -19,15 +19,16 @@ async def create_trophy(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    # Only verified users or admins can create trophies
+    # Only verified users, edu_org, or admins can create trophies
     user = await db.scalar(select(User).where(User.id == uuid.UUID(current_user["sub"])))
-    if not user or (not user.is_verified and user.role != "admin"):
-        raise HTTPException(status_code=403, detail="Only verified users can create trophies.")
+    if not user or (not user.is_verified and user.role not in ["admin", "edu_org"]):
+        raise HTTPException(status_code=403, detail="Chỉ các tổ chức hoặc tài khoản đã xác minh mới có thể tạo Trophy.")
     
     trophy = Trophy(
         name=data.name,
+        description=data.description,
         points=data.points,
-        icon_url=data.icon_url,
+        icon=data.icon or "🏆",
         creator_id=user.id
     )
     db.add(trophy)
@@ -44,11 +45,14 @@ async def list_trophies(db: AsyncSession = Depends(get_db)):
 async def get_user_trophies(user_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     result = await db.execute(
         select(UserTrophy)
-        .options(joinedload(UserTrophy.trophy))
+        .options(
+            joinedload(UserTrophy.trophy),
+            joinedload(UserTrophy.activity)
+        )
         .where(UserTrophy.user_id == user_id)
         .order_by(UserTrophy.created_at.desc())
     )
-    return list(result.scalars().all())
+    return list(result.unique().scalars().all())
 
 class TrophyAwardRequest(BaseModel):
     user_id: uuid.UUID
@@ -81,4 +85,4 @@ async def award_trophy(
         .options(joinedload(UserTrophy.trophy))
         .where(UserTrophy.id == user_trophy.id)
     )
-    return result.scalar_one()
+    return result.unique().scalar_one()

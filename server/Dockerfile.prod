@@ -1,3 +1,4 @@
+# ── Stage 1: Base Runtime Environment ──
 FROM python:3.12-slim AS base
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -6,31 +7,41 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Install system dependencies (e.g. for psycopg2 or postgis if needed)
+# ── Stage 2: Builder & Production Dependencies ──
+FROM base AS builder
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# ── Dependencies layer ──
-FROM base AS deps
-
 COPY pyproject.toml ./
-# Install only production dependencies
-RUN pip install --no-cache-dir .
+# Install only production dependencies into isolated prefix
+RUN pip install --no-cache-dir --prefix=/install .
 
-# ── App layer ──
-FROM base AS app
+# ── Stage 3: Production Runner (Non-Root) ──
+FROM base AS runner
 
-COPY --from=deps /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
-COPY --from=deps /usr/local/bin /usr/local/bin
+# Create dedicated non-root application user and group and ensure /app ownership
+RUN addgroup --system --gid 1001 appgroup && \
+    adduser --system --uid 1001 --ingroup appgroup --home /app appuser && \
+    chown -R appuser:appgroup /app
 
-COPY . .
+# Copy installed production packages from builder
+COPY --from=builder /install /usr/local
 
-# Non-root user for security
-RUN addgroup --system app && adduser --system --ingroup app app
-USER app
+# Copy application source code with non-root ownership
+# .dockerignore excludes .venv, __pycache__, tests, seeds
+COPY --chown=appuser:appgroup . .
+
+USER appuser
 
 EXPOSE 8000
 
-# Use gunicorn with uvicorn workers for production
-CMD ["gunicorn", "app.main:app", "-w", "1", "-k", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000"]
+# Built-in healthcheck using standard library urllib (no curl needed)
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD python -c "import urllib.request, sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health').getcode() == 200 else 1)"
+
+# Gunicorn process manager with configurable worker concurrency
+# Connection ceiling: WEB_CONCURRENCY × (DB_POOL_SIZE + DB_MAX_OVERFLOW)
+# Default: 2 × (20 + 10) = 60 potential DB connections
+CMD ["sh", "-c", "gunicorn app.main:app -w ${WEB_CONCURRENCY:-2} -k uvicorn.workers.UvicornWorker --worker-tmp-dir /dev/shm --bind 0.0.0.0:8000"]

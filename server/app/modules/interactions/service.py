@@ -31,13 +31,6 @@ async def _validate_target(db: AsyncSession, target_type: str, target_id: uuid.U
             raise NotFoundError("Activity not found.")
         return obj
 
-    if target_type == "document":
-        from app.modules.documents.repository import get_by_id
-        obj = await get_by_id(db, target_id)
-        if not obj:
-            raise NotFoundError("Document not found.")
-        return obj
-
     raise ValidationError(f"Unsupported target type: {target_type}")
 
 

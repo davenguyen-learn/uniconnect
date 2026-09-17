@@ -6,15 +6,15 @@
 
 .form-label {
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
 }
 
 .form-input {
   width: 100%;
   padding: var(--space-2) var(--space-3);
-  background: var(--color-bg-secondary);
-  border: var(--border-thick);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-glass-border);
   border-radius: var(--radius-md);
   color: var(--color-text-primary);
   font-size: var(--font-size-sm);
@@ -28,11 +28,11 @@
 
 .form-input:focus {
   border-color: var(--color-accent);
-  box-shadow: 4px 4px 0px 0px #000;
+  box-shadow: 0 0 0 1px var(--color-accent);
 }
 
 .form-input:hover:not(:focus) {
-  border-color: #000;
+  border-color: var(--color-glass-border-hover);
 }
 
 .form-input.error {
@@ -40,7 +40,7 @@
 }
 
 .form-input.error:focus {
-  box-shadow: 4px 4px 0px 0px var(--color-error);
+  box-shadow: 0 0 0 1px var(--color-error);
 }
 
 .form-error {

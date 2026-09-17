@@ -1,5 +1,11 @@
 import { api } from './client';
-import type { UserInfo } from './documents';
+
+export interface UserInfo {
+  id: string;
+  username: string;
+  full_name: string | null;
+  avatar_url?: string | null;
+}
 
 export interface NotificationResponse {
   id: string;

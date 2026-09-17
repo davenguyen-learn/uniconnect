@@ -1,13 +1,5 @@
-import { Outlet } from 'react-router-dom';
-import Navbar from './Navbar';
+import AppShell from '../AppShell/AppShell';
 
 export default function Layout() {
-  return (
-    <>
-      <Navbar />
-      <main style={{ flex: 1 }}>
-        <Outlet />
-      </main>
-    </>
-  );
+  return <AppShell />;
 }

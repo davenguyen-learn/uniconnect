@@ -4,7 +4,7 @@
   position: relative;
   border-radius: var(--radius-xl);
   overflow: hidden;
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-md);
   border: 1px solid var(--color-glass-border);
 }
 
@@ -14,11 +14,20 @@
   z-index: 1; /* Keep map below modals/navbar */
 }
 
+/* ── Modern Aesthetic Map Tiles (Soft Pastel / Clean Minimalist) ── */
+.modern-map-tiles .leaflet-tile {
+  filter: contrast(90%) brightness(102%) saturate(45%) hue-rotate(-3deg);
+  transition: filter var(--transition-base);
+}
+
+/* Dark mode aesthetic */
+[data-theme='dark'] .modern-map-tiles .leaflet-tile {
+  filter: brightness(0.72) invert(1) contrast(2.8) hue-rotate(200deg) saturate(0.25);
+}
+
 /* Custom Popup Styles */
 .custom-popup .leaflet-popup-content-wrapper {
-  background: var(--color-glass);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: var(--color-bg-elevated);
   border: 1px solid var(--color-glass-border);
   color: var(--color-text-primary);
   border-radius: var(--radius-lg);
@@ -27,7 +36,7 @@
 }
 
 .custom-popup .leaflet-popup-tip {
-  background: var(--color-glass);
+  background: var(--color-bg-elevated);
   border: 1px solid var(--color-glass-border);
   border-top: none;
   border-left: none;
@@ -59,13 +68,13 @@
 
 .popup-category {
   font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-bold);
+  font-weight: var(--font-weight-semibold);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--color-accent);
-  background: rgba(108, 92, 231, 0.1);
-  padding: 2px 6px;
-  border-radius: 4px;
+  background: var(--color-accent-subtle);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
 }
 
 .popup-distance {
@@ -75,7 +84,7 @@
 
 .popup-title {
   font-size: var(--font-size-base);
-  font-weight: var(--font-weight-bold);
+  font-weight: var(--font-weight-semibold);
   margin: 0 0 var(--space-1) 0;
   color: var(--color-text-primary);
   line-height: 1.2;
@@ -125,7 +134,7 @@
   align-items: center;
   justify-content: center;
   border: 2px solid;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   transition: transform 0.2s ease;
 }
 
@@ -144,7 +153,7 @@
 .marker-shadow-dot {
   width: 10px;
   height: 4px;
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.15);
   border-radius: 50%;
   margin-top: 2px;
 }
@@ -158,7 +167,7 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: rgba(239, 68, 68, 0.3);
+  background: rgba(237, 73, 86, 0.25);
   animation: marker-pulse-anim 2s ease-out infinite;
   z-index: -1;
 }
@@ -191,10 +200,10 @@
 .user-location-dot {
   width: 12px;
   height: 12px;
-  background: #3b82f6;
+  background: var(--color-accent);
   border: 2px solid white;
   border-radius: 50%;
-  box-shadow: 0 0 6px rgba(59, 130, 246, 0.5);
+  box-shadow: 0 0 6px rgba(0, 149, 246, 0.5);
   z-index: 2;
 }
 
@@ -202,7 +211,7 @@
   position: absolute;
   width: 20px;
   height: 20px;
-  background: rgba(59, 130, 246, 0.25);
+  background: rgba(0, 149, 246, 0.2);
   border-radius: 50%;
   animation: user-pulse 2.5s ease-out infinite;
   z-index: 1;
@@ -222,11 +231,11 @@
 /* ─── Tooltip Styles ─── */
 .activity-tooltip {
   font-weight: 600;
-  background: rgba(255, 255, 255, 0.95);
-  color: #1a1a1a;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.98);
+  color: #262626;
+  border: 1px solid var(--color-glass-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
   padding: 4px 8px;
   font-size: 0.8rem;
   text-shadow: none;
@@ -234,26 +243,26 @@
 
 /* Remove default Leaflet tooltip arrow and background to avoid conflicting styles */
 .leaflet-tooltip.activity-tooltip {
-  background-color: rgba(255, 255, 255, 0.95);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  color: #1a1a1a;
+  background-color: rgba(255, 255, 255, 0.98);
+  border: 1px solid var(--color-glass-border);
+  color: #262626;
 }
 .leaflet-tooltip-top.activity-tooltip::before,
 .leaflet-tooltip-bottom.activity-tooltip::before,
 .leaflet-tooltip-left.activity-tooltip::before,
 .leaflet-tooltip-right.activity-tooltip::before {
-  border-top-color: rgba(255, 255, 255, 0.95) !important;
+  border-top-color: rgba(255, 255, 255, 0.98) !important;
 }
 
 /* Tooltip time badge */
 .tooltip-time-badge {
   display: inline-block;
   font-size: 0.7rem;
-  font-weight: 700;
-  background: rgba(0, 0, 0, 0.08);
-  color: #555;
+  font-weight: 600;
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
   padding: 1px 5px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   margin-right: 3px;
   vertical-align: middle;
 }
@@ -265,15 +274,15 @@
 
 /* Tooltip matching user interests — golden highlight */
 .leaflet-tooltip.tooltip-match {
-  background: linear-gradient(135deg, #fff8e1 0%, #ffe082 100%);
+  background: #fff8e1;
   border: 1.5px solid #ffc107;
   color: #5d4037;
-  box-shadow: 0 0 12px rgba(255, 193, 7, 0.4), 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 0 12px rgba(255, 193, 7, 0.3), var(--shadow-md);
   font-weight: 700;
 }
 
 .leaflet-tooltip-top.tooltip-match::before {
-  border-top-color: #ffe082 !important;
+  border-top-color: #fff8e1 !important;
 }
 
 /* ─── Map Legend ─── */
@@ -282,20 +291,21 @@
   bottom: 20px;
   left: 20px;
   z-index: 1000;
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(8px);
   padding: 12px 14px;
-  border-radius: 10px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--color-glass-border);
   font-size: 0.82rem;
-  color: #333;
+  color: var(--color-text-primary);
 }
 
 .map-legend-title {
   margin: 0 0 8px 0;
   font-size: 0.88rem;
   font-weight: 700;
-  color: #222;
+  color: var(--color-text-primary);
 }
 
 .legend-item {
@@ -317,8 +327,8 @@
 }
 
 .legend-dot-match {
-  background: linear-gradient(135deg, #ffc107, #ff9800);
-  box-shadow: 0 0 6px rgba(255, 193, 7, 0.5);
+  background: #ffc107;
+  box-shadow: 0 0 6px rgba(255, 193, 7, 0.4);
 }
 
 .legend-dot--urgent {
@@ -348,19 +358,23 @@
 
 .recenter-btn {
   border-radius: 50% !important;
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   padding: 0 !important;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.25rem;
-  background: #ffffff !important;
-  border: 3px solid #000 !important;
-  box-shadow: 4px 4px 0px 0px #000 !important;
+  background: var(--color-bg-elevated) !important;
+  border: 1px solid var(--color-glass-border) !important;
+  box-shadow: var(--shadow-md) !important;
+  color: var(--color-text-primary) !important;
+}
+
+.recenter-btn:hover {
+  box-shadow: var(--shadow-lg) !important;
 }
 
 .recenter-btn:active {
-  transform: translate(4px, 4px) !important;
-  box-shadow: 0px 0px 0px 0px #000 !important;
+  transform: scale(0.95) !important;
 }

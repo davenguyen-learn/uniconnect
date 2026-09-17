@@ -7,6 +7,11 @@ class Settings(BaseSettings):
     # ── Database ──
     DATABASE_URL: str = "postgresql+asyncpg://uniconnect:uniconnect_dev_pwd@db:5432/uniconnect"
     DB_ECHO: bool = False
+    DB_POOL_SIZE: int = 20
+    DB_MAX_OVERFLOW: int = 10
+    DB_POOL_TIMEOUT: float = 30.0
+    DB_POOL_RECYCLE: int = 1800
+    DB_POOL_PRE_PING: bool = True
 
     # ── JWT ──
     JWT_SECRET: str = "change-me-to-a-random-64-char-string-in-production"
@@ -21,6 +26,14 @@ class Settings(BaseSettings):
     # ── Server ──
     SERVER_HOST: str = "0.0.0.0"
     SERVER_PORT: int = 8000
+    # Comma-separated list of trusted proxy IPs/networks for X-Forwarded-For parsing.
+    # Only proxies listed here are trusted to set forwarded headers.
+    # Default "127.0.0.1" trusts only loopback; set to actual proxy IPs in production.
+    TRUSTED_PROXY_IPS: str = "127.0.0.1"
+
+    @property
+    def trusted_proxy_list(self) -> list[str]:
+        return [ip.strip() for ip in self.TRUSTED_PROXY_IPS.split(",") if ip.strip()]
 
     # ── Storage (Cloudflare R2) ──
     R2_ENDPOINT_URL: str = ""
@@ -33,6 +46,8 @@ class Settings(BaseSettings):
 
     # ── AI Services ──
     GEMINI_API_KEY: str = ""
+    GEMINI_PRIMARY_MODEL: str = "gemini-2.5-flash"
+    GEMINI_FALLBACK_MODELS: str = "gemini-2.0-flash,gemini-1.5-flash"
 
     @property
     def cors_origin_list(self) -> list[str]:
@@ -42,7 +57,7 @@ class Settings(BaseSettings):
     def is_production(self) -> bool:
         return self.APP_ENV == "production"
 
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
+    model_config = {"env_file": (".env", "../.env"), "env_file_encoding": "utf-8", "extra": "ignore"}
 
 
 settings = Settings()

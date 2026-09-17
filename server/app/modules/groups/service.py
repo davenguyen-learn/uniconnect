@@ -1,12 +1,31 @@
 import uuid
+from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import HTTPException
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.groups import repository as group_repo
-from app.modules.groups.models import Group, GroupMember, GroupRole
-from app.modules.groups.schemas import GroupCreate, GroupDetailResponse, GroupMemberResponse, GroupResponse, GroupUpdate
+from app.modules.groups.models import Group, GroupMember, GroupRole, GroupJoinRequest, ActivityCoHost, ActivityCoHostInvitation
+from app.modules.groups.schemas import (
+    GroupCreate,
+    GroupDetailResponse,
+    GroupMemberResponse,
+    GroupResponse,
+    GroupUpdate,
+    GroupStatsResponse,
+    GroupJoinRequestResponse,
+    CoHostInvitationCreate,
+    CoHostInvitationResponse,
+)
+from app.modules.activities.models import Activity
+from app.modules.groups.permissions import (
+    can_approve_join_request,
+    can_invite_cohost,
+    can_respond_cohost_invitation,
+    is_group_admin_or_owner,
+)
 
 
 async def create_group(db: AsyncSession, owner_id: uuid.UUID, data: GroupCreate) -> GroupResponse:
@@ -16,7 +35,6 @@ async def create_group(db: AsyncSession, owner_id: uuid.UUID, data: GroupCreate)
         public_description=data.public_description,
         private_description=data.private_description,
         allow_member_activities=data.allow_member_activities,
-        allow_member_documents=data.allow_member_documents,
         require_approval=data.require_approval,
         privacy=data.privacy,
         owner_id=owner_id,
@@ -99,7 +117,6 @@ async def get_group(db: AsyncSession, group_id: uuid.UUID, user_id: uuid.UUID | 
         public_description=group.public_description,
         private_description=revealed_private_desc,
         allow_member_activities=group.allow_member_activities,
-        allow_member_documents=group.allow_member_documents,
         require_approval=group.require_approval,
         privacy=group.privacy.value if hasattr(group.privacy, 'value') else group.privacy,
         owner_id=group.owner_id,
@@ -120,7 +137,16 @@ async def join_group(db: AsyncSession, group_id: uuid.UUID, user_id: uuid.UUID, 
         raise HTTPException(status_code=400, detail="Already a member")
         
     if group.require_approval:
-        from app.modules.groups.models import GroupJoinRequest
+        # Check if already has a pending join request
+        chk_stmt = select(GroupJoinRequest).where(
+            GroupJoinRequest.group_id == group_id,
+            GroupJoinRequest.user_id == user_id,
+            GroupJoinRequest.status == "pending",
+        )
+        chk_res = await db.execute(chk_stmt)
+        if chk_res.scalar_one_or_none():
+            raise HTTPException(status_code=409, detail="Join request already pending")
+
         req = GroupJoinRequest(
             group_id=group_id,
             user_id=user_id,
@@ -128,7 +154,7 @@ async def join_group(db: AsyncSession, group_id: uuid.UUID, user_id: uuid.UUID, 
             form_responses=form_responses
         )
         db.add(req)
-        await db.flush()
+        await db.commit()
     else:
         member = GroupMember(
             group_id=group_id,
@@ -136,6 +162,7 @@ async def join_group(db: AsyncSession, group_id: uuid.UUID, user_id: uuid.UUID, 
             role=GroupRole.member
         )
         await group_repo.add_member(db, member)
+        await db.commit()
 
 
 async def leave_group(db: AsyncSession, group_id: uuid.UUID, user_id: uuid.UUID) -> None:
@@ -189,10 +216,280 @@ def _build_group_response(group: Group) -> GroupResponse:
         public_description=group.public_description,
         private_description=group.private_description,
         allow_member_activities=group.allow_member_activities,
-        allow_member_documents=group.allow_member_documents,
         require_approval=group.require_approval,
         privacy=group.privacy.value if hasattr(group.privacy, 'value') else group.privacy,
         owner_id=group.owner_id,
         created_at=group.created_at,
         member_count=member_count
     )
+
+
+# ── Phase 8 Services ──
+
+async def get_group_stats_service(db: AsyncSession, group_id: uuid.UUID) -> GroupStatsResponse:
+    """Public stats endpoint: 100% server-derived with SQL subquery deduplication."""
+    group = await group_repo.get_group_by_id(db, group_id)
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+
+    member_count, total_activities_count, total_ctxh_contributed = await group_repo.get_group_stats(db, group_id)
+    return GroupStatsResponse(
+        group_id=group_id,
+        member_count=member_count,
+        total_activities_count=total_activities_count,
+        total_ctxh_contributed=total_ctxh_contributed,
+    )
+
+
+async def get_group_members_service(
+    db: AsyncSession, group_id: uuid.UUID, limit: int = 20, offset: int = 0
+) -> list[GroupMemberResponse]:
+    members, _ = await group_repo.get_group_members_paginated(db, group_id, limit, offset)
+    return [
+        GroupMemberResponse(
+            user_id=m.user_id,
+            role=m.role,
+            joined_at=m.created_at,
+            username=m.user.username if m.user else None,
+            full_name=m.user.full_name if m.user else None,
+        )
+        for m in members
+    ]
+
+
+async def list_group_join_requests(
+    db: AsyncSession, group_id: uuid.UUID, user_id: uuid.UUID, status: str = "pending", limit: int = 20, offset: int = 0
+) -> list[GroupJoinRequestResponse]:
+    """Management only: Lists join requests for club owner/admin."""
+    if not await can_approve_join_request(db, user_id, group_id):
+        raise HTTPException(status_code=403, detail="Only group owner or admin can view join requests")
+
+    reqs, _ = await group_repo.get_group_join_requests(db, group_id, status=status, limit=limit, offset=offset)
+    return [
+        GroupJoinRequestResponse(
+            id=r.id,
+            group_id=r.group_id,
+            user_id=r.user_id,
+            status=r.status,
+            created_at=r.created_at,
+            username=r.user.username if r.user else None,
+            full_name=r.user.full_name if r.user else None,
+            form_responses=r.form_responses,
+        )
+        for r in reqs
+    ]
+
+
+async def action_join_request(
+    db: AsyncSession, group_id: uuid.UUID, request_id: uuid.UUID, user_id: uuid.UUID, action: str
+) -> GroupJoinRequestResponse:
+    """State machine transition: pending -> approved | rejected."""
+    if not await can_approve_join_request(db, user_id, group_id):
+        raise HTTPException(status_code=403, detail="Only group owner or admin can review join requests")
+
+    if action not in ("approved", "rejected"):
+        raise HTTPException(status_code=400, detail="Action must be 'approved' or 'rejected'")
+
+    stmt = select(GroupJoinRequest).where(GroupJoinRequest.id == request_id, GroupJoinRequest.group_id == group_id)
+    res = await db.execute(stmt)
+    req = res.scalar_one_or_none()
+    if not req:
+        raise HTTPException(status_code=404, detail="Join request not found")
+
+    if req.status != "pending":
+        raise HTTPException(status_code=400, detail="Cannot process request that is not pending")
+
+    if action == "approved":
+        req.status = "approved"
+        # Check if already a member before adding
+        if not await group_repo.is_member(db, group_id, req.user_id):
+            new_member = GroupMember(
+                group_id=group_id,
+                user_id=req.user_id,
+                role=GroupRole.member,
+            )
+            db.add(new_member)
+    else:
+        req.status = "rejected"
+
+    await db.commit()
+    await db.refresh(req)
+
+    return GroupJoinRequestResponse(
+        id=req.id,
+        group_id=req.group_id,
+        user_id=req.user_id,
+        status=req.status,
+        created_at=req.created_at,
+        username=req.user.username if req.user else None,
+        full_name=req.user.full_name if req.user else None,
+        form_responses=req.form_responses,
+    )
+
+
+async def invite_cohost(
+    db: AsyncSession, activity_id: uuid.UUID, user_id: uuid.UUID, data: CoHostInvitationCreate
+) -> CoHostInvitationResponse:
+    """Lead host invites another group to be co-host."""
+    if not await can_invite_cohost(db, user_id, activity_id):
+        raise HTTPException(status_code=403, detail="Only activity host or lead group admin can invite co-hosts")
+
+    act_stmt = select(Activity).where(Activity.id == activity_id, Activity.is_deleted.is_(False))
+    act_res = await db.execute(act_stmt)
+    act = act_res.scalar_one_or_none()
+    if not act:
+        raise HTTPException(status_code=404, detail="Activity not found")
+
+    if not act.group_id:
+        raise HTTPException(status_code=400, detail="Activity does not belong to a group")
+
+    # Invariant: cannot invite lead host
+    if data.invited_group_id == act.group_id:
+        raise HTTPException(status_code=400, detail="Cannot invite lead host as co-host")
+
+    # Check invited group exists
+    invited_group = await group_repo.get_group_by_id(db, data.invited_group_id)
+    if not invited_group:
+        raise HTTPException(status_code=404, detail="Invited group not found")
+
+    # Invariant: cannot invite if already an accepted co-host
+    chk_cohost = await db.execute(
+        select(ActivityCoHost).where(
+            ActivityCoHost.activity_id == activity_id,
+            ActivityCoHost.group_id == data.invited_group_id,
+        )
+    )
+    if chk_cohost.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="Group is already an accepted co-host")
+
+    # Invariant: cannot invite if pending invitation exists
+    chk_pending = await db.execute(
+        select(ActivityCoHostInvitation).where(
+            ActivityCoHostInvitation.activity_id == activity_id,
+            ActivityCoHostInvitation.invited_group_id == data.invited_group_id,
+            ActivityCoHostInvitation.status == "pending",
+        )
+    )
+    if chk_pending.scalar_one_or_none():
+        raise HTTPException(status_code=409, detail="A pending invitation already exists for this group")
+
+    invitation = ActivityCoHostInvitation(
+        id=uuid.uuid4(),
+        activity_id=activity_id,
+        host_group_id=act.group_id,
+        invited_group_id=data.invited_group_id,
+        status="pending",
+        message=data.message,
+        created_at=datetime.now(timezone.utc),
+    )
+    db.add(invitation)
+    await db.commit()
+    await db.refresh(invitation)
+
+    return CoHostInvitationResponse(
+        id=invitation.id,
+        activity_id=invitation.activity_id,
+        activity_title=act.title,
+        host_group_id=invitation.host_group_id,
+        host_group_name=act.group.name if act.group else None,
+        invited_group_id=invitation.invited_group_id,
+        invited_group_name=invited_group.name,
+        status=invitation.status,
+        message=invitation.message,
+        created_at=invitation.created_at,
+    )
+
+
+async def list_cohost_invitations(
+    db: AsyncSession, group_id: uuid.UUID, user_id: uuid.UUID, status: str | None = None, limit: int = 20, offset: int = 0
+) -> list[CoHostInvitationResponse]:
+    """Management only: BCN inbox for co-host invitations."""
+    if not await is_group_admin_or_owner(db, user_id, group_id):
+        raise HTTPException(status_code=403, detail="Only group owner or admin can access co-host invitations")
+
+    invitations, _ = await group_repo.get_cohost_invitations_for_group(
+        db, group_id, status=status, limit=limit, offset=offset
+    )
+    return [
+        CoHostInvitationResponse(
+            id=inv.id,
+            activity_id=inv.activity_id,
+            activity_title=inv.activity.title if inv.activity else None,
+            host_group_id=inv.host_group_id,
+            host_group_name=inv.host_group.name if inv.host_group else None,
+            invited_group_id=inv.invited_group_id,
+            invited_group_name=inv.invited_group.name if inv.invited_group else None,
+            status=inv.status,
+            message=inv.message,
+            created_at=inv.created_at,
+        )
+        for inv in invitations
+    ]
+
+
+async def respond_cohost_invitation(
+    db: AsyncSession, invitation_id: uuid.UUID, user_id: uuid.UUID, action: str
+) -> CoHostInvitationResponse:
+    """Atomic acceptance or decline with MAX_COHOSTS limit and transactional consistency."""
+    if action not in ("accepted", "declined"):
+        raise HTTPException(status_code=400, detail="Action must be 'accepted' or 'declined'")
+
+    if not await can_respond_cohost_invitation(db, user_id, invitation_id):
+        raise HTTPException(status_code=403, detail="Only owner or admin of the invited group can respond")
+
+    stmt = select(ActivityCoHostInvitation).where(ActivityCoHostInvitation.id == invitation_id)
+    res = await db.execute(stmt)
+    inv = res.scalar_one_or_none()
+    if not inv:
+        raise HTTPException(status_code=404, detail="Invitation not found")
+
+    if action == "declined":
+        upd_stmt = (
+            update(ActivityCoHostInvitation)
+            .where(ActivityCoHostInvitation.id == invitation_id, ActivityCoHostInvitation.status == "pending")
+            .values(status="declined")
+        )
+        upd_res = await db.execute(upd_stmt)
+        if upd_res.rowcount != 1:
+            raise HTTPException(status_code=409, detail="Invitation has already been processed or is not pending")
+        await db.commit()
+        await db.refresh(inv)
+    else:  # accepted
+        # Check MAX_COHOSTS = 5
+        current_count = await group_repo.count_accepted_cohosts(db, inv.activity_id)
+        if current_count >= 5:
+            raise HTTPException(status_code=409, detail="Activity has reached the maximum limit of 5 co-hosts")
+
+        # Atomic transition
+        upd_stmt = (
+            update(ActivityCoHostInvitation)
+            .where(ActivityCoHostInvitation.id == invitation_id, ActivityCoHostInvitation.status == "pending")
+            .values(status="accepted")
+        )
+        upd_res = await db.execute(upd_stmt)
+        if upd_res.rowcount != 1:
+            raise HTTPException(status_code=409, detail="Invitation has already been processed or is not pending")
+
+        # Create ActivityCoHost in same transaction
+        try:
+            cohost = ActivityCoHost(activity_id=inv.activity_id, group_id=inv.invited_group_id)
+            db.add(cohost)
+            await db.commit()
+            await db.refresh(inv)
+        except Exception:
+            await db.rollback()
+            raise
+
+    return CoHostInvitationResponse(
+        id=inv.id,
+        activity_id=inv.activity_id,
+        activity_title=inv.activity.title if inv.activity else None,
+        host_group_id=inv.host_group_id,
+        host_group_name=inv.host_group.name if inv.host_group else None,
+        invited_group_id=inv.invited_group_id,
+        invited_group_name=inv.invited_group.name if inv.invited_group else None,
+        status=inv.status,
+        message=inv.message,
+        created_at=inv.created_at,
+    )
+

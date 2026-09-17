@@ -143,3 +143,81 @@ async def list_following(db: AsyncSession, user_id: uuid.UUID, limit: int = 20, 
         has_more=(offset + limit) < total
     )
 
+
+async def get_user_stats(db: AsyncSession, user_id: uuid.UUID, is_self: bool = False) -> dict:
+    """Aggregate server-derived stats for user recognition, CTXH progress, and trophies."""
+    from app.modules.participation.models import JoinRequest
+    from app.modules.activities.models import Activity
+    from app.modules.trophies.models import UserTrophy, Trophy
+    from app.modules.users.policy import CTXH_TARGET_DAYS, resolve_rank_title
+    from sqlalchemy import func
+
+    # Check user exists
+    user = await db.scalar(select(User).where(User.id == user_id))
+    if not user:
+        raise NotFoundError("User not found.")
+
+    # 1. CTXH days and attended activities count (Single aggregate query)
+    ctxh_query = (
+        select(
+            func.coalesce(func.sum(Activity.social_work_days), 0.0),
+            func.count(JoinRequest.id),
+        )
+        .select_from(JoinRequest)
+        .join(Activity, JoinRequest.activity_id == Activity.id)
+        .where(
+            JoinRequest.user_id == user_id,
+            JoinRequest.attendance_confirmed == True,
+        )
+    )
+    ctxh_res = await db.execute(ctxh_query)
+    total_ctxh_raw, total_attended_raw = ctxh_res.one()
+    total_ctxh = float(total_ctxh_raw)
+    total_attended = int(total_attended_raw)
+
+    # 2. Trophies count and points (Single aggregate query)
+    trophy_query = (
+        select(
+            func.count(UserTrophy.id),
+            func.coalesce(func.sum(Trophy.points), 0),
+        )
+        .select_from(UserTrophy)
+        .join(Trophy, UserTrophy.trophy_id == Trophy.id)
+        .where(UserTrophy.user_id == user_id)
+    )
+    trophy_res = await db.execute(trophy_query)
+    total_trophies_raw, total_points_raw = trophy_res.one()
+    total_trophies = int(total_trophies_raw)
+    total_points = int(total_points_raw)
+
+    rank_title = resolve_rank_title(total_points)
+
+    if not is_self:
+        return {
+            "user_id": str(user_id),
+            "total_ctxh_days": total_ctxh,
+            "total_attended_activities": total_attended,
+            "total_trophies_count": total_trophies,
+            "total_trophy_points": total_points,
+            "rank_title": rank_title,
+        }
+
+    # Self / Private detailed calculations
+    completion_percent = min(round((total_ctxh / CTXH_TARGET_DAYS) * 100, 1), 100.0)
+    remaining_days = max(0.0, round(CTXH_TARGET_DAYS - total_ctxh, 1))
+    is_target_reached = total_ctxh >= CTXH_TARGET_DAYS
+
+    return {
+        "user_id": str(user_id),
+        "total_ctxh_days": total_ctxh,
+        "target_ctxh_days": CTXH_TARGET_DAYS,
+        "ctxh_completion_percent": completion_percent,
+        "remaining_ctxh_days": remaining_days,
+        "is_target_reached": is_target_reached,
+        "total_attended_activities": total_attended,
+        "total_trophies_count": total_trophies,
+        "total_trophy_points": total_points,
+        "rank_title": rank_title,
+    }
+
+

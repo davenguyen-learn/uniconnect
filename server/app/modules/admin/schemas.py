@@ -11,7 +11,6 @@ from pydantic import BaseModel, ConfigDict, Field
 class AdminStats(BaseModel):
     total_users: int
     total_activities: int
-    total_documents: int
     total_reports: int
     pending_reports: int
     new_users_this_week: int
@@ -41,7 +40,7 @@ class AdminUserList(BaseModel):
 
 
 class RoleUpdate(BaseModel):
-    role: str = Field(..., pattern="^(student|moderator|admin)$")
+    role: str = Field(..., pattern="^(student|moderator|admin|edu_org)$")
 
 
 class StatusUpdate(BaseModel):
@@ -111,31 +110,6 @@ class AdminActivityItem(BaseModel):
 
 class AdminActivityList(BaseModel):
     items: list[AdminActivityItem]
-    total: int
-    limit: int
-    offset: int
-    has_more: bool
-
-
-# ── Document management ──
-
-class AdminDocumentItem(BaseModel):
-    id: uuid.UUID
-    author_id: uuid.UUID
-    title: str
-    description: str | None
-    file_name: str
-    file_size: int
-    file_type: str
-    is_deleted: bool
-    created_at: datetime
-    author_username: str | None = None
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class AdminDocumentList(BaseModel):
-    items: list[AdminDocumentItem]
     total: int
     limit: int
     offset: int

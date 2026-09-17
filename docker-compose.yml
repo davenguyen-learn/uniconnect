@@ -22,6 +22,8 @@ services:
       context: ./server
       target: app
     env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-uniconnect}:${POSTGRES_PASSWORD:-uniconnect_dev_pwd}@db:5432/${POSTGRES_DB:-uniconnect}
     ports:
       - "8000:8000"
     volumes:
@@ -34,6 +36,7 @@ services:
   client:
     build:
       context: ./client
+    env_file: .env
     ports:
       - "5173:5173"
     volumes:

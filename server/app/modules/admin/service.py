@@ -10,14 +10,12 @@ from sqlalchemy.orm import joinedload
 from app.core.exceptions import NotFoundError, ValidationError
 from app.modules.users.models import User, UserRole
 from app.modules.activities.models import Activity
-from app.modules.documents.models import Document
 from app.modules.reports.models import Report
 from app.modules.admin.schemas import (
     AdminStats,
     AdminUserItem, AdminUserList,
     AdminReportItem, AdminReportList, ReportReporterInfo,
     AdminActivityItem, AdminActivityList,
-    AdminDocumentItem, AdminDocumentList,
 )
 
 
@@ -32,9 +30,6 @@ async def get_stats(db: AsyncSession) -> AdminStats:
     total_activities = (await db.execute(
         select(func.count()).select_from(Activity).where(Activity.is_deleted == False)
     )).scalar() or 0
-    total_documents = (await db.execute(
-        select(func.count()).select_from(Document).where(Document.is_deleted == False)
-    )).scalar() or 0
     total_reports = (await db.execute(select(func.count()).select_from(Report))).scalar() or 0
     pending_reports = (await db.execute(
         select(func.count()).select_from(Report).where(Report.status == "pending")
@@ -46,7 +41,6 @@ async def get_stats(db: AsyncSession) -> AdminStats:
     return AdminStats(
         total_users=total_users,
         total_activities=total_activities,
-        total_documents=total_documents,
         total_reports=total_reports,
         pending_reports=pending_reports,
         new_users_this_week=new_users_this_week,
@@ -100,28 +94,58 @@ async def list_users(
     )
 
 
+from app.modules.admin.models import AdminAuditAction, AdminAuditTargetType
+from app.modules.admin.audit.service import record_audit_log
+
+
 async def update_user_role(
-    db: AsyncSession, user_id: uuid.UUID, new_role: str
+    db: AsyncSession, user_id: uuid.UUID, new_role: str, admin_id: uuid.UUID | None = None
 ) -> AdminUserItem:
-    """Change a user's role."""
+    """Change a user's role with audit trail."""
     user = await db.get(User, user_id)
     if not user:
         raise NotFoundError("User not found.")
 
+    prev_role = user.role.value if hasattr(user.role, 'value') else str(user.role)
     user.role = UserRole(new_role)
+
+    await record_audit_log(
+        db=db,
+        actor_id=admin_id,
+        action=AdminAuditAction.change_user_role,
+        target_type=AdminAuditTargetType.user,
+        target_id=user.id,
+        metadata_json={
+            "username": user.username,
+            "previous_role": prev_role,
+            "new_role": new_role,
+        },
+    )
     await db.flush()
     return AdminUserItem.model_validate(user)
 
 
 async def update_user_status(
-    db: AsyncSession, user_id: uuid.UUID, is_active: bool
+    db: AsyncSession, user_id: uuid.UUID, is_active: bool, admin_id: uuid.UUID | None = None
 ) -> AdminUserItem:
-    """Activate or deactivate a user."""
+    """Activate or deactivate a user with audit trail."""
     user = await db.get(User, user_id)
     if not user:
         raise NotFoundError("User not found.")
 
     user.is_active = is_active
+    audit_act = AdminAuditAction.activate_user if is_active else AdminAuditAction.deactivate_user
+    await record_audit_log(
+        db=db,
+        actor_id=admin_id,
+        action=audit_act,
+        target_type=AdminAuditTargetType.user,
+        target_id=user.id,
+        metadata_json={
+            "username": user.username,
+            "is_active": is_active,
+        },
+    )
     await db.flush()
     return AdminUserItem.model_validate(user)
 
@@ -249,74 +273,23 @@ async def list_activities(
     )
 
 
-async def delete_activity(db: AsyncSession, activity_id: uuid.UUID) -> dict:
-    """Soft-delete an activity."""
+async def delete_activity(
+    db: AsyncSession, activity_id: uuid.UUID, admin_id: uuid.UUID | None = None
+) -> dict:
+    """Soft-delete an activity with audit trail."""
     activity = await db.get(Activity, activity_id)
     if not activity:
         raise NotFoundError("Activity not found.")
 
     activity.is_deleted = True
     activity.deleted_at = datetime.now(timezone.utc)
+    await record_audit_log(
+        db=db,
+        actor_id=admin_id,
+        action=AdminAuditAction.hide_activity,
+        target_type=AdminAuditTargetType.activity,
+        target_id=activity.id,
+        metadata_json={"title": activity.title},
+    )
     await db.flush()
     return {"status": "deleted", "id": str(activity_id)}
-
-
-# ── Document Management ──
-
-async def list_documents(
-    db: AsyncSession,
-    search: str | None = None,
-    limit: int = 20,
-    offset: int = 0,
-) -> AdminDocumentList:
-    """List all documents with author info."""
-    base = select(Document).options(joinedload(Document.author))
-    count_base = select(func.count()).select_from(Document)
-
-    if search:
-        pattern = f"%{search}%"
-        search_filter = Document.title.ilike(pattern)
-        base = base.where(search_filter)
-        count_base = count_base.where(search_filter)
-
-    total = (await db.execute(count_base)).scalar() or 0
-
-    stmt = base.order_by(Document.created_at.desc()).limit(limit).offset(offset)
-    result = await db.execute(stmt)
-    documents = result.unique().scalars().all()
-
-    items = []
-    for d in documents:
-        item_data = {
-            "id": d.id,
-            "author_id": d.author_id,
-            "title": d.title,
-            "description": d.description,
-            "file_name": d.file_name,
-            "file_size": d.file_size,
-            "file_type": d.file_type,
-            "is_deleted": d.is_deleted,
-            "created_at": d.created_at,
-            "author_username": d.author.username if d.author else None,
-        }
-        items.append(AdminDocumentItem(**item_data))
-
-    return AdminDocumentList(
-        items=items,
-        total=total,
-        limit=limit,
-        offset=offset,
-        has_more=(offset + limit) < total,
-    )
-
-
-async def delete_document(db: AsyncSession, document_id: uuid.UUID) -> dict:
-    """Soft-delete a document."""
-    doc = await db.get(Document, document_id)
-    if not doc:
-        raise NotFoundError("Document not found.")
-
-    doc.is_deleted = True
-    doc.deleted_at = datetime.now(timezone.utc)
-    await db.flush()
-    return {"status": "deleted", "id": str(document_id)}

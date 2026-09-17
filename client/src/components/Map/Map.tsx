@@ -152,8 +152,8 @@ const userLocationIcon = L.divIcon({
 });
 
 export default function Map({ activities, userLocation, onBoundsChange, userInterests }: MapProps) {
-  // Default to a central location (e.g., somewhere in US or Europe) if no location
-  const center: [number, number] = userLocation || [40.7128, -74.0060]; // Default NYC
+  // Default to Dinh Độc Lập (TP. Hồ Chí Minh) if no GPS location
+  const center: [number, number] = userLocation || [10.7769, 106.6953];
 
   const isMatchingInterest = (category: string | null): boolean => {
     if (!userInterests || userInterests.length === 0 || !category) return false;
@@ -162,17 +162,31 @@ export default function Map({ activities, userLocation, onBoundsChange, userInte
     );
   };
 
+  const cartoApiKey = import.meta.env.VITE_CARTO_API_KEY;
+
+  const tileLayerConfig = cartoApiKey
+    ? {
+        url: `https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=${cartoApiKey}`,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        className: '',
+      }
+    : {
+        url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        className: 'modern-map-tiles',
+      };
+
   return (
     <div className="map-wrapper">
       <MapContainer
         center={center}
         zoom={13}
         scrollWheelZoom={true}
-        className="leaflet-container"
+        className={`leaflet-container ${tileLayerConfig.className}`}
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+          attribution={tileLayerConfig.attribution}
+          url={tileLayerConfig.url}
         />
         
         {userLocation && <RecenterAutomatically lat={userLocation[0]} lng={userLocation[1]} />}

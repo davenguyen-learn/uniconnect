@@ -18,7 +18,7 @@
 }
 
 .notification-bell:hover {
-  background: var(--bg-surface);
+  background: var(--color-bg-tertiary);
 }
 
 .bell-icon {
@@ -29,7 +29,7 @@
   position: absolute;
   top: 0;
   right: 0;
-  background: var(--accent-danger, #ff4d4f);
+  background: var(--color-error);
   color: white;
   font-size: 0.7rem;
   font-weight: bold;
@@ -49,15 +49,13 @@
   margin-top: 0.5rem;
   width: 350px;
   max-height: 400px;
-  background: var(--color-bg-secondary, #1a1a24);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: var(--color-bg-elevated);
   border: 1px solid var(--color-glass-border);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-xl);
   display: flex;
   flex-direction: column;
-  z-index: var(--z-dropdown, 9999);
+  z-index: var(--z-dropdown);
   overflow: hidden;
 }
 
@@ -78,7 +76,7 @@
 .mark-all-btn {
   background: transparent;
   border: none;
-  color: var(--accent-primary);
+  color: var(--color-accent);
   font-size: 0.85rem;
   cursor: pointer;
 }
@@ -95,7 +93,7 @@
 .notification-empty {
   padding: 2rem;
   text-align: center;
-  color: var(--text-muted);
+  color: var(--color-text-tertiary);
 }
 
 .notification-item {
@@ -109,11 +107,11 @@
 }
 
 .notification-item:hover {
-  background: var(--bg-surface);
+  background: var(--color-bg-secondary);
 }
 
 .notification-item.unread {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--color-accent-light);
 }
 
 .notification-avatar {
@@ -133,7 +131,7 @@
 .avatar-placeholder {
   width: 100%;
   height: 100%;
-  background: var(--accent-primary);
+  background: var(--color-accent);
   color: white;
   display: flex;
   align-items: center;
@@ -152,19 +150,19 @@
   margin: 0 0 0.25rem 0;
   font-size: 0.9rem;
   line-height: 1.4;
-  color: var(--text-primary);
+  color: var(--color-text-primary);
 }
 
 .notification-time {
   font-size: 0.75rem;
-  color: var(--text-muted);
+  color: var(--color-text-tertiary);
 }
 
 .unread-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--accent-primary);
+  background: var(--color-accent);
   flex-shrink: 0;
   margin-top: 0.5rem;
 }

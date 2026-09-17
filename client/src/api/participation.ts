@@ -21,9 +21,32 @@ export interface JoinRequestCreate {
   form_responses?: Record<string, any>;
 }
 
+export interface CertificateResponse {
+  certificate_code: string;
+  activity_id: string;
+  user_id: string;
+  participant_name: string;
+  participant_username: string;
+  participant_university?: string | null;
+  activity_title: string;
+  activity_date: string;
+  location_name?: string | null;
+  host_name: string;
+  host_university?: string | null;
+  social_work_days?: number | null;
+  trophy_name?: string | null;
+  trophy_icon?: string | null;
+  trophy_points?: number | null;
+  issued_at: string;
+  verification_url: string;
+}
+
 export const participationApi = {
-  requestToJoin: (activityId: string, data?: JoinRequestCreate) =>
-    api.post<JoinRequestResponse>(`/activities/${activityId}/join`, data),
+  requestToJoin: (activityId: string, data?: JoinRequestCreate, confirmSwap?: boolean) =>
+    api.post<JoinRequestResponse>(
+      `/activities/${activityId}/join${confirmSwap ? '?confirm_swap=true' : ''}`,
+      data
+    ),
 
   listByActivity: (activityId: string) =>
     api.get<JoinRequestResponse[]>(`/activities/${activityId}/requests`),
@@ -42,4 +65,12 @@ export const participationApi = {
 
   leaveActivity: (activityId: string) =>
     api.post<void>(`/activities/${activityId}/leave`),
+
+  getCertificate: (activityId: string, userId?: string) =>
+    api.get<CertificateResponse>(
+      `/activities/${activityId}/certificate${userId ? `?user_id=${userId}` : ''}`
+    ),
+
+  verifyCertificate: (code: string) =>
+    api.get<CertificateResponse>(`/certificates/verify/${code}`),
 };

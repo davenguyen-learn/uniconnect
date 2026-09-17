@@ -31,3 +31,48 @@ class JoinRequestResponse(BaseModel):
     user: UserInfo | None = None
 
     model_config = {"from_attributes": True}
+
+
+class CheckInRequest(BaseModel):
+    code: str = Field(..., min_length=4, max_length=20)
+    latitude: float | None = Field(None, ge=-90.0, le=90.0)
+    longitude: float | None = Field(None, ge=-180.0, le=180.0)
+    accuracy: float | None = Field(None, gt=0.0)
+
+
+class CheckInResponse(BaseModel):
+    message: str
+    attendance_confirmed: bool
+    trophy_awarded: bool = False
+    already_confirmed: bool = False
+
+
+class CheckInCodeResponse(BaseModel):
+    check_in_code: str
+    rotating_token: str
+    expires_in_seconds: int
+    check_in_radius: int
+
+
+class AttendanceUpdateRequest(BaseModel):
+    attended: bool
+
+
+class CertificateResponse(BaseModel):
+    certificate_code: str
+    activity_id: uuid.UUID
+    user_id: uuid.UUID
+    participant_name: str
+    participant_username: str
+    participant_university: str | None = None
+    activity_title: str
+    activity_date: str
+    location_name: str | None = None
+    host_name: str
+    host_university: str | None = None
+    social_work_days: float | None = None
+    trophy_name: str | None = None
+    trophy_icon: str | None = None
+    trophy_points: int | None = None
+    issued_at: datetime
+    verification_url: str

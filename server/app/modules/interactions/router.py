@@ -22,14 +22,12 @@ from app.modules.interactions.schemas import (
 class TargetType(str, Enum):
     """Allowed target types for interactions."""
     activities = "activities"
-    documents = "documents"
 
 
 def _map_target_type(target_type: TargetType) -> str:
     """Map URL path param to internal target_type string."""
     return {
         TargetType.activities: "activity",
-        TargetType.documents: "document",
     }[target_type]
 
 

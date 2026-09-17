@@ -16,9 +16,7 @@
 .create-activity-title {
   font-size: 2.5rem;
   margin-bottom: var(--space-2);
-  background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--color-text-primary);
   text-align: center;
 }
 

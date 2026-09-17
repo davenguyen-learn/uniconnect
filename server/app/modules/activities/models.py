@@ -2,7 +2,7 @@ import enum
 import uuid
 
 from geoalchemy2 import Geography
-from sqlalchemy import CheckConstraint, DateTime, Enum, ForeignKey, Integer, String, Text
+from sqlalchemy import CheckConstraint, DateTime, Enum, ForeignKey, Integer, String, Text, Float
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from pgvector.sqlalchemy import Vector
 
@@ -60,6 +60,8 @@ class Activity(PrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
         server_default="true",
     )
 
+    social_work_days: Mapped[float | None] = mapped_column(Float, nullable=True, default=None)
+
     group_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("groups.id", ondelete="CASCADE"), nullable=True, index=True
     )
@@ -70,6 +72,16 @@ class Activity(PrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
     
     trophy_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("trophies.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+
+    attendance_mode: Mapped[str] = mapped_column(
+        String(20), default="manual", server_default="manual", nullable=False
+    )
+    check_in_code: Mapped[str | None] = mapped_column(
+        String(64), nullable=True, unique=True, index=True
+    )
+    check_in_radius: Mapped[int] = mapped_column(
+        Integer, default=300, server_default="300", nullable=False
     )
 
     # Relationships

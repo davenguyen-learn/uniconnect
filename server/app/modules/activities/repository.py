@@ -22,7 +22,7 @@ async def create(db: AsyncSession, activity: Activity) -> Activity:
         .options(joinedload(Activity.host))
         .where(Activity.id == activity.id)
     )
-    return result.scalar_one()
+    return result.unique().scalar_one()
 
 
 async def get_by_id(db: AsyncSession, activity_id: uuid.UUID) -> Activity | None:
@@ -32,7 +32,7 @@ async def get_by_id(db: AsyncSession, activity_id: uuid.UUID) -> Activity | None
         .options(joinedload(Activity.host))
         .where(and_(Activity.id == activity_id, Activity.is_deleted == False))  # noqa: E712
     )
-    return result.scalar_one_or_none()
+    return result.unique().scalar_one_or_none()
 
 
 async def update(db: AsyncSession, activity: Activity, data: dict) -> Activity:
@@ -229,36 +229,60 @@ async def get_coordinates_from_db(db: AsyncSession, activity_id: uuid.UUID) -> t
         return (row.lat, row.lng)
     return None
 
+
+async def list_hosted_activities(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    limit: int = 50,
+    offset: int = 0,
+) -> tuple[list[Activity], int]:
+    """List all activities hosted by the user (both past and upcoming), sorted newest first."""
+    base_filter = and_(
+        Activity.is_deleted == False,
+        Activity.host_id == user_id,
+    )
+
+    count_q = select(func.count()).select_from(Activity).where(base_filter)
+    total = (await db.execute(count_q)).scalar() or 0
+
+    query = (
+        select(Activity)
+        .options(joinedload(Activity.host))
+        .where(base_filter)
+        .order_by(Activity.start_time.desc())
+        .limit(limit)
+        .offset(offset)
+    )
+    result = await db.execute(query)
+    activities = list(result.unique().scalars().all())
+
+    return activities, total
+
+
 async def list_joined_activities(
     db: AsyncSession,
     user_id: uuid.UUID,
-    limit: int = 20,
+    limit: int = 50,
     offset: int = 0,
 ) -> tuple[list[Activity], int]:
-    """List activities the user has joined (pending or approved)."""
+    """List all activities the user has joined (both past and upcoming), sorted newest first."""
     from app.modules.participation.models import JoinRequest, RequestStatus
 
-    now = datetime.now(timezone.utc)
-
-    # Base join filter: activity is not deleted, is in future, and user has an active request
     base_filter = and_(
         Activity.is_deleted == False,
-        Activity.end_time > now,
         JoinRequest.user_id == user_id,
         JoinRequest.status.in_([RequestStatus.pending, RequestStatus.approved]),
     )
 
-    # Count
     count_q = select(func.count()).select_from(Activity).join(JoinRequest).where(base_filter)
     total = (await db.execute(count_q)).scalar() or 0
 
-    # Fetch
     query = (
         select(Activity)
         .join(JoinRequest)
         .options(joinedload(Activity.host))
         .where(base_filter)
-        .order_by(Activity.start_time.asc())
+        .order_by(Activity.start_time.desc())
         .limit(limit)
         .offset(offset)
     )

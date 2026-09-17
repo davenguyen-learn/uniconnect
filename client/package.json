@@ -21,10 +21,13 @@
     "vitest": "^4.1.9"
   },
   "dependencies": {
+    "@tailwindcss/vite": "^4.3.3",
     "leaflet": "^1.9.4",
+    "lucide-react": "^1.46.0",
     "react-leaflet": "^5.0.0",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.18.0",
-    "remark-gfm": "^4.0.1"
+    "remark-gfm": "^4.0.1",
+    "tailwindcss": "^4.3.3"
   }
 }

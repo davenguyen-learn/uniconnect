@@ -1,0 +1,67 @@
+# docker-compose.prod.yml — Production Stack
+#
+# Sizing & Connection Ceiling:
+#   workers × (DB_POOL_SIZE + DB_MAX_OVERFLOW)
+#   Default: 2 × (20 + 10) = 60 potential DB connections.
+#   Adjust WEB_CONCURRENCY, DB_POOL_SIZE, DB_MAX_OVERFLOW, and PostgreSQL
+#   max_connections together as a deployment constraint.
+#
+# Ingress & Network Architecture:
+#   - client (Nginx) is the sole ingress on port 80 (or 443 with TLS).
+#   - server (FastAPI) and db (PostgreSQL) are internal to the Docker network.
+#   - Loopback-only debug ports (127.0.0.1:8001 / 127.0.0.1:5434) can be uncommented
+#     if direct bastion/SSH tunnel access is required.
+
+services:
+  db:
+    build:
+      context: .
+      dockerfile: Dockerfile.db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-uniconnect}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-uniconnect_dev_pwd}
+      POSTGRES_DB: ${POSTGRES_DB:-uniconnect}
+    # No public port binding in production — accessible only within docker network
+    # ports:
+    #   - "127.0.0.1:5434:5432"
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-uniconnect}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile.prod
+    env_file: .env
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-uniconnect}:${POSTGRES_PASSWORD:-uniconnect_dev_pwd}@db:5432/${POSTGRES_DB:-uniconnect}
+      # Trust Docker internal subnets as reverse proxy for X-Forwarded-For
+      TRUSTED_PROXY_IPS: "127.0.0.1,172.16.0.0/12,10.0.0.0/8,192.168.0.0/16"
+    # No public port binding — reverse-proxied exclusively via Nginx
+    # ports:
+    #   - "127.0.0.1:8001:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile.prod
+    ports:
+      - "80:80"
+    depends_on:
+      server:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_prod_data:

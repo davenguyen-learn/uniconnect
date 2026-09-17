@@ -12,6 +12,7 @@ class UserRole(str, enum.Enum):
     student = "student"
     moderator = "moderator"
     admin = "admin"
+    edu_org = "edu_org"
 
 
 class User(PrimaryKeyMixin, TimestampMixin, Base):

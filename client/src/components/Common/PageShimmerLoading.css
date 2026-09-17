@@ -1,0 +1,104 @@
+/* ==========================================================================
+   PageShimmerLoading — Design System Skeleton Transitions
+   ========================================================================== */
+
+.page-shimmer-container {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 32px 20px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  animation: shimmerFadeIn 0.2s ease-out;
+}
+
+@keyframes shimmerFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Shimmer base animation */
+.shimmer-block {
+  background: linear-gradient(
+    90deg,
+    rgba(226, 232, 240, 0.6) 0%,
+    rgba(241, 245, 249, 0.9) 50%,
+    rgba(226, 232, 240, 0.6) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmerWave 1.5s infinite linear;
+  border-radius: 8px;
+}
+
+@keyframes shimmerWave {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Header */
+.shimmer-header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 0;
+}
+
+.shimmer-title {
+  height: 36px;
+  width: 40%;
+  max-width: 320px;
+  border-radius: 10px;
+}
+
+.shimmer-subtitle {
+  height: 18px;
+  width: 65%;
+  max-width: 480px;
+}
+
+/* Card Grid */
+.shimmer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.shimmer-card {
+  background: var(--bg-surface, #FFFFFF);
+  border: 1px solid var(--border-color, #E2E8F0);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  display: flex;
+  flex-direction: column;
+}
+
+.shimmer-card-media {
+  height: 160px;
+  width: 100%;
+  border-radius: 0;
+}
+
+.shimmer-card-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.shimmer-line {
+  height: 14px;
+}
+
+.shimmer-line-lg { width: 85%; height: 18px; }
+.shimmer-line-md { width: 60%; }
+.shimmer-line-sm { width: 40%; }
+
+/* Accessibility: reduce motion */
+@media (prefers-reduced-motion: reduce) {
+  .shimmer-block {
+    animation: none;
+    background: #E2E8F0;
+  }
+}

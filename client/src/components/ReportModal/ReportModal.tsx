@@ -6,7 +6,7 @@ import './ReportModal.css';
 interface ReportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  targetType: 'activity' | 'document' | 'user';
+  targetType: 'activity' | 'user';
   targetId: string;
 }
 
@@ -44,7 +44,6 @@ export const ReportModal: React.FC<ReportModalProps> = ({
 
   const getTargetName = () => {
     if (targetType === 'activity') return 'Hoạt động';
-    if (targetType === 'document') return 'Tài liệu';
     return 'Người dùng';
   };
 

@@ -88,11 +88,11 @@ export default function Navbar() {
         </li>
         <li>
           <NavLink
-            to="/documents"
+            to="/calendar"
             className={({ isActive }) => `navbar-link ${isActive ? 'active' : ''}`}
             onClick={() => setMenuOpen(false)}
           >
-            Tài liệu
+            Lịch của tôi
           </NavLink>
         </li>
       </ul>

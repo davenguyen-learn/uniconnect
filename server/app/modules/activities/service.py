@@ -2,10 +2,11 @@
 
 import uuid
 from datetime import datetime, timedelta, timezone
+from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import ForbiddenError, NotFoundError, ValidationError
+from app.core.exceptions import ConflictError, ForbiddenError, NotFoundError, ValidationError
 from app.modules.activities import repository
 from app.modules.activities.constants import TEMPORAL_LOCK_MINUTES
 from app.modules.activities.models import Activity
@@ -26,6 +27,7 @@ def _activity_to_response(
     lng: float,
     distance: float | None = None,
     private_description: str | None = None,
+    conflict_info: Any | None = None,
 ) -> ActivityResponse:
     """Convert an Activity model to a response schema."""
     host_info = None
@@ -49,6 +51,10 @@ def _activity_to_response(
         custom_form_info = activity.custom_form
         # Due to from_attributes=True, pydantic handles the parsing automatically
 
+    trophy_info = None
+    if getattr(activity, 'trophy', None):
+        trophy_info = activity.trophy
+
     return ActivityResponse(
         id=activity.id,
         host_id=activity.host_id,
@@ -66,11 +72,16 @@ def _activity_to_response(
         current_participants=activity.current_participants,
         privacy=activity.privacy.value if hasattr(activity.privacy, 'value') else activity.privacy,
         require_approval=activity.require_approval,
+        social_work_days=activity.social_work_days,
         created_at=activity.created_at,
         host=host_info,
         group=group_info,
         distance_meters=distance,
         custom_form=custom_form_info,
+        trophy=trophy_info,
+        conflict_info=conflict_info,
+        attendance_mode=getattr(activity, 'attendance_mode', 'manual') or 'manual',
+        check_in_radius=getattr(activity, 'check_in_radius', 300) or 300,
     )
 
 
@@ -87,6 +98,13 @@ async def create_activity(
 
     if data.start_time <= now:
         raise ValidationError("Start time must be in the future.")
+
+    # Check host conflict
+    from app.modules.calendar.service import get_detector_for_user
+    detector = await get_detector_for_user(db, uuid.UUID(user_id))
+    host_conflict = detector.check_conflict(data.start_time, data.end_time)
+    if host_conflict.has_conflict and host_conflict.conflicting_with and host_conflict.conflicting_with.type == "hosted_activity":
+        raise ConflictError(f"Bạn đang là Host của hoạt động '{host_conflict.conflicting_with.title}' trong cùng khung giờ.")
         
     if data.group_id:
         from app.modules.groups.repository import get_group_by_id
@@ -97,6 +115,21 @@ async def create_activity(
     embedding_text = f"{data.title}\n{data.description or ''}"
     from app.modules.chat.embeddings import generate_embedding
     
+    from app.modules.users.models import User, UserRole
+    from sqlalchemy import select
+    user_result = await db.execute(select(User).where(User.id == uuid.UUID(user_id)))
+    user_obj = user_result.scalar_one_or_none()
+    
+    if not user_obj or user_obj.role not in [UserRole.admin, UserRole.edu_org]:
+        data.social_work_days = None
+
+    if data.trophy_id:
+        if not user_obj or (user_obj.role not in [UserRole.admin, UserRole.edu_org] and not user_obj.is_verified):
+            raise ForbiddenError("Chỉ các tổ chức hoặc tài khoản đã xác minh mới có thể gắn Trophy cho hoạt động.")
+
+    import secrets
+    check_in_code = secrets.token_hex(4).upper()
+
     activity = Activity(
         host_id=uuid.UUID(user_id),
         title=data.title,
@@ -110,7 +143,12 @@ async def create_activity(
         max_participants=data.max_participants,
         privacy=data.privacy,
         require_approval=data.require_approval,
+        social_work_days=data.social_work_days,
         group_id=data.group_id,
+        trophy_id=data.trophy_id,
+        attendance_mode=data.attendance_mode or "manual",
+        check_in_radius=data.check_in_radius or 300,
+        check_in_code=check_in_code,
         current_participants=1,  # Host is counted
         embedding=generate_embedding(embedding_text),
     )
@@ -175,7 +213,7 @@ async def get_activity(
                 JoinRequest.status == RequestStatus.approved,
             ))
         )
-        if result.scalar_one_or_none():
+        if result.unique().scalar_one_or_none():
             revealed_private_desc = activity.private_description
 
     return _activity_to_response(activity, lat, lng, private_description=revealed_private_desc)
@@ -205,6 +243,26 @@ async def update_activity(
     update_data = data.model_dump(exclude_unset=True)
     if not update_data:
         raise ValidationError("No fields to update.")
+
+    if "social_work_days" in update_data:
+        from app.modules.users.models import User, UserRole
+        from sqlalchemy import select
+        user_result = await db.execute(select(User.role).where(User.id == uuid.UUID(user_id)))
+        user_role = user_result.scalar_one_or_none()
+        if user_role not in [UserRole.admin, UserRole.edu_org]:
+            update_data.pop("social_work_days")
+
+    if "trophy_id" in update_data and update_data["trophy_id"]:
+        from app.modules.users.models import User, UserRole
+        from sqlalchemy import select
+        user_result = await db.execute(select(User).where(User.id == uuid.UUID(user_id)))
+        user_obj = user_result.scalar_one_or_none()
+        if not user_obj or (user_obj.role not in [UserRole.admin, UserRole.edu_org] and not user_obj.is_verified):
+            raise ForbiddenError("Chỉ các tổ chức hoặc tài khoản đã xác minh mới có thể gắn Trophy cho hoạt động.")
+
+    if not activity.check_in_code:
+        import secrets
+        activity.check_in_code = secrets.token_hex(4).upper()
 
     # Handle location update
     if "latitude" in update_data or "longitude" in update_data:
@@ -249,9 +307,11 @@ async def list_activities(
     group_id: uuid.UUID | None = None,
     limit: int = 20,
     offset: int = 0,
+    include_conflicts: bool = False,
 ) -> ActivityListResponse:
     from app.modules.users.models import UserFollow
     from sqlalchemy import select
+    from app.modules.calendar.service import get_detector_for_user
 
     # Fetch followed user IDs to prioritize their activities
     followed_user_ids_result = await db.execute(
@@ -264,12 +324,23 @@ async def list_activities(
         limit=limit, offset=offset, followed_user_ids=followed_user_ids
     )
 
+    detector = None
+    if user_id:
+        try:
+            detector = await get_detector_for_user(db, uuid.UUID(user_id))
+        except Exception:
+            detector = None
+
     items = []
     for activity in activities:
+        conflict = detector.check_conflict(activity.start_time, activity.end_time) if detector else None
+        if not include_conflicts and conflict and conflict.has_conflict and conflict.level == "hard_conflict":
+            continue
+
         coords = await repository.get_coordinates_from_db(db, activity.id)
         lat, lng = coords if coords else (0, 0)
         lat, lng = obfuscate_coordinates(lat, lng)  # Always obfuscate in listings
-        items.append(_activity_to_response(activity, lat, lng))
+        items.append(_activity_to_response(activity, lat, lng, conflict_info=conflict))
 
     return ActivityListResponse(
         items=items, total=total, limit=limit, offset=offset, has_more=(offset + limit < total)
@@ -277,11 +348,11 @@ async def list_activities(
 
 
 async def get_my_activities(
-    db: AsyncSession, user_id: str, limit: int = 20, offset: int = 0
+    db: AsyncSession, user_id: str, limit: int = 50, offset: int = 0
 ) -> ActivityListResponse:
-    """List activities hosted by the current user."""
-    activities, total = await repository.list_active(
-        db, user_id=uuid.UUID(user_id), host_id=uuid.UUID(user_id), limit=limit, offset=offset
+    """List activities hosted by the current user (all past & upcoming)."""
+    activities, total = await repository.list_hosted_activities(
+        db, user_id=uuid.UUID(user_id), limit=limit, offset=offset
     )
 
     items = []
@@ -296,7 +367,7 @@ async def get_my_activities(
 
 
 async def discover_nearby(
-    db: AsyncSession, query: NearbyQuery, user_id: str | None = None
+    db: AsyncSession, query: NearbyQuery, user_id: str | None = None, include_conflicts: bool = False
 ) -> ActivityListResponse:
     """Find activities within radius using PostGIS spatial query."""
     # Ensure user_id is provided, otherwise we can't filter group visibility
@@ -305,6 +376,7 @@ async def discover_nearby(
 
     from app.modules.users.models import UserFollow
     from sqlalchemy import select
+    from app.modules.calendar.service import get_detector_for_user
 
     # Fetch followed user IDs to prioritize their activities
     followed_user_ids_result = await db.execute(
@@ -327,8 +399,19 @@ async def discover_nearby(
         followed_user_ids=followed_user_ids,
     )
 
+    detector = None
+    if user_id:
+        try:
+            detector = await get_detector_for_user(db, uuid.UUID(user_id))
+        except Exception:
+            detector = None
+
     items = []
     for activity, distance in results:
+        conflict = detector.check_conflict(activity.start_time, activity.end_time) if detector else None
+        if not include_conflicts and conflict and conflict.has_conflict and conflict.level == "hard_conflict":
+            continue
+
         coords = await repository.get_coordinates_from_db(db, activity.id)
         lat, lng = coords if coords else (0, 0)
 
@@ -337,12 +420,29 @@ async def discover_nearby(
         if not is_host:
             lat, lng = obfuscate_coordinates(lat, lng)
 
-        items.append(_activity_to_response(activity, lat, lng, distance=distance))
+        items.append(_activity_to_response(activity, lat, lng, distance=distance, conflict_info=conflict))
 
     return ActivityListResponse(
         items=items, total=total, limit=query.limit, offset=query.offset,
         has_more=(query.offset + query.limit < total),
     )
+
+
+async def preview_reschedule(
+    db: AsyncSession,
+    activity_id: uuid.UUID,
+    user_id: str,
+    new_start_time: datetime,
+    new_end_time: datetime,
+):
+    """Host previews how rescheduling will impact existing approved participants."""
+    activity = await repository.get_by_id(db, activity_id)
+    if not activity:
+        raise NotFoundError("Activity not found.")
+    if str(activity.host_id) != user_id:
+        raise ForbiddenError("Only the host can preview rescheduling impact.")
+    from app.modules.calendar.service import preview_reschedule_impact
+    return await preview_reschedule_impact(db, activity_id, new_start_time, new_end_time)
 
 
 async def get_joined_activities(
