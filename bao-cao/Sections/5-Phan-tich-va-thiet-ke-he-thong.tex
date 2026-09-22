@@ -897,67 +897,10 @@ Nhằm cụ thể hóa sự tương tác động giữa các tác nhân (Client 
 Biểu đồ tại Hình~\ref{fig:sequence_tham_gia_hoat_dong} mô tả quy trình tiếp nhận yêu cầu tham gia sự kiện của sinh viên, bao gồm các bước xác thực người dùng, kiểm tra điều kiện sức chứa tối đa, ghi nhận biểu mẫu đăng ký tùy biến và trả về trạng thái phê duyệt:
 
 \begin{figure}[H]
-\centering
-\resizebox{0.92\textwidth}{!}{
-\begin{tikzpicture}[
-    >=Stealth,
-    font=\footnotesize,
-    lifeline/.style={draw=gray!70, dashed, thick},
-    actor/.style={rectangle, rounded corners=3pt, draw=blue!80!black, fill=blue!15, minimum width=2.4cm, minimum height=0.8cm, font=\bfseries\footnotesize, align=center},
-    msg/.style={->, thick, >=stealth},
-    reply/.style={<--, dashed, thick, >=stealth}
-]
-
-% Participants
-\node[actor] (student) at (0,0) {Sinh viên\\(Client App)};
-\node[actor] (client) at (3.8,0) {Giao diện Hoạt động\\(Web Client)};
-\node[actor] (service) at (8.0,0) {Dịch vụ Tham gia\\(Participation Service)};
-\node[actor] (db) at (12.6,0) {Cơ sở Dữ liệu\\(PostgreSQL)};
-
-% Vertical Lifelines
-\draw[lifeline] (student) -- (0,-10.2);
-\draw[lifeline] (client) -- (3.8,-10.2);
-\draw[lifeline] (service) -- (8.0,-10.2);
-\draw[lifeline] (db) -- (12.6,-10.2);
-
-% Sequence
-\draw[msg] (0,-1.0) -- node[above] {1. Yêu cầu đăng ký tham gia sự kiện} (3.8,-1.0);
-\draw[msg] (3.8,-1.6) -- node[above] {2. Chuyển tiếp yêu cầu đăng ký tham gia} (8.0,-1.6);
-
-\draw[msg] (8.0,-2.2) -- node[above] {3. Truy vấn giới hạn sức chứa và trạng thái đăng ký} (12.6,-2.2);
-\draw[reply] (8.0,-2.7) -- node[above] {4. Trả về dữ liệu sức chứa, hạn chót đăng ký} (12.6,-2.7);
-
-% UML Combined Fragment: alt (MỘT KHUNG DUY NHẤT CHUẨN UML 2.x)
-\draw[thick, draw=blue!70!black, rounded corners=2pt, fill=blue!1] (-0.4,-3.2) rectangle (13.0,-9.6);
-\node[draw=blue!70!black, fill=blue!15, font=\scriptsize\bfseries, anchor=north west] at (-0.4,-3.2) {alt};
-
-% Nhánh 1: Hết sức chứa hoặc quá hạn
-\node[font=\scriptsize\itshape, text=red!80!black, anchor=north west] at (0.3,-3.3) {[Hết sức chứa hoặc quá thời hạn đăng ký]};
-\draw[reply] (3.8,-4.0) -- node[above] {5. Từ chối tiếp nhận đăng ký sự kiện} (8.0,-4.0);
-\draw[reply] (0,-4.5) -- node[above] {6. Thông báo lý do không thể đăng ký} (3.8,-4.5);
-
-% Đường phân tách nhánh UML (Dashed divider 1)
-\draw[dashed, thick, draw=blue!60!black] (-0.4,-5.0) -- (13.0,-5.0);
-
-% Nhánh 2: Còn sức chứa - Cần duyệt
-\node[font=\scriptsize\itshape, text=blue!80!black, anchor=north west] at (-0.3,-5.1) {[Còn sức chứa: Yêu cầu Ban Tổ chức xét duyệt]};
-\draw[msg] (8.0,-5.9) -- node[above] {7. Lưu đơn đăng ký (Trạng thái: Chờ duyệt)} (12.6,-5.9);
-\draw[reply] (3.8,-6.4) -- node[above] {8. Phản hồi tiếp nhận: Đang chờ xét duyệt} (8.0,-6.4);
-\draw[reply] (0,-6.9) -- node[above] {9. Thông báo: Đang chờ BTC phê duyệt} (3.8,-6.9);
-
-% Đường phân tách nhánh UML (Dashed divider 2)
-\draw[dashed, thick, draw=blue!60!black] (-0.4,-7.4) -- (13.0,-7.4);
-
-% Nhánh 3: Còn sức chứa - Tự do tham gia
-\node[font=\scriptsize\itshape, text=blue!80!black, anchor=north west] at (-0.3,-7.5) {[Còn sức chứa: Mở tự do tham gia (Tự động duyệt)]};
-\draw[msg] (8.0,-8.2) -- node[above] {10. Ghi nhận tham gia chính thức \& Tăng số lượng (+1)} (12.6,-8.2);
-\draw[reply] (3.8,-8.7) -- node[above] {11. Phản hồi xác nhận: Đã tham gia thành công} (8.0,-8.7);
-\draw[reply] (0,-9.2) -- node[above] {12. Cập nhật giao diện: Đã tham gia \& Mở thảo luận} (3.8,-9.2);
-
-\end{tikzpicture}
-}
-\caption{Sequence Diagram: Quy trình đăng ký tham gia hoạt động và đối soát sức chứa}
-\label{fig:sequence_tham_gia_hoat_dong}
+    \centering
+    \includegraphics[width=0.96\textwidth]{Images/sequence_join_activity.png} 
+    \caption{Sequence Diagram: Quy trình đăng ký tham gia hoạt động và đối soát sức chứa}
+    \label{fig:sequence_tham_gia_hoat_dong}
 \end{figure}
 
 \clearpage

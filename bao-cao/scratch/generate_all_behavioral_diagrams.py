@@ -8,10 +8,15 @@ server = plantuml.PlantUML(
 skin = """skinparam backgroundColor #FFFFFF
 skinparam shadowing false
 skinparam defaultFontName "Noto Sans, Arial, sans-serif"
-skinparam defaultFontSize 12
+skinparam defaultFontSize 16
+skinparam sequenceMessageFontSize 15
+skinparam sequenceParticipantFontSize 16
+skinparam sequenceActorFontSize 16
+skinparam sequenceGroupFontSize 15
+skinparam sequenceGroupHeaderFontSize 15
 skinparam roundcorner 6
 skinparam arrowColor #263238
-skinparam arrowThickness 1.2
+skinparam arrowThickness 1.5
 skinparam participant {
     BackgroundColor #E8F0FE
     BorderColor #1976D2
