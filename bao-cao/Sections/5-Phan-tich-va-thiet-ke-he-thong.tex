@@ -1028,10 +1028,53 @@ Hình~\ref{fig:sequence_cohost_rbac} mô tả luồng điều phối liên kết
 Hình~\ref{fig:sequence_hoi_dap_chatbot} thể hiện chu trình xử lý hội thoại thông minh: Client gửi câu hỏi tự nhiên, Router xác thực JWT và kiểm tra hạn ngạch Rate Limit, Trợ lý AI thực thi vòng lặp suy luận ReAct, kích hoạt Tool gọi truy vấn ngữ nghĩa trên cơ sở dữ liệu vector pgvector và tổng hợp câu trả lời gửi về người dùng:
 
 \begin{figure}[H]
-    \centering
-    \includegraphics[width=0.90\textwidth]{Images/sequence-hoi-dap-chatbot.png} 
-    \caption{Sequence Diagram: Quy trình điều phối ReAct Agent và tìm kiếm tương đồng vector (pgvector) với trợ lý AI}
-    \label{fig:sequence_hoi_dap_chatbot}
+\centering
+\resizebox{0.92\textwidth}{!}{
+\begin{tikzpicture}[
+    >=Stealth,
+    font=\footnotesize,
+    lifeline/.style={draw=gray!70, dashed, thick},
+    actor/.style={rectangle, rounded corners=3pt, draw=blue!80!black, fill=blue!15, minimum width=2.3cm, minimum height=0.8cm, font=\bfseries\footnotesize, align=center},
+    msg/.style={->, thick, >=stealth},
+    reply/.style={<--, dashed, thick, >=stealth}
+]
+
+% Participants
+\node[actor] (student) at (0,0) {Sinh viên\\(Client)};
+\node[actor] (chat_ui) at (3.5,0) {Giao diện Trợ lý\\(Chat UI)};
+\node[actor] (agent) at (7.0,0) {Dịch vụ Trợ lý AI\\(ReAct Agent)};
+\node[actor] (pgvector) at (10.5,0) {Kho Dữ liệu Vector\\(pgvector)};
+\node[actor] (gemini) at (13.8,0) {Dịch vụ LLM\\(Gemini API)};
+
+% Vertical Lifelines
+\draw[lifeline] (student) -- (0,-9.2);
+\draw[lifeline] (chat_ui) -- (3.5,-9.2);
+\draw[lifeline] (agent) -- (7.0,-9.2);
+\draw[lifeline] (pgvector) -- (10.5,-9.2);
+\draw[lifeline] (gemini) -- (13.8,-9.2);
+
+% Messages
+\draw[msg] (0,-1.0) -- node[above] {1. Đặt câu hỏi tự nhiên (VD: "Chiều nay có sự kiện thể thao nào?")} (3.5,-1.0);
+\draw[msg] (3.5,-1.7) -- node[above] {2. Chuyển tiếp câu hỏi hội thoại kèm ngữ cảnh} (7.0,-1.7);
+
+\draw[msg] (7.0,-2.4) -- node[above] {3. Phân tích ý định \& Xác định công cụ (Prompt + Specs)} (13.8,-2.4);
+\draw[reply] (7.0,-3.0) -- node[above] {4. Kích hoạt công cụ: Tìm kiếm sự kiện theo ngữ nghĩa} (13.8,-3.0);
+
+\draw[msg] (7.0,-3.6) -- ++(1.0,0) |- node[pos=0.5, right=2pt, font=\scriptsize] {5. Vector hóa chuỗi truy vấn (Mô hình Embedding)} (7.0,-4.3);
+
+\draw[msg] (7.0,-5.0) -- node[above] {6. Tìm kiếm Top K sự kiện tương đồng (Khoảng cách Cosine)} (10.5,-5.0);
+\draw[reply] (7.0,-5.6) -- node[above] {7. Trả về danh sách sự kiện phù hợp nhất} (10.5,-5.6);
+
+\draw[msg] (7.0,-6.3) -- node[above] {8. Cung cấp dữ liệu sự kiện thực tế để tổng hợp câu trả lời} (13.8,-6.3);
+\draw[reply] (7.0,-6.9) -- node[above] {9. Phản hồi câu trả lời tự nhiên (Giải thích quy định + Gợi ý)} (13.8,-6.9);
+
+\draw[reply] (3.5,-7.6) -- node[above] {10. Trả về câu trả lời hoàn chỉnh kèm thẻ sự kiện đề xuất} (7.0,-7.6);
+\draw[reply] (0,-8.3) -- node[above] {11. Hiển thị câu trả lời trực quan \& Điều hướng bản đồ} (3.5,-8.3);
+
+\end{tikzpicture}
+}
+\caption{Sequence Diagram: Quy trình điều phối ReAct Agent và tìm kiếm tương đồng vector (pgvector) với trợ lý AI}
+\label{fig:sequence_hoi_dap_chatbot}
 \end{figure}
 
 \clearpage
@@ -1040,8 +1083,59 @@ Hình~\ref{fig:sequence_hoi_dap_chatbot} thể hiện chu trình xử lý hội 
 Hình~\ref{fig:sequence_verify_certificate} mô tả quy trình kết xuất bản ghi chứng nhận thành file PDF A4 Landscape kèm mã định danh duy nhất và mã QR, cùng luồng xử lý của cổng tra cứu công khai khi bên thứ ba quét mã đối soát trực tiếp với cơ sở dữ liệu:
 
 \begin{figure}[H]
-    \centering
-    \includegraphics[width=0.90\textwidth]{Images/sequence-verify-certificate.png} 
-    \caption{Sequence Diagram: Quy trình kết xuất PDF và kiểm chứng Giấy chứng nhận CTXH trực tuyến}
-    \label{fig:sequence_verify_certificate}
+\centering
+\resizebox{0.92\textwidth}{!}{
+\begin{tikzpicture}[
+    >=Stealth,
+    font=\footnotesize,
+    lifeline/.style={draw=gray!70, dashed, thick},
+    actor/.style={rectangle, rounded corners=3pt, draw=blue!80!black, fill=blue!15, minimum width=2.3cm, minimum height=0.8cm, font=\bfseries\footnotesize, align=center},
+    msg/.style={->, thick, >=stealth},
+    reply/.style={<--, dashed, thick, >=stealth}
+]
+
+% Participants
+\node[actor] (student) at (0,0) {Sinh viên\\(Client)};
+\node[actor] (client) at (3.5,0) {Giao diện Web\\(Web Client)};
+\node[actor] (service) at (7.0,0) {Dịch vụ Chứng nhận\\(Certificate Service)};
+\node[actor] (db) at (10.5,0) {Cơ sở Dữ liệu\\(PostgreSQL)};
+\node[actor] (verifier) at (13.8,0) {Bên Thẩm tra\\(Third-party Verifier)};
+
+% Vertical Lifelines
+\draw[lifeline] (student) -- (0,-11.6);
+\draw[lifeline] (client) -- (3.5,-11.6);
+\draw[lifeline] (service) -- (7.0,-11.6);
+\draw[lifeline] (db) -- (10.5,-11.6);
+\draw[lifeline] (verifier) -- (13.8,-11.6);
+
+% Giai đoạn 1
+\node[fill=blue!10, draw=blue!70!black, font=\scriptsize\bfseries, rounded corners=2pt] at (6.9,-0.8) {Quy trình 1: Kết xuất Giấy chứng nhận CTXH};
+
+\draw[msg] (0,-1.4) -- node[above] {1. Yêu cầu xuất Giấy chứng nhận CTXH} (3.5,-1.4);
+\draw[msg] (3.5,-2.0) -- node[above] {2. Chuyển tiếp yêu cầu kết xuất chứng nhận} (7.0,-2.0);
+
+\draw[msg] (7.0,-2.6) -- node[above] {3. Đối soát điều kiện hoàn thành sự kiện \& điểm danh} (10.5,-2.6);
+\draw[reply] (7.0,-3.2) -- node[above] {4. Dữ liệu chứng thực hợp lệ (Số ngày CTXH)} (10.5,-3.2);
+
+\draw[msg] (7.0,-3.7) -- ++(1.0,0) |- node[pos=0.5, right=2pt, font=\scriptsize] {5. Khởi tạo Certificate UUID \& Mã QR tra cứu} (7.0,-4.3);
+\draw[msg] (7.0,-4.8) -- ++(1.0,0) |- node[pos=0.5, right=2pt, font=\scriptsize] {6. Kết xuất file PDF A4 Landscape (Chữ ký số + QR)} (7.0,-5.4);
+
+\draw[reply] (3.5,-6.0) -- node[above] {7. Trả về tệp Giấy chứng nhận điện tử} (7.0,-6.0);
+\draw[reply] (0,-6.6) -- node[above] {8. Tải tệp Giấy chứng nhận PDF về thiết bị} (3.5,-6.6);
+
+% Giai đoạn 2
+\node[fill=green!15, draw=green!60!black, font=\scriptsize\bfseries, rounded corners=2pt] at (6.9,-7.4) {Quy trình 2: Xác thực trực tuyến qua Mã QR};
+
+\draw[msg] (13.8,-8.0) -- ++(-1.0,0) |- node[pos=0.5, left=2pt, font=\scriptsize] {9. Quét mã QR trên chứng nhận} (13.8,-8.6);
+
+\draw[msg] (13.8,-9.2) -- node[above] {10. Yêu cầu thẩm tra tính xác thực theo UUID} (7.0,-9.2);
+\draw[msg] (7.0,-9.8) -- node[above] {11. Truy vấn bản ghi chứng nhận gốc trong CSDL} (10.5,-9.8);
+\draw[reply] (7.0,-10.4) -- node[above] {12. Bản ghi gốc hợp lệ từ CSDL} (10.5,-10.4);
+
+\draw[reply] (7.0,-11.0) -- node[above] {13. Hiển thị trang công khai "Chứng nhận Hợp lệ"} (13.8,-11.0);
+
+\end{tikzpicture}
+}
+\caption{Sequence Diagram: Quy trình kết xuất PDF và kiểm chứng Giấy chứng nhận CTXH trực tuyến}
+\label{fig:sequence_verify_certificate}
 \end{figure}
