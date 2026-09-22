@@ -369,7 +369,7 @@ skinparam conditionBorderColor #FFA000
 skinparam conditionFontColor #B78103
 skinparam conditionFontSize 11
 
-title Quy trình Khởi tạo và Xuất bản Hoạt động trên Bản đồ
+title Quy trình tạo hoạt động
 
 start
 :Chọn vị trí trên bản đồ;
