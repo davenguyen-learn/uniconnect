@@ -1102,37 +1102,37 @@ Hình~\ref{fig:sequence_verify_certificate} mô tả quy trình kết xuất b�
 \node[actor] (verifier) at (13.8,0) {Bên Thẩm tra\\(Third-party Verifier)};
 
 % Vertical Lifelines
-\draw[lifeline] (student) -- (0,-11.6);
-\draw[lifeline] (client) -- (3.5,-11.6);
-\draw[lifeline] (service) -- (7.0,-11.6);
-\draw[lifeline] (db) -- (10.5,-11.6);
-\draw[lifeline] (verifier) -- (13.8,-11.6);
+\draw[lifeline] (student) -- (0,-11.2);
+\draw[lifeline] (client) -- (3.5,-11.2);
+\draw[lifeline] (service) -- (7.0,-11.2);
+\draw[lifeline] (db) -- (10.5,-11.2);
+\draw[lifeline] (verifier) -- (13.8,-11.2);
 
-% Giai đoạn 1
-\node[fill=blue!10, draw=blue!70!black, font=\scriptsize\bfseries, rounded corners=2pt] at (6.9,-0.8) {Quy trình 1: Kết xuất Giấy chứng nhận CTXH};
+% Luồng 1: Kết xuất Giấy chứng nhận
+\draw[msg] (0,-1.0) -- node[above] {1. Yêu cầu xuất Giấy chứng nhận CTXH} (3.5,-1.0);
+\draw[msg] (3.5,-1.6) -- node[above] {2. Chuyển tiếp yêu cầu kết xuất chứng nhận} (7.0,-1.6);
 
-\draw[msg] (0,-1.4) -- node[above] {1. Yêu cầu xuất Giấy chứng nhận CTXH} (3.5,-1.4);
-\draw[msg] (3.5,-2.0) -- node[above] {2. Chuyển tiếp yêu cầu kết xuất chứng nhận} (7.0,-2.0);
+\draw[msg] (7.0,-2.2) -- node[above] {3. Đối soát điều kiện hoàn thành sự kiện \& điểm danh} (10.5,-2.2);
+\draw[reply] (7.0,-2.8) -- node[above] {4. Dữ liệu chứng thực hợp lệ (Số ngày CTXH)} (10.5,-2.8);
 
-\draw[msg] (7.0,-2.6) -- node[above] {3. Đối soát điều kiện hoàn thành sự kiện \& điểm danh} (10.5,-2.6);
-\draw[reply] (7.0,-3.2) -- node[above] {4. Dữ liệu chứng thực hợp lệ (Số ngày CTXH)} (10.5,-3.2);
+\draw[msg] (7.0,-3.4) -- ++(1.0,0) |- node[pos=0.5, right=2pt, font=\scriptsize] {5. Khởi tạo Certificate UUID \& Mã QR tra cứu} (7.0,-4.0);
+\draw[msg] (7.0,-4.6) -- ++(1.0,0) |- node[pos=0.5, right=2pt, font=\scriptsize] {6. Kết xuất file PDF A4 Landscape (Chữ ký số + QR)} (7.0,-5.2);
 
-\draw[msg] (7.0,-3.7) -- ++(1.0,0) |- node[pos=0.5, right=2pt, font=\scriptsize] {5. Khởi tạo Certificate UUID \& Mã QR tra cứu} (7.0,-4.3);
-\draw[msg] (7.0,-4.8) -- ++(1.0,0) |- node[pos=0.5, right=2pt, font=\scriptsize] {6. Kết xuất file PDF A4 Landscape (Chữ ký số + QR)} (7.0,-5.4);
+\draw[reply] (3.5,-5.8) -- node[above] {7. Trả về tệp Giấy chứng nhận điện tử} (7.0,-5.8);
+\draw[reply] (0,-6.4) -- node[above] {8. Tải tệp Giấy chứng nhận PDF về thiết bị} (3.5,-6.4);
 
-\draw[reply] (3.5,-6.0) -- node[above] {7. Trả về tệp Giấy chứng nhận điện tử} (7.0,-6.0);
-\draw[reply] (0,-6.6) -- node[above] {8. Tải tệp Giấy chứng nhận PDF về thiết bị} (3.5,-6.6);
+% Đường phân tách quy trình chuẩn UML
+\draw[dashed, thick, gray!60] (-0.3,-7.0) -- (14.1,-7.0);
+\node[font=\scriptsize\itshape\bfseries, text=blue!80!black, anchor=west] at (0.2,-6.8) {Quy trình 2: Xác thực trực tuyến qua Mã QR};
 
-% Giai đoạn 2
-\node[fill=green!15, draw=green!60!black, font=\scriptsize\bfseries, rounded corners=2pt] at (6.9,-7.4) {Quy trình 2: Xác thực trực tuyến qua Mã QR};
+% Luồng 2: Xác thực trực tuyến
+\draw[msg] (13.8,-7.6) -- ++(-1.0,0) |- node[pos=0.5, left=2pt, font=\scriptsize] {9. Quét mã QR trên chứng nhận} (13.8,-8.2);
 
-\draw[msg] (13.8,-8.0) -- ++(-1.0,0) |- node[pos=0.5, left=2pt, font=\scriptsize] {9. Quét mã QR trên chứng nhận} (13.8,-8.6);
+\draw[msg] (13.8,-8.8) -- node[above] {10. Yêu cầu thẩm tra tính xác thực theo UUID} (7.0,-8.8);
+\draw[msg] (7.0,-9.4) -- node[above] {11. Truy vấn bản ghi chứng nhận gốc trong CSDL} (10.5,-9.4);
+\draw[reply] (7.0,-10.0) -- node[above] {12. Bản ghi gốc hợp lệ từ CSDL} (10.5,-10.0);
 
-\draw[msg] (13.8,-9.2) -- node[above] {10. Yêu cầu thẩm tra tính xác thực theo UUID} (7.0,-9.2);
-\draw[msg] (7.0,-9.8) -- node[above] {11. Truy vấn bản ghi chứng nhận gốc trong CSDL} (10.5,-9.8);
-\draw[reply] (7.0,-10.4) -- node[above] {12. Bản ghi gốc hợp lệ từ CSDL} (10.5,-10.4);
-
-\draw[reply] (7.0,-11.0) -- node[above] {13. Hiển thị trang công khai "Chứng nhận Hợp lệ"} (13.8,-11.0);
+\draw[reply] (7.0,-10.6) -- node[above] {13. Hiển thị trang công khai "Chứng nhận Hợp lệ"} (13.8,-10.6);
 
 \end{tikzpicture}
 }
