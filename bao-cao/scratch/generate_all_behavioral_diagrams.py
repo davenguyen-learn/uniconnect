@@ -372,9 +372,10 @@ skinparam conditionFontSize 11
 title Quy trình tạo hoạt động
 
 start
-:Chọn vị trí trên bản đồ;
+:Nhấn nút "Tạo hoạt động mới";
 :Mở biểu mẫu tạo hoạt động;
 :Nhập thông tin hoạt động\n(Tiêu đề, thời gian, mô tả, số lượng);
+:Chọn vị trí trên bản đồ\n(Ghim tọa độ qua LocationPicker);
 :Cấu hình duyệt thành viên và hình thức điểm danh;
 :Nhấn nút "Tạo hoạt động";
 

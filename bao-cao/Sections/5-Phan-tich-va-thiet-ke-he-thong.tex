@@ -219,13 +219,14 @@ Sơ đồ phản ánh thiết kế tổng thể gồm 3 tác nhân chính tươn
     Postconditions & Hệ thống lưu thông tin hoạt động vào cơ sở dữ liệu, tự động nhúng vector mô tả hoạt động và hiển thị điểm ghim mới lên bản đồ cho tất cả người dùng khác. \\ \hline
     
     % Phân rã Normal Flow để hỗ trợ ngắt trang
-    \textbf{Normal Flow} & 1. Actor nhấn giữ (long-press) vào một vị trí cụ thể trên giao diện bản đồ. \\
-    & 2. Hệ thống hiển thị biểu mẫu yêu cầu nhập thông tin hoạt động. \\ 
-    & 3. Actor nhập dữ liệu: Tiêu đề, Mô tả, Thời gian bắt đầu và Số lượng giới hạn. \\ 
-    & 4. Actor nhấn nút "Tạo hoạt động". \\ 
-    & 5. Hệ thống gửi dữ liệu tọa độ và nội dung form lên Backend xử lý. \\ 
-    & 6. Hệ thống lưu bản ghi vào CSDL và chạy ngầm tác vụ nhúng Vector cho phần mô tả. \\ 
-    & 7. Hệ thống thông báo tạo thành công và tải lại lớp bản đồ để hiển thị Marker mới. \\ \hline
+    \textbf{Normal Flow} & 1. Người dùng nhấn nút "Tạo hoạt động mới" trên giao diện ứng dụng. \\
+    & 2. Hệ thống hiển thị biểu mẫu tạo hoạt động mới. \\ 
+    & 3. Người dùng nhập thông tin hoạt động: Tiêu đề, Thời gian diễn ra, Mô tả và Giới hạn số lượng tham gia. \\ 
+    & 4. Người dùng chọn vị trí tổ chức trên bản đồ khuôn viên (thông qua bộ định vị LocationPicker tích hợp). \\ 
+    & 5. Người dùng cấu hình duyệt thành viên, hình thức điểm danh và nhấn nút "Tạo hoạt động". \\ 
+    & 6. Hệ thống gửi dữ liệu tọa độ và nội dung form lên Backend xử lý. \\ 
+    & 7. Hệ thống lưu bản ghi vào CSDL (PostGIS) và chạy ngầm tác vụ nhúng Vector cho phần mô tả (pgvector). \\ 
+    & 8. Hệ thống thông báo tạo thành công và cập nhật điểm ghim (Marker) mới lên bản đồ. \\ \hline
     
     Alternative flow & Actor bỏ trống các trường thông tin bắt buộc (Tiêu đề, Thời gian); hệ thống sẽ chặn việc gửi dữ liệu ở phía Frontend, hiển thị viền đỏ ở các ô nhập liệu và yêu cầu điền đầy đủ. \\ \hline
     Exception & Sự cố đường truyền hoặc hết phiên đăng nhập: Tại bước 5, nếu thiết bị mất mạng hoặc token JWT đã hết hạn, máy chủ sẽ không thể xử lý. Hệ thống hiển thị thông báo "Kết nối thất bại, vui lòng thử lại", đồng thời giữ nguyên các thông tin Actor đã nhập trên biểu mẫu để tránh mất dữ liệu. \\ \hline
@@ -783,7 +784,7 @@ Nhằm mô hình hóa chi tiết động thái xử lý nghiệp vụ, sự ph�
 
 \subsubsection{Quy trình tạo hoạt động}
 
-Quy trình tạo mới hoạt động (Hình~\ref{fig:activity_tao_hoat_dong}) mô tả tuần tự luồng tương tác giữa người dùng và hệ thống, từ thao tác chọn vị trí trên bản đồ học đường đến khi hoạt động được lưu trữ và lập chỉ mục ngữ nghĩa:
+Quy trình tạo mới hoạt động (Hình~\ref{fig:activity_tao_hoat_dong}) mô tả tuần tự luồng tương tác giữa người dùng và hệ thống từ khi mở biểu mẫu đến khi hoạt động được lưu trữ và lập chỉ mục ngữ nghĩa:
 
 \begin{figure}[H]
     \centering
@@ -792,7 +793,7 @@ Quy trình tạo mới hoạt động (Hình~\ref{fig:activity_tao_hoat_dong}) m
     \label{fig:activity_tao_hoat_dong}
 \end{figure}
 
-Người dùng khởi tạo luồng bằng việc chọn vị trí trên bản đồ học đường, mở biểu mẫu và nhập thông tin hoạt động (tiêu đề, thời gian, mô tả, số lượng) cùng cấu hình duyệt thành viên và hình thức điểm danh. Khi người dùng nhấn nút \textit{''Tạo hoạt động''}, giao diện kiểm tra tính hợp lệ của dữ liệu: nếu dữ liệu thiếu hoặc không hợp lệ, hệ thống hiển thị cảnh báo lỗi nhập liệu để người dùng bổ sung; nếu hợp lệ, yêu cầu được gửi lên máy chủ. Tại máy chủ, hệ thống lưu trữ thông tin hoạt động và tọa độ vị trí (PostGIS) vào cơ sở dữ liệu, đồng thời phân nhánh song song (\texttt{fork}) thành hai luồng độc lập: phản hồi kết quả để máy khách hiển thị điểm ghim (Marker) mới lên bản đồ, và kích hoạt tác vụ chạy ngầm tạo vector nhúng ngữ nghĩa lưu vào pgvector phục vụ tính năng tìm kiếm thông minh của trợ lý AI.
+Người dùng khởi tạo luồng bằng việc nhấn nút \textit{''Tạo hoạt động mới''} trên giao diện ứng dụng. Hệ thống hiển thị biểu mẫu tạo hoạt động, cho phép người dùng nhập các thông tin cơ bản (tiêu đề, thời gian, mô tả, số lượng), chọn vị trí tổ chức trên bản đồ học đường thông qua bộ định vị tích hợp (\texttt{LocationPicker}) và cấu hình duyệt thành viên, hình thức điểm danh. Khi người dùng nhấn nút \textit{''Tạo hoạt động''}, giao diện kiểm tra tính hợp lệ của dữ liệu: nếu dữ liệu thiếu hoặc không hợp lệ, hệ thống hiển thị cảnh báo lỗi nhập liệu để người dùng bổ sung; nếu hợp lệ, yêu cầu được gửi lên máy chủ. Tại máy chủ, hệ thống lưu trữ thông tin hoạt động và tọa độ vị trí (PostGIS) vào cơ sở dữ liệu, đồng thời phân nhánh song song (\texttt{fork}) thành hai luồng độc lập: phản hồi kết quả để máy khách hiển thị điểm ghim (Marker) mới lên bản đồ, và kích hoạt tác vụ chạy ngầm tạo vector nhúng ngữ nghĩa lưu vào pgvector phục vụ tính năng tìm kiếm thông minh của trợ lý AI.
 
 \subsubsection{Quy trình Đăng ký tham gia hoạt động}
 
