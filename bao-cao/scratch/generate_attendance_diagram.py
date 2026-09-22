@@ -73,8 +73,8 @@ endif
 
 try:
     data = server.processes(puml_content)
-    with open("bao-cao/Images/activity-diem-danh-da-che-do.png", "wb") as f:
+    with open("Images/activity-diem-danh-da-che-do.png", "wb") as f:
         f.write(data)
-    print(f"Generated bao-cao/Images/activity-diem-danh-da-che-do.png successfully: {len(data)} bytes")
+    print(f"Generated Images/activity-diem-danh-da-che-do.png successfully: {len(data)} bytes")
 except Exception as e:
     print(f"Error: {e}")
