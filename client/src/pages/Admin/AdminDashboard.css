@@ -151,7 +151,7 @@
 }
 
 .icon-gold { background: #FEF3C7; color: #D97706; }
-.icon-emerald { background: #D1FAE5; color: #059669; }
+.icon-emerald { background: #D1FAE5; color: #047857; }
 .icon-navy { background: #DBEAFE; color: #2563EB; }
 .icon-purple { background: #EDE9FE; color: #7C3AED; }
 
@@ -342,7 +342,7 @@
 .text-bold { font-weight: 600; }
 .text-muted { color: var(--text-muted, #64748B); }
 .text-right { text-align: right; }
-.text-emerald { color: #059669; }
+.text-emerald { color: #047857; }
 
 /* ── Badges ── */
 .role-badge {

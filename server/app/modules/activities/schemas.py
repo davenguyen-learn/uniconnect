@@ -30,7 +30,8 @@ class ActivityCreate(BaseModel):
     category: str | None = Field(default=None, max_length=50)
     latitude: float = Field(ge=-90, le=90)
     longitude: float = Field(ge=-180, le=180)
-    location_name: str | None = Field(default=None, max_length=200)
+    meeting_location: str | None = Field(default=None, max_length=200)
+    location_name: str | None = Field(default=None, max_length=200)  # Backward-compatible alias
     start_time: datetime
     end_time: datetime
     max_participants: int = Field(gt=0, le=1000)
@@ -48,6 +49,8 @@ class ActivityCreate(BaseModel):
     def validate_times(self):
         if self.end_time <= self.start_time:
             raise ValueError("end_time must be after start_time")
+        if not self.meeting_location and self.location_name:
+            self.meeting_location = self.location_name
         return self
 
 
@@ -58,7 +61,8 @@ class ActivityUpdate(BaseModel):
     category: str | None = Field(default=None, max_length=50)
     latitude: float | None = Field(default=None, ge=-90, le=90)
     longitude: float | None = Field(default=None, ge=-180, le=180)
-    location_name: str | None = Field(default=None, max_length=200)
+    meeting_location: str | None = Field(default=None, max_length=200)
+    location_name: str | None = Field(default=None, max_length=200)  # Backward-compatible alias
     start_time: datetime | None = None
     end_time: datetime | None = None
     max_participants: int | None = Field(default=None, gt=0, le=1000)
@@ -81,7 +85,8 @@ class ActivityResponse(BaseModel):
     category: str | None
     latitude: float
     longitude: float
-    location_name: str | None
+    meeting_location: str | None = None
+    location_name: str | None = None  # Backward-compatible alias
     start_time: datetime
     end_time: datetime
     max_participants: int

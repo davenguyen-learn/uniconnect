@@ -65,7 +65,8 @@ def _activity_to_response(
         category=activity.category,
         latitude=lat,
         longitude=lng,
-        location_name=activity.location_name,
+        meeting_location=getattr(activity, 'meeting_location', None) or getattr(activity, 'location_name', None),
+        location_name=getattr(activity, 'meeting_location', None) or getattr(activity, 'location_name', None),
         start_time=activity.start_time,
         end_time=activity.end_time,
         max_participants=activity.max_participants,
@@ -130,14 +131,15 @@ async def create_activity(
     import secrets
     check_in_code = secrets.token_hex(4).upper()
 
+    meeting_loc = data.meeting_location or data.location_name
     activity = Activity(
         host_id=uuid.UUID(user_id),
         title=data.title,
         description=data.description,
         private_description=data.private_description,
         category=data.category,
-        location=f"SRID=4326;POINT({data.longitude} {data.latitude})",
-        location_name=data.location_name,
+        marker_location=f"SRID=4326;POINT({data.longitude} {data.latitude})",
+        meeting_location=meeting_loc,
         start_time=data.start_time,
         end_time=data.end_time,
         max_participants=data.max_participants,
@@ -145,13 +147,19 @@ async def create_activity(
         require_approval=data.require_approval,
         social_work_days=data.social_work_days,
         group_id=data.group_id,
-        trophy_id=data.trophy_id,
         attendance_mode=data.attendance_mode or "manual",
         check_in_radius=data.check_in_radius or 300,
         check_in_code=check_in_code,
         current_participants=1,  # Host is counted
         embedding=generate_embedding(embedding_text),
     )
+
+    if data.trophy_id:
+        from app.modules.trophies.models import Trophy
+        from sqlalchemy import select
+        trophy = await db.scalar(select(Trophy).where(Trophy.id == data.trophy_id))
+        if trophy:
+            trophy.activity_id = activity.id
     
     if data.custom_form:
         from app.modules.forms.models import CustomForm, FormField, FieldType
@@ -252,25 +260,33 @@ async def update_activity(
         if user_role not in [UserRole.admin, UserRole.edu_org]:
             update_data.pop("social_work_days")
 
-    if "trophy_id" in update_data and update_data["trophy_id"]:
+    new_trophy_id = update_data.pop("trophy_id", None)
+    if new_trophy_id:
         from app.modules.users.models import User, UserRole
+        from app.modules.trophies.models import Trophy
         from sqlalchemy import select
         user_result = await db.execute(select(User).where(User.id == uuid.UUID(user_id)))
         user_obj = user_result.scalar_one_or_none()
         if not user_obj or (user_obj.role not in [UserRole.admin, UserRole.edu_org] and not user_obj.is_verified):
             raise ForbiddenError("Chỉ các tổ chức hoặc tài khoản đã xác minh mới có thể gắn Trophy cho hoạt động.")
+        trophy = await db.scalar(select(Trophy).where(Trophy.id == new_trophy_id))
+        if trophy:
+            trophy.activity_id = activity.id
 
     if not activity.check_in_code:
         import secrets
         activity.check_in_code = secrets.token_hex(4).upper()
 
     # Handle location update
+    if "location_name" in update_data and "meeting_location" not in update_data:
+        update_data["meeting_location"] = update_data.pop("location_name")
+
     if "latitude" in update_data or "longitude" in update_data:
         coords = await repository.get_coordinates_from_db(db, activity_id)
         current_lat, current_lng = coords if coords else (0, 0)
         new_lat = update_data.pop("latitude", current_lat)
         new_lng = update_data.pop("longitude", current_lng)
-        activity.location = f"SRID=4326;POINT({new_lng} {new_lat})"
+        activity.marker_location = f"SRID=4326;POINT({new_lng} {new_lat})"
 
     if "title" in update_data or "description" in update_data:
         new_title = update_data.get("title", activity.title)

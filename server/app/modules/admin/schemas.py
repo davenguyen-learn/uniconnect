@@ -96,7 +96,8 @@ class AdminActivityItem(BaseModel):
     title: str
     description: str | None
     category: str | None
-    location_name: str | None
+    meeting_location: str | None = None
+    location_name: str | None = None
     start_time: datetime
     end_time: datetime
     max_participants: int

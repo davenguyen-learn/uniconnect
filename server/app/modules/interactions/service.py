@@ -44,8 +44,8 @@ async def create_comment(
     user_id: uuid.UUID,
     data: CommentCreate,
 ) -> CommentResponse:
-    """Create a comment or reply on a target."""
-    await _validate_target(db, target_type, target_id)
+    """Create a comment or reply on an activity."""
+    target_obj = await _validate_target(db, target_type, target_id)
 
     # Validate parent exists and enforce 1-level nesting
     if data.parent_id:
@@ -54,26 +54,23 @@ async def create_comment(
             raise NotFoundError("Parent comment not found.")
         if parent.parent_id is not None:
             raise ValidationError("Replies can only be one level deep.")
-        if parent.target_type != target_type or parent.target_id != target_id:
-            raise ValidationError("Parent comment does not belong to this target.")
+        if parent.activity_id != target_id:
+            raise ValidationError("Parent comment does not belong to this activity.")
 
     comment = await repository.create_comment(
         db,
-        target_type=target_type,
-        target_id=target_id,
+        activity_id=target_id,
         user_id=user_id,
         content=data.content,
         parent_id=data.parent_id,
     )
     
-    # Notify target owner
+    # Notify activity host
     from app.modules.notifications.service import create_interaction_notification
-    target_obj = await _validate_target(db, target_type, target_id)
-    # The target models (Activity, Document) have author_id, except Group which we aren't supporting yet
-    owner_id = getattr(target_obj, "author_id", None)
+    owner_id = getattr(target_obj, "host_id", getattr(target_obj, "author_id", None))
     if owner_id:
-        title = getattr(target_obj, "title", "post")
-        await create_interaction_notification(db, user_id, owner_id, "comment", target_type, target_id, title)
+        title = getattr(target_obj, "title", "activity")
+        await create_interaction_notification(db, user_id, owner_id, "comment", target_id, title)
         
     return CommentResponse.model_validate(comment)
 
@@ -87,7 +84,7 @@ async def list_comments(
     """List top-level comments with their replies."""
     await _validate_target(db, target_type, target_id)
 
-    comments, total = await repository.list_comments(db, target_type, target_id, limit, offset)
+    comments, total = await repository.list_comments(db, target_id, limit, offset)
     return CommentListResponse(
         items=[CommentResponse.model_validate(c) for c in comments],
         total=total,
@@ -138,20 +135,20 @@ async def toggle_like(
     target_id: uuid.UUID,
     user_id: uuid.UUID,
 ) -> LikeResponse:
-    """Toggle like on a target."""
+    """Toggle like on an activity."""
     target_obj = await _validate_target(db, target_type, target_id)
 
-    liked = await repository.toggle_like(db, target_type, target_id, user_id)
+    liked = await repository.toggle_like(db, target_id, user_id)
     
     if liked:
-        # Notify target owner
+        # Notify activity host
         from app.modules.notifications.service import create_interaction_notification
-        owner_id = getattr(target_obj, "author_id", None)
+        owner_id = getattr(target_obj, "host_id", getattr(target_obj, "author_id", None))
         if owner_id:
-            title = getattr(target_obj, "title", "post")
-            await create_interaction_notification(db, user_id, owner_id, "like", target_type, target_id, title)
+            title = getattr(target_obj, "title", "activity")
+            await create_interaction_notification(db, user_id, owner_id, "like", target_id, title)
             
-    total = await repository.count_likes(db, target_type, target_id)
+    total = await repository.count_likes(db, target_id)
     return LikeResponse(liked=liked, total_likes=total)
 
 
@@ -161,11 +158,11 @@ async def get_like_status(
     target_id: uuid.UUID,
     user_id: uuid.UUID,
 ) -> LikeResponse:
-    """Get like status and count for a target."""
+    """Get like status and count for an activity."""
     await _validate_target(db, target_type, target_id)
 
-    liked = await repository.is_liked_by_user(db, target_type, target_id, user_id)
-    total = await repository.count_likes(db, target_type, target_id)
+    liked = await repository.is_liked_by_user(db, target_id, user_id)
+    total = await repository.count_likes(db, target_id)
     return LikeResponse(liked=liked, total_likes=total)
 
 
@@ -178,9 +175,9 @@ async def get_content_stats(
     """Get aggregated stats (like count, comment count, user like status)."""
     await _validate_target(db, target_type, target_id)
 
-    like_count = await repository.count_likes(db, target_type, target_id)
-    comment_count = await repository.count_comments(db, target_type, target_id)
-    is_liked = await repository.is_liked_by_user(db, target_type, target_id, user_id)
+    like_count = await repository.count_likes(db, target_id)
+    comment_count = await repository.count_comments(db, target_id)
+    is_liked = await repository.is_liked_by_user(db, target_id, user_id)
 
     return ContentStatsResponse(
         like_count=like_count,

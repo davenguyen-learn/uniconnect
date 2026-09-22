@@ -96,7 +96,7 @@ export function mapChatEventCardToViewModel(dto: ChatEventCardDTO): ChatEventCar
     activityId: dto.activity_id,
     title: dto.title,
     dateTimeFormatted,
-    locationName: dto.location_name,
+    locationName: dto.meeting_location || dto.location_name,
     ctxhFormatted,
     distanceFormatted,
     conflictBadge,

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { 
   Users, 
   Calendar, 
@@ -37,8 +37,15 @@ import './GroupDetail.css';
 
 export default function GroupDetail() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const toast = useToast();
+
+  useEffect(() => {
+    if (id === 'create' || id === 'new') {
+      navigate('/groups/new', { replace: true });
+    }
+  }, [id, navigate]);
 
   const [group, setGroup] = useState<GroupDetailResponse | null>(null);
   const [stats, setStats] = useState<GroupStatsViewModel | null>(null);

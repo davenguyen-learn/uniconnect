@@ -1,0 +1,68 @@
+\section*{PHỤ LỤC C: DANH MỤC API ENDPOINTS HỆ THỐNG}
+\addcontentsline{toc}{section}{Phụ lục C: Danh mục API Endpoints hệ thống}
+
+Phụ lục này tài liệu hóa chi tiết các giao diện lập trình ứng dụng (RESTful API) được hiện thực trong phân hệ backend FastAPI của UniConnect. Tất cả các endpoint đều tuân thủ kiến trúc RESTful, dữ liệu trao đổi định dạng JSON chuẩn UTF-8, và được bảo vệ thông qua cơ chế xác thực JWT Bearer Token tại tầng phụ thuộc (Dependency Injection).
+
+\subsection*{C.1 Bảng tổng hợp Giao diện API theo Phân hệ}
+
+\begingroup
+\singlespacing
+\small
+\renewcommand{\arraystretch}{1.1}
+\begin{xltabular}{\textwidth}{|l|l|c|X|}
+\hline
+\textbf{Phương thức} & \textbf{Đường dẫn (Endpoint Path)} & \textbf{Xác thực} & \textbf{Mô tả nghiệp vụ} \\ \hline
+\endfirsthead
+\hline
+\textbf{Phương thức} & \textbf{Đường dẫn (Endpoint Path)} & \textbf{Xác thực} & \textbf{Mô tả nghiệp vụ} \\ \hline
+\endhead
+\hline
+\endfoot
+\hline
+\endlastfoot
+
+\multicolumn{4}{|l|}{\textbf{1. Phân hệ Xác thực \& Tài khoản (Auth \& Users)}} \\ \hline
+\texttt{POST} & \texttt{/api/v1/auth/register} & Không & Đăng ký tài khoản sinh viên mới bằng email trường học. \\ \hline
+\texttt{POST} & \texttt{/api/v1/auth/login} & Không & Đăng nhập, xác thực mật khẩu Bcrypt, trả về JWT Token. \\ \hline
+\texttt{GET} & \texttt{/api/v1/users/me} & Bearer & Lấy thông tin hồ sơ cá nhân và quyền hạn người dùng hiện tại. \\ \hline
+\texttt{PATCH} & \texttt{/api/v1/users/me} & Bearer & Cập nhật thông tin tiểu sử, avatar và tùy chọn quyền riêng tư. \\ \hline
+\texttt{GET} & \texttt{/api/v1/users/\{id\}/stats} & Bearer & Xem thống kê hoạt động, số giờ CTXH và thứ hạng sinh viên. \\ \hline
+\texttt{POST} & \texttt{/api/v1/users/\{id\}/follow} & Bearer & Bắt đầu theo dõi hoạt động của sinh viên hoặc Nhóm sinh viên khác. \\ \hline
+
+\multicolumn{4}{|l|}{\textbf{2. Phân hệ Hoạt động \& Bản đồ (Activities \& Map)}} \\ \hline
+\texttt{GET} & \texttt{/api/v1/activities/nearby} & Tùy chọn & Truy vấn không gian PostGIS lọc sự kiện theo tọa độ bán kính. \\ \hline
+\texttt{POST} & \texttt{/api/v1/activities} & Bearer & Khởi tạo sự kiện mới kèm tọa độ, khung giờ và cấu hình CTXH. \\ \hline
+\texttt{GET} & \texttt{/api/v1/activities/\{id\}} & Tùy chọn & Lấy thông tin chi tiết sự kiện, số lượng đăng ký và danh sách Co-host. \\ \hline
+\texttt{PATCH} & \texttt{/api/v1/activities/\{id\}} & Bearer & Chỉnh sửa thông tin sự kiện (chỉ dành cho Chủ trì hoặc Co-host). \\ \hline
+\texttt{DELETE} & \texttt{/api/v1/activities/\{id\}} & Bearer & Hủy sự kiện và tự động gửi thông báo đến người đã đăng ký. \\ \hline
+
+\multicolumn{4}{|l|}{\textbf{3. Phân hệ Tham gia \& Điểm danh (Participation \& Attendance)}} \\ \hline
+\texttt{POST} & \texttt{/api/v1/activities/\{id\}/join} & Bearer & Đăng ký tham gia sự kiện; kiểm tra slot và xung đột lịch trình. \\ \hline
+\texttt{GET} & \texttt{/api/v1/activities/\{id\}/check-in-code} & Bearer & Tạo mã QR xoay động 30s HMAC-SHA256 (dành cho BTC). \\ \hline
+\texttt{POST} & \texttt{/api/v1/activities/\{id\}/check-in} & Bearer & Điểm danh sinh viên: đối soát mã QR HMAC hoặc tọa độ GPS. \\ \hline
+\texttt{GET} & \texttt{/api/v1/activities/\{id\}/participants} & Bearer & Danh sách sinh viên tham dự kèm trạng thái điểm danh thực tế. \\ \hline
+\texttt{GET} & \texttt{/api/v1/certificates/verify/\{code\}} & Không & Cổng công khai đối soát tính nguyên bản của Giấy chứng nhận CTXH. \\ \hline
+
+\multicolumn{4}{|l|}{\textbf{4. Phân hệ Lịch thông minh (Smart Calendar)}} \\ \hline
+\texttt{GET} & \texttt{/api/v1/calendar/events} & Bearer & Lấy danh sách sự kiện đã đăng ký trong tháng của sinh viên. \\ \hline
+\texttt{POST} & \texttt{/api/v1/calendar/check-conflict} & Bearer & Kiểm tra xung đột thời gian dựa trên vị từ giao nhau thời gian. \\ \hline
+\texttt{GET} & \texttt{/api/v1/calendar/busy-slots} & Bearer & Quản lý danh sách khung giờ bận cá nhân lặp lại hàng tuần. \\ \hline
+\texttt{POST} & \texttt{/api/v1/calendar/busy-slots} & Bearer & Thêm mới lịch bận cố định (lịch học, lịch làm thêm cá nhân). \\ \hline
+
+\multicolumn{4}{|l|}{\textbf{5. Phân hệ Nhóm \& Đồng tổ chức (Groups \& Co-hosting)}} \\ \hline
+\texttt{GET} & \texttt{/api/v1/groups/discover} & Tùy chọn & Danh sách các Đội, Nhóm học tập, Nhóm phong trào và Đoàn khoa trong trường. \\ \hline
+\texttt{POST} & \texttt{/api/v1/activities/\{id\}/invite-cohost} & Bearer & Mời Nhóm khác làm Đồng tổ chức sự kiện (Primary Owner). \\ \hline
+\texttt{POST} & \texttt{/api/v1/groups/co-host-invitations/\{id\}/respond} & Bearer & Phê chuẩn hoặc từ chối tham gia Đồng tổ chức sự kiện. \\ \hline
+\texttt{GET} & \texttt{/api/v1/groups/\{id\}/members} & Bearer & Danh sách thành viên và phân quyền vai trò trong nội bộ nhóm. \\ \hline
+
+\multicolumn{4}{|l|}{\textbf{6. Phân hệ Trò chơi hóa \& Trợ lý AI (Gamification \& AI)}} \\ \hline
+\texttt{GET} & \texttt{/api/v1/trophies/user/\{id\}} & Bearer & Danh sách danh hiệu Trophy đã đạt và tiến trình phấn đấu tiếp theo. \\ \hline
+\texttt{POST} & \texttt{/api/v1/chat/ask} & Bearer & Gửi câu hỏi cho Trợ lý AI theo kiến trúc RAG (Rate Limiting). \\ \hline
+
+\multicolumn{4}{|l|}{\textbf{7. Phân hệ Quản trị hệ thống (Admin Dashboard)}} \\ \hline
+\texttt{GET} & \texttt{/api/v1/admin/metrics} & Admin & Lấy số liệu KPI tăng trưởng người dùng, sự kiện và lượt điểm danh. \\ \hline
+\texttt{GET} & \texttt{/api/v1/admin/reports} & Admin & Danh sách báo cáo vi phạm nội dung đang chờ ban điều hành xử lý. \\ \hline
+\texttt{POST} & \texttt{/api/v1/admin/reports/\{id\}/review} & Admin & Xử lý báo cáo: gỡ bỏ nội dung vi phạm hoặc bác bỏ tố cáo. \\ \hline
+\texttt{GET} & \texttt{/api/v1/admin/students/export} & Admin & Xuất toàn bộ dữ liệu sinh viên và ngày CTXH dạng CSV UTF-8 BOM. \\ \hline
+\end{xltabular}
+\endgroup

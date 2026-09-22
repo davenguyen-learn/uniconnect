@@ -8,18 +8,27 @@ from app.core.models import Base, PrimaryKeyMixin, TimestampMixin
 class Trophy(PrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "trophies"
 
+    activity_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("activities.id", ondelete="CASCADE"), nullable=True, index=True
+    )
     name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True, index=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    points: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    icon: Mapped[str | None] = mapped_column(String(50), nullable=True)
-    
-    # The organization or verified user who created this trophy
-    creator_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
-    )
-    
+
     # Relationships
-    creator = relationship("User", backref="created_trophies")
+    activity = relationship("Activity", back_populates="trophies")
+
+    # Backward compatibility properties
+    @property
+    def points(self) -> int:
+        return 0
+
+    @property
+    def icon(self) -> str:
+        return "🏆"
+
+    @property
+    def creator_id(self) -> uuid.UUID | None:
+        return None
 
 
 class UserTrophy(PrimaryKeyMixin, TimestampMixin, Base):

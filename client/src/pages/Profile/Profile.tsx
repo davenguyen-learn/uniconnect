@@ -363,7 +363,7 @@ export default function Profile() {
       <div className="profile-ctxh-card glass animate-fade-in">
         <div className="ctxh-passport-header">
           <div className="ctxh-passport-title-group">
-            <Award size={24} className="text-emerald-500" />
+            <Award size={24} className="text-emerald-700 dark:text-emerald-400" />
             <div>
               <h2 className="ctxh-passport-title">Hộ Chiếu Ngày CTXH & Cống Hiến</h2>
               <p className="ctxh-passport-subtitle">Số liệu xác thực chính thức từ hệ thống</p>
@@ -392,7 +392,7 @@ export default function Profile() {
             <div className="ctxh-stat-grid">
               <div className="ctxh-stat-box">
                 <span className="ctxh-stat-box-label">Tổng ngày CTXH</span>
-                <span className="ctxh-stat-box-value text-emerald-600 dark:text-emerald-400">
+                <span className="ctxh-stat-box-value text-emerald-800 dark:text-emerald-300">
                   {stats.total_ctxh_days.toFixed(1)} ngày
                 </span>
                 <span className="ctxh-stat-box-hint">
@@ -441,7 +441,7 @@ export default function Profile() {
                   <span>
                     Chỉ tiêu: <strong>15.0 ngày</strong>
                   </span>
-                  <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                  <span className="font-semibold text-emerald-800 dark:text-emerald-300">
                     {myStats.ctxh_completion_percent}% hoàn thành
                   </span>
                 </div>
@@ -545,25 +545,34 @@ export default function Profile() {
               {activities.map((act) => (
                 <div key={act.id} className="certificate-row-item">
                   <div className="certificate-row-info">
-                    <span className="certificate-row-title">{act.title}</span>
+                    <Link
+                      to={`/activities/${act.id}`}
+                      className="certificate-row-title"
+                      title="Xem chi tiết hoạt động"
+                    >
+                      <span>{act.title}</span>
+                      <ExternalLink size={14} className="certificate-row-icon" />
+                    </Link>
                     <div className="certificate-row-meta">
                       <span>{formatActivityDate(act.start_time)}</span>
                       {act.social_work_days && act.social_work_days > 0 && (
-                        <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                        <span className="certificate-badge-ctxh">
                           +{act.social_work_days} ngày CTXH
                         </span>
                       )}
                     </div>
                   </div>
 
-                  <Button
-                    size="sm"
-                    variant="primary"
-                    onClick={() => setSelectedCertificateActivityId(act.id)}
-                  >
-                    <FileText size={14} className="inline mr-1" />
-                    Xuất Bằng Khen / PDF
-                  </Button>
+                  <div className="certificate-row-actions">
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      onClick={() => setSelectedCertificateActivityId(act.id)}
+                    >
+                      <FileText size={14} className="inline mr-1" />
+                      Xuất Bằng Khen / PDF
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>

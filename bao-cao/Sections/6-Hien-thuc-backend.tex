@@ -1,61 +1,65 @@
-\section{Hiện thực backend}
+\section{Hiện thực hệ thống (Backend và Giao diện người dùng)}
 
 \subsection{Môi trường phát triển và công nghệ sử dụng}
 \begin{itemize}
     \item Ngôn ngữ: Python 3.10+.
 
-    \item Framework: FastAPI (đảm bảo hiệu năng cao, hỗ trợ Asynchronous).
+    \item Framework: FastAPI (đảm bảo hiệu năng cao, xử lý bất đồng bộ Asynchronous ASGI).
     
-    \item Database: PostgreSQL 15+ kết hợp với PostGIS (xử lý tọa độ bản đồ) và pgvector (xử lý Vector AI).
+    \item Database: PostgreSQL 15+ kết hợp tiện ích mở rộng pgvector (xử lý Vector Embeddings cho RAG) và PostGIS/Cube (tính toán không gian địa lý).
     
-    \item ORM: SQLAlchemy 2.0 (quản lý truy vấn thông qua Model).
+    \item ORM \& Migration: SQLAlchemy 2.0 (quản lý mô hình thực thể quan hệ) và Alembic (quản lý phiên bản di chuyển cấu trúc cơ sở dữ liệu).
     
-    \item Migration: Alembic (quản lý lịch sử thay đổi cấu trúc Database).
+    \item Lưu trữ tệp đối tượng (Object Storage): Supabase Storage giao tiếp qua chuẩn S3 API bất đồng bộ (\texttt{aioboto3}) phục vụ lưu trữ ảnh đại diện, minh chứng hoạt động và chứng chỉ PDF.
     
-    \item Môi trường: Docker \& Docker-compose (để đóng gói và triển khai nhanh).
+    \item Hạ tầng triển khai: Kiến trúc kép hỗ trợ Docker Compose (cho môi trường cục bộ/kiểm thử) và hạ tầng Cloud-Native (Vercel cho Frontend, Render cho Backend API, Neon cho PostgreSQL/pgvector, Supabase cho Object Storage).
 \end{itemize}
 
+\clearpage
 \subsection{Cấu trúc thư mục dự án}
 
-Để đảm bảo tính linh hoạt, dễ bảo trì và khả năng mở rộng, mã nguồn của hệ thống Backend được tổ chức theo kiến trúc phân lớp (Layered Architecture). Cấu trúc thư mục chi tiết của dự án được trình bày như sau:
+Để đảm bảo tính độc lập giữa các miền nghiệp vụ (Domain-Driven), dễ bảo trì và mở rộng khi phát triển quy mô lớn, mã nguồn của hệ thống Backend được tổ chức theo kiến trúc hướng Module (Modular Architecture). Mỗi phân hệ chức năng độc lập chứa toàn bộ mô hình dữ liệu (models), dịch vụ nghiệp vụ (services), lược đồ xác thực dữ liệu (schemas) và bộ định tuyến API (router). Cấu trúc thư mục chi tiết của dự án được tổ chức như sau:
 
-\begin{mycode}[Project Directory Structure]{}
-uniconnect/
+\begin{mycode}[Project Directory Structure - Modular Architecture]{}
+server/
     app/
-        api/                # API Layer (Routes)
-            v1/             # API Version 1
-                api.py      # Main router entry point
-                endpoints/  # Specific endpoint logic (auth, activity, etc.)
-        core/               # Core configurations (config, security)
-        crud/               # Basic CRUD operations
-        models/             # SQLAlchemy model definitions (ERD mapping)
-        schemas/            # Pydantic schemas (Data Validation)
-        services/           # Business logic layer (RAG, AI processing)
-        db/                 # Database session management
-        main.py             # Application entry point
-    alembic/                # Database migrations management
-    tests/                  # Automated test cases
-    .env                    # Environment variables
-    docker-compose.yml      # Container orchestration config
-    Dockerfile              # Container image definition
-    requirements.txt        # Python project dependencies
+        core/               # Core configuration, DB session & security
+            config.py       # Pydantic BaseSettings environment config
+            database.py     # SQLAlchemy 2.0 AsyncSession management
+            security.py     # Password hashing (bcrypt) & JWT token handling
+        modules/            # Domain-driven feature modules
+            activities/     # Activity lifecycle, PostGIS location & conflict checks
+            admin/          # System admin, organization verification & audit logs
+            auth/           # Authentication, registration & user verification
+            calendar/       # Smart calendar, busy timeslots & .ics export
+            chat/           # AI ReAct Agent & pgvector semantic RAG
+            forms/          # Polymorphic custom registration forms
+            groups/         # Student groups, management & co-hosting delegation
+            interactions/   # Social interactions: threaded comments & likes
+            notifications/  # Real-time push notifications & event queue
+            participation/  # Join requests, HMAC-SHA256 QR & GPS check-in
+            reports/        # Content violation reports & moderation
+            trophies/       # Gamification trophies & badge achievements
+            users/          # User profiles, RBAC & follow relationships
+        main.py             # FastAPI entrypoint & router aggregation
+    alembic/                # Database schema migration scripts
+    tests/                  # Automated test suite (64 test cases)
+    Dockerfile.prod         # Production server container specification
+    docker-compose.prod.yml # Multi-container orchestration (Nginx, App, DB)
+    requirements.txt        # Python backend dependencies
 \end{mycode}
 
 \subsection{Mô tả các thành phần hệ thống}
-Việc tổ chức mã nguồn theo cấu trúc trên giúp tách biệt rõ ràng giữa logic nghiệp vụ, giao diện lập trình và truy xuất dữ liệu. Các thành phần chính bao gồm:
+Việc tổ chức mã nguồn theo kiến trúc module trên giúp triệt tiêu sự phụ thuộc chéo và phân tách rõ ràng trách nhiệm giữa các miền nghiệp vụ:
 
 \begin{itemize}
-    \item \textbf{Thư mục \texttt{app/models/}:} Hiện thực hóa sơ đồ ERD thành các lớp Python thông qua SQLAlchemy ORM. Tại đây, các ràng buộc dữ liệu, khóa chính, khóa ngoại và các kiểu dữ liệu đặc thù như \textit{Geography} (cho bản đồ) và \textit{Vector} (cho AI) được định nghĩa chặt chẽ.
+    \item \textbf{Thư mục \texttt{app/core/}:} Đóng vai trò nền tảng hạ tầng, cung cấp phiên làm việc cơ sở dữ liệu bất đồng bộ (\textit{AsyncSession}), cơ chế băm mật khẩu và cấu hình tập trung.
     
-    \item \textbf{Thư mục \texttt{app/api/}:} Đóng vai trò lớp biên (Boundary), định nghĩa các Endpoint để Frontend tương tác. Cách tiếp cận này giúp hệ thống có khả năng nâng cấp các phiên bản API độc lập mà không gây ảnh hưởng đến các thành phần cũ.
-    
-    \item \textbf{Thư mục \texttt{app/services/}:} Đây là lớp chứa đựng logic nghiệp vụ chính. Các xử lý phức tạp như: quy trình tìm kiếm ngữ nghĩa RAG, tính toán không gian bản đồ, hay logic phê duyệt người dùng tham gia hoạt động được tập trung tại đây để tối ưu hóa việc tái sử dụng mã nguồn.
-    
-    \item \textbf{Thư mục \texttt{app/schemas/}:} Sử dụng thư viện Pydantic để định nghĩa các cấu trúc dữ liệu trao đổi (DTO). Lớp này đảm bảo mọi dữ liệu đầu vào và đầu ra đều được kiểm tra kiểu dữ liệu (Validation) nghiêm ngặt trước khi xử lý.
+    \item \textbf{Thư mục \texttt{app/modules/}:} Mỗi thư mục con là một đơn vị khép kín đảm nhiệm trọn vẹn vòng đời của một tính năng. Ví dụ: thư mục \texttt{activities/} vừa định nghĩa thực thể SQLAlchemy \texttt{Activity}, vừa kiểm soát lược đồ Pydantic và hiện thực thuật toán đối soát lịch.
     
     \item \textbf{Hệ thống \texttt{alembic/}:} Đảm nhận vai trò quản lý các phiên bản cấu trúc cơ sở dữ liệu. Mọi thay đổi trong mô hình dữ liệu đều được ghi vết và cập nhật đồng bộ vào Database thực tế thông qua các kịch bản Migration, đảm bảo tính toàn vẹn dữ liệu.
     
-    \item \textbf{Docker và Containerization:} Toàn bộ hệ thống Backend và các dịch vụ bổ trợ (PostgreSQL, pgvector) được đóng gói trong các Container riêng biệt, giúp đồng nhất môi trường phát triển và môi trường vận hành thực tế.
+    \item \textbf{Docker và Containerization:} Toàn bộ hệ thống Backend và các dịch vụ bổ trợ (PostgreSQL, pgvector, PostGIS) được đóng gói trong các Container riêng biệt, giúp đồng nhất môi trường phát triển và môi trường vận hành thực tế.
 \end{itemize}
 
 \subsection{Hiện thực các tính năng cốt lõi}
@@ -65,45 +69,65 @@ Việc tổ chức mã nguồn theo cấu trúc trên giúp tách biệt rõ rà
 
 \begin{mycode}[Geospatial Field Definition in Activity Model]{Python}
 # Define geospatial Point field (latitude, longitude)
-location = Column(Geography(geometry_type='POINT', srid=4326), nullable=True)
+marker_location = mapped_column(
+    Geography(geometry_type="POINT", srid=4326), nullable=True
+)
+meeting_location: Mapped[str | None] = mapped_column(String(200), nullable=True)
 
 @property
 def latitude(self):
     """Extract latitude from Geometry data"""
-    if self.location is not None:
-        return to_shape(self.location).y
+    if self.marker_location is not None:
+        return to_shape(self.marker_location).y
     return None
 
 @property
 def longitude(self):
     """Extract longitude from Geometry data"""
-    if self.location is not None:
-        return to_shape(self.location).x
+    if self.marker_location is not None:
+        return to_shape(self.marker_location).x
     return None
 \end{mycode}
 
 Việc hiện thực này cho phép hệ thống thực hiện các truy vấn không gian phức tạp như tìm kiếm các hoạt động trong bán kính nhất định xung quanh người dùng với hiệu năng tối ưu.
 
 \subsubsection{Hệ thống tìm kiếm ngữ nghĩa và Trợ lý AI (RAG)}
-Đây là tính năng trọng tâm của dự án, cho phép người dùng hỏi đáp dựa trên kho học liệu nội bộ. Hệ thống thực hiện quy trình RAG qua các bước:
+Đây là tính năng thông minh của dự án, cho phép người dùng hỏi đáp về các hoạt động ngoại khóa, sự kiện và nhận gợi ý phù hợp với sở thích cá nhân. Hệ thống thực hiện quy trình RAG qua các bước:
 \begin{enumerate}[leftmargin=*]
-    \item \textbf{Vector hóa:} Sử dụng mô hình Embedding (như Sentence-Transformers hoặc Gemini) để chuyển đổi nội dung tài liệu thành các Vector 768 chiều.
-    \item \textbf{Lưu trữ:} Sử dụng tiện ích \textit{pgvector} để lưu trữ và lập chỉ mục (Index) các Vector này.
-    \item \textbf{Truy xuất:} Sử dụng toán tử khoảng cách Cosine (\textit{Cosine Similarity}) để tìm kiếm các đoạn văn bản có ý nghĩa gần nhất với câu hỏi của người dùng.
+    \item \textbf{Vector hóa:} Sử dụng mô hình Embedding để chuyển đổi nội dung tiêu đề, mô tả và đặc điểm sự kiện thành các Vector 768 chiều.
+    \item \textbf{Lưu trữ:} Sử dụng tiện ích \textit{pgvector} trong PostgreSQL để lưu trữ và lập chỉ mục HNSW/IVFFlat cho các Vector này.
+    \item \textbf{Truy xuất:} Sử dụng toán tử khoảng cách Cosine (\textit{Cosine Similarity}) để tìm kiếm các sự kiện có ngữ nghĩa gần nhất với câu hỏi hoặc sở thích của người dùng.
 \end{enumerate}
 
-\begin{mycode}[Vector Similarity Search Query]{SQL}
--- Find the top 5 chunks with similarity > 0.7
+\begin{mycode}[Vector Similarity Search Query for Activities]{SQL}
+-- Find the top 5 activities with similarity > 0.7
 -- The <=> operator calculates Cosine Distance
 -- Subtract from 1 to obtain Cosine Similarity
 SELECT 
-    content, 
+    title, description, meeting_location,
     1 - (embedding <=> '[vector_query]') AS similarity
-FROM resources
-WHERE 1 - (embedding <=> '[vector_query]') > 0.7
+FROM activities
+WHERE is_deleted = false AND 1 - (embedding <=> '[vector_query]') > 0.7
 ORDER BY similarity DESC 
 LIMIT 5;
 \end{mycode}
+
+\subsubsection{Hiện thực Điểm danh Chống gian lận (Mã QR xoay động HMAC \& GPS Geofencing)}
+
+Hệ thống hiện thực cơ chế điểm danh chống gian lận đa tầng:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Mã QR xoay động 30 giây (HMAC-SHA256):} Máy chủ tạo token điểm danh dựa trên thuật toán HMAC-SHA256 kết hợp timestamp làm tròn chu kỳ 30 giây và secret key của sự kiện. Mã QR và chuỗi ký tự OTP tự động đổi mới mỗi 30 giây trên màn hình ban tổ chức. Khi người dùng quét mã, máy chủ kiểm tra tính hợp lệ của token trong cửa sổ thời gian trôi (time window drift $\le 1$) để chấp nhận độ trễ mạng hợp lý.
+    \item \textbf{Đối soát Hàng rào địa lý GPS Geofencing:} Khi gửi mã xác nhận, máy khách tự động kích hoạt tiến trình quét định vị vệ tinh GPS và gửi kèm tọa độ kinh độ, vĩ độ cùng độ chính xác phần cứng ($accuracy$). Máy chủ tính toán khoảng cách Haversine giữa tọa độ người dùng với tọa độ sự kiện, từ chối điểm danh nếu khoảng cách vượt quá bán kính quy định ($check\_in\_radius$, mặc định 100m--300m) hoặc sai số thiết bị quá cao ($accuracy > 100$m).
+\end{itemize}
+
+\subsubsection{Hiện thực Phân hệ Trợ lý AI và Hội thoại Thông minh (ReAct Agent)}
+
+Phân hệ trợ lý học đường AI được hiện thực hóa thông qua giao diện lập trình RESTful API kết hợp mô hình đại lý suy luận tự động (ReAct Agent Pattern) và kiểm soát tần suất truy vấn (Rate Limiter):
+\begin{itemize}[leftmargin=*]
+    \item Tiếp nhận và xác thực yêu cầu hội thoại thông qua Access Token JWT, duy trì ngữ cảnh phiên hỏi đáp (Conversation History) từ phía Client.
+    \item Tích hợp bộ lọc tần suất (Rate Limiter) tại tầng ứng dụng (Application Layer) nhằm kiểm soát số lượng yêu cầu theo địa chỉ IP/Token trong một khung thời gian xác định, bảo vệ tài nguyên tính toán và hạn ngạch gọi Gemini API.
+    \item Điều phối vòng lặp suy luận ReAct: Khi câu hỏi yêu cầu dữ liệu thực tế, mô hình tự động phát tín hiệu gọi Tool (Tool Calling) để thực thi truy vấn vector tương đồng trên bảng \texttt{activities} qua tiện ích mở rộng \texttt{pgvector}, sau đó tổng hợp ngữ cảnh sự kiện để trả lời tự nhiên định dạng Markdown.
+\end{itemize}
 
 \subsubsection{Authentication}
 
@@ -113,21 +137,19 @@ Hệ thống triển khai cơ chế xác thực dựa trên tiêu chuẩn JSON W
 from jose import jwt
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
-Security configuration
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 SECRET_KEY = "your_secret_key"
 ALGORITHM = "HS256"
 
 def create_access_token(data: dict):
-"""Generate JWT for authenticated users"""
-to_encode = data.copy()
-expire = datetime.utcnow() + timedelta(minutes=30)
-to_encode.update({"exp": expire})
-return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    to_encode = data.copy()
+    expire = datetime.utcnow() + timedelta(minutes=30)
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 def get_password_hash(password):
-"""Hash password using bcrypt"""
-return pwd_context.hash(password)
+    return pwd_context.hash(password)
 \end{mycode}
 
 \subsubsection{Interactive API Documentation (Swagger UI)}
@@ -135,7 +157,7 @@ return pwd_context.hash(password)
 Một trong những ưu điểm cốt lõi của việc sử dụng FastAPI là khả năng tự động khởi tạo tài liệu API tương tác thông qua Swagger UI. Điều này giúp các nhà phát triển (đặc biệt là đội ngũ Frontend) dễ dàng theo dõi và thử nghiệm API mà không cần truy cập trực tiếp vào mã nguồn.
 
 \begin{itemize}[leftmargin=*]
-\item \textbf{Khám phá Điểm cuối (Endpoints):} Tất cả các đường dẫn (routes) được định nghĩa trong thư mục \texttt{app/api/v1/endpoints/} đều được chỉ mục hóa tự động.
+\item \textbf{Khám phá Điểm cuối (Endpoints):} Tất cả các đường dẫn (routes) được định nghĩa trong các router module đều được chỉ mục hóa tự động.
 \item \textbf{Kiểm soát dữ liệu đầu vào:} Giao diện hiển thị rõ ràng các lược đồ dữ liệu (Schemas) cần thiết cho mỗi yêu cầu, giúp giảm thiểu lỗi định dạng dữ liệu khi trao đổi giữa Client và Server.
 \item \textbf{Thử nghiệm trực tiếp:} Cho phép thực hiện các yêu cầu HTTP (GET, POST, PUT, DELETE) trực tiếp trên trình duyệt để kiểm tra logic xử lý của Backend ngay lập tức.
 \end{itemize}
@@ -147,65 +169,138 @@ Một trong những ưu điểm cốt lõi của việc sử dụng FastAPI là 
     \label{fig:swagger}
 \end{figure}
 
-\subsubsection{Đóng gói ứng dụng với Docker}
+\subsubsection{Đóng gói ứng dụng với Docker trong môi trường sản xuất}
 
-Để đảm bảo hệ thống vận hành ổn định trên mọi môi trường, dự án được đóng gói bằng công nghệ Docker. Toàn bộ dịch vụ bao gồm mã nguồn Backend và cơ sở dữ liệu PostgreSQL (tích hợp PostGIS/pgvector) được điều phối thông qua tệp cấu hình \texttt{docker-compose.yml}.
+Để đảm bảo hệ thống vận hành ổn định và độc lập trên môi trường sản xuất, dự án được đóng gói thành các container Docker riêng biệt. Toàn bộ kiến trúc phân tầng bao gồm Nginx Reverse Proxy (phục vụ SPA tĩnh và ủy quyền chuyển tiếp), máy chủ FastAPI Backend và cơ sở dữ liệu PostgreSQL (tích hợp PostGIS/pgvector) được điều phối thông qua tệp cấu hình \texttt{docker-compose.prod.yml}:
 
-\begin{mycode}[Docker-Compose Orchestration]{}
+\begin{mycode}[Production Docker-Compose Stack]{yaml}
 services:
-  # 1. Server Backend
-  backend:
-    build: .
-    container_name: uniconnect_api
-    ports:
-      - "8000:8000"
-    env_file:
-      - .env
-    volumes:
-      - .:/app
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_started
-
-  # 2. Database (Đã tích hợp PostGIS + pgvector)
+  # 1. PostgreSQL Database (PostGIS & pgvector extensions)
   db:
-    build: 
-      context: .
-      dockerfile: Dockerfile.db
-    container_name: uniconnect_db
+    build: { context: ., dockerfile: Dockerfile.db }
     environment:
-      - POSTGRES_USER=\${DB_USER}
-      - POSTGRES_PASSWORD=\${DB_PASSWORD}
-      - POSTGRES_DB=\${DB_NAME}
-    ports:
-      - "5432:5432"
+      POSTGRES_USER: ${POSTGRES_USER:-uniconnect}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-uniconnect}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U \${DB_USER} -d \${DB_NAME}"]
-      interval: 5s   
-      timeout: 5s   
-      retries: 5
-      
-  # 3. Redis
-  redis:
-    image: redis:alpine
-    container_name: uniconnect_redis
-    ports:
-      - "6379:6379" 
-    volumes:
-      - redis_data:/data
+      - postgres_prod_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  # 2. FastAPI Backend Application Server (Isolated Internal Network)
+  server:
+    build: { context: ./server, dockerfile: Dockerfile.prod }
+    env_file: .env
+    environment:
+      APP_ENV: production
+      DATABASE_URL: postgresql+asyncpg://...
+      TRUSTED_PROXY_IPS: "127.0.0.1,172.16.0.0/12"
+    depends_on:
+      db: { condition: service_healthy }
+    restart: unless-stopped
+
+  # 3. Nginx Ingress Reverse Proxy & Static SPA (Public Port 80)
+  client:
+    build: { context: ./client, dockerfile: Dockerfile.prod }
+    ports: ["80:80"]
+    depends_on:
+      server: { condition: service_healthy }
+    restart: unless-stopped
 
 volumes:
-  postgres_data:
-  redis_data:
+  postgres_prod_data:
 \end{mycode}
 
-Việc sử dụng Docker giúp rút ngắn thời gian triển khai và đảm bảo các thành phần mở rộng của cơ sở dữ liệu luôn sẵn sàng mà không cần cài đặt thủ công.
+Kiến trúc triển khai phân tách rõ ràng ranh giới mạng: dịch vụ Nginx đóng vai trò là điểm đón tiếp duy nhất (Ingress) mở cổng ra bên ngoài, trong khi máy chủ Backend và Cơ sở dữ liệu hoạt động hoàn toàn bên trong mạng nội bộ cô lập của Docker, gia tăng mức độ an toàn thông tin cho toàn bộ hệ thống.
+
+\subsection{Hiện thực giao diện người dùng (User Interface - Frontend)}
+Giao diện người dùng của UniConnect được xây dựng bằng thư viện React 18 kết hợp ngôn ngữ TypeScript và công cụ đóng gói Vite. Thiết kế giao diện tuân thủ triết lý tối giản, hiện đại với bộ biểu tượng chuẩn Lucide Icons, cấu trúc lưới linh hoạt (Responsive Grid) đảm bảo trải nghiệm tương thích hoàn hảo trên cả trình duyệt máy tính để bàn lẫn thiết bị di động (Mobile-first). Dưới đây là các màn hình chức năng then chốt của hệ thống:
+
+\subsubsection{Màn hình Bản đồ Khám phá Hoạt động (Campus Interactive Map)}
+Giao diện trung tâm cho phép người dùng tương tác trực tiếp với bản đồ khuôn viên trường. Các hoạt động được phân loại theo màu sắc biểu tượng trực quan, hỗ trợ định vị GPS thời gian thực và lọc sự kiện theo bán kính di chuyển.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.76\textwidth]{Images/ui-campus-map.png}
+    \caption{Giao diện Bản đồ khám phá hoạt động học đường tương tác}
+    \label{fig:ui_campus_map}
+\end{figure}
+
+\subsubsection{Màn hình Chi tiết Hoạt động và Đăng ký tham gia (Event Details)}
+Cung cấp thông tin đầy đủ về sự kiện: thời gian, địa điểm, đơn vị chủ trì, các nhóm Đồng tổ chức (Co-hosts), số suất tham dự còn lại và tự động đối soát lịch trình cá nhân để đưa ra cảnh báo trùng lịch nếu có.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.76\textwidth]{Images/ui-activity-detail.png}
+    \caption{Giao diện Chi tiết hoạt động và đối soát lịch trình đăng ký}
+    \label{fig:ui_activity_detail}
+\end{figure}
+
+\clearpage
+\subsubsection{Màn hình Điểm danh Đa chế độ (Multi-mode Attendance)}
+Hỗ trợ cơ chế xác thực chống gian lận đa tầng: Quét mã QR xoay động 30 giây HMAC-SHA256 trên màn hình ban tổ chức kết hợp kiểm tra tọa độ GPS Geofencing tự động trên thiết bị người dùng để đối soát bán kính hợp lệ tại địa điểm tổ chức.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.76\textwidth]{Images/ui-attendance-checkin.png}
+    \caption{Giao diện Điểm danh chống gian lận đa chế độ (HMAC QR và GPS)}
+    \label{fig:ui_attendance_checkin}
+\end{figure}
+
+\subsubsection{Màn hình Lịch Thông minh (Smart Calendar Schedule)}
+Hiển thị tổng thể lịch trình cá nhân của người dùng theo dạng tuần/tháng, tích hợp các khung giờ bận cố định (thời khóa biểu) và các sự kiện ngoại khóa đã xác nhận tham gia. Hỗ trợ nút xuất nhanh file chuẩn \texttt{.ics} để đồng bộ với Google Calendar hoặc Apple Calendar.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.76\textwidth]{Images/ui-smart-calendar.png}
+    \caption{Giao diện Lịch thông minh và quản lý khung giờ bận cá nhân}
+    \label{fig:ui_smart_calendar}
+\end{figure}
+
+\subsubsection{Màn hình Hồ sơ Cá nhân và Bộ sưu tập Danh hiệu (Gamification Profile)}
+Không gian tôn vinh nỗ lực tham gia hoạt động của người dùng: hiển thị số ngày Công tác Xã hội (CTXH) tích lũy, cấp bậc thứ hạng thành viên và tủ trưng bày các danh hiệu Trophy đã mở khóa.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.76\textwidth]{Images/ui-gamification-profile.png}
+    \caption{Giao diện Hồ sơ cá nhân, tiến trình tích lũy CTXH và danh hiệu Trophy}
+    \label{fig:ui_gamification_profile}
+\end{figure}
+
+\subsubsection{Màn hình Trợ lý Học đường AI (AI Assistant Chat)}
+Giao diện trao đổi tương tác với trợ lý thông minh theo kiến trúc RAG: người dùng có thể đặt câu hỏi về quy định ngày CTXH, nhờ tìm kiếm các hoạt động phù hợp với sở thích hoặc kiểm tra khung thời gian rảnh trong tuần.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.76\textwidth]{Images/ui-ai-assistant.png}
+    \caption{Giao diện Trợ lý học đường AI giải đáp quy chế và gợi ý sự kiện}
+    \label{fig:ui_ai_assistant}
+\end{figure}
+
+\subsubsection{Màn hình Bảng điều khiển Quản trị viên (Admin KPI Dashboard)}
+Dành riêng cho ban điều hành trường học: theo dõi các biểu đồ trực quan về mức độ tăng trưởng người dùng, tỷ lệ tham gia phong trào, kiểm duyệt các báo cáo vi phạm nội dung và xuất danh sách người dùng chuẩn UTF-8 BOM CSV.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.76\textwidth]{Images/ui-admin-dashboard.png}
+    \caption{Giao diện Bảng điều khiển Quản trị viên và Kiểm duyệt nội dung}
+    \label{fig:ui_admin_dashboard}
+\end{figure}
+
+\subsubsection{Màn hình Tra cứu Xác thực Chứng nhận (Certificate Verification)}
+Cổng thông tin mở tại đường dẫn \texttt{/verify-certificate} cho phép bất kỳ ai (nhà tuyển dụng, ban thi đua) quét mã QR trên Giấy chứng nhận điện tử để tra cứu tính nguyên bản và thông tin xác thực từ máy chủ UniConnect.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.76\textwidth]{Images/ui-certificate-verify.png}
+    \caption{Giao diện Cổng tra cứu xác thực Giấy chứng nhận CTXH trực tuyến}
+    \label{fig:ui_certificate_verify}
+\end{figure}
 
 \subsection{Kết luận chương}
 
-Chương này đã khái quát quá trình hiện thực hóa các thành phần cốt lõi của Backend, từ cấu trúc tổ chức mã nguồn đến các tính năng then chốt về xử lý dữ liệu không gian, tìm kiếm ngữ nghĩa và triển khai hệ thống. Đây là nền tảng vững chắc để phát triển giao diện người dùng và tích hợp các dịch vụ thông minh trong giai đoạn tiếp theo.
+Chương này đã trình bày toàn diện quá trình hiện thực hóa hệ thống UniConnect ở cả hai phương diện: kiến trúc dịch vụ Backend vững chắc và giao diện người dùng Frontend hiện đại. Về phía Backend, việc áp dụng mô hình Modular Architecture trên nền tảng FastAPI và SQLAlchemy 2.0 giúp phân tách độc lập các miền nghiệp vụ, tạo điều kiện thuận lợi cho việc kiểm thử tự động với 64 trường hợp kiểm thử đạt tỷ lệ thành công 100\%. Các tính năng then chốt như đối soát lịch trình cá nhân, xử lý dữ liệu không gian PostGIS, tìm kiếm ngữ nghĩa tương đồng pgvector và cơ chế điểm danh kép chống gian lận (HMAC-SHA256 kết hợp GPS Geofencing) đã được hiện thực hóa trọn vẹn với hiệu năng cao và độ trễ phản hồi thấp.
+
+Về phía Frontend, ứng dụng Single Page Application (SPA) phát triển trên nền React 18, TypeScript và Vite mang đến trải nghiệm người dùng trực quan, mượt mà trên cả máy tính lẫn thiết bị di động. Hệ thống cung cấp đầy đủ các phân hệ chức năng tương tác từ bản đồ số khuôn viên trường, quản lý lịch thông minh, điểm danh thời gian thực, bảng thành tích vinh danh Gamification đến cổng xác thực Giấy chứng nhận điện tử công khai.
+
+Toàn bộ giải pháp đã được đóng gói hoàn chỉnh bằng Docker và Docker Compose theo mô hình mạng phân tầng an toàn (Reverse Proxy Nginx, Máy chủ ứng dụng FastAPI nội bộ và Cơ sở dữ liệu PostgreSQL mở rộng), sẵn sàng cho việc triển khai thực tế trên hạ tầng đám mây và mở rộng quy mô phục vụ cộng đồng sinh viên.
 

@@ -9,8 +9,9 @@ export interface UserInfo {
 
 export interface CommentResponse {
   id: string;
-  target_type: string;
-  target_id: string;
+  activity_id: string;
+  target_type?: string;
+  target_id?: string;
   user_id: string;
   parent_id: string | null;
   content: string;

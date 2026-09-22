@@ -1,0 +1,38 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+
+actor "Người dùng" as User
+actor "Quản trị viên (Admin)" as Admin
+actor "Google Gemini API" as Gemini <<External Service>>
+
+rectangle "Hệ thống UniConnect" {
+  usecase "Khám phá sự kiện trên Bản đồ số" as UC_Map
+  usecase "Tạo và Quản lý hoạt động" as UC_Activity
+  usecase "Đăng ký và Tương tác hoạt động" as UC_Join
+  usecase "Điểm danh hoạt động" as UC_Attendance
+  usecase "Nhận Giấy chứng nhận tham gia" as UC_Cert
+  usecase "Tạo và Quản lý nhóm" as UC_Group
+  usecase "Hỏi đáp và Tra cứu thông minh" as UC_AI
+  
+  usecase "Quản trị hệ thống và Kiểm duyệt" as UC_Admin
+}
+
+' Toàn bộ luồng nghiệp vụ người dùng
+User -- UC_Map
+User -- UC_Activity
+User -- UC_Join
+User -- UC_Attendance
+User -- UC_Cert
+User -- UC_Group
+User -- UC_AI
+
+' Quản trị hệ thống
+Admin -- UC_Admin
+
+' Tích hợp dịch vụ ngoại vi
+UC_AI -- Gemini
+@enduml

@@ -58,28 +58,29 @@ async def create_interaction_notification(
     actor_id: uuid.UUID,
     owner_id: uuid.UUID,
     interaction_type: str,
-    target_type: str,
-    target_id: uuid.UUID,
+    activity_id: uuid.UUID,
     title: str = "",
+    target_type: str = "activity",
+    target_id: uuid.UUID | None = None,
 ) -> None:
-    """Helper to create a notification for likes/comments if actor != owner."""
+    """Helper to create a notification for likes/comments on an activity if actor != owner."""
     if actor_id == owner_id:
         return
-        
+
+    act_id = activity_id or target_id
     message = ""
     if interaction_type == "like":
-        message = f"Someone liked your {target_type} {title}".strip()
+        message = f"Someone liked your activity {title}".strip()
     elif interaction_type == "comment":
-        message = f"Someone commented on your {target_type} {title}".strip()
+        message = f"Someone commented on your activity {title}".strip()
     else:
-        message = f"New {interaction_type} on your {target_type} {title}".strip()
+        message = f"New {interaction_type} on your activity {title}".strip()
         
     await repository.create_notification(
         db=db,
         user_id=owner_id,
         actor_id=actor_id,
         type=f"new_{interaction_type}",
-        target_type=target_type,
-        target_id=target_id,
+        activity_id=act_id,
         message=message,
     )

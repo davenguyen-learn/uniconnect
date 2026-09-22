@@ -1,7 +1,8 @@
 
-\usepackage{a4wide,amssymb,epsfig,latexsym,multicol,array,hhline,fancyhdr}
+\usepackage{amssymb,epsfig,latexsym,multicol,array,hhline,fancyhdr}
 \usepackage[T2A,T5]{fontenc}
 \usepackage[utf8]{inputenc}
+\usepackage{mathptmx} % Font Times New Roman chuẩn học thuật
 \usepackage{amsmath}
 \usepackage{lastpage}
 \usepackage[lined,boxed,commentsnumbered]{algorithm2e}
@@ -10,7 +11,6 @@
 \usepackage{graphicx}							% Standard graphics package
 \usepackage{array}
 \usepackage{tabularx, caption}
-\usepackage{tabularx}
 \usepackage{multirow}
 \usepackage{multicol}
 \usepackage{rotating}
@@ -22,18 +22,29 @@
 \usetikzlibrary{arrows,backgrounds}
 \usepackage{hyperref}
 \usepackage{subcaption}
-\def\thesislayout{	% A4: 210 × 297
-	\geometry{
-		a4paper,
-		total={160mm,240mm},  % fix over page
-		left=30mm,
-		top=30mm,
-	}
+
+% Định dạng lề trang chuẩn đồ án tốt nghiệp ĐH Bách Khoa
+\geometry{
+	a4paper,
+	top=25mm,
+	bottom=25mm,
+	left=30mm,
+	right=20mm
 }
-\setlength{\parindent}{0pt}
+\onehalfspacing % Dãn dòng 1.5 lines toàn bài
+\setlength{\parindent}{1cm}
 
 \hypersetup{urlcolor=blue,linkcolor=black,citecolor=black,colorlinks=true} 
-%\usepackage{pstcol} 								% PSTricks with the standard color package
+
+% Định dạng chú thích hình ảnh và bảng biểu nhất quán
+\captionsetup{
+    font=small,
+    labelfont=bf,
+    labelsep=colon,
+    justification=centering
+}
+\captionsetup[figure]{name=Hình}
+\captionsetup[table]{name=Bảng}
 
 \newtheorem{theorem}{{\bf Theorem}}
 \newtheorem{property}{{\bf Property}}
@@ -42,8 +53,10 @@
 \newtheorem{lemma}[proposition]{{\bf Lemma}}
 
 \AtBeginDocument{\renewcommand*\contentsname{Mục lục}}
-\AtBeginDocument{\renewcommand*\refname{Nguồn tham khảo}}
-%\usepackage{fancyhdr}
+\AtBeginDocument{\renewcommand*\refname{Tài liệu tham khảo}}
+\AtBeginDocument{\renewcommand*\figurename{Hình}}
+\AtBeginDocument{\renewcommand*\tablename{Bảng}}
+
 \setlength{\headheight}{40pt}
 \pagestyle{fancy}
 \fancyhead{} % clear all header fields
@@ -51,12 +64,10 @@
  \begin{tabular}{rl}
     \begin{picture}(25,15)(0,0)
     \put(0,-8){\includegraphics[width=8mm, height=8mm]{Images/bachkhoa_logo.png}}
-    %\put(0,-8){\epsfig{width=10mm,figure=hcmut.eps}}
    \end{picture}&
-	%\includegraphics[width=8mm, height=8mm]{hcmut.png} & %
 	\begin{tabular}{l}
-		\textbf{\bf \ttfamily Trường Đại Học Bách khoa, TP Hồ Chí Minh}\\
-		\textbf{\bf \ttfamily Khoa Khoa học và Kỹ thuật Máy tính}
+		\textbf{Trường Đại Học Bách khoa, TP Hồ Chí Minh}\\
+		\textbf{Khoa Khoa học và Kỹ thuật Máy tính}
 	\end{tabular} 	
  \end{tabular}
 }
@@ -66,8 +77,8 @@
 		\tiny \bf 
 	\end{tabular}  }
 \fancyfoot{} % clear all footer fields
-\fancyfoot[L]{\scriptsize \ttfamily Báo cáo đồ án chuyên ngành}
-\fancyfoot[R]{\scriptsize \ttfamily Trang {\thepage}/\pageref{LastPage}}
+\fancyfoot[L]{\scriptsize Báo cáo đồ án tốt nghiệp}
+\fancyfoot[R]{\scriptsize Trang {\thepage}/\pageref{LastPage}}
 \renewcommand{\headrulewidth}{0.3pt}
 \renewcommand{\footrulewidth}{0.3pt}
 

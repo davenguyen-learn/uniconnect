@@ -141,7 +141,7 @@ export function mapActivityToDetailViewModel(params: {
     privacy: activity.privacy || 'public',
     startFormatted,
     endFormatted,
-    locationName: activity.location_name || 'Khuôn viên trường',
+    locationName: activity.meeting_location || activity.location_name || 'Khuôn viên trường',
     latitude: activity.latitude,
     longitude: activity.longitude,
     currentParticipants,

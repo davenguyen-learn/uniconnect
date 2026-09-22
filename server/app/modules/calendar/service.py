@@ -287,7 +287,8 @@ async def get_user_calendar_events(
                 event_type="activity_joined",
                 activity_id=act.id,
                 category=act.category,
-                location_name=act.location_name,
+                meeting_location=getattr(act, 'meeting_location', None) or act.location_name,
+                location_name=getattr(act, 'meeting_location', None) or act.location_name,
                 is_recurring=False,
                 color_tag="joined",
             )
@@ -305,7 +306,8 @@ async def get_user_calendar_events(
                 event_type="activity_hosted",
                 activity_id=act.id,
                 category=act.category,
-                location_name=act.location_name,
+                meeting_location=getattr(act, 'meeting_location', None) or act.location_name,
+                location_name=getattr(act, 'meeting_location', None) or act.location_name,
                 is_recurring=False,
                 color_tag="hosted",
             )

@@ -1,0 +1,31 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName "Arial"
+skinparam defaultFontSize 11
+skinparam roundCorner 6
+skinparam shadowing false
+
+skinparam rectangle {
+    BorderThickness 1.2
+    FontSize 11
+}
+
+rectangle "==TRÌNH DUYỆT NGƯỜI DÙNG (RESPONSIVE WEB CLIENT)==\n--\n* **Công nghệ:** React 19 SPA, TypeScript, Vite, Tailwind CSS\n* **Năng lực:** Bản đồ Leaflet, Định vị HTML5 Geolocation, Quét mã QR, Giao diện Responsive" as L1 #E8F0FE
+
+rectangle "==CỔNG TIẾP NHẬN (INGRESS / REVERSE PROXY)==\n--\n* **Nginx 1.27-alpine Container (Cổng HTTP :80)**\n* Phục vụ tệp tĩnh SPA (Static Asset Serving)\n* Reverse Proxy điều hướng /api/* sang Backend Uvicorn:8000" as L2 #FFF3E0
+
+rectangle "==DỊCH VỤ NGOẠI VI: BẢN ĐỒ==\n--\n* **OpenStreetMap Tile Server**\n* Cung cấp mảnh bản đồ nền qua HTTPS trực tiếp tới Trình duyệt" as L2_OSM #FFF9C4
+
+rectangle "==TẦNG DỊCH VỤ ỨNG DỤNG: FASTAPI MODULAR MONOLITH==\n--\n**[1] API Routers:** Tiếp nhận HTTP, thẩm định Pydantic Schema, xác thực phiên JWT\n   ↓\n**[2] Application Services / Business Logic:** Xử lý nghiệp vụ theo Domain\n     (Activity & Spatial • Attendance • Calendar • Groups • Cert • AI Agent • Admin)\n     *AI Agent điều phối ReAct loop, gửi prompt và thực thi các local tools*\n   ↓\n**[3] Repositories / Data Access:** Quản lý truy xuất dữ liệu qua SQLAlchemy AsyncSession / Engine" as L3 #F3E5F5
+
+rectangle "==KHO LƯU TRỮ DỮ LIỆU THỐNG NHẤT==\n--\n* **PostgreSQL 16 Container**\n* Dữ liệu Quan hệ: User, Activity, Group, Attendance, Trophy\n* Mở rộng Không gian (PostGIS): Tọa độ Point, truy vấn địa lý\n* Mở rộng Vector (pgvector): Lưu trữ và tìm kiếm vector nhúng ngữ nghĩa" as L4_DB #E8F5E9
+
+rectangle "==DỊCH VỤ NGOẠI VI: AI==\n--\n* **Google GenAI (Gemini API)**\n* Dịch vụ mô hình ngôn ngữ lớn (LLM Inference) và sinh vector nhúng (Embedding)" as L4_Gemini #FFF9C4
+
+L1 -down-> L2 : "HTTP :80 (SPA & /api/*)"
+L1 -right-> L2_OSM : "HTTPS Tiles"
+L2 -down-> L3 : "HTTP :8000 (Mạng Docker nội bộ)"
+L3 -down-> L4_DB : "SQLAlchemy Async / asyncpg (TCP :5432)"
+L3 -right-> L4_Gemini : "HTTPS API"
+
+@enduml

@@ -1028,26 +1028,13 @@ async def seed():
         print(f"💬 Creating {NUM_COMMENTS} comments + {NUM_REPLIES} replies...")
         comment_objs = []
 
-        # Comments on activities
-        act_comment_count = int(NUM_COMMENTS * 0.7)
-        for _ in range(act_comment_count):
+        # Comments on activities (100% activities now that documents are removed)
+        for _ in range(NUM_COMMENTS):
             act = random.choice(activities)
             comment = Comment(
-                target_type="activity", target_id=act.id,
+                activity_id=act.id,
                 user_id=random.choice(users).id,
                 content=random.choice(ACTIVITY_COMMENTS),
-            )
-            db.add(comment)
-            comment_objs.append(comment)
-
-        # Comments on documents
-        doc_comment_count = NUM_COMMENTS - act_comment_count
-        for _ in range(doc_comment_count):
-            doc = random.choice(docs)
-            comment = Comment(
-                target_type="document", target_id=doc.id,
-                user_id=random.choice(users).id,
-                content=random.choice(DOCUMENT_COMMENTS),
             )
             db.add(comment)
             comment_objs.append(comment)
@@ -1061,7 +1048,7 @@ async def seed():
         for _ in range(NUM_REPLIES):
             parent = random.choice(comment_objs)
             reply = Comment(
-                target_type=parent.target_type, target_id=parent.target_id,
+                activity_id=parent.activity_id,
                 user_id=random.choice(users).id,
                 parent_id=parent.id,
                 content=random.choice(REPLY_POOL),
@@ -1079,34 +1066,14 @@ async def seed():
         like_pairs = set()
         like_count = 0
 
-        # Likes on activities (~50%)
-        for _ in range(int(NUM_LIKES * 0.5)):
+        # Likes on activities
+        for _ in range(NUM_LIKES):
             act = random.choice(activities)
             liker = random.choice(users)
-            pair = ("activity", act.id, liker.id)
+            pair = (act.id, liker.id)
             if pair not in like_pairs:
                 like_pairs.add(pair)
-                db.add(ContentLike(target_type="activity", target_id=act.id, user_id=liker.id))
-                like_count += 1
-
-        # Likes on documents (~30%)
-        for _ in range(int(NUM_LIKES * 0.3)):
-            doc = random.choice(docs)
-            liker = random.choice(users)
-            pair = ("document", doc.id, liker.id)
-            if pair not in like_pairs:
-                like_pairs.add(pair)
-                db.add(ContentLike(target_type="document", target_id=doc.id, user_id=liker.id))
-                like_count += 1
-
-        # Likes on comments (~20%)
-        for _ in range(int(NUM_LIKES * 0.2)):
-            comment = random.choice(comment_objs)
-            liker = random.choice(users)
-            pair = ("comment", comment.id, liker.id)
-            if pair not in like_pairs:
-                like_pairs.add(pair)
-                db.add(ContentLike(target_type="comment", target_id=comment.id, user_id=liker.id))
+                db.add(ContentLike(activity_id=act.id, user_id=liker.id))
                 like_count += 1
 
         await db.commit()
@@ -1122,10 +1089,12 @@ async def seed():
             n_type, target_type_str, msg_template = random.choice(NOTIF_TEMPLATES)
             recipient = random.choice(users)
             actor = random.choice([u for u in users if u.id != recipient.id])
+            activity_ref_id = None
 
             if target_type_str == "activity":
                 target = random.choice(activities)
                 target_name = target.title
+                activity_ref_id = target.id
             elif target_type_str == "document":
                 target = random.choice(docs)
                 target_name = target.title
@@ -1143,8 +1112,8 @@ async def seed():
 
             db.add(Notification(
                 user_id=recipient.id, actor_id=actor.id,
-                type=n_type, target_type=target_type_str,
-                target_id=target.id, message=message,
+                activity_id=activity_ref_id,
+                type=n_type, message=message,
                 is_read=random.random() < 0.35,
             ))
             notif_count += 1

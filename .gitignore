@@ -53,6 +53,9 @@ alembic/versions/__pycache__/
 # ── Misc ──
 *.log
 *.bak
+*.zip
+*.pdf
 
 # ── Local files ──
 local/
+bao-cao/scratch/reproducibility_test/

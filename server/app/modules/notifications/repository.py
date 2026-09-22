@@ -13,18 +13,21 @@ async def create_notification(
     user_id: uuid.UUID,
     actor_id: uuid.UUID | None,
     type: str,
-    target_type: str,
-    target_id: uuid.UUID,
     message: str,
+    activity_id: uuid.UUID | None = None,
+    target_type: str | None = None,
+    target_id: uuid.UUID | None = None,
+    action_url: str | None = None,
 ) -> Notification:
     """Create a new notification."""
+    act_id = activity_id or target_id
     notification = Notification(
         user_id=user_id,
         actor_id=actor_id,
+        activity_id=act_id,
         type=type,
-        target_type=target_type,
-        target_id=target_id,
         message=message,
+        action_url=action_url,
     )
     db.add(notification)
     await db.commit()

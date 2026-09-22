@@ -30,6 +30,7 @@ export interface CertificateResponse {
   participant_university?: string | null;
   activity_title: string;
   activity_date: string;
+  meeting_location?: string | null;
   location_name?: string | null;
   host_name: string;
   host_university?: string | null;

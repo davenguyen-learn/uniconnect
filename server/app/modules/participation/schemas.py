@@ -67,6 +67,7 @@ class CertificateResponse(BaseModel):
     participant_university: str | None = None
     activity_title: str
     activity_date: str
+    meeting_location: str | None = None
     location_name: str | None = None
     host_name: str
     host_university: str | None = None

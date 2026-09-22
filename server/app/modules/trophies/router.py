@@ -27,9 +27,7 @@ async def create_trophy(
     trophy = Trophy(
         name=data.name,
         description=data.description,
-        points=data.points,
-        icon=data.icon or "🏆",
-        creator_id=user.id
+        activity_id=data.activity_id,
     )
     db.add(trophy)
     await db.commit()
@@ -65,15 +63,14 @@ async def award_trophy(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    # Only creator of the trophy can award it
     trophy = await db.scalar(select(Trophy).where(Trophy.id == trophy_id))
-    if not trophy or str(trophy.creator_id) != current_user["sub"]:
-        raise HTTPException(status_code=403, detail="Not authorized to award this trophy.")
+    if not trophy:
+        raise HTTPException(status_code=404, detail="Trophy not found.")
         
     user_trophy = UserTrophy(
         user_id=data.user_id,
         trophy_id=trophy_id,
-        activity_id=data.activity_id
+        activity_id=data.activity_id or trophy.activity_id
     )
     db.add(user_trophy)
     await db.commit()

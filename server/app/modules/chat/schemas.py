@@ -13,7 +13,8 @@ class ActivitySearchToolItem(BaseModel):
     title: str
     start_time: str
     end_time: str
-    location_name: str
+    meeting_location: str = "Khuôn viên trường"
+    location_name: str = "Khuôn viên trường"
     social_work_days: float | None = None
     distance_meters: float | None = None
     distance_status: str = "unknown"  # "nearby", "moderate", "far", "unknown"
@@ -58,7 +59,8 @@ class ChatEventCardItem(BaseModel):
     title: str
     start_time: str
     end_time: str
-    location_name: str
+    meeting_location: str = "Khuôn viên trường"
+    location_name: str = "Khuôn viên trường"
     social_work_days: float | None = None
     distance_meters: float | None = None
     distance_status: str = "unknown"

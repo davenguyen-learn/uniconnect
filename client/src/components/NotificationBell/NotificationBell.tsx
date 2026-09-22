@@ -57,10 +57,11 @@ export default function NotificationBell() {
     setIsOpen(false);
 
     // Navigate to target
-    if (notification.target_type === 'document') {
-      navigate(`/documents`); // Ideally we'd navigate to the exact document if there was a detail page
-    } else if (notification.target_type === 'activity') {
-      navigate(`/map`); // Simple fallback
+    const targetActivityId = notification.activity_id || notification.target_id;
+    if (targetActivityId) {
+      navigate(`/activities/${targetActivityId}`);
+    } else {
+      navigate(`/map`);
     }
   };
 

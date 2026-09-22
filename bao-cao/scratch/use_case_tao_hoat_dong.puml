@@ -1,0 +1,17 @@
+@startuml
+left to right direction
+skinparam backgroundColor #FFFFFF
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam arrowColor #333333
+
+actor "Người dùng" as User
+
+rectangle "Hệ thống UniConnect" {
+  usecase "Tạo hoạt động trên bản đồ" as UC
+}
+
+User -- UC
+@enduml

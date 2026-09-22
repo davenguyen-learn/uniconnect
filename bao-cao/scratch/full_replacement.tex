@@ -1,0 +1,216 @@
+\subsubsection{Danh sách thực thể và thuộc tính (22 Domain Entities)}
+
+Nhằm bảo đảm tính chính xác kỹ thuật tuyệt đối và loại bỏ hoàn toàn sai lệch tài liệu (documentation drift), danh mục 22 thực thể nghiệp vụ (Domain Entities) dưới đây được trích xuất và ánh xạ trực tiếp từ các lớp mô hình ORM (SQLAlchemy Models) thuộc mã nguồn hệ thống UniConnect:
+
+\begin{enumerate}
+    \item \textbf{Nhóm Người dùng và Đồ thị xã hội (Users \& Social Graph):}
+    \begin{itemize}
+        \item \texttt{users} (Model: \texttt{User}, 13 cột): Thực thể định danh toàn bộ người dùng trong hệ sinh thái. Quản lý khóa chính \texttt{id} (UUID); thông tin đăng nhập duy nhất gồm \texttt{email} (VARCHAR(255), UNIQUE, Index) và \texttt{username} (VARCHAR(50), UNIQUE, Index); mật khẩu băm bảo mật \texttt{password\_hash} (VARCHAR(255)); thông tin cá nhân gồm \texttt{full\_name} (VARCHAR(100)), \texttt{bio} (TEXT), \texttt{university} (VARCHAR(150)); vai trò phân quyền \texttt{role} (Enum: \texttt{student}, \texttt{moderator}, \texttt{admin}, \texttt{edu\_org}, mặc định: \texttt{student}); trạng thái kiểm soát tài khoản gồm \texttt{is\_active} (BOOLEAN, mặc định: True), \texttt{is\_verified} (BOOLEAN, mặc định: False); sở thích ngoại khóa \texttt{interests} (JSONB) phục vụ cá nhân hóa gợi ý; cùng dấu thời gian \texttt{created\_at} và \texttt{updated\_at} (TIMESTAMP WITH TIME ZONE).
+        \item \texttt{user\_follows} (Model: \texttt{UserFollow}, 4 cột): Lưu vết quan hệ theo dõi mạng xã hội tự tham chiếu (Self-referential) giữa các sinh viên. Sử dụng khóa chính phức hợp gồm hai khóa ngoại: \texttt{follower\_id} (UUID, PK, FK $\rightarrow$ \texttt{users.id}, ON DELETE CASCADE) và \texttt{following\_id} (UUID, PK, FK $\rightarrow$ \texttt{users.id}, ON DELETE CASCADE); đi kèm dấu thời gian \texttt{created\_at} và \texttt{updated\_at}.
+    \end{itemize}
+
+    \item \textbf{Nhóm Hoạt động sự kiện (Activities Module):}
+    \begin{itemize}
+        \item \texttt{activities} (Model: \texttt{Activity}, 25 cột): Thực thể trung tâm quản lý các sự kiện và phong trào ngoại khóa. Bao gồm khóa chính \texttt{id} (UUID); khóa ngoại người chủ trì \texttt{host\_id} (UUID, FK $\rightarrow$ \texttt{users.id}, ON DELETE CASCADE); nhóm tổ chức \texttt{group\_id} (UUID, Nullable, FK $\rightarrow$ \texttt{groups.id}, ON DELETE SET NULL); biểu mẫu khảo sát đính kèm \texttt{custom\_form\_id} (UUID, Nullable, FK $\rightarrow$ \texttt{custom\_forms.id}, ON DELETE SET NULL); tiêu đề \texttt{title} (VARCHAR(150), Index); nội dung mô tả công khai \texttt{description} (TEXT) và mô tả nội bộ chỉ thành viên tham gia xem được \texttt{private\_description} (TEXT); phân loại chủ đề \texttt{category} (VARCHAR(50), Index); tọa độ ghim bản đồ số \texttt{marker\_location} (PostGIS \texttt{geography(POINT, 4326)}); địa điểm tập trung \texttt{meeting\_location} (VARCHAR(200)); vector nhúng ngữ nghĩa \texttt{embedding} (\texttt{VECTOR(768)}) phục vụ tìm kiếm ngữ nghĩa và Trợ lý AI RAG; khung thời gian diễn ra gồm \texttt{start\_time} và \texttt{end\_time} (TIMESTAMP WITH TIME ZONE, Index); quy mô kiểm soát gồm \texttt{max\_participants} (INTEGER) và \texttt{current\_participants} (INTEGER, mặc định: 1, ràng buộc kiểm tra không âm \texttt{ck\_nonneg\_participants}); chế độ hiển thị \texttt{privacy} (Enum: \texttt{public}, \texttt{private}); cờ yêu cầu duyệt đơn \texttt{require\_approval} (BOOLEAN, mặc định: True); số ngày CTXH quy đổi \texttt{social\_work\_days} (FLOAT); cấu hình điểm danh chống gian lận gồm phương thức \texttt{attendance\_mode} (VARCHAR(20), mặc định: \texttt{manual}), mã bảo mật điểm danh \texttt{check\_in\_code} (VARCHAR(64), UNIQUE, Nullable) và bán kính định vị radar \texttt{check\_in\_radius} (INTEGER, mặc định: 300 mét); cờ xóa mềm \texttt{is\_deleted} (BOOLEAN) cùng \texttt{deleted\_at}; và dấu thời gian \texttt{created\_at}, \texttt{updated\_at}.
+    \end{itemize}
+
+    \item \textbf{Nhóm Nhóm sinh viên và Đồng tổ chức (Groups \& Co-hosting):}
+    \begin{itemize}
+        \item \texttt{groups} (Model: \texttt{Group}, 14 cột): Quản lý các tổ chức, đội nhóm sinh viên. Bao gồm khóa chính \texttt{id} (UUID); chủ sở hữu sáng lập \texttt{owner\_id} (UUID, FK $\rightarrow$ \texttt{users.id}, ON DELETE CASCADE); tên nhóm định danh duy nhất \texttt{name} (VARCHAR(100), UNIQUE, Index); mô tả ngắn \texttt{description} (TEXT), mô tả công khai \texttt{public\_description} (TEXT) và nội quy nội bộ \texttt{private\_description} (TEXT); cờ phân quyền thành viên tổ chức sự kiện \texttt{allow\_member\_activities} (BOOLEAN, mặc định: True); cờ yêu cầu xét duyệt thành viên \texttt{require\_approval} (BOOLEAN, mặc định: True); quyền riêng tư \texttt{privacy} (Enum: \texttt{public}, \texttt{private}); biểu mẫu đăng ký gia nhập tùy biến \texttt{custom\_form\_id} (UUID, Nullable, FK $\rightarrow$ \texttt{custom\_forms.id}, ON DELETE SET NULL); dấu thời gian \texttt{created\_at}, \texttt{updated\_at}; cờ xóa mềm \texttt{is\_deleted} và \texttt{deleted\_at}.
+        \item \texttt{group\_members} (Model: \texttt{GroupMember}, 6 cột): Quản lý danh sách thành viên và phân quyền nội bộ nhóm. Gồm khóa chính \texttt{id} (UUID); khóa ngoại \texttt{group\_id} (UUID, FK $\rightarrow$ \texttt{groups.id}, ON DELETE CASCADE); khóa ngoại thành viên \texttt{user\_id} (UUID, FK $\rightarrow$ \texttt{users.id}, ON DELETE CASCADE); vai trò \texttt{role} (Enum: \texttt{admin}, \texttt{member}, mặc định: \texttt{member}); dấu thời gian \texttt{created\_at}, \texttt{updated\_at}. Ràng buộc toàn vẹn duy nhất: \texttt{UNIQUE(group\_id, user\_id)}.
+        \item \texttt{group\_join\_requests} (Model: \texttt{GroupJoinRequest}, 7 cột): Đơn đăng ký gia nhập nhóm của sinh viên. Gồm khóa chính \texttt{id} (UUID); khóa ngoại \texttt{group\_id} và \texttt{user\_id}; trạng thái xét duyệt \texttt{status} (VARCHAR(20), mặc định: \texttt{pending}); dữ liệu phản hồi câu hỏi biểu mẫu \texttt{form\_responses} (JSONB); cùng dấu thời gian \texttt{created\_at}, \texttt{updated\_at}. Ràng buộc: \texttt{UNIQUE(group\_id, user\_id)}.
+        \item \texttt{activity\_cohosts} (Model: \texttt{ActivityCoHost}, 5 cột): Quan hệ ủy quyền đồng tổ chức chính thức giữa sự kiện và nhóm đối tác. Gồm khóa chính \texttt{id} (UUID); khóa ngoại liên kết sự kiện \texttt{activity\_id} (UUID, FK $\rightarrow$ \texttt{activities.id}, ON DELETE CASCADE); khóa ngoại nhóm phối hợp \texttt{group\_id} (UUID, FK $\rightarrow$ \texttt{groups.id}, ON DELETE CASCADE); cùng \texttt{created\_at}, \texttt{updated\_at}. Ràng buộc: \texttt{UNIQUE(activity\_id, group\_id)}.
+        \item \texttt{activity\_cohost\_invitations} (Model: \texttt{ActivityCoHostInvitation}, 8 cột): Quản lý tiến trình mời đồng tổ chức. Gồm khóa chính \texttt{id} (UUID); sự kiện mời phối hợp \texttt{activity\_id}; nhóm chủ trì gửi lời mời \texttt{host\_group\_id} (UUID, FK $\rightarrow$ \texttt{groups.id}, ON DELETE CASCADE); nhóm đối tác nhận lời mời \texttt{invited\_group\_id} (UUID, FK $\rightarrow$ \texttt{groups.id}, ON DELETE CASCADE); trạng thái phản hồi \texttt{status} (VARCHAR(20), gồm: \texttt{pending}, \texttt{accepted}, \texttt{rejected}); lời nhắn kèm \texttt{message} (TEXT); cùng \texttt{created\_at}, \texttt{updated\_at}.
+        \item \texttt{organization\_verification\_requests} (Model: \texttt{OrganizationVerificationRequest}, 12 cột): Hồ sơ đăng ký cấp huy hiệu định danh uy tín chính thức cho nhóm sinh viên. Gồm khóa chính \texttt{id} (UUID); người đại diện nộp đơn \texttt{user\_id} (UUID, FK $\rightarrow$ \texttt{users.id}, ON DELETE CASCADE); tên tổ chức \texttt{organization\_name} (VARCHAR(150)); khoa viện bảo trợ \texttt{faculty} (VARCHAR(150)); đường dẫn tài liệu minh chứng pháp lý \texttt{document\_url} (VARCHAR(500)); bản giải trình hoạt động \texttt{description} (TEXT); trạng thái thẩm định \texttt{status} (Enum: \texttt{pending}, \texttt{approved}, \texttt{rejected}); ghi chú thẩm định của Admin \texttt{admin\_note} (TEXT); quản trị viên thụ lý \texttt{reviewed\_by} (UUID, Nullable, FK $\rightarrow$ \texttt{users.id}, ON DELETE SET NULL) và thời điểm thụ lý \texttt{reviewed\_at}; cùng \texttt{created\_at}, \texttt{updated\_at}.
+    \end{itemize}
+
+    \item \textbf{Nhóm Đăng ký tham gia và Biểu mẫu tùy biến (Participation \& Forms):}
+    \begin{itemize}
+        \item \texttt{join\_requests} (Model: \texttt{JoinRequest}, 9 cột): Quản lý toàn bộ tiến trình đăng ký và kết quả điểm danh của sinh viên tại sự kiện. Gồm khóa chính \texttt{id} (UUID); sự kiện tham gia \texttt{activity\_id} (UUID, FK $\rightarrow$ \texttt{activities.id}, ON DELETE CASCADE); sinh viên đăng ký \texttt{user\_id} (UUID, FK $\rightarrow$ \texttt{users.id}, ON DELETE CASCADE); trạng thái đơn \texttt{status} (Enum: \texttt{pending}, \texttt{approved}, \texttt{declined}, \texttt{cancelled}); lời nhắn từ người nộp \texttt{message} (TEXT); thời điểm ban tổ chức phản hồi \texttt{responded\_at}; câu trả lời biểu mẫu khảo sát sự kiện \texttt{form\_responses} (JSONB); cờ chứng nhận điểm danh hợp lệ \texttt{attendance\_confirmed} (BOOLEAN, mặc định: False); và thời điểm đăng ký \texttt{created\_at}. Ràng buộc: \texttt{UNIQUE(activity\_id, user\_id)}.
+        \item \texttt{custom\_forms} (Model: \texttt{CustomForm}, 5 cột): Biểu mẫu thu thập dữ liệu tùy biến tái sử dụng linh hoạt cho cả sự kiện và nhóm. Gồm khóa chính \texttt{id} (UUID); tiêu đề biểu mẫu \texttt{title} (VARCHAR(200)); hướng dẫn điền \texttt{description} (TEXT); và dấu thời gian \texttt{created\_at}, \texttt{updated\_at}.
+        \item \texttt{form\_fields} (Model: \texttt{FormField}, 7 cột): Chi tiết từng câu hỏi trong biểu mẫu tùy biến. Gồm khóa chính \texttt{id} (UUID); biểu mẫu trực thuộc \texttt{form\_id} (UUID, FK $\rightarrow$ \texttt{custom\_forms.id}, ON DELETE CASCADE); tiêu đề câu hỏi \texttt{label} (VARCHAR(200)); kiểu dữ liệu nhập \texttt{field\_type} (Enum: \texttt{text}, \texttt{textarea}, \texttt{checkbox}, \texttt{number}); cờ bắt buộc \texttt{is\_required} (BOOLEAN, mặc định: True); thứ tự sắp xếp câu hỏi \texttt{order} (INTEGER); và thuộc tính bổ sung \texttt{meta\_data} (JSONB).
+    \end{itemize}
+
+    \item \textbf{Nhóm Tương tác cộng đồng (Interactions Module):}
+    \begin{itemize}
+        \item \texttt{comments} (Model: \texttt{Comment}, 9 cột): Diễn đàn thảo luận và trao đổi sinh viên dưới từng hoạt động. Gồm khóa chính \texttt{id} (UUID); hoạt động thảo luận \texttt{activity\_id} (UUID, FK $\rightarrow$ \texttt{activities.id}, ON DELETE CASCADE); người bình luận \texttt{user\_id} (UUID, FK $\rightarrow$ \texttt{users.id}, ON DELETE CASCADE); bình luận cha cấp trên \texttt{parent\_id} (UUID, Nullable, FK $\rightarrow$ \texttt{comments.id}, ON DELETE CASCADE) cho phép phân cấp phản hồi đa tầng lồng nhau; nội dung thảo luận \texttt{content} (TEXT); dấu thời gian \texttt{created\_at}, \texttt{updated\_at}; cùng cờ xóa mềm \texttt{is\_deleted} và \texttt{deleted\_at}.
+        \item \texttt{content\_likes} (Model: \texttt{ContentLike}, 4 cột): Biểu thị cảm xúc quan tâm và yêu thích sự kiện ngoại khóa của người dùng. Gồm khóa chính \texttt{id} (UUID); liên kết sự kiện \texttt{activity\_id} (UUID, FK $\rightarrow$ \texttt{activities.id}, ON DELETE CASCADE); liên kết người tương tác \texttt{user\_id} (UUID, FK $\rightarrow$ \texttt{users.id}, ON DELETE CASCADE); và thời điểm tương tác \texttt{created\_at}. Ràng buộc: \texttt{UNIQUE(activity\_id, user\_id)}.
+    \end{itemize}
+
+    \item \textbf{Nhóm Lịch cá nhân thông minh (Smart Calendar):}
+    \begin{itemize}
+        \item \texttt{user\_busy\_slots} (Model: \texttt{UserBusySlot}, 13 cột): Cấu hình khung thời gian bận định kỳ của sinh viên (lịch học cố định, ca làm thêm) phục vụ thuật toán phát hiện xung đột lịch. Gồm khóa chính \texttt{id} (UUID); chủ sở hữu \texttt{user\_id} (UUID, FK $\rightarrow$ \texttt{users.id}, ON DELETE CASCADE); tên lịch bận \texttt{title} (VARCHAR(150)); kiểu lặp \texttt{recurrence} (VARCHAR(20), gồm: \texttt{once}, \texttt{weekly}); khung thời gian tuyệt đối khi lặp một lần gồm \texttt{start\_datetime} và \texttt{end\_datetime}; khung thời gian định kỳ hàng tuần gồm thứ trong tuần \texttt{day\_of\_week} (INTEGER: $0 \rightarrow 6$), giờ bắt đầu \texttt{start\_time\_of\_day} và kết thúc \texttt{end\_time\_of\_day} (TIME); khoảng thời gian áp dụng trong học kỳ gồm \texttt{valid\_from} và \texttt{valid\_until} (DATE); cùng dấu thời gian \texttt{created\_at}, \texttt{updated\_at}.
+        \item \texttt{busy\_slot\_exceptions} (Model: \texttt{BusySlotException}, 3 cột): Các ngày ngoại lệ hủy bỏ cảnh báo bận định kỳ (ngày lễ, buổi học được dời lịch). Gồm khóa chính \texttt{id} (UUID); khung giờ bận liên kết \texttt{busy\_slot\_id} (UUID, FK $\rightarrow$ \texttt{user\_busy\_slots.id}, ON DELETE CASCADE); và ngày ngoại lệ cụ thể \texttt{skip\_date} (DATE).
+        \item \texttt{user\_vacation\_periods} (Model: \texttt{UserVacationPeriod}, 7 cột): Quản lý các kỳ nghỉ dài ngày (nghỉ hè, nghỉ Tết) của sinh viên. Gồm khóa chính \texttt{id} (UUID); người dùng \texttt{user\_id} (UUID, FK $\rightarrow$ \texttt{users.id}, ON DELETE CASCADE); tiêu đề kỳ nghỉ \texttt{title} (VARCHAR(100)); ngày bắt đầu \texttt{start\_date} và kết thúc \texttt{end\_date} (DATE); cùng \texttt{created\_at}, \texttt{updated\_at}.
+    \end{itemize}
+
+    \item \textbf{Nhóm Trò chơi hóa và Thành tích (Gamification \& Trophies):}
+    \begin{itemize}
+        \item \texttt{trophies} (Model: \texttt{Trophy}, 6 cột): Quản lý danh hiệu và huy hiệu vinh danh gắn với hoạt động. Gồm khóa chính \texttt{id} (UUID); hoạt động thiết lập trao thưởng \texttt{activity\_id} (UUID, Nullable, FK $\rightarrow$ \texttt{activities.id}, ON DELETE CASCADE); tên danh hiệu duy nhất \texttt{name} (VARCHAR(100), UNIQUE); mô tả ý nghĩa \texttt{description} (TEXT); cùng dấu thời gian \texttt{created\_at}, \texttt{updated\_at}.
+        \item \texttt{user\_trophies} (Model: \texttt{UserTrophy}, 6 cột): Bảng ghi nhận chứng nhận danh hiệu đã trao cho sinh viên sau khi hoàn thành điểm danh hợp lệ. Gồm khóa chính \texttt{id} (UUID); sinh viên thụ hưởng \texttt{user\_id} (UUID, FK $\rightarrow$ \texttt{users.id}, ON DELETE CASCADE); danh hiệu tương ứng \texttt{trophy\_id} (UUID, FK $\rightarrow$ \texttt{trophies.id}, ON DELETE CASCADE); sự kiện đạt được \texttt{activity\_id} (UUID, Nullable, FK $\rightarrow$ \texttt{activities.id}, ON DELETE CASCADE); cùng dấu thời gian \texttt{created\_at}, \texttt{updated\_at}. Ràng buộc: \texttt{UNIQUE(user\_id, trophy\_id)}.
+    \end{itemize}
+
+    \item \textbf{Nhóm Quản trị, Thông báo và Giám sát (Administration \& Notifications):}
+    \begin{itemize}
+        \item \texttt{notifications} (Model: \texttt{Notification}, 10 cột): Hệ thống thông báo định danh và đẩy tin theo thời gian thực. Gồm khóa chính \texttt{id} (UUID); người nhận thông báo \texttt{user\_id} (UUID, FK $\rightarrow$ \texttt{users.id}, ON DELETE CASCADE); tác nhân kích hoạt \texttt{actor\_id} (UUID, Nullable, FK $\rightarrow$ \texttt{users.id}, ON DELETE SET NULL); sự kiện liên quan \texttt{activity\_id} (UUID, Nullable, FK $\rightarrow$ \texttt{activities.id}, ON DELETE SET NULL); phân loại sự kiện \texttt{type} (VARCHAR(50)); nội dung thông báo \texttt{message} (TEXT); đường dẫn điều hướng động khi nhấp \texttt{action\_url} (VARCHAR(255)); cờ kiểm soát đã đọc \texttt{is\_read} (BOOLEAN, mặc định: False); cùng dấu thời gian \texttt{created\_at}, \texttt{updated\_at}.
+        \item \texttt{reports} (Model: \texttt{Report}, 11 cột): Quản lý các báo cáo tố cáo vi phạm nội dung và hành vi từ người dùng. Gồm khóa chính \texttt{id} (UUID); sinh viên gửi báo cáo \texttt{reporter\_id} (UUID, FK $\rightarrow$ \texttt{users.id}, ON DELETE CASCADE); loại đối tượng bị báo cáo \texttt{target\_type} (VARCHAR(50), gồm: \texttt{activity}, \texttt{user}, \texttt{comment}, \texttt{group}); định danh mục tiêu bị tố cáo \texttt{target\_id} (UUID); lý do tố cáo \texttt{reason} (VARCHAR(100)); nội dung giải trình chi tiết \texttt{description} (TEXT); trạng thái xử lý \texttt{status} (VARCHAR(50), gồm: \texttt{pending}, \texttt{resolved}, \texttt{dismissed}); ghi chú kết luận của Admin \texttt{admin\_note} (TEXT); quản trị viên trực tiếp thụ lý \texttt{resolved\_by} (UUID, Nullable, FK $\rightarrow$ \texttt{users.id}, ON DELETE SET NULL); cùng dấu thời gian \texttt{created\_at}, \texttt{updated\_at}.
+        \item \texttt{admin\_audit\_logs} (Model: \texttt{AdminAuditLog}, 7 cột): Nhật ký kiểm toán bảo mật lưu vết mọi hành vi can thiệp dữ liệu nhạy cảm của ban quản trị. Gồm khóa chính \texttt{id} (UUID); quản trị viên thực hiện thao tác \texttt{actor\_id} (UUID, Nullable, FK $\rightarrow$ \texttt{users.id}, ON DELETE SET NULL); tên hành vi can thiệp \texttt{action} (VARCHAR(100), gồm: \texttt{verify\_organization}, \texttt{reject\_organization}, \texttt{deactivate\_user}, \texttt{activate\_user}, \texttt{change\_user\_role}, \texttt{resolve\_report}, \texttt{dismiss\_report}, \texttt{hide\_activity}); phân loại thực thể chịu tác động \texttt{target\_type} (VARCHAR(50), gồm: \texttt{user}, \texttt{activity}, \texttt{report}, \texttt{verification}); định danh đối tượng \texttt{target\_id} (UUID); dữ liệu ảnh chụp trạng thái trước và sau can thiệp \texttt{metadata\_json} (JSONB); cùng dấu thời gian ghi nhật ký bất biến \texttt{created\_at} (TIMESTAMP WITH TIME ZONE).
+    \end{itemize}
+\end{enumerate}
+
+\noindent\textit{Ghi chú về phân tách phạm vi:} Hai bảng còn lại trong CSDL PostgreSQL là \texttt{alembic\_version} (lưu vết mã băm phiên bản di chuyển lược đồ CSDL) và \texttt{spatial\_ref\_sys} (bảng danh mục hệ quy chiếu không gian EPSG:4326 của tiện ích mở rộng PostGIS) là các bảng vận hành hạ tầng của hệ quản trị, do đó hoàn toàn tách biệt khỏi 22 thực thể thuộc miền nghiệp vụ phần mềm (Domain ERD).
+
+\subsubsection{Mô tả các mối quan hệ thực thể}
+
+\setlist[itemize]{leftmargin=*, nosep, topsep=0pt}
+
+\begin{longtable}{|p{0.28\textwidth}|p{0.18\textwidth}|p{0.48\textwidth}|}
+    \caption{Bảng tổng hợp các mối quan hệ giữa các thực thể nghiệp vụ (Domain Relationships)} \label{tab:relationship_summary} \\
+    
+    \hline
+    \textbf{Thực thể tham gia} & \textbf{Quan hệ \& Lực lượng} & \textbf{Giải thích ý nghĩa \& Ràng buộc khóa ngoại (FK)} \\ \hline
+    \endfirsthead
+
+    \hline
+    \textbf{Thực thể tham gia} & \textbf{Quan hệ \& Lực lượng} & \textbf{Giải thích ý nghĩa \& Ràng buộc khóa ngoại (FK)} \\ \hline
+    \endhead
+
+    \hline
+    \endfoot
+
+    \hline
+    \endlastfoot
+
+    \texttt{users} -- \texttt{activities} & Host / Own \newline (1 -- N) & 
+    \begin{itemize}
+        \item Một người dùng có thể tạo và chủ trì nhiều hoạt động ngoại khóa.
+        \item Mỗi hoạt động bắt buộc có duy nhất một người chủ trì (\texttt{activities.host\_id} $\rightarrow$ \texttt{users.id}, ON DELETE CASCADE).
+    \end{itemize} \\ \hline
+
+    \texttt{groups} -- \texttt{activities} & Organize \newline (0..1 -- N) & 
+    \begin{itemize}
+        \item Một nhóm sinh viên có thể đứng tên chủ trì tổ chức nhiều sự kiện.
+        \item Hoạt động có thể do một nhóm đứng tên hoặc do cá nhân tạo (\texttt{activities.group\_id} $\rightarrow$ \texttt{groups.id}, Nullable, ON DELETE SET NULL).
+    \end{itemize} \\ \hline
+
+    \texttt{users} -- \texttt{user\_follows} & Follow \newline (1 -- N) & 
+    \begin{itemize}
+        \item Một sinh viên có thể theo dõi nhiều người khác hoặc có nhiều người theo dõi.
+        \item Khóa chính kép tự tham chiếu: \texttt{(follower\_id, following\_id)} trỏ về \texttt{users.id} (ON DELETE CASCADE).
+    \end{itemize} \\ \hline
+    
+    \texttt{users} -- \texttt{activities} \newline (qua \texttt{join\_requests}) & Participate \newline (N -- N) & 
+    \begin{itemize}
+        \item Sinh viên đăng ký tham gia nhiều hoạt động; hoạt động có nhiều sinh viên tham gia.
+        \item Thực thể trung gian \texttt{join\_requests} lưu trữ trạng thái duyệt đơn (\texttt{status}) và chứng nhận hoàn thành điểm danh (\texttt{attendance\_confirmed}). Ràng buộc: \texttt{UNIQUE(activity\_id, user\_id)}.
+    \end{itemize} \\ \hline
+
+    \texttt{activities} -- \texttt{groups} \newline (qua \texttt{activity\_cohosts}) & Co-host \newline (N -- N) & 
+    \begin{itemize}
+        \item Một hoạt động có thể liên kết đồng tổ chức với nhiều nhóm đối tác.
+        \item Bảng \texttt{activity\_cohosts} cấp quyền ủy nhiệm mở điểm danh cho ban quản trị nhóm đối tác. Ràng buộc: \texttt{UNIQUE(activity\_id, group\_id)}.
+    \end{itemize} \\ \hline
+
+    \texttt{activities} -- \texttt{groups} \newline (qua \texttt{activity\_cohost\_invitations}) & Co-host Invite \newline (N -- N) & 
+    \begin{itemize}
+        \item Nhóm chủ trì (\texttt{host\_group\_id}) gửi lời mời đồng tổ chức sự kiện tới nhóm đối tác (\texttt{invited\_group\_id}).
+        \item Lưu vết trạng thái phản hồi lời mời (\texttt{status}: pending, accepted, rejected).
+    \end{itemize} \\ \hline
+
+    \texttt{groups} -- \texttt{users} \newline (qua \texttt{group\_members}) & Member \newline (N -- N) & 
+    \begin{itemize}
+        \item Người dùng là thành viên của nhiều nhóm với vai trò xác định (\texttt{role}: admin, member). Quyền sở hữu nhóm do \texttt{groups.owner\_id} quản lý.
+        \item Bảng \texttt{group\_members} ràng buộc: \texttt{UNIQUE(group\_id, user\_id)}.
+    \end{itemize} \\ \hline
+
+    \texttt{groups} -- \texttt{users} \newline (qua \texttt{group\_join\_requests}) & Join Group \newline (N -- N) & 
+    \begin{itemize}
+        \item Đơn đăng ký gia nhập nhóm từ sinh viên kèm câu trả lời khảo sát (\texttt{form\_responses}), quản lý theo trạng thái \texttt{status} (pending, approved, rejected).
+        \item Ràng buộc: \texttt{UNIQUE(group\_id, user\_id)}.
+    \end{itemize} \\ \hline
+
+    \texttt{users} -- \texttt{organization\_verification\_requests} & Request Verification \newline (1 -- N) & 
+    \begin{itemize}
+        \item Sinh viên đại diện nhóm nộp hồ sơ minh chứng pháp lý xin cấp huy hiệu chính thức (\texttt{user\_id} $\rightarrow$ \texttt{users.id}).
+        \item Quản trị viên thẩm định và phê duyệt lưu tại \texttt{reviewed\_by} $\rightarrow$ \texttt{users.id} (Nullable).
+    \end{itemize} \\ \hline
+
+    \texttt{activities} -- \texttt{trophies} & Reward \newline (1 -- N) & 
+    \begin{itemize}
+        \item Mỗi hoạt động có thể thiết lập các danh hiệu vinh danh trao tặng cho sinh viên hoàn thành (\texttt{trophies.activity\_id} $\rightarrow$ \texttt{activities.id}, ON DELETE CASCADE).
+    \end{itemize} \\ \hline
+
+    \texttt{users} -- \texttt{trophies} \newline (qua \texttt{user\_trophies}) & Achieve / Earn \newline (N -- N) & 
+    \begin{itemize}
+        \item Người dùng tích lũy nhiều danh hiệu \texttt{trophies}; danh hiệu được trao cho nhiều sinh viên.
+        \item Bảng \texttt{user\_trophies} lưu mốc thời gian trao tặng và hoạt động đạt được (\texttt{activity\_id}), ràng buộc \texttt{UNIQUE(user\_id, trophy\_id)}.
+    \end{itemize} \\ \hline
+
+    \texttt{users} -- \texttt{user\_busy\_slots} & Busy Schedule \newline (1 -- N) & 
+    \begin{itemize}
+        \item Sinh viên cấu hình các khung giờ bận trong tuần (lịch học cố định, ca trực) phục vụ phát hiện xung đột thời gian (\texttt{user\_id} $\rightarrow$ \texttt{users.id}, ON DELETE CASCADE).
+    \end{itemize} \\ \hline
+
+    \texttt{user\_busy\_slots} -- \texttt{busy\_slot\_exceptions} & Has Exception \newline (1 -- N) & 
+    \begin{itemize}
+        \item Một khung giờ bận định kỳ có thể có các ngày ngoại lệ nghỉ lễ hoặc dời buổi học (\texttt{busy\_slot\_id} $\rightarrow$ \texttt{user\_busy\_slots.id}, ON DELETE CASCADE).
+    \end{itemize} \\ \hline
+
+    \texttt{users} -- \texttt{user\_vacation\_periods} & Vacation \newline (1 -- N) & 
+    \begin{itemize}
+        \item Sinh viên quản lý các kỳ nghỉ dài ngày (\texttt{start\_date <= end\_date}) để hệ thống tạm ngắt cảnh báo bận (\texttt{user\_id} $\rightarrow$ \texttt{users.id}, ON DELETE CASCADE).
+    \end{itemize} \\ \hline
+
+    \texttt{activities} -- \texttt{custom\_forms} & Has Form \newline (0..1 -- 1) & 
+    \begin{itemize}
+        \item Hoạt động có thể liên kết với một biểu mẫu đăng ký tùy biến (\texttt{activities.custom\_form\_id} $\rightarrow$ \texttt{custom\_forms.id}, Nullable, ON DELETE SET NULL).
+    \end{itemize} \\ \hline
+
+    \texttt{groups} -- \texttt{custom\_forms} & Has Form \newline (0..1 -- 1) & 
+    \begin{itemize}
+        \item Nhóm có thể liên kết với một biểu mẫu tuyển thành viên tùy biến (\texttt{groups.custom\_form\_id} $\rightarrow$ \texttt{custom\_forms.id}, Nullable, ON DELETE SET NULL).
+    \end{itemize} \\ \hline
+
+    \texttt{custom\_forms} -- \texttt{form\_fields} & Contains \newline (1 -- N) & 
+    \begin{itemize}
+        \item Biểu mẫu tùy biến chứa nhiều câu hỏi và trường nhập liệu (\texttt{form\_fields.form\_id} $\rightarrow$ \texttt{custom\_forms.id}, ON DELETE CASCADE).
+    \end{itemize} \\ \hline
+
+    \texttt{activities} -- \texttt{comments} & Discussion \newline (1 -- N) & 
+    \begin{itemize}
+        \item Hoạt động chứa luồng thảo luận gồm nhiều bình luận của sinh viên (\texttt{comments.activity\_id} $\rightarrow$ \texttt{activities.id}, ON DELETE CASCADE).
+    \end{itemize} \\ \hline
+
+    \texttt{users} -- \texttt{comments} & Author \newline (1 -- N) & 
+    \begin{itemize}
+        \item Người dùng đăng tải nhiều bình luận trao đổi trong các hoạt động (\texttt{comments.user\_id} $\rightarrow$ \texttt{users.id}, ON DELETE CASCADE).
+    \end{itemize} \\ \hline
+
+    \texttt{comments} -- \texttt{comments} & Reply \newline (1 -- N) & 
+    \begin{itemize}
+        \item Mối quan hệ tự thân hỗ trợ cấu trúc thảo luận phân cấp lồng nhau đa tầng (\texttt{comments.parent\_id} $\rightarrow$ \texttt{comments.id}, Nullable, ON DELETE CASCADE).
+    \end{itemize} \\ \hline
+
+    \texttt{users} -- \texttt{notifications} & Receive \newline (1 -- N) & 
+    \begin{itemize}
+        \item Người dùng nhận được nhiều thông báo hệ thống và tương tác theo thời gian thực (\texttt{notifications.user\_id} $\rightarrow$ \texttt{users.id}, ON DELETE CASCADE).
+        \item Thông báo liên kết tùy chọn với hoạt động (\texttt{activity\_id} $\rightarrow$ \texttt{activities.id}, ON DELETE SET NULL) và điều hướng động qua \texttt{action\_url}.
+    \end{itemize} \\ \hline
+
+    \texttt{users} -- \texttt{reports} & File Report \newline (1 -- N) & 
+    \begin{itemize}
+        \item Người dùng gửi nhiều báo cáo vi phạm nội dung (\texttt{reporter\_id} $\rightarrow$ \texttt{users.id}, ON DELETE CASCADE).
+        \item Trường \texttt{target\_type} và \texttt{target\_id} sử dụng cơ chế định danh đa hình (Polymorphic Reference).
+        \item Quản trị viên xử lý lưu tại \texttt{resolved\_by} $\rightarrow$ \texttt{users.id} (Nullable, ON DELETE SET NULL).
+    \end{itemize} \\ \hline
+
+    \texttt{users} -- \texttt{content\_likes} & Like Activity \newline (1 -- N) & 
+    \begin{itemize}
+        \item Người dùng bày tỏ cảm xúc yêu thích hoạt động ngoại khóa. Ràng buộc khóa ngoại trực tiếp \texttt{content\_likes.activity\_id} ($\rightarrow$ \texttt{activities.id}, ON DELETE CASCADE) và \texttt{UNIQUE(activity\_id, user\_id)}.
+    \end{itemize} \\ \hline
+
+    \texttt{users} -- \texttt{admin\_audit\_logs} & Audit Trail \newline (1 -- N) & 
+    \begin{itemize}
+        \item Lưu vết chi tiết từng thao tác quản trị viên phục vụ giám sát và kiểm toán bảo mật (\texttt{admin\_audit\_logs.actor\_id} $\rightarrow$ \texttt{users.id}, ON DELETE SET NULL).
+    \end{itemize} \\ \hline
+\end{longtable}

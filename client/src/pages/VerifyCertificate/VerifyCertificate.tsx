@@ -55,11 +55,11 @@ export default function VerifyCertificate() {
 
         {cert && !loading && !error && (
           <div className="py-4">
-            <div className="w-20 h-20 rounded-full bg-emerald-500/15 border-2 border-emerald-500 flex items-center justify-center mx-auto mb-4 text-4xl text-emerald-600 shadow-lg shadow-emerald-500/20">
+            <div className="w-20 h-20 rounded-full bg-emerald-100 dark:bg-emerald-950/60 border-2 border-emerald-600 dark:border-emerald-500 flex items-center justify-center mx-auto mb-4 text-4xl text-emerald-700 dark:text-emerald-300 shadow-lg shadow-emerald-500/15">
               ✓
             </div>
 
-            <div className="inline-block px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider mb-2">
+            <div className="inline-block px-4 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 text-xs font-bold uppercase tracking-wider mb-2">
               Xác thực điện tử chính thức (Official Verified)
             </div>
 
@@ -86,7 +86,7 @@ export default function VerifyCertificate() {
                 <span className="text-xs text-[var(--color-text-secondary)] uppercase tracking-wider block">Hoạt động đã tham gia:</span>
                 <span className="text-base font-bold text-[var(--color-text-primary)]">"{cert.activity_title}"</span>
                 <span className="text-xs text-[var(--color-text-secondary)] block mt-1">
-                  📅 {cert.activity_date} {cert.location_name ? `• 📍 ${cert.location_name}` : ''}
+                  📅 {cert.activity_date} {(cert.meeting_location || cert.location_name) ? `• 📍 ${cert.meeting_location || cert.location_name}` : ''}
                 </span>
               </div>
 
@@ -98,7 +98,7 @@ export default function VerifyCertificate() {
               {/* Badges */}
               <div className="flex flex-wrap gap-3 pt-2">
                 {cert.social_work_days !== null && cert.social_work_days !== undefined && cert.social_work_days > 0 && (
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 font-bold text-sm">
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 font-bold text-sm">
                     <span>🌱</span>
                     <span>+{cert.social_work_days} Ngày Công tác Xã hội (CTXH)</span>
                   </div>

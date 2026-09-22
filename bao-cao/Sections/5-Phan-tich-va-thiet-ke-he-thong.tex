@@ -2,158 +2,112 @@
 
 \subsection{Xác định các bên liên quan và tác nhân hệ thống}
 
-Trong một hệ thống mạng xã hội học đường tích hợp AI và Bản đồ số, việc xác định rõ thực thể tham gia giúp định hình phạm vi thiết kế và các luồng xử lý dữ liệu (đặc biệt là dữ liệu cá nhân và điểm rèn luyện). 
+Trong một hệ thống mạng xã hội học đường tích hợp AI và Bản đồ số, việc xác định rõ thực thể tham gia giúp định hình phạm vi thiết kế và các luồng xử lý dữ liệu (đặc biệt là dữ liệu cá nhân, quản lý điểm danh chống gian lận và ngày công tác xã hội). 
 
-\subsubsection{Các bên liên quan (Stakeholders}
+\subsubsection{Các bên liên quan (Stakeholders)}
 
 Stakeholders là những cá nhân hoặc tổ chức có lợi ích trực tiếp hoặc gián tiếp từ sự thành công của dự án:
 
 \begin{itemize}
-    \item Ban Giám hiệu và Nhà trường: Đóng vai trò là đơn vị quản lý vĩ mô. Nhà trường quan tâm đến việc tạo ra một môi trường tương tác an toàn, lành mạnh cho sinh viên, đồng thời ứng dụng công nghệ để hiện đại hóa công tác quản lý hoạt động phong trào.
+    \item Ban Giám hiệu và Nhà trường: Đóng vai trò là đơn vị quản lý vĩ mô. Nhà trường quan tâm đến việc tạo ra một môi trường tương tác an toàn, lành mạnh cho sinh viên, đồng thời ứng dụng công nghệ để hiện đại hóa công tác quản lý hoạt động phong trào và công nhận ngày công tác xã hội (CTXH) minh bạch, chống gian lận.
 
-    \item Đội ngũ phát triển (Developers): Chịu trách nhiệm về mặt kỹ thuật, đảm bảo sự ổn định của hệ thống vận hành trên Docker, tối ưu hóa các câu lệnh truy vấn không gian và duy trì độ chính xác của trợ lý AI.
+    \item Đội ngũ phát triển (Developers): Chịu trách nhiệm về mặt kỹ thuật, đảm bảo sự ổn định của hệ thống vận hành trên Docker, tối ưu hóa các câu lệnh truy vấn không gian PostGIS, kiến trúc API RESTful nhất quán và duy trì độ chính xác của trợ lý AI.
     
-    \item Đoàn thanh niên và Hội sinh viên: Là đơn vị trực tiếp điều phối các hoạt động ngoại khóa. Họ cần một công cụ trực quan để thông tin đến sinh viên nhanh nhất và quản lý dữ liệu tham gia một cách minh bạch.
+    \item Đoàn thanh niên, Hội sinh viên và các Nhóm: Là đơn vị trực tiếp điều phối các hoạt động ngoại khóa. Họ cần công cụ trực quan để công bố sự kiện trên bản đồ số, phối hợp liên nhóm (Đồng tổ chức -- Co-hosting), tổ chức điểm danh chống gian lận và quản lý thành viên hiệu quả.
 \end{itemize}
 
-\subsection{Các tác nhân hệ thống (Actors)}
+\subsubsection{Các tác nhân hệ thống (Actors)}
 
-Tác nhân là những thực thể tương tác trực tiếp với các chức năng của UniConnect. Hệ thống được thiết kế với 4 nhóm tác nhân sau:
+Tác nhân là những thực thể tương tác trực tiếp với các chức năng của UniConnect. Hệ thống được mô hình hóa tinh giản và chuẩn xác theo nguyên tắc phân tách giữa ranh giới ca sử dụng (Use Case) và cơ chế phân quyền (RBAC), bao gồm 3 tác nhân chính sau:
 
 \begin{enumerate}
-    \item \textbf{Tác nhân Sinh viên (Student):}
-    Là nhóm tác nhân trung tâm, sinh viên tương tác với hệ thống nhằm mục đích kết nối xã hội và hỗ trợ học tập. Các tương tác chính bao gồm:
+    \item \textbf{Tác nhân Người dùng (User):}
+    Là tác nhân trung tâm của hệ thống, đại diện cho toàn bộ đối tượng người dùng trong khuôn viên trường học (bao gồm sinh viên, ban cán sự, ban quản trị nhóm và cán bộ phụ trách phong trào). Khi tham gia vào hệ thống, Người dùng đóng vai trò là chủ thể của các luồng nghiệp vụ tương tác cốt lõi:
     \begin{itemize}
-        \item Quản lý hiện diện: Cập nhật vị trí hiện tại trên bản đồ khuôn viên trường, thiết lập trạng thái cá nhân (đang học, đang nghỉ, cần tìm bạn học nhóm) hoặc chọn chế độ ẩn danh.
+        \item Khám phá sự kiện trên Bản đồ số: Tìm kiếm, lọc và xem thông tin các hoạt động ngoại khóa, học nhóm, sự kiện Đoàn -- Hội đang diễn ra quanh khuôn viên trường.
         
-        \item Tương tác hoạt động tự phát: Khởi tạo các điểm ghim hoạt động trên bản đồ (ví dụ: rủ chơi thể thao, học nhóm tại thư viện); tham gia hoặc rời khỏi các hoạt động của người khác.
+        \item Tạo và Quản lý hoạt động: Khởi tạo các điểm ghim hoạt động tại tọa độ thực tế trên khuôn viên trường; điều phối, chỉnh sửa thông tin và phê duyệt hoặc từ chối các yêu cầu xin tham gia đối với các hoạt động do chính mình sở hữu (Resource Ownership).
         
-        \item Quản lý tri thức: Đăng tải các tài liệu học thuật cá nhân (giáo trình, đề thi cũ); đặt câu hỏi và thảo luận trong cộng đồng (Q\&A).
+        \item Đăng ký và Tương tác hoạt động: Gửi yêu cầu tham gia các sự kiện, trao đổi thảo luận và bình luận trong không gian sự kiện.
         
-        \item Khai thác AI: Đặt câu hỏi cho Trợ lý ảo để tra cứu nhanh thông tin trường học hoặc yêu cầu gợi ý các tài liệu/hoạt động phù hợp với năng lực cá nhân.
+        \item Điểm danh hoạt động: Xác nhận tham gia sự kiện thực tế thông qua việc quét mã QR xoay động hoặc kiểm tra bán kính định vị GPS; ghi nhận kết quả điểm danh vào hệ thống.
+        
+        \item Nhận Giấy chứng nhận tham gia: Nhận và tải về Giấy chứng nhận tham gia sự kiện điện tử kèm mã tra cứu trực tuyến \texttt{UC-...} để phục vụ việc minh chứng rèn luyện.
+        
+        \item Tạo và Quản lý nhóm: Thành lập các nhóm học tập, nhóm phong trào; quản lý thành viên, kiểm duyệt yêu cầu gia nhập và thiết lập liên kết Đồng tổ chức (Co-hosting) giữa các nhóm.
+        
+        \item Hỏi đáp và Tra cứu thông minh: Tương tác với Trợ lý ảo AI để tra cứu thông tin trường học, kiểm tra lịch trình và nhận gợi ý sự kiện phù hợp.
+    \end{itemize}
+    \textit{Lưu ý về cơ chế phân quyền (RBAC):} Mọi người dùng đều chia sẻ tập chức năng nghiệp vụ nêu trên. Các đặc quyền chuyên sâu (ví dụ: chỉ các tổ chức giáo dục, nhóm chính thức có vai trò \texttt{edu\_org} mới được gán thuộc tính Ngày công tác xã hội -- CTXH và gắn huy hiệu rèn luyện vào hoạt động) được kiểm soát bởi các quy tắc nghiệp vụ (Business Rules) và kiểm tra quyền hạn (Role-Based Access Control) tại tầng ứng dụng, thay vì phân mảnh thành các Actor riêng biệt trong sơ đồ tổng quát.
+
+    \item \textbf{Tác nhân Quản trị viên (Admin):}
+    Đóng vai trò duy trì sự ổn định, an toàn và toàn vẹn dữ liệu của toàn bộ hệ thống. Admin sở hữu tập chức năng quản trị độc lập nằm ngoài luồng nghiệp vụ thông thường của Người dùng:
+    \begin{itemize}
+        \item Quản lý định danh và cấp quyền: Cấp duyệt vai trò Tổ chức giáo dục / Nhóm chính thức (\texttt{edu\_org}) và khóa các tài khoản vi phạm tiêu chuẩn cộng đồng.
+
+        \item Kiểm duyệt nội dung (Moderation): Tiếp nhận và xử lý các báo cáo vi phạm từ người dùng; gỡ bỏ các hoạt động, bình luận không lành mạnh.
+        
+        \item Vận hành hạ tầng \& Thống kê: Giám sát trạng thái hoạt động của hệ thống và tra cứu vết nhật ký kiểm toán (Audit Log).
     \end{itemize}
 
-    \item \textbf{Tác nhân Cán bộ trường / Ban tổ chức (Staff/Organizer)}
-    Đây là tác nhân mở rộng của Sinh viên nhưng có thêm các quyền hạn quản lý cấp cao để phục vụ công tác tổ chức chính quy. Các tương tác đặc thù bao gồm:
+    \item \textbf{Tác nhân Dịch vụ Ngoại vi: Nền tảng Google GenAI (External Service Actor):}
+    Dịch vụ nền tảng Google GenAI (mô hình Gemini và Gemini Embedding) đóng vai trò là tác nhân ngoại vi (External Service) cung cấp năng lực tính toán không gian vector và suy luận ngôn ngữ tự nhiên:
     \begin{itemize}
-        \item Tổ chức hoạt động chính quy: Khởi tạo các sự kiện có gắn kèm thuộc tính "Điểm rèn luyện", "Ngày công tác xã hội" hoặc "Hội thảo học thuật". Các hoạt động này sẽ được ưu tiên hiển thị nổi bật trên bản đồ.
+        \item Xử lý dữ liệu nhúng (Embedding): Tính toán vector nhúng ngữ nghĩa cho nội dung sự kiện phục vụ tìm kiếm tương đồng trên cơ sở dữ liệu vector.
 
-        \item Quản lý danh sách thành viên: Theo dõi số lượng và danh tính sinh viên đăng ký tham gia hoạt động theo thời gian thực.
-        
-        \item Khai thác dữ liệu định danh: Trích xuất báo cáo danh sách thành viên tham gia dưới định dạng tệp tin (Excel/CSV) bao gồm Email và Mã số sinh viên để phục vụ việc cộng điểm rèn luyện sau sự kiện.
-        
-        \item Điều phối truyền thông: Gửi thông báo nhắc hẹn hoặc cập nhật thay đổi thông tin hoạt động tới toàn bộ sinh viên đã đăng ký tham gia.
-    \end{itemize}
-
-    \item \textbf{Tác nhân Quản trị viên (Admin)}
-    Đóng vai trò duy trì sự ổn định và an toàn của toàn bộ hệ thống. Các tương tác tập trung vào quản lý kỹ thuật:
-    \begin{itemize}
-        \item Quản lý định danh: Phê duyệt hoặc khóa tài khoản người dùng vi phạm quy định; quản lý quyền hạn của các tài khoản thuộc nhóm Cán bộ trường.
-
-        \item Kiểm soát nội dung (Moderation): Giám sát các hoạt động và tài liệu bị người dùng báo cáo; trực tiếp gỡ bỏ các thông tin sai lệch, không lành mạnh khỏi bản đồ và diễn đàn.
-        
-        \item Vận hành hạ tầng: Theo dõi trạng thái của các Container trong Docker; cập nhật kho dữ liệu tri thức (Knowledge Base) để trợ lý AI luôn có thông tin mới nhất.
-        
-        \item Thống kê hệ thống: Xem báo cáo về mật độ hoạt động của sinh viên trong campus theo thời gian để tư vấn cho nhà trường về việc phân bổ không gian học tập.
-    \end{itemize}
-
-    \item \textbf{Tác nhân Trợ lý ảo AI (System Actor)}
-    Là một thực thể phần mềm thông minh, thực hiện các tương tác tự động nhằm tối ưu hóa trải nghiệm cho các tác nhân còn lại:
-    \begin{itemize}
-        \item Xử lý dữ liệu nhúng (Embedding): Tự động chuyển đổi các bài đăng, tài liệu và hồ sơ người dùng thành các vector toán học ngay khi dữ liệu được tạo mới.
-
-        \item Hỗ trợ truy xuất (Retrieval): Lắng nghe các yêu cầu tìm kiếm ngữ nghĩa và trả về kết quả dựa trên độ tương đồng về sở thích hoặc nội dung học tập.
-        
-        \item Hỗ trợ tư vấn (RAG): Tổng hợp dữ liệu từ cơ sở dữ liệu nội bộ để cung cấp các câu trả lời chính xác, mang tính cá nhân hóa cho từng sinh viên thông qua giao diện chat.
+        \item Hỗ trợ suy luận và gọi hàm (AI Assistant \& Function Calling): Lắng nghe yêu cầu từ người dùng, hỗ trợ xác định ý định và tham số gọi công cụ để AI Agent nội bộ thực thi tra cứu dữ liệu.
     \end{itemize}
 \end{enumerate}
 
-\subsection{Yêu cầu chức năng (Functional requirements}
+\subsection{Yêu cầu chức năng (Functional requirements)}
 
-\subsubsection{Nhóm chức năng dành cho Sinh viên (Student)}
+Các yêu cầu chức năng của hệ thống UniConnect được phân tích, đặc tả và phân loại theo phương pháp kỹ thuật phần mềm tiêu chuẩn của Sommerville\cite{sommerville2015software}, phân định rõ trách nhiệm giữa các nhóm tác nhân:
+
+\subsubsection{Nhóm chức năng nghiệp vụ Người dùng (User)}
+
+Toàn bộ các tài khoản học đường khi tham gia hệ thống đều có quyền tiếp cận các phân hệ chức năng cốt lõi sau:
+
 \begin{itemize}
-    \item Quản lý tài khoản: Đăng ký, đăng nhập, cập nhật hồ sơ cá nhân (chuyên ngành, khóa học, sở thích).
+    \item \textbf{Quản lý tài khoản và định danh:} Đăng ký, đăng nhập hệ thống an toàn bằng mật khẩu mã hóa Bcrypt và cấp phát mã thông báo JSON Web Token (JWT), cập nhật hồ sơ cá nhân (chuyên ngành, khóa học, ảnh đại diện, tiểu sử).
 
-    \item Tương tác bản đồ số: 
-    \begin{itemize}
-        \item Xem vị trí các điểm hoạt động đang diễn ra.
+    \item \textbf{Tương tác bản đồ số không gian:} Xem vị trí các điểm hoạt động đang diễn ra trên bản đồ tương tác Leaflet; lọc sự kiện theo danh mục và bán kính địa lý.
     
-        \item Chia sẻ vị trí hiện tại hoặc thiết lập trạng thái ẩn danh/hiện diện.
-    \end{itemize}
+    \item \textbf{Tạo và Quản lý hoạt động:} Khởi tạo hoạt động học tập, ngoại khóa hoặc phong trào gắn liền với tọa độ khuôn viên trường; quản lý thông tin, phê duyệt danh sách thành viên tham gia dựa trên quyền sở hữu tài nguyên (Resource Ownership). Đối với các tài khoản được xác thực vai trò \texttt{edu\_org}, hệ thống cho phép kích hoạt các thuộc tính đặc thù như cấp ngày Công tác Xã hội (CTXH) và liên kết danh hiệu rèn luyện (Trophies).
     
-    \item Quản lý hoạt động tự phát:
-    \begin{itemize}
-        \item Tạo hoạt động học tập, thể thao, giải trí tại một vị trí cụ thể trên bản đồ.
+    \item \textbf{Đăng ký và Tương tác hoạt động:} Đăng ký tham gia sự kiện, trao đổi thảo luận và tương tác trong không gian bình luận theo ngữ cảnh hoạt động.
     
-        \item Đăng ký tham gia hoặc hủy tham gia các hoạt động do người khác khởi tạo.
-    \end{itemize}
+    \item \textbf{Điểm danh hoạt động:} Xác nhận tham gia sự kiện thực tế thông qua việc quét mã QR xoay động 30s HMAC-SHA256 kết hợp định vị GPS Geofencing; ghi nhận kết quả điểm danh tức thì.
     
-    \item Diễn đàn và Tài liệu:
-    \begin{itemize}
-        \item Đăng tải tài liệu (PDF, Slide, hình ảnh) và phân loại theo môn học.
+    \item \textbf{Nhận Giấy chứng nhận tham gia:} Nhận Giấy chứng nhận điện tử (PDF) sau khi hoàn thành hoạt động hợp lệ; tra cứu tính xác thực trực tuyến thông qua mã định danh chứng nhận \texttt{UC-...} hoặc cổng quét mã QR công khai.
     
-        \item Đặt câu hỏi, trả lời và tham gia thảo luận trong các chủ đề học thuật.
-        
-        \item Đánh giá chất lượng tài liệu và câu trả lời thông qua cơ chế Upvote/Downvote.
-    \end{itemize}
+    \item \textbf{Tạo và Quản lý nhóm:} Thành lập nhóm học tập, nhóm phong trào; quản lý thành viên, kiểm duyệt yêu cầu gia nhập và liên kết Đồng tổ chức (Co-hosting) sự kiện liên nhóm.
     
-    \item Hỗ trợ AI: Gửi yêu cầu tư vấn, hỏi đáp về thông tin nhà trường và tìm kiếm tài liệu thông qua giao diện Chatbot.
+    \item \textbf{Quản lý Lịch cá nhân (Smart Calendar):} Tự động đồng bộ các hoạt động đã đăng ký vào Lịch cá nhân; phát hiện xung đột thời gian và hỗ trợ xuất tệp lịch \texttt{.ics} chuẩn hóa.
+    
+    \item \textbf{Hỏi đáp và Tra cứu thông minh:} Tương tác với trợ lý AI để tra cứu sự kiện, đối soát lịch bận và nhận khuyến nghị hoạt động thông minh.
 \end{itemize}
-
-
-\subsubsection{Nhóm chức năng dành cho Cán bộ trường / Ban tổ chức (Staff/Organizer)}
-\begin{itemize}
-    \item Tổ chức sự kiện chính thống: 
-    \begin{itemize}
-        \item Tạo các hoạt động có tính chất đặc biệt như: Hội thảo, Ngày hội việc làm, Hoạt động tình nguyện.
-    
-        \item Gắn thuộc tính "Cộng điểm rèn luyện" hoặc "Ngày công tác xã hội" cho sự kiện.
-    \end{itemize}
-    
-    \item Quản lý người tham gia:
-    \begin{itemize}
-        \item Phê duyệt danh sách sinh viên đăng ký (đối với các sự kiện giới hạn số lượng).
-    
-        \item Gửi thông báo (Push notification/Email) đến toàn bộ sinh viên trong sự kiện.
-    \end{itemize}
-    
-    \item Trích xuất dữ liệu:
-    \begin{itemize}
-        \item Xuất báo cáo: Trích xuất danh sách sinh viên đã tham gia hoạt động ra tệp tin định dạng Excel/CSV.
-    
-        \item Dữ liệu định danh: Tiếp cận địa chỉ Email và Mã số sinh viên của người tham gia để phục vụ việc xác nhận quyền lợi cho sinh viên.
-    \end{itemize}
-\end{itemize}
-
 
 \subsubsection{Nhóm chức năng dành cho Quản trị viên (Admin)}
 
 \begin{itemize}
-    \item Quản lý người dùng: Kích hoạt, khóa tài khoản hoặc thay đổi vai trò người dùng (nâng cấp từ Sinh viên lên Cán bộ trường).
+    \item \textbf{Quản trị người dùng và Phân quyền:} Kích hoạt, khóa tài khoản vi phạm và phê duyệt nâng cấp tài khoản lên vai trò Tổ chức giáo dục / Nhóm chính thức (\texttt{edu\_org}).
 
-    \item Kiểm duyệt nội dung (Moderation): 
-    \begin{itemize}
-        \item Tiếp nhận và xử lý các báo cáo vi phạm từ cộng đồng.
+    \item \textbf{Kiểm duyệt nội dung (Moderation):} Tiếp nhận, xem xét và xử lý các báo cáo vi phạm từ cộng đồng; gỡ bỏ các hoạt động, bài đăng hoặc bình luận không lành mạnh.
     
-        \item Xóa bỏ các bài đăng, tài liệu hoặc điểm ghim hoạt động có nội dung không phù hợp.
-    \end{itemize}
+    \item \textbf{Quản trị kho tri thức AI:} Đồng bộ, cập nhật các tài liệu quy chế và dữ liệu sự kiện vào cơ sở dữ liệu Vector để phục vụ tra cứu tri thức ngữ cảnh.
     
-    \item Quản lý kho tri thức AI: Cập nhật các tệp tin quy định, hướng dẫn của nhà trường vào cơ sở dữ liệu Vector để AI học thông tin mới.
-    
-    \item Báo cáo hệ thống: Xem thống kê về lượng truy cập, mật độ hoạt động trên bản đồ và các chủ đề thảo luận sôi nổi nhất.
+    \item \textbf{Giám sát hệ thống:} Theo dõi mật độ hoạt động, thống kê tổng thể và kiểm tra vết nhật ký kiểm toán (Audit Logs).
 \end{itemize}
 
-\subsubsection{Nhóm chức năng của Trợ lý ảo AI (System Actor)}
+\subsubsection{Năng lực hỗ trợ của Dịch vụ Ngoại vi AI (Google GenAI)}
 
 \begin{itemize}
-    \item Xử lý ngôn ngữ tự nhiên: Phân tích ý định (Intent) từ câu hỏi của sinh viên để đưa ra phản hồi phù hợp.
+    \item \textbf{Sinh vector nhúng (Embedding):} Chuyển đổi nội dung sự kiện và truy vấn người dùng thành vector đặc trưng 768 chiều phục vụ tìm kiếm ngữ nghĩa tương đồng qua pgvector.
 
-    \item Truy xuất thông tin (RAG): Tìm kiếm và tổng hợp thông tin từ kho dữ liệu nội bộ để trả lời các câu hỏi về thủ tục, quy định trường học.
-    
-    \item Gợi ý thông minh: Tự động đề xuất các hoạt động hoặc bạn bè có độ tương đồng về sở thích/ngành học dựa trên thuật toán tìm kiếm Vector.
+    \item \textbf{Suy luận ngôn ngữ tự nhiên (LLM Inference):} Phân tích ngữ cảnh hội thoại, nhận diện ý định và trả lời câu hỏi của sinh viên dựa trên kết quả thực thi các công cụ dữ liệu nội bộ.
 \end{itemize}
 
-\subsection{Yêu cầu phi chức năng (Non-functional requirements}
+\subsection{Yêu cầu phi chức năng (Non-functional requirements)}
 
 \subsubsection{Yêu cầu về hiệu năng và khả năng đáp ứng (Performance)} 
 \begin{itemize}
@@ -187,27 +141,51 @@ Tác nhân là những thực thể tương tác trực tiếp với các chức
 
 \subsubsection{Yêu cầu về khả năng mở rộng và bảo trì (Scalability)} 
 \begin{itemize}
-    \item Kiến trúc Micro-services ready: Các thành phần được đóng gói riêng biệt bằng Docker Compose, cho phép dễ dàng tách riêng Database hoặc AI Worker ra các máy chủ độc lập khi số lượng sinh viên tăng lên (ví dụ: mở rộng cho toàn bộ các cơ sở của trường).
+    \item Kiến trúc Micro-services ready: Các thành phần được đóng gói riêng biệt bằng Docker Compose, cho phép dễ dàng tách riêng Database hoặc AI Worker ra các máy chủ độc lập khi số lượng người dùng tăng lên (ví dụ: mở rộng cho toàn bộ các cơ sở của trường).
 
     \item Tiêu chuẩn mã nguồn: Mã nguồn phải tuân thủ các quy tắc Linting (cho TypeScript) và PEP8 (cho Python) để phục vụ việc bảo trì, nâng cấp bởi đội ngũ khác trong tương lai.
 \end{itemize}
 
 
-\subsubsectionautorefname{Yêu cầu về tính chính xác và đạo đức AI (AI Ethics)}
+\subsubsection{Yêu cầu về tính chính xác và đạo đức AI (AI Ethics)}
 \begin{itemize}
     \item Độ chính xác của RAG: Câu trả lời của Trợ lý ảo phải dựa trên ít nhất 80\% dữ liệu từ kho tri thức nội bộ. Nếu không tìm thấy thông tin, AI phải trả lời "Tôi không biết" thay vì tự dự đoán thông tin sai lệch.
 
-    \item Kiểm soát nội dung độc hại: Hệ thống nhúng (Embedding) cần có bộ lọc để nhận diện và cảnh báo các nội dung nhạy cảm, vi phạm thuần phong mỹ tục ngay khi sinh viên đăng tải.
+    \item Kiểm soát nội dung độc hại: Hệ thống nhúng (Embedding) cần có bộ lọc để nhận diện và cảnh báo các nội dung nhạy cảm, vi phạm thuần phong mỹ tục ngay khi người dùng đăng tải.
 \end{itemize}
 
 \subsection{Use case diagram tổng quát}
 
+Sơ đồ Use Case tổng quát của hệ thống UniConnect được xây dựng nhằm mô tả ranh giới hệ thống (System Boundary) và các luồng tương tác chức năng cốt lõi giữa các tác nhân và hệ thống, được thể hiện tại Hình~\ref{fig:usecase_tongquat}.
+
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\textwidth]{Images/use-case-tong-quat.png}
+    \includegraphics[width=0.85\textwidth]{Images/use-case-tong-quat-2.png}
     \caption{Sơ đồ Use Case tổng quát hệ thống UniConnect}
     \label{fig:usecase_tongquat}
 \end{figure}
+
+Sơ đồ phản ánh thiết kế tổng thể gồm 3 tác nhân chính tương tác với 8 ca sử dụng được cô lập trong phạm vi ranh giới hệ thống UniConnect:
+
+\begin{enumerate}[label=\textbf{\arabic*.}]
+    \item \textbf{Tác nhân Người dùng (User):} Là tác nhân trung tâm bao hàm sinh viên, ban cán sự, ban quản trị nhóm và cán bộ phong trào. Thay vì phân mảnh thành nhiều tác nhân gây trùng lặp use case, toàn bộ người dùng thông thường đều tương tác với cùng một tập 7 ca sử dụng nghiệp vụ:
+    \begin{itemize}
+        \item \textit{Khám phá sự kiện trên Bản đồ số:} Xem, định vị và lọc các hoạt động ngoại khóa trực quan theo không gian địa lý quanh khuôn viên trường học.
+        \item \textit{Tạo và Quản lý hoạt động:} Khởi tạo sự kiện tại tọa độ thực tế trên khuôn viên trường; điều phối, chỉnh sửa thông tin và phê duyệt hoặc từ chối người tham gia đối với hoạt động do chính mình sở hữu.
+        \item \textit{Đăng ký và Tương tác hoạt động:} Gửi yêu cầu đăng ký tham gia, bình luận và trao đổi theo ngữ cảnh sự kiện.
+        \item \textit{Điểm danh hoạt động:} Xác nhận sự có mặt tại sự kiện thông qua quét mã QR xoay động 30s HMAC-SHA256 kết hợp định vị GPS Geofencing.
+        \item \textit{Nhận Giấy chứng nhận tham gia:} Tiếp nhận chứng nhận tham gia sự kiện điện tử (PDF) và mã tra cứu trực tuyến \texttt{UC-...} để phục vụ minh chứng rèn luyện.
+        \item \textit{Tạo và Quản lý nhóm:} Thành lập nhóm học tập, nhóm phong trào, quản lý danh sách thành viên và thiết lập quan hệ Đồng tổ chức (Co-hosting).
+        \item \textit{Hỏi đáp và Tra cứu thông minh:} Giao tiếp với Trợ lý ảo AI để kiểm tra lịch bận, đối soát xung đột và nhận gợi ý sự kiện phù hợp.
+    \end{itemize}
+    Các đặc quyền quản trị nâng cao (như gắn quyền cộng ngày Công tác Xã hội hoặc huy hiệu rèn luyện Trophies) được kiểm soát linh hoạt thông qua cơ chế phân quyền RBAC tầng ứng dụng (vai trò \texttt{edu\_org}) và quyền sở hữu tài nguyên (Resource Ownership), thay vì tách thành các Use Case riêng lẻ.
+
+    \item \textbf{Tác nhân Quản trị viên (Admin):} Tương tác với ca sử dụng độc lập \textit{"Quản trị hệ thống và Kiểm duyệt"}, bao gồm các tác vụ quản lý tài khoản, phê duyệt vai trò tổ chức, kiểm duyệt nội dung vi phạm tiêu chuẩn cộng đồng và giám sát nhật ký kiểm toán hệ thống.
+
+    \item \textbf{Tác nhân Dịch vụ Ngoại vi (Google Gemini API):} Đóng vai trò là dịch vụ trí tuệ nhân tạo bên ngoài (External Service) liên kết trực tiếp với ca sử dụng \textit{"Hỏi đáp và Tra cứu thông minh"}, cung cấp khả năng suy luận ngôn ngữ tự nhiên và tính toán vector nhúng để hỗ trợ người dùng.
+\end{enumerate}
+
+\noindent \textbf{Nguyên tắc mô hình hóa UML:} Toàn bộ các mối quan hệ giữa Actor và Use Case trên sơ đồ được biểu diễn bằng đường liên kết thuần túy (Association -- không có mũi tên định hướng theo chuẩn UML 2.5). Hệ thống không áp đặt các quan hệ phụ thuộc giả định như \texttt{<<include>>} hay \texttt{<<extend>>} giữa các ca sử dụng nhằm giữ vững tính khái quát cao nhất ở cấp độ sơ đồ tổng thể, phản ánh trung thực kiến trúc phần mềm và mã nguồn hiện thực của dự án.
 
 \subsection{Đặc tả Use case}
 \subsubsection{Tạo hoạt động trên bản đồ}
@@ -235,7 +213,7 @@ Tác nhân là những thực thể tương tác trực tiếp với các chức
 
     % Nội dung bảng
     Use case name & Tạo hoạt động trên bản đồ \\ \hline
-    Actor & Sinh viên, Cán bộ trường \\ \hline
+    Actor & Người dùng \\ \hline
     Description & Cho phép người dùng khởi tạo một điểm ghim (Marker) đại diện cho một sự kiện hoặc hoạt động (học nhóm, thể thao, sự kiện khoa) tại một tọa độ cụ thể trên khuôn viên trường. \\ \hline
     Preconditions & Người dùng đã đăng nhập thành công vào hệ thống và cấp quyền truy cập vị trí cho trình duyệt/ứng dụng. \\ \hline
     Postconditions & Hệ thống lưu thông tin hoạt động vào cơ sở dữ liệu, tự động nhúng vector mô tả hoạt động và hiển thị điểm ghim mới lên bản đồ cho tất cả người dùng khác. \\ \hline
@@ -279,8 +257,8 @@ Tác nhân là những thực thể tương tác trực tiếp với các chức
 
     % Kịch bản chi tiết bắt đầu từ đây
     Use case name & Quản lý hoạt động \\ \hline
-    Actor & Sinh viên, Cán bộ trường (Chủ sở hữu hoạt động) \\ \hline
-    Description & Cho phép người dùng quản lý các hoạt động hoặc sự kiện do chính mình khởi tạo trên bản đồ, bao gồm việc cập nhật thông tin, hủy hoạt động và điều phối danh sách thành viên tham gia. \\ \hline
+    Actor & Người dùng (Chủ sở hữu hoạt động) \\ \hline
+    Description & Cho phép người dùng quản lý các hoạt động hoặc sự kiện do chính tài khoản đó khởi tạo trên bản đồ, bao gồm việc cập nhật thông tin, hủy hoạt động và điều phối danh sách thành viên tham gia. \\ \hline
     Preconditions & Actor đã đăng nhập thành công và hệ thống xác thực Actor chính là chủ sở hữu (người tạo) của hoạt động đó. \\ \hline
     Postconditions & Các thay đổi về thông tin hoạt động hoặc trạng thái thành viên được cập nhật đồng bộ vào cơ sở dữ liệu. \\ \hline
     
@@ -292,9 +270,9 @@ Tác nhân là những thực thể tương tác trực tiếp với các chức
     \begin{itemize}[leftmargin=*, noitemsep]
         \item \textbf{Nhánh Sửa thông tin:} Actor chọn "Chỉnh sửa", thay đổi các thông tin (Tiêu đề, Mô tả, Số lượng) và nhấn "Cập nhật". Hệ thống kiểm tra dữ liệu và lưu vào CSDL.
         \item \textbf{Nhánh Xóa/Hủy:} Actor chọn "Hủy hoạt động", hệ thống hiển thị hộp thoại cảnh báo. Actor nhấn "Xác nhận", hệ thống chuyển trạng thái sang "Đã hủy" và gỡ điểm ghim khỏi bản đồ.
-        \item \textbf{Nhánh Duyệt thành viên:} Trong tab "Yêu cầu", Actor nhấn "Chấp nhận" đối với các sinh viên đang chờ. Hệ thống chuyển trạng thái của họ thành thành viên chính thức.
-        \item \textbf{Nhánh Loại bỏ thành viên:} Trong tab "Thành viên", Actor chọn một sinh viên và nhấn "Loại bỏ khỏi nhóm". Hệ thống xóa sinh viên đó khỏi danh sách tham gia.
-        \item \textbf{Nhánh Mời thành viên:} Actor nhập Mã số sinh viên/Email của người cần mời và nhấn "Gửi lời mời". Hệ thống gửi thông báo mời tham gia tới tài khoản mục tiêu.
+        \item \textbf{Nhánh Duyệt thành viên:} Trong tab "Yêu cầu", Actor nhấn "Chấp nhận" đối với các thành viên đang chờ. Hệ thống chuyển trạng thái của họ thành thành viên chính thức.
+        \item \textbf{Nhánh Loại bỏ thành viên:} Trong tab "Thành viên", Actor chọn một thành viên và nhấn "Loại bỏ khỏi nhóm". Hệ thống xóa thành viên đó khỏi danh sách tham gia.
+        \item \textbf{Nhánh Mời thành viên:} Actor nhập Email hoặc tên tài khoản của người cần mời và nhấn "Gửi lời mời". Hệ thống gửi thông báo mời tham gia tới tài khoản mục tiêu.
     \end{itemize} \\ 
     & 4. Hệ thống hiển thị thông báo "Thao tác thành công" và cập nhật lại giao diện Dashboard. \\ \hline
     
@@ -329,45 +307,37 @@ Tác nhân là những thực thể tương tác trực tiếp với các chức
 
     % Nội dung bảng
     Use case name & Tham gia và tương tác hoạt động \\ \hline
-    Actor & Sinh viên \\ \hline
-    Description & Cho phép Sinh viên tham gia vào các hoạt động trên bản đồ (có thể vào trực tiếp hoặc cần phê duyệt), rời khỏi hoạt động khi đổi ý, và thảo luận/bình luận bên trong không gian của hoạt động đó. \\ \hline
-    Preconditions & Sinh viên đã đăng nhập hệ thống. Hoạt động mục tiêu đang trong trạng thái "Đang diễn ra" hoặc "Sắp diễn ra" (chưa kết thúc/chưa bị khóa). \\ \hline
-    Postconditions & Trạng thái tham gia của Sinh viên được cập nhật (Đã tham gia/Đang chờ/Đã rời). Các bình luận (nếu có) được lưu vào cơ sở dữ liệu và hiển thị công khai cho những người xem hoạt động. \\ \hline
+    Actor & Người dùng \\ \hline
+    Description & Cho phép người dùng tham gia vào các hoạt động trên bản đồ (có thể vào trực tiếp hoặc cần phê duyệt), rời khỏi hoạt động khi đổi ý, và thảo luận/bình luận bên trong không gian của hoạt động đó. \\ \hline
+    Preconditions & Người dùng đã đăng nhập hệ thống. Hoạt động mục tiêu đang trong trạng thái "Đang diễn ra" hoặc "Sắp diễn ra" (chưa kết thúc/chưa bị khóa). \\ \hline
+    Postconditions & Trạng thái tham gia của người dùng được cập nhật (Đã tham gia/Đang chờ/Đã rời). Các bình luận (nếu có) được lưu vào cơ sở dữ liệu và hiển thị công khai cho những người xem hoạt động. \\ \hline
     
     % Phân rã Normal Flow để hỗ trợ ngắt trang
-    \textbf{Normal Flow} & 1. Sinh viên nhấn vào một điểm ghim hoạt động trên giao diện bản đồ. \\ 
+    \textbf{Normal Flow} & 1. Người dùng nhấn vào một điểm ghim hoạt động trên giao diện bản đồ. \\ 
     & 2. Hệ thống hiển thị bảng thông tin chi tiết của hoạt động (Mô tả, Danh sách thành viên, Khu vực thảo luận). \\ 
-    & 3. Tùy thuộc vào thiết lập của hoạt động và trạng thái hiện tại của Sinh viên, Sinh viên thực hiện một trong các nhánh sau:
+    & 3. Tùy thuộc vào thiết lập của hoạt động và trạng thái hiện tại, người dùng thực hiện một trong các nhánh sau:
     \vspace{0.2cm}
     \begin{itemize}[leftmargin=*, noitemsep]
-        \item \textbf{Nhánh Tham gia tự do:} (Hoạt động không yêu cầu duyệt). Sinh viên nhấn "Tham gia". Hệ thống lập tức thêm Sinh viên vào danh sách thành viên chính thức.
-        \item \textbf{Nhánh Xin tham gia:} (Hoạt động yêu cầu phê duyệt). Sinh viên nhấn "Xin tham gia". Hệ thống ghi nhận trạng thái "Đang chờ duyệt" và gửi thông báo (Notification) đến chủ sở hữu hoạt động.
-        \item \textbf{Nhánh Rời khỏi:} Sinh viên (đang là thành viên hoặc đang chờ duyệt) nhấn nút "Rời khỏi". Hệ thống yêu cầu xác nhận, sau đó xóa Sinh viên khỏi danh sách tham gia.
-        \item \textbf{Nhánh Bình luận:} Sinh viên nhập nội dung vào ô thảo luận và nhấn "Gửi". Hệ thống lưu bình luận vào CSDL và tự động cập nhật hiển thị lên luồng thảo luận.
+        \item \textbf{Nhánh Tham gia tự do:} (Hoạt động không yêu cầu duyệt). Người dùng nhấn "Tham gia". Hệ thống lập tức thêm người dùng vào danh sách thành viên chính thức.
+        \item \textbf{Nhánh Xin tham gia:} (Hoạt động yêu cầu phê duyệt). Người dùng nhấn "Xin tham gia". Hệ thống ghi nhận trạng thái "Đang chờ duyệt" và gửi thông báo (Notification) đến chủ sở hữu hoạt động.
+        \item \textbf{Nhánh Rời khỏi:} Người dùng (đang là thành viên hoặc đang chờ duyệt) nhấn nút "Rời khỏi". Hệ thống yêu cầu xác nhận, sau đó xóa người dùng khỏi danh sách tham gia.
+        \item \textbf{Nhánh Bình luận:} Người dùng nhập nội dung vào ô thảo luận và nhấn "Gửi". Hệ thống lưu bình luận vào CSDL và tự động cập nhật hiển thị lên luồng thảo luận.
     \end{itemize} \\ 
     & 4. Hệ thống hiển thị thông báo "Thao tác thành công" (hoặc "Đã gửi yêu cầu") và tải lại giao diện chi tiết hoạt động để cập nhật dữ liệu mới nhất. \\ \hline
     
-    Alternative flow & Ở nhánh Bình luận, nếu Sinh viên chỉ nhập các khoảng trắng hoặc để trống ô nội dung, hệ thống (Frontend) sẽ vô hiệu hóa nút "Gửi" hoặc báo lỗi "Nội dung bình luận không được để trống" để ngăn chặn việc gửi dữ liệu rác. \\ \hline
-    Exception & Đã đạt giới hạn số lượng thành viên: Tại nhánh Tham gia (hoặc Xin tham gia), sau khi Sinh viên nhấn nút, hệ thống (Backend) kiểm tra thấy số lượng người đăng ký đã đạt mức tối đa (max\_participants). Hệ thống chặn thao tác, không lưu dữ liệu và hiển thị thông báo lỗi: "Hoạt động này đã đủ số lượng người tham gia". \\ \hline
+    Alternative flow & Ở nhánh Bình luận, nếu người dùng chỉ nhập các khoảng trắng hoặc để trống ô nội dung, hệ thống (Frontend) sẽ vô hiệu hóa nút "Gửi" hoặc báo lỗi "Nội dung bình luận không được để trống" để ngăn chặn việc gửi dữ liệu rác. \\ \hline
+    Exception & Đã đạt giới hạn số lượng thành viên: Tại nhánh Tham gia (hoặc Xin tham gia), sau khi người dùng nhấn nút, hệ thống (Backend) kiểm tra thấy số lượng người đăng ký đã đạt mức tối đa (max\_participants). Hệ thống chặn thao tác, không lưu dữ liệu và hiển thị thông báo lỗi: "Hoạt động này đã đủ số lượng người tham gia". \\ \hline
 
 \end{xltabular}
 
-\subsubsection{Đăng tải tài liệu}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\textwidth]{Images/use-case-dang-tai-tai-lieu.png} 
-    \caption{Sơ đồ Use Case Đăng tải tài liệu}
-    \label{fig:usecase_dang_tai_tai_lieu}
-\end{figure}
+\subsubsection{Điểm danh đa chế độ chống gian lận và Trao danh hiệu}
 
 \renewcommand{\arraystretch}{1.5}
 \begin{xltabular}{\textwidth}{|>{\bfseries}p{3.5cm}|X|}
-    % Cấu hình Tiêu đề và Nhãn bảng
-    \caption{Đặc tả Use case Đăng tải tài liệu và Nhúng tri thức} \label{tab:uc_dangtaitailieu} \\
+    \caption{Đặc tả Use case Điểm danh đa chế độ chống gian lận và Trao Trophy} \label{tab:uc_diemdanh} \\
     \hline
     \endfirsthead
-    \caption[]{Đặc tả Use case Đăng tải tài liệu và Nhúng tri thức} \\
+    \caption[]{Đặc tả Use case Điểm danh đa chế độ chống gian lận và Trao Trophy} \\
     \hline
     \endhead
     \hline
@@ -375,72 +345,62 @@ Tác nhân là những thực thể tương tác trực tiếp với các chức
     \hline
     \endlastfoot
 
-    % Nội dung bảng
-    Use case name & Đăng tải tài liệu và Nhúng tri thức (Embedding) \\ \hline
-    Actor & Sinh viên, Trợ lý ảo AI (System Actor) \\ \hline
-    Description & Cho phép Sinh viên đóng góp tài liệu học tập (PDF, Slide, Word) lên hệ thống. Đồng thời, hệ thống AI sẽ tự động đọc, phân tích và chuyển hóa nội dung tài liệu thành các Vector toán học để phục vụ công tác tra cứu ngữ nghĩa (Semantic Search) sau này. \\ \hline
-    Preconditions & Sinh viên đã đăng nhập thành công. Tệp tin tải lên không chứa mã độc (được quét qua ở tầng Frontend/Firewall). \\ \hline
-    Postconditions & Thông tin tài liệu được lưu trữ. File vật lý được lưu trữ an toàn (ví dụ: ổ cứng hoặc S3). Nội dung tài liệu được chuyển đổi thành Vector và lưu vào bảng cấu hình của cơ sở dữ liệu. \\ \hline
+    Use case name & Điểm danh đa chế độ chống gian lận và Trao Trophy \\ \hline
+    Actor & Người dùng (Người tham gia, Host/Co-host), Hệ thống \\ \hline
+    Description & Cung cấp giải pháp điểm danh toàn diện với cơ chế chống gian lận nghiêm ngặt. Người tổ chức kích hoạt phiên điểm danh bằng Mã QR xoay động 30 giây (kết hợp HMAC-SHA256 và GPS Geofencing). Sau khi điểm danh thành công, hệ thống tự động chuyển trạng thái tham gia, trao tặng Huy hiệu (Trophy) độc quyền và cộng dồn ngày Công tác Xã hội (CTXH). \\ \hline
+    Preconditions & Người dùng đã đăng ký tham gia hoạt động và được phê duyệt (trạng thái \texttt{approved}). Người tổ chức đã đăng nhập với vai trò Host hoặc Co-host của sự kiện. \\ \hline
+    Postconditions & Trạng thái tham gia chuyển sang \texttt{attended} (\texttt{attendance\_confirmed = True}). Hệ thống trao Trophy vào bộ sưu tập của người tham gia, cập nhật cấp bậc và ghi nhận số ngày CTXH vào cơ sở dữ liệu. \\ \hline
     
-    % Phân rã Normal Flow để hỗ trợ ngắt trang
-    \textbf{Normal Flow} & 1. Sinh viên truy cập vào phân hệ "Kho học liệu" và nhấn nút "Tải lên tài liệu". \\ 
-    & 2. Hệ thống hiển thị biểu mẫu yêu cầu: Chọn tệp tin, Tiêu đề, Chọn Khoa/Ngành, và Gắn thẻ (Tags). \\ 
-    & 3. Sinh viên đính kèm tệp và điền đầy đủ thông tin, sau đó nhấn "Đăng tải". \\ 
-    & 4. Máy chủ (Backend) tiếp nhận yêu cầu, kiểm tra định dạng và kích thước tệp tin. \\ 
-    & 5. Máy chủ lưu file vật lý vào hệ thống lưu trữ và tạo một bản ghi siêu dữ liệu (Metadata) vào cơ sở dữ liệu. \\ 
-    & 6. Kích hoạt AI: Máy chủ đưa tác vụ đọc file vào hàng đợi. Trợ lý ảo AI (Worker) bóc tách văn bản từ file, chia nhỏ (Chunking) và gọi mô hình AI để chuyển văn bản thành Vector. \\ 
-    & 7. Trợ lý AI lưu tọa độ Vector vào trường \texttt{embed} của hàng tài liệu tương ứng trong CSDL PostgreSQL. \\ 
-    & 8. Hệ thống phản hồi "Đăng tải thành công" tới giao diện của Sinh viên. \\ \hline
-    
-    Alternative flow & Định dạng tệp không được hỗ trợ: Tại bước 3, nếu Sinh viên đính kèm các tệp thực thi (như .exe, .sh) hoặc các định dạng không phải văn bản/ảnh chuẩn, Frontend sẽ chặn lập tức và báo lỗi "Chỉ hỗ trợ tải lên định dạng PDF, DOCX, PPTX". \\ \hline
-    Exception & Vượt quá dung lượng cho phép: Tại bước 4, nếu tệp tin có kích thước lớn hơn mức cấu hình hệ thống (ví dụ: lớn hơn 25MB), máy chủ sẽ từ chối xử lý luồng để bảo vệ băng thông và trả về thông báo lỗi "Dung lượng tệp vượt quá giới hạn". \\ \hline
-
-\end{xltabular}
-
-\subsubsection{Tương tác tài liệu}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\textwidth]{Images/use-case-tuong-tac-tai-lieu.png} 
-    \caption{Sơ đồ Use Case tương tác tài liệu}
-    \label{fig:usecase_tuong_tac_tai_lieu}
-\end{figure}
-
-\renewcommand{\arraystretch}{1.5}
-\begin{xltabular}{\textwidth}{|>{\bfseries}p{3.5cm}|X|}
-    % Cấu hình Tiêu đề và Nhãn bảng
-    \caption{Đặc tả Use case Tương tác tài liệu} \label{tab:uc_tuongtactailieu} \\
-    \hline
-    \endfirsthead
-    \caption[]{Đặc tả Use case Tương tác tài liệu} \\
-    \hline
-    \endhead
-    \hline
-    \endfoot
-    \hline
-    \endlastfoot
-
-    % Nội dung bảng
-    Use case name & Tương tác và đánh giá tài liệu \\ \hline
-    Actor & Sinh viên \\ \hline
-    Description & Cho phép Sinh viên tương tác trực tiếp với các tài liệu trong kho học liệu thông qua các hành động bày tỏ quan điểm (Upvote/Downvote), để lại ý kiến thảo luận (Bình luận) hoặc gửi cảnh báo lên hệ thống khi phát hiện tài liệu có nội dung không phù hợp (Báo cáo vi phạm). \\ \hline
-    Preconditions & Sinh viên đã đăng nhập thành công vào hệ thống và tài liệu mục tiêu đang ở trạng thái hiển thị công khai. \\ \hline
-    Postconditions & Số lượt upvote/downvote được cập nhật, nội dung bình luận được hiển thị công khai, hoặc biểu mẫu báo cáo được chuyển tới phân hệ quản trị của Admin. \\ \hline
-    
-    % Phân rã Normal Flow để hỗ trợ ngắt trang
-    \textbf{Normal Flow} & 1. Sinh viên chọn xem một tài liệu cụ thể trong giao diện Kho học liệu. \\ 
-    & 2. Hệ thống hiển thị trang thông tin chi tiết của tài liệu, bao gồm nội dung xem trước, điểm đánh giá hiện tại, danh sách các bình luận cũ và tùy chọn báo cáo. \\ 
-    & 3. Sinh viên thực hiện một trong các tương tác theo nhu cầu:
+    \textbf{Normal Flow} & 1. Người tổ chức mở giao diện điều hành sự kiện và khởi chạy phiên điểm danh:
     \vspace{0.2cm}
     \begin{itemize}[leftmargin=*, noitemsep]
-        \item \textbf{Nhánh Đánh giá (Upvote/Downvote):} Sinh viên nhấn vào biểu tượng tương ứng. Hệ thống ghi nhận, tính toán lại tổng điểm tài liệu và cập nhật trạng thái hiển thị của nút bấm ngay lập tức trên giao diện.
-        \item \textbf{Nhánh Bình luận:} Sinh viên nhập ý kiến vào khung thảo luận và nhấn "Gửi". Hệ thống lưu dữ liệu và đưa bình luận mới vào đầu luồng hiển thị.
-        \item \textbf{Nhánh Báo cáo vi phạm:} Sinh viên nhấn nút "Báo cáo", lựa chọn lý do vi phạm (tài liệu sai kiến thức, bản quyền, nội dung nhạy cảm) và nhập mô tả chi tiết, sau đó nhấn "Gửi báo cáo".
+        \item \textbf{Cơ chế QR xoay động (HMAC-SHA256):} Hệ thống sinh mã QR mới mỗi 30 giây bằng thuật toán mã hóa HMAC-SHA256 kèm tọa độ tâm và bán kính Geofencing cho phép. Người tổ chức chiếu mã QR lên màn hình.
+        \item \textbf{Quét mã và xác thực vị trí:} Người tham gia mở camera trên ứng dụng UniConnect để quét mã; thiết bị tự động thu nhận tọa độ GPS thực tế kèm sai số phần cứng và gửi lên máy chủ trong cùng payload điểm danh.
     \end{itemize} \\ 
-    & 4. Hệ thống thực hiện lưu trữ các thay đổi tương ứng vào cơ sở dữ liệu và hiển thị thông báo "Thao tác thành công". \\ \hline
+    & 2. Máy chủ (Backend) tiếp nhận yêu cầu, kiểm tra chữ ký HMAC (chống chụp màn hình gửi cho nhau) và tính toán khoảng cách Haversine giữa tọa độ người dùng và tọa độ sự kiện (Geofencing $\le$ bán kính cho phép). \\ 
+    & 3. Nếu dữ liệu hợp lệ, hệ thống thực thi giao dịch nguyên tử (Atomic Transaction):
+    \begin{itemize}[leftmargin=*, noitemsep]
+        \item Cập nhật trạng thái người tham gia thành \texttt{attended} (với \texttt{attendance\_confirmed = True}) và lưu mốc thời gian \texttt{checkin\_time}.
+        \item Trao tặng Trophy độc quyền của sự kiện vào hồ sơ người tham gia (\texttt{user\_trophies}).
+        \item Cộng dồn số ngày CTXH tương ứng của hoạt động vào tổng tích lũy của sinh viên.
+    \end{itemize} \\ 
+    & 4. Ứng dụng hiển thị hiệu ứng chúc mừng kèm Huy hiệu Trophy vừa nhận được trên màn hình người dùng. Danh sách điểm danh của người tổ chức cập nhật trạng thái thời gian thực. \\ \hline
     
-    Alternative flow & Hủy đánh giá: Ở nhánh Đánh giá, nếu Sinh viên nhấn lại vào nút bấm đang chọn (ví dụ đang Upvote và nhấn lại Upvote), hệ thống sẽ hiểu là hành động rút lại tương tác, trừ đi một điểm đánh giá và trả nút bấm về trạng thái mặc định. \\ \hline
-    Exception & Tài liệu bị gỡ bỏ đột ngột: Tại bước 3, nếu tài liệu vừa bị tác giả chủ sở hữu hoặc Admin xóa/ẩn đi do vi phạm ngay tại thời điểm Sinh viên đang thao tác tương tác, Backend sẽ từ chối xử lý, trả về lỗi và Frontend hiển thị thông báo "Tài liệu này không còn tồn tại trên hệ thống". \\ \hline
+    Alternative flow & Điểm danh thủ công: Đối với trường hợp người tham gia hết pin điện thoại hoặc lỗi định vị phần cứng, người tổ chức có thể tra cứu thông tin người tham gia trên danh sách quản trị và nhấn nút "Xác nhận có mặt thủ công" với quyền Host/Co-host. \\ \hline
+    Exception & Ngoài phạm vi địa lý hoặc mã QR hết hạn: Tại bước 2, nếu khoảng cách GPS của người dùng vượt quá bán kính quy định (ví dụ đang ở xa) hoặc token QR gửi lên đã quá 30 giây, Backend sẽ từ chối giao dịch, ghi log cảnh báo gian lận và trả về thông báo lỗi: "Vị trí không hợp lệ hoặc mã điểm danh đã hết hạn". \\ \hline
+
+\end{xltabular}
+
+\subsubsection{Xuất Giấy chứng nhận CTXH và Tra cứu trực tuyến}
+
+\renewcommand{\arraystretch}{1.5}
+\begin{xltabular}{\textwidth}{|>{\bfseries}p{3.5cm}|X|}
+    \caption{Đặc tả Use case Xuất Giấy chứng nhận CTXH và Tra cứu trực tuyến} \label{tab:uc_chungnhan} \\
+    \hline
+    \endfirsthead
+    \caption[]{Đặc tả Use case Xuất Giấy chứng nhận CTXH và Tra cứu trực tuyến} \\
+    \hline
+    \endhead
+    \hline
+    \endfoot
+    \hline
+    \endlastfoot
+
+    Use case name & Xuất Giấy chứng nhận CTXH và Tra cứu trực tuyến \\ \hline
+    Actor & Người dùng, Nhà tuyển dụng / Đơn vị thẩm định (Verifier) \\ \hline
+    Description & Cho phép người dùng xuất Giấy chứng nhận tham gia hoạt động và minh chứng ngày Công tác Xã hội (CTXH) dưới định dạng file PDF chuẩn A4 Landscape. Mỗi chứng nhận được gán một mã định danh duy nhất (Certificate UUID) và mã QR dẫn về cổng tra cứu công khai trực tiếp trên hệ thống UniConnect để bất kỳ bên thứ ba nào cũng có thể kiểm chứng tính nguyên bản, chống làm giả. \\ \hline
+    Preconditions & Người dùng đã hoàn thành hoạt động và có trạng thái điểm danh \texttt{approved} kết hợp \texttt{attendance\_confirmed = True}. \\ \hline
+    Postconditions & Tệp tin PDF Giấy chứng nhận được tải về máy người dùng; đường link xác thực được lưu trữ công khai trong CSDL hệ thống. \\ \hline
+    
+    \textbf{Normal Flow} & 1. Người dùng truy cập vào mục "Hồ sơ cá nhân" hoặc "Lịch sử hoạt động đã tham gia". \\ 
+    & 2. Người dùng chọn một sự kiện đã hoàn thành điểm danh và nhấn nút "Xuất chứng nhận CTXH". \\ 
+    & 3. Máy chủ (Backend) kiểm tra tính hợp lệ của bản ghi điểm danh, truy xuất thông tin người dùng (Họ tên, Đơn vị/Khoa), thông tin sự kiện (Tên hoạt động, Ban tổ chức, Số ngày CTXH, Ngày diễn ra). \\ 
+    & 4. Hệ thống sinh mã xác thực duy nhất (Certificate UUID) và tạo mã QR liên kết tới URL: \texttt{https://uniconnect.vn/verify-certificate?id=<Certificate\_UUID>}. \\ 
+    & 5. Máy chủ kết xuất file PDF đồ họa chuẩn A4 Landscape với đầy đủ chữ ký số của Ban tổ chức, logo trường và mã QR tra cứu, sau đó truyền tải trực tiếp về trình duyệt của người dùng. \\ 
+    & 6. Khi nhà tuyển dụng hoặc đơn vị thẩm định quét mã QR trên chứng nhận (bản giấy hoặc bản số), hệ thống chuyển hướng đến trang công khai \texttt{/verify-certificate}, hiển thị trạng thái "Chứng nhận hợp lệ", thông tin người dùng và số ngày CTXH đã được công nhận. \\ \hline
+    
+    Alternative flow & Xem trước trực tuyến: Người dùng có thể chọn "Xem trước chứng nhận" trên modal giao diện Web mà không cần tải file PDF về thiết bị. \\ \hline
+    Exception & Chưa hoàn thành điểm danh: Nếu người dùng chưa ở trạng thái \texttt{approved} kết hợp \texttt{attendance\_confirmed = True}, nút "Xuất chứng nhận" sẽ bị vô hiệu hóa kèm thông báo "Hoạt động chưa được xác nhận điểm danh". \\ \hline
 
 \end{xltabular}
 
@@ -467,21 +427,21 @@ Tác nhân là những thực thể tương tác trực tiếp với các chức
 
     % Nội dung bảng
     Use case name & Hỏi đáp tri thức và tra cứu thông minh \\ \hline
-    Actor & Sinh viên, Trợ lý ảo AI (System Actor) \\ \hline
-    Description & Cho phép Sinh viên đặt các câu hỏi tự nhiên về quy định nhà trường, tài liệu học thuật hoặc các hoạt động/sự kiện đang và sắp diễn ra trên bản đồ campus. Hệ thống ứng dụng kiến trúc RAG để tìm kiếm ngữ nghĩa đa nền tảng dữ liệu và phản hồi thông tin chính xác. \\ \hline
-    Preconditions & Sinh viên đã đăng nhập thành công. Kho tri thức (quy chế, tài liệu) và siêu dữ liệu hoạt động (vị trí, mô tả sự kiện) đã được nhúng thành Vector và lưu trữ sẵn sàng. \\ \hline
-    Postconditions & Sinh viên nhận được câu trả lời tổng hợp chính xác theo thời gian thực kèm các gợi ý liên kết (tới file tài liệu hoặc vị trí ghim sự kiện trên bản đồ). \\ \hline
+    Actor & Người dùng, Google Gemini API (Dịch vụ ngoại vi) \\ \hline
+    Description & Cho phép người dùng đặt các câu hỏi tự nhiên về quy định nhà trường, tiêu chí tính ngày CTXH hoặc các hoạt động/sự kiện đang và sắp diễn ra trên bản đồ campus. Hệ thống ứng dụng kiến trúc RAG để tìm kiếm ngữ nghĩa đa nền tảng dữ liệu và phản hồi thông tin chính xác. \\ \hline
+    Preconditions & Người dùng đã đăng nhập thành công. Dữ liệu quy chế và siêu dữ liệu hoạt động (vị trí, mô tả sự kiện, ban tổ chức) đã được nhúng thành Vector và lưu trữ sẵn sàng trong \texttt{pgvector}. \\ \hline
+    Postconditions & Người dùng nhận được câu trả lời tổng hợp chính xác theo thời gian thực kèm các gợi ý liên kết (tới vị trí ghim sự kiện trên bản đồ hoặc trang chi tiết hoạt động). \\ \hline
     
-    \textbf{Normal Flow} & 1. Sinh viên nhập câu hỏi vào khung chat (ví dụ: "Thủ tục mượn sách thư viện?" hoặc "Chiều nay ở sân thể chất có hoạt động nào không?") và nhấn gửi. \\ 
+    \textbf{Normal Flow} & 1. Người dùng nhập câu hỏi vào khung chat (ví dụ: "Thủ tục đăng ký ngày CTXH thế nào?" hoặc "Chiều nay ở sân thể chất có hoạt động nào không?") và nhấn gửi. \\ 
     & 2. Hệ thống tiếp nhận chuỗi văn bản và gọi mô hình Embedding để chuyển câu hỏi thành một Vector truy vấn. \\ 
-    & 3. Giai đoạn phân loại và truy xuất dữ liệu hỗn hợp: Trợ lý AI thực hiện tìm kiếm khoảng cách Vector đồng thời trên các phân bảng lưu trữ của \texttt{pgvector} (bao gồm bảng phân đoạn tài liệu học liệu và bảng thông tin mô tả hoạt động). \\ 
-    & 4. Trợ lý AI chọn lọc ra top các kết quả có độ tương đồng ngữ nghĩa cao nhất để làm ngữ cảnh nền tảng (Context). \\ 
-    & 5. Giai đoạn tổng hợp ngữ cảnh: Hệ thống đóng gói câu hỏi gốc cùng với ngữ cảnh thu được thành một cấu trúc Prompt chuẩn mực và chuyển tiếp đến Mô hình ngôn ngữ lớn (LLM). \\ 
-    & 6. LLM phân tích, tổng hợp dữ liệu và sinh ra câu trả lời bằng ngôn ngữ tự nhiên. \\ 
-    & 7. Hệ thống hiển thị câu trả lời trực quan lên màn hình chat của Sinh viên (kèm đường dẫn đến điểm ghim hoạt động hoặc tệp tài liệu được nhắc tới) và lưu vào lịch sử hội thoại. \\ \hline
+    & 3. Giai đoạn phân loại và truy xuất dữ liệu hỗn hợp: Hệ thống thực hiện tìm kiếm khoảng cách Vector đồng thời trên các phân bảng lưu trữ của \texttt{pgvector} (bao gồm bảng thông tin mô tả hoạt động và quy chế rèn luyện). \\ 
+    & 4. Hệ thống chọn lọc ra top các kết quả có độ tương đồng ngữ nghĩa cao nhất để làm ngữ cảnh nền tảng (Context). \\ 
+    & 5. Giai đoạn tổng hợp ngữ cảnh: Hệ thống đóng gói câu hỏi gốc cùng với ngữ cảnh thu được thành một cấu trúc Prompt chuẩn mực và chuyển tiếp đến Google Gemini API (LLM). \\ 
+    & 6. Google Gemini API phân tích, tổng hợp dữ liệu và sinh ra câu trả lời bằng ngôn ngữ tự nhiên. \\ 
+    & 7. Hệ thống hiển thị câu trả lời trực quan lên màn hình chat của người dùng (kèm đường dẫn đến điểm ghim hoạt động được nhắc tới) và lưu vào lịch sử hội thoại. \\ \hline
     
     Alternative flow & Nếu câu hỏi mang tính chất giao tiếp thông thường không chứa thực thể cần tra cứu, hệ thống bỏ qua bước truy xuất dữ liệu ở bước 3 và bước 4, chuyển trực tiếp câu hỏi sang cho LLM phản hồi theo luồng hội thoại thông thường. \\ \hline
-    Exception & Tri thức nằm ngoài phạm vi hệ thống: Tại bước 3, nếu điểm số tương đồng ngữ nghĩa (Semantic Score) của tất cả các kết quả trả về từ cơ sở dữ liệu đều dưới ngưỡng an toàn cấu hình (ví dụ < 0.65), Trợ lý AI sẽ chủ động chặn luồng gửi đi của LLM nhằm chống ảo giác thông tin và đưa ra câu trả lời chuẩn: "Xin lỗi, hệ thống chưa tìm thấy thông tin phù hợp về quy định hoặc hoạt động này trong cơ sở dữ liệu." \\ \hline
+    Exception & Tri thức nằm ngoài phạm vi hệ thống: Tại bước 3, nếu điểm số tương đồng ngữ nghĩa (Semantic Score) của tất cả các kết quả trả về từ cơ sở dữ liệu đều dưới ngưỡng an toàn cấu hình (ví dụ < 0.65), hệ thống sẽ chủ động đưa ra câu trả lời chuẩn: "Xin lỗi, hệ thống chưa tìm thấy thông tin phù hợp về quy định hoặc hoạt động này trong cơ sở dữ liệu." \\ \hline
 
 \end{xltabular}
 
@@ -521,8 +481,8 @@ Tác nhân là những thực thể tương tác trực tiếp với các chức
     & 3. Admin lựa chọn thực hiện một trong các nhánh nghiệp vụ sau:
     \vspace{0.2cm}
     \begin{itemize}[leftmargin=*, noitemsep]
-        \item \textbf{Nhánh Xử lý vi phạm:} Admin xem chi tiết một báo cáo (chứa ID tài liệu hoặc hoạt động bị tố cáo). Nếu xác định vi phạm, Admin nhấn "Gỡ bỏ nội dung" và gửi cảnh cáo. Hệ thống sẽ ẩn dữ liệu này khỏi luồng hiển thị công khai.
-        \item \textbf{Nhánh Quản lý người dùng:} Admin tìm kiếm một Sinh viên/Cán bộ cụ thể, thực hiện đổi vai trò (Role) hoặc nhấn "Khóa tài khoản" nếu người này vi phạm nghiêm trọng.
+        \item \textbf{Nhánh Xử lý vi phạm:} Admin xem chi tiết một báo cáo (chứa ID hoạt động hoặc bình luận bị tố cáo). Nếu xác định vi phạm, Admin nhấn "Gỡ bỏ nội dung" và gửi cảnh cáo. Hệ thống sẽ ẩn dữ liệu này khỏi luồng hiển thị công khai.
+        \item \textbf{Nhánh Quản lý người dùng:} Admin tìm kiếm một Người dùng cụ thể, thực hiện đổi vai trò (Role) hoặc nhấn "Khóa tài khoản" nếu người này vi phạm nghiêm trọng.
         \item \textbf{Nhánh Cấu hình hệ thống:} Admin điều chỉnh các danh mục dùng chung (như thêm/xóa Ngành học, Thẻ tag) hoặc cấu hình tham số hệ thống.
     \end{itemize} \\ 
     & 4. Máy chủ (Backend) ghi nhận lệnh thao tác, kiểm tra quyền JWT của Admin và thực thi thay đổi vào cơ sở dữ liệu PostgreSQL. \\ 
@@ -535,291 +495,553 @@ Tác nhân là những thực thể tương tác trực tiếp với các chức
 
 \subsection{Kiến trúc tổng thể hệ thống}
 
+Nhằm đáp ứng đồng thời các yêu cầu về hiệu năng cao, khả năng bảo trì và tính mở rộng linh hoạt, kiến trúc của hệ thống UniConnect được xây dựng theo mô hình \textbf{Modular Monolith phân tầng kết hợp hướng dịch vụ tích hợp}. Toàn bộ hệ sinh thái được phân định rõ ràng giữa tầng hiển thị phía máy khách (Client-side), cổng điều phối trung gian (Ingress), tầng nghiệp vụ ứng dụng lõi (Backend Application), kho lưu trữ dữ liệu thống nhất (Multi-model Datastore) và các dịch vụ ngoại vi chuyên trách (External Services). Sơ đồ kiến trúc tổng thể hệ thống và các luồng giao tiếp cốt lõi được thể hiện trực quan tại Hình~\ref{fig:kien_truc_tong_the}.
+
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\textwidth]{Images/kien-truc-tong-the-he-thong.png} 
-    \caption{Kiến trúc tổng thể hệ thống}
-    \label{fig:kien_truc_tong_the_he_thong}
+    \includegraphics[width=0.82\textwidth]{Images/kien-truc-tong-the-he-thong-2.png}
+    \caption{Sơ đồ kiến trúc tổng thể và các luồng giao tiếp dữ liệu hệ thống UniConnect}
+    \label{fig:kien_truc_tong_the}
 \end{figure}
 
-Hệ thống UniConnect được thiết kế dựa trên kiến trúc hướng dịch vụ (Microservices), đảm bảo tính độc lập và khả năng mở rộng thông qua môi trường đóng gói container. Mọi yêu cầu từ phía Client đều đi qua API Gateway để điều hướng và kiểm soát truy cập. Về cơ chế xác thực, IdentityService tích hợp quy trình đăng nhập bảo mật, trong đó Client đảm nhiệm giao diện, còn Backend thực hiện cấp phát và xác thực JWT nội bộ qua kênh Server-to-Server, đảm bảo an toàn cho phiên làm việc. Đối với tính năng tra cứu thông minh, AI \& RAG Service đóng vai trò xử lý ngôn ngữ tự nhiên, đóng gói ngữ cảnh từ cơ sở dữ liệu Vector (pgvector) và quản lý lịch sử hội thoại trước khi gửi sang Mô hình ngôn ngữ lớn (LLM) để sinh câu trả lời. Các dịch vụ nghiệp vụ cốt lõi khác như Map \& Activity Service và Document Service hoạt động song song với phân vùng dữ liệu riêng biệt, đảm bảo sự tách biệt rõ ràng về mặt lưu trữ và logic xử lý giữa mạng xã hội bản đồ và kho học liệu.
+Kiến trúc tổng thể tại Hình~\ref{fig:kien_truc_tong_the} cho phép người đọc nắm bắt ngay lập tức cấu trúc vận hành của hệ thống UniConnect qua các thành phần chính:
+
+\begin{enumerate}[label=\textbf{\arabic*.}]
+    \item \textbf{Web Client:} Ứng dụng Single Page Application (SPA) phát triển trên nền tảng React, TypeScript và thư viện bản đồ Leaflet theo chuẩn thiết kế thích ứng (Responsive Web Client). Client gửi yêu cầu nghiệp vụ tới Nginx qua giao thức HTTP, đồng thời chủ động gửi truy vấn HTTPS trực tiếp tới hệ thống máy chủ bản đồ mở OpenStreetMap để lấy các mảnh bản đồ (Map Tiles), giúp giải phóng hoàn toàn tải trung chuyển dữ liệu không gian qua máy chủ ứng dụng.
+
+    \item \textbf{Ingress / Reverse Proxy (Nginx):} Đóng vai trò là cửa ngõ duy nhất tiếp nhận lưu lượng truy cập từ người dùng qua giao thức HTTP, trực tiếp phục vụ các tệp tĩnh SPA và điều hướng (reverse proxy) các yêu cầu API (\texttt{/api/*}) vào máy chủ ứng dụng nội bộ thông qua kết nối HTTP nội bộ.
+
+    \item \textbf{Application Server (FastAPI Modular Monolith):} Khối xử lý nghiệp vụ trung tâm của toàn bộ hệ thống, tích hợp toàn bộ các mô-đun chức năng lõi (Hoạt động, Nhóm, Điểm danh, Lịch thông minh, Chứng nhận, Trợ lý AI và Quản trị) theo mô hình Modular Monolith đồng nhất. Kiến trúc bên trong phân tách rõ ràng thành 3 phân lớp logic: Giao diện lập trình (API), Nghiệp vụ lõi (Business Logic) và Truy xuất dữ liệu (Data Access).
+
+    \item \textbf{Data Store (PostgreSQL 16):} Kho lưu trữ dữ liệu thống nhất đa mô hình (Unified Datastore), kết hợp toàn vẹn dữ liệu quan hệ nghiệp vụ (Relational Core), dữ liệu không gian địa lý (PostGIS) và vector nhúng ngữ nghĩa (pgvector). FastAPI kết nối tới cơ sở dữ liệu qua giao thức TCP thông qua trình điều khiển bất đồng bộ chuyên dụng \texttt{asyncpg}.
+
+    \item \textbf{External Services (Dịch vụ ngoại vi):} Bao gồm OpenStreetMap (cung cấp lớp bản đồ nền cho Web Client) và Google Gemini API (tiếp nhận yêu cầu từ FastAPI qua HTTPS bằng SDK chính thức để thực hiện suy luận ngôn ngữ tự nhiên và sinh vector nhúng ngữ nghĩa).
+\end{enumerate}
 
 \subsection{Mô tả mô hình thực thể kết hợp (ERD)}
 
+Thiết kế cơ sở dữ liệu của hệ thống UniConnect được phân tầng rõ ràng theo hai cấp độ trừu tượng chuẩn mực trong kỹ nghệ dữ liệu:
+\begin{enumerate}
+    \item \textbf{Mô hình thực thể kết hợp mức ý niệm (Conceptual ERD --- Ký pháp Peter Chen):} Tập trung mô tả trực quan các thực thể cốt lõi, thuộc tính nội tại và các mối quan hệ ngữ nghĩa nghiệp vụ trong không gian bài toán tương tác sinh viên và quản lý hoạt động ngoại khóa.
+    \item \textbf{Lược đồ cơ sở dữ liệu quan hệ mức vật lý (Physical Relational Schema --- Ký pháp Crow's Foot):} Hiện thực hóa toàn bộ 22 bảng dữ liệu trong hệ quản trị PostgreSQL, chi tiết hóa các kiểu dữ liệu nâng cao (PostGIS Point, pgvector 768 chiều, JSONB), các ràng buộc toàn vẹn khóa chính (PK), khóa ngoại (FK), cơ chế kiểm soát xóa tầng (\texttt{CASCADE}, \texttt{SET NULL}) và các chỉ mục hiệu năng.
+\end{enumerate}
+
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\textwidth]{Images/erd.png} 
-    \caption{Entity Relationship Diagram của hệ thống}
+    \includegraphics[width=0.95\textwidth]{Images/erd-2.png} 
+    \caption{Mô hình thực thể kết hợp mức ý niệm phân hệ cốt lõi (Conceptual ERD --- Ký pháp Peter Chen)}
+    \label{fig:mo_hinh_erd_chen}
+\end{figure}
+
+Sơ đồ tại Hình~\ref{fig:mo_hinh_erd_chen} biểu diễn phân hệ tương tác cốt lõi gồm 6 thực thể trung tâm: \texttt{User}, \texttt{Activity}, \texttt{Group}, \texttt{Comment}, \texttt{Notification}, và \texttt{Trophy}. Trong đó, các quy tắc ký pháp Peter Chen chuẩn mực được áp dụng nhất quán:
+\begin{itemize}
+    \item \textbf{Thực thể (Hình chữ nhật):} Đại diện cho 6 lớp đối tượng nòng cốt trong hệ thống:
+    \begin{itemize}
+        \item \texttt{User}: Thực thể người dùng gồm 11 thuộc tính (\underline{\texttt{id}}, \texttt{email}, \texttt{username}, \texttt{password\_hash}, \texttt{full\_name}, \texttt{role}, \texttt{bio}, \texttt{interests}, \texttt{university}, \texttt{is\_active}, \texttt{is\_verified}).
+        \item \texttt{Activity}: Thực thể sự kiện ngoại khóa gồm 18 thuộc tính (\underline{\texttt{id}}, \texttt{host\_id}, \texttt{group\_id}, \texttt{title}, \texttt{description}, \texttt{category}, \texttt{marker\_location}, \texttt{meet\_location}, \texttt{start\_time}, \texttt{end\_time}, \texttt{max\_participants}, \texttt{social\_work\_days}, \texttt{privacy}, \texttt{require\_approval}, \texttt{attendance\_mode}, \texttt{check\_in\_code}, \texttt{check\_in\_radius}, \texttt{embedding}). Trong đó, thuộc tính \texttt{meet\_location} trên sơ đồ ý niệm tương ứng với địa điểm tập trung \texttt{meeting\_location} trên lược đồ vật lý.
+        \item \texttt{Group}: Thực thể nhóm gồm 7 thuộc tính (\underline{\texttt{id}}, \texttt{owner\_id}, \texttt{name}, \texttt{description}, \texttt{privacy}, \texttt{require\_approval}, \texttt{allow\_member\_activities}).
+        \item \texttt{Comment}: Thực thể bình luận trao đổi gồm 5 thuộc tính (\underline{\texttt{id}}, \texttt{user\_id}, \texttt{activity\_id}, \texttt{parent\_id}, \texttt{content}).
+        \item \texttt{Notification}: Thực thể thông báo tức thời gồm 6 thuộc tính (\underline{\texttt{id}}, \texttt{user\_id}, \texttt{message}, \texttt{type}, \texttt{is\_read}, \texttt{action\_url}), trong đó \texttt{action\_url} đóng vai trò điều hướng tương tác động.
+        \item \texttt{Trophy}: Thực thể danh hiệu vinh danh gồm 4 thuộc tính (\underline{\texttt{id}}, \texttt{activity\_id}, \texttt{name}, \texttt{description}), gắn kết trực tiếp với hoạt động trao thưởng.
+    \end{itemize}
+    \item \textbf{Thuộc tính (Hình bầu dục/Elip):} Biểu diễn các trường dữ liệu của từng thực thể, với các thuộc tính định danh duy nhất (Khóa chính) được gạch chân (\underline{\texttt{id}}).
+    \item \textbf{Mối quan hệ (Hình thoi) và Ràng buộc tham gia (Participation):}
+    \begin{itemize}
+        \item \textbf{Tham gia toàn phần (Total Participation --- Đường nét đôi):} Biểu thị sự tồn tại phụ thuộc bắt buộc. Cụ thể: \texttt{Comment} bắt buộc thuộc về \texttt{Activity} (\textit{has}) và do \texttt{User} tạo (\textit{create}); \texttt{Activity} bắt buộc có người chủ trì \texttt{User} (\textit{create}); \texttt{Group} bắt buộc có người sáng lập \texttt{User} (\textit{create}); \texttt{Notification} bắt buộc gắn với người nhận \texttt{User} (\textit{receive}); \texttt{Trophy} bắt buộc thuộc về sự kiện \texttt{Activity} (\textit{reward}).
+        \item \textbf{Tham gia một phần (Partial Participation --- Đường nét đơn):} Biểu thị sự tham gia tùy biến, không bắt buộc. Ví dụ: \texttt{Activity} có thể được tạo bởi cá nhân mà không nhất thiết thuộc \texttt{Group} (\textit{has}); một \texttt{Comment} gốc không bắt buộc có bình luận cha (\textit{reply}); người dùng có thể tham gia hoặc không tham gia các nhóm, sự kiện.
+        \item \textbf{Quan hệ tự thân (Self-referential):} Bao gồm mạng lưới kết nối theo dõi giữa các sinh viên (\texttt{User} -- \textit{follow} -- \texttt{User}, lực lượng $N:M$) và cấu trúc phân cấp thảo luận lồng nhau (\texttt{Comment} -- \textit{reply} -- \texttt{Comment}, lực lượng $1:N$).
+    \end{itemize}
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.92\textwidth]{Images/uniconnect-dbeaver-export-2.png} 
+    \caption{Lược đồ cơ sở dữ liệu quan hệ mức vật lý toàn hệ thống trích xuất từ PostgreSQL (Physical Relational Schema --- DBeaver Export)}
     \label{fig:mo_hinh_erd}
 \end{figure}
 
-\subsubsection{Danh sách thực thể và thuộc tính}
+\subsubsection{Danh sách thực thể và thuộc tính (22 Domain Entities)}
+
+Nhằm bảo đảm tính chính xác kỹ thuật tuyệt đối và loại bỏ hoàn toàn sai lệch tài liệu (documentation drift), danh mục 22 thực thể nghiệp vụ (Domain Entities) dưới đây được trích xuất và ánh xạ trực tiếp từ các lớp mô hình ORM (SQLAlchemy Models) thuộc mã nguồn hệ thống UniConnect:
+
 \begin{enumerate}
-    \item User
-    Đại diện cho tất cả các tác nhân tham gia vào hệ thống UniConnect (bao gồm Sinh viên, Cán bộ trường và Quản trị viên). Thực thể này lưu trữ các thông tin cốt lõi để định danh, phân quyền và hồ sơ cá nhân của người dùng.
+    \item \textbf{Nhóm Người dùng và Đồ thị xã hội (Users \& Social Graph):}
     \begin{itemize}
-        \item ID: Mã định danh duy nhất (khóa chính), tự động tăng để quản lý người dùng.
-
-        \item Email, Password: Thông tin tài khoản dùng để đăng nhập và mật khẩu đã được mã hóa để đảm bảo an toàn thông tin.
-        
-        \item Role: Vai trò của người dùng (Sinh viên, Cán bộ, hoặc Admin), quyết định quyền hạn truy cập các tính năng.
-        
-        \item Is Active: Trạng thái tài khoản (Cho phép hoặc Chặn truy cập).
-        
-        \item Full Name: Họ và tên đầy đủ của người dùng.
-        
-        \item Avatar URL: Đường dẫn liên kết tới hình ảnh đại diện (Lưu trữ trên Cloud hoặc Server).
-        
-        \item Gender, Date of Birth: Thông tin giới thiệu cơ bản về giới tính và ngày sinh.
-        
-        \item Bio: Đoạn giới thiệu ngắn về bản thân của người dùng.
-        
-        \item Created At, Updated At: (Từ TimestampMixin) Ghi lại thời điểm tạo tài khoản và lần cập nhật thông tin gần nhất.
+        \item \texttt{users} (Model: \texttt{User}, 13 cột): Thực thể định danh toàn bộ người dùng trong hệ sinh thái. Quản lý khóa chính \texttt{id} (UUID); thông tin đăng nhập duy nhất gồm \texttt{email} (VARCHAR(255), UNIQUE, Index) và \texttt{username} (VARCHAR(50), UNIQUE, Index); mật khẩu băm bảo mật \texttt{password\_hash} (VARCHAR(255)); thông tin cá nhân gồm \texttt{full\_name} (VARCHAR(100)), \texttt{bio} (TEXT), \texttt{university} (VARCHAR(150)); vai trò phân quyền \texttt{role} (Enum: \texttt{student}, \texttt{moderator}, \texttt{admin}, \texttt{edu\_org}, mặc định: \texttt{student}); trạng thái kiểm soát tài khoản gồm \texttt{is\_active} (BOOLEAN, mặc định: True), \texttt{is\_verified} (BOOLEAN, mặc định: False); sở thích ngoại khóa \texttt{interests} (JSONB) phục vụ cá nhân hóa gợi ý; cùng dấu thời gian \texttt{created\_at} và \texttt{updated\_at} (TIMESTAMP WITH TIME ZONE).
+        \item \texttt{user\_follows} (Model: \texttt{UserFollow}, 4 cột): Lưu vết quan hệ theo dõi mạng xã hội tự tham chiếu (Self-referential) giữa các sinh viên. Sử dụng khóa chính phức hợp gồm hai khóa ngoại: \texttt{follower\_id} (UUID, PK, FK $\rightarrow$ \texttt{users.id}, ON DELETE CASCADE) và \texttt{following\_id} (UUID, PK, FK $\rightarrow$ \texttt{users.id}, ON DELETE CASCADE); đi kèm dấu thời gian \texttt{created\_at} và \texttt{updated\_at}.
     \end{itemize}
 
-    \item Activity
-    Thực thể này đại diện cho các sự kiện hoặc hoạt động được ghim trên bản đồ campus. Nó chứa toàn bộ thông tin về nội dung, thời gian và tọa độ địa lý để người dùng có thể tìm kiếm và tham gia.
-
+    \item \textbf{Nhóm Hoạt động sự kiện (Activities Module):}
     \begin{itemize}
-        \item ID: Mã định danh duy nhất cho mỗi hoạt động.
-
-        \item Owner ID: Khóa ngoại tham chiếu đến người tạo hoạt động (User).
-        
-        \item Title, Description: Tiêu đề và nội dung mô tả chi tiết về hoạt động.
-        
-        \item Images, Tags: Danh sách các đường dẫn ảnh minh họa và bộ thẻ từ khóa để phân loại hoạt động (ví dụ: \#thethao, \#hocthuat).
-        
-        \item Max Participants: Giới hạn số lượng người tham gia tối đa (nếu để trống nghĩa là không giới hạn).
-        
-        \item Address, Location: Địa chỉ văn bản và tọa độ địa lý thực tế (Point - vĩ độ/kinh độ). Đây là dữ liệu cốt lõi để hiển thị điểm ghim trên bản đồ.
-        
-        \item Start Time, End Time: Khung thời gian diễn ra hoạt động.
-        
-        \item Registration Deadline: Hạn chót để người dùng nhấn đăng ký tham gia.
-        
-        \item Auto Approve: Chế độ phê duyệt tự động. Nếu là True, người dùng nhấn tham gia sẽ vào thẳng danh sách; nếu False, chủ sở hữu phải duyệt thủ công.
-        
-        \item Is Active: Trạng thái hiển thị của hoạt động trên bản đồ.
-
-        \item Created At, Updated At: (Từ TimestampMixin) Ghi lại thời điểm tạo hoạt động và lần cập nhật thông tin gần nhất.
+        \item \texttt{activities} (Model: \texttt{Activity}, 25 cột): Thực thể trung tâm quản lý các sự kiện và phong trào ngoại khóa. Bao gồm khóa chính \texttt{id} (UUID); khóa ngoại người chủ trì \texttt{host\_id} (UUID, FK $\rightarrow$ \texttt{users.id}, ON DELETE CASCADE); nhóm tổ chức \texttt{group\_id} (UUID, Nullable, FK $\rightarrow$ \texttt{groups.id}, ON DELETE SET NULL); biểu mẫu khảo sát đính kèm \texttt{custom\_form\_id} (UUID, Nullable, FK $\rightarrow$ \texttt{custom\_forms.id}, ON DELETE SET NULL); tiêu đề \texttt{title} (VARCHAR(150), Index); nội dung mô tả công khai \texttt{description} (TEXT) và mô tả nội bộ chỉ thành viên tham gia xem được \texttt{private\_description} (TEXT); phân loại chủ đề \texttt{category} (VARCHAR(50), Index); tọa độ ghim bản đồ số \texttt{marker\_location} (PostGIS \texttt{geography(POINT, 4326)}); địa điểm tập trung \texttt{meeting\_location} (VARCHAR(200)); vector nhúng ngữ nghĩa \texttt{embedding} (\texttt{VECTOR(768)}) phục vụ tìm kiếm ngữ nghĩa và Trợ lý AI RAG; khung thời gian diễn ra gồm \texttt{start\_time} và \texttt{end\_time} (TIMESTAMP WITH TIME ZONE, Index); quy mô kiểm soát gồm \texttt{max\_participants} (INTEGER) và \texttt{current\_participants} (INTEGER, mặc định: 1, ràng buộc kiểm tra không âm \texttt{ck\_nonneg\_participants}); chế độ hiển thị \texttt{privacy} (Enum: \texttt{public}, \texttt{private}); cờ yêu cầu duyệt đơn \texttt{require\_approval} (BOOLEAN, mặc định: True); số ngày CTXH quy đổi \texttt{social\_work\_days} (FLOAT); cấu hình điểm danh chống gian lận gồm phương thức \texttt{attendance\_mode} (VARCHAR(20), mặc định: \texttt{manual}), mã bảo mật điểm danh \texttt{check\_in\_code} (VARCHAR(64), UNIQUE, Nullable) và bán kính định vị GPS Geofencing \texttt{check\_in\_radius} (INTEGER, mặc định: 300 mét); cờ xóa mềm \texttt{is\_deleted} (BOOLEAN) cùng \texttt{deleted\_at}; và dấu thời gian \texttt{created\_at}, \texttt{updated\_at}.
     \end{itemize}
 
-    \item Resource
-    Thực thể này quản lý các bài viết, tài liệu học tập và tri thức được đóng góp bởi cộng đồng sinh viên hoặc cán bộ trường. Đây là nguồn dữ liệu chính để Trợ lý AI thực hiện truy xuất ngữ nghĩa.
+    \item \textbf{Phân hệ Hội nhóm sinh viên và Đồng tổ chức (Groups \& Co-hosting):}
     \begin{itemize}
-        \item ID: Mã định danh duy nhất của tài liệu.
-
-        \item Author ID: Khóa ngoại liên kết tới người đăng tải (User).
-        
-        \item Title: Tiêu đề của tài liệu/bài viết, giúp người dùng nhận diện nhanh nội dung.
-        
-        \item Content: Nội dung chi tiết của học liệu. Trường này hỗ trợ định dạng Markdown, cho phép trình bày văn bản phong phú, đính kèm hình ảnh và các liên kết tải xuống tài liệu vật lý (PDF, Slide, v.v.).
-        
-        \item Tags: Danh sách các từ khóa liên quan giúp phân loại và tìm kiếm tài liệu theo chủ đề hoặc môn học.
-        
-        \item Is Active: Trạng thái kiểm duyệt hoặc hiển thị của tài liệu trên hệ thống.
-
-        \item Created At, Updated At: (Từ TimestampMixin) Ghi lại thời điểm tạo bài viết và lần cập nhật thông tin gần nhất.
+        \item \texttt{groups} (Model: \texttt{Group}, 14 cột): Quản lý các tổ chức, đội nhóm sinh viên. Bao gồm khóa chính \texttt{id} (UUID); chủ sở hữu sáng lập \texttt{owner\_id} (UUID, FK $\rightarrow$ \texttt{users.id}, ON DELETE CASCADE); tên nhóm định danh duy nhất \texttt{name} (VARCHAR(100), UNIQUE, Index); mô tả ngắn \texttt{description} (TEXT), mô tả công khai \texttt{public\_description} (TEXT) và nội quy nội bộ \texttt{private\_description} (TEXT); cờ phân quyền thành viên tổ chức sự kiện \texttt{allow\_member\_activities} (BOOLEAN, mặc định: True); cờ yêu cầu xét duyệt thành viên \texttt{require\_approval} (BOOLEAN, mặc định: True); quyền riêng tư \texttt{privacy} (Enum: \texttt{public}, \texttt{private}); biểu mẫu đăng ký gia nhập tùy biến \texttt{custom\_form\_id} (UUID, Nullable, FK $\rightarrow$ \texttt{custom\_forms.id}, ON DELETE SET NULL); dấu thời gian \texttt{created\_at}, \texttt{updated\_at}; cờ xóa mềm \texttt{is\_deleted} và \texttt{deleted\_at}.
+        \item \texttt{group\_members} (Model: \texttt{GroupMember}, 6 cột): Quản lý danh sách thành viên và phân quyền nội bộ nhóm. Gồm khóa chính \texttt{id} (UUID); khóa ngoại \texttt{group\_id} (UUID, FK $\rightarrow$ \texttt{groups.id}, ON DELETE CASCADE); khóa ngoại thành viên \texttt{user\_id} (UUID, FK $\rightarrow$ \texttt{users.id}, ON DELETE CASCADE); vai trò \texttt{role} (Enum: \texttt{admin}, \texttt{member}, mặc định: \texttt{member}); dấu thời gian \texttt{created\_at}, \texttt{updated\_at}. Ràng buộc toàn vẹn duy nhất: \texttt{UNIQUE(group\_id, user\_id)}.
+        \item \texttt{group\_join\_requests} (Model: \texttt{GroupJoinRequest}, 7 cột): Đơn đăng ký gia nhập nhóm của sinh viên. Gồm khóa chính \texttt{id} (UUID); khóa ngoại \texttt{group\_id} và \texttt{user\_id}; trạng thái xét duyệt \texttt{status} (VARCHAR(20), mặc định: \texttt{pending}); dữ liệu phản hồi câu hỏi biểu mẫu \texttt{form\_responses} (JSONB); cùng dấu thời gian \texttt{created\_at}, \texttt{updated\_at}. Ràng buộc: \texttt{UNIQUE(group\_id, user\_id)}.
+        \item \texttt{activity\_cohosts} (Model: \texttt{ActivityCoHost}, 5 cột): Quan hệ ủy quyền đồng tổ chức chính thức giữa sự kiện và nhóm đối tác. Gồm khóa chính \texttt{id} (UUID); khóa ngoại liên kết sự kiện \texttt{activity\_id} (UUID, FK $\rightarrow$ \texttt{activities.id}, ON DELETE CASCADE); khóa ngoại nhóm phối hợp \texttt{group\_id} (UUID, FK $\rightarrow$ \texttt{groups.id}, ON DELETE CASCADE); cùng \texttt{created\_at}, \texttt{updated\_at}. Ràng buộc: \texttt{UNIQUE(activity\_id, group\_id)}.
+        \item \texttt{activity\_cohost\_invitations} (Model: \texttt{ActivityCoHostInvitation}, 8 cột): Quản lý tiến trình mời đồng tổ chức. Gồm khóa chính \texttt{id} (UUID); sự kiện mời phối hợp \texttt{activity\_id}; nhóm chủ trì gửi lời mời \texttt{host\_group\_id} (UUID, FK $\rightarrow$ \texttt{groups.id}, ON DELETE CASCADE); nhóm đối tác nhận lời mời \texttt{invited\_group\_id} (UUID, FK $\rightarrow$ \texttt{groups.id}, ON DELETE CASCADE); trạng thái phản hồi \texttt{status} (VARCHAR(20), gồm: \texttt{pending}, \texttt{accepted}, \texttt{rejected}); lời nhắn kèm \texttt{message} (TEXT); cùng \texttt{created\_at}, \texttt{updated\_at}.
+        \item \texttt{organization\_verification\_requests} (Model: \texttt{OrganizationVerificationRequest}, 12 cột): Hồ sơ đăng ký cấp huy hiệu định danh uy tín chính thức cho nhóm sinh viên. Gồm khóa chính \texttt{id} (UUID); người đại diện nộp đơn \texttt{user\_id} (UUID, FK $\rightarrow$ \texttt{users.id}, ON DELETE CASCADE); tên tổ chức \texttt{organization\_name} (VARCHAR(150)); khoa viện bảo trợ \texttt{faculty} (VARCHAR(150)); đường dẫn tài liệu minh chứng pháp lý \texttt{document\_url} (VARCHAR(500)); bản giải trình hoạt động \texttt{description} (TEXT); trạng thái thẩm định \texttt{status} (Enum: \texttt{pending}, \texttt{approved}, \texttt{rejected}); ghi chú thẩm định của Admin \texttt{admin\_note} (TEXT); quản trị viên thụ lý \texttt{reviewed\_by} (UUID, Nullable, FK $\rightarrow$ \texttt{users.id}, ON DELETE SET NULL) và thời điểm thụ lý \texttt{reviewed\_at}; cùng \texttt{created\_at}, \texttt{updated\_at}.
     \end{itemize}
 
-    \item Report
-    Thực thể này quản lý các báo cáo từ người dùng đối với các nội dung khác trên hệ thống. Điểm đặc biệt của thực thể này là sử dụng cơ chế định danh mục tiêu linh hoạt, cho phép báo cáo nhiều loại đối tượng khác nhau (như hoạt động, tài liệu, hoặc bình luận).
-
+    \item \textbf{Nhóm Đăng ký tham gia và Biểu mẫu tùy biến (Participation \& Forms):}
     \begin{itemize}
-        \item ID: Mã định danh duy nhất cho từng bản ghi báo cáo.
-
-        \item Reporter ID: Khóa ngoại liên kết tới người thực hiện báo cáo (User).
-        
-        \item Target Type: Loại đối tượng bị báo cáo (Ví dụ: Resource, Activity, Comment). Đây là trường định danh để hệ thống biết báo cáo này thuộc phân hệ nào.
-        
-        \item Target ID: ID vật lý của đối tượng bị báo cáo trong bảng tương ứng của nó.
-        
-        \item Reason: Lý do báo cáo được chọn từ danh sách có sẵn (Ví dụ: Nội dung nhạy cảm, Thông tin sai lệch, Lừa đảo, Vi phạm bản quyền).
-        
-        \item Details: Nội dung mô tả chi tiết bổ sung từ người báo cáo để giúp Admin có thêm căn cứ xử lý.
-        
-        \item Status: Trạng thái xử lý của báo cáo (Đang chờ, Đã xử lý, hoặc Đã bác bỏ).
-        
-        \item Created At, Updated At: (Từ TimestampMixin) Ghi lại thời điểm tạo báo cáo và lần cập nhật thông tin gần nhất.
+        \item \texttt{join\_requests} (Model: \texttt{JoinRequest}, 9 cột): Quản lý toàn bộ tiến trình đăng ký và kết quả điểm danh của sinh viên tại sự kiện. Gồm khóa chính \texttt{id} (UUID); sự kiện tham gia \texttt{activity\_id} (UUID, FK $\rightarrow$ \texttt{activities.id}, ON DELETE CASCADE); sinh viên đăng ký \texttt{user\_id} (UUID, FK $\rightarrow$ \texttt{users.id}, ON DELETE CASCADE); trạng thái đơn \texttt{status} (Enum: \texttt{pending}, \texttt{approved}, \texttt{declined}, \texttt{cancelled}); lời nhắn từ người nộp \texttt{message} (TEXT); thời điểm ban tổ chức phản hồi \texttt{responded\_at}; câu trả lời biểu mẫu khảo sát sự kiện \texttt{form\_responses} (JSONB); cờ chứng nhận điểm danh hợp lệ \texttt{attendance\_confirmed} (BOOLEAN, mặc định: False); và thời điểm đăng ký \texttt{created\_at}. Ràng buộc: \texttt{UNIQUE(activity\_id, user\_id)}.
+        \item \texttt{custom\_forms} (Model: \texttt{CustomForm}, 5 cột): Biểu mẫu thu thập dữ liệu tùy biến tái sử dụng linh hoạt cho cả sự kiện và nhóm. Gồm khóa chính \texttt{id} (UUID); tiêu đề biểu mẫu \texttt{title} (VARCHAR(200)); hướng dẫn điền \texttt{description} (TEXT); và dấu thời gian \texttt{created\_at}, \texttt{updated\_at}.
+        \item \texttt{form\_fields} (Model: \texttt{FormField}, 7 cột): Chi tiết từng câu hỏi trong biểu mẫu tùy biến. Gồm khóa chính \texttt{id} (UUID); biểu mẫu trực thuộc \texttt{form\_id} (UUID, FK $\rightarrow$ \texttt{custom\_forms.id}, ON DELETE CASCADE); tiêu đề câu hỏi \texttt{label} (VARCHAR(200)); kiểu dữ liệu nhập \texttt{field\_type} (Enum: \texttt{text}, \texttt{textarea}, \texttt{checkbox}, \texttt{number}); cờ bắt buộc \texttt{is\_required} (BOOLEAN, mặc định: True); thứ tự sắp xếp câu hỏi \texttt{order} (INTEGER); và thuộc tính bổ sung \texttt{meta\_data} (JSONB).
     \end{itemize}
 
-    \item Notification
-    Thực thể này quản lý luồng thông tin cập nhật giữa các người dùng và giữa hệ thống với người dùng. Nó đảm bảo tính tương tác thời gian thực bằng cách gửi thông điệp khi có sự thay đổi về trạng thái hoạt động hoặc các tương tác xã hội.
+    \item \textbf{Nhóm Tương tác cộng đồng (Interactions Module):}
     \begin{itemize}
-        \item ID: Mã định danh duy nhất cho mỗi thông báo.
-
-        \item Recipient ID: (Khóa ngoại) Định danh người nhận thông báo. Đây là quan hệ bắt buộc (Total Participation).
-        
-        \item Actor ID: (Khóa ngoại) Định danh người gây ra hành động dẫn đến thông báo (ví dụ: người nhấn "Like" hoặc "Comment"). Trường này có thể để trống (NULL) nếu là thông báo từ hệ thống.
-        
-        \item Type: Phân loại thông báo dựa trên tập giá trị NotificationType (Yêu cầu tham gia, Được duyệt, Cập nhật hoạt động, Bình luận mới, Cảm xúc mới, Thông báo hệ thống).
-        
-        \item Reference ID \& Type: Cặp thuộc tính dùng để dẫn hướng người dùng khi nhấn vào thông báo. Reference Type xác định đối tượng liên quan (Activity, Resource, hoặc User), và Reference ID lưu ID của đối tượng đó.
-        
-        \item Content: Nội dung chi tiết của thông báo hiển thị cho người dùng.
-        
-        \item Is Read: Trạng thái kiểm soát việc người dùng đã xem thông báo hay chưa, phục vụ cho việc hiển thị dấu chấm đỏ hoặc số lượng thông báo mới trên giao diện UI.
+        \item \texttt{comments} (Model: \texttt{Comment}, 9 cột): Diễn đàn thảo luận và trao đổi sinh viên dưới từng hoạt động. Gồm khóa chính \texttt{id} (UUID); hoạt động thảo luận \texttt{activity\_id} (UUID, FK $\rightarrow$ \texttt{activities.id}, ON DELETE CASCADE); người bình luận \texttt{user\_id} (UUID, FK $\rightarrow$ \texttt{users.id}, ON DELETE CASCADE); bình luận cha cấp trên \texttt{parent\_id} (UUID, Nullable, FK $\rightarrow$ \texttt{comments.id}, ON DELETE CASCADE) cho phép phân cấp phản hồi đa tầng lồng nhau; nội dung thảo luận \texttt{content} (TEXT); dấu thời gian \texttt{created\_at}, \texttt{updated\_at}; cùng cờ xóa mềm \texttt{is\_deleted} và \texttt{deleted\_at}.
+        \item \texttt{content\_likes} (Model: \texttt{ContentLike}, 4 cột): Biểu thị cảm xúc quan tâm và yêu thích sự kiện ngoại khóa của người dùng. Gồm khóa chính \texttt{id} (UUID); liên kết sự kiện \texttt{activity\_id} (UUID, FK $\rightarrow$ \texttt{activities.id}, ON DELETE CASCADE); liên kết người tương tác \texttt{user\_id} (UUID, FK $\rightarrow$ \texttt{users.id}, ON DELETE CASCADE); và thời điểm tương tác \texttt{created\_at}. Ràng buộc: \texttt{UNIQUE(activity\_id, user\_id)}.
     \end{itemize}
 
-    \item Conversation
-    Thực thể này đóng vai trò là "phòng chat" đại diện cho kênh kết nối trực tiếp giữa hai người dùng. Thay vì tạo nhiều bản ghi trùng lặp, thực thể này quản lý một cặp định danh duy nhất để duy trì lịch sử hội thoại xuyên suốt.
+    \item \textbf{Nhóm Lịch cá nhân thông minh (Smart Calendar):}
     \begin{itemize}
-        \item ID: Mã định danh duy nhất của cuộc hội thoại.
-        
-        \item User1 ID \& User2 ID: Hai khóa ngoại tham chiếu đến bảng User. Hệ thống áp dụng ràng buộc UniqueConstraint và CheckConstraint ($user1\_id < user2\_id$) để đảm bảo giữa hai người dùng bất kỳ chỉ tồn tại duy nhất một phòng chat, tránh lãng phí dữ liệu.
-        
-        \item Last Message At: Thuộc tính lưu thời điểm tin nhắn cuối cùng được gửi. Đây là dữ liệu quan trọng để hệ thống sắp xếp (sort) danh sách hộp thư, đưa các cuộc hội thoại mới nhất lên đầu giao diện.
+        \item \texttt{user\_busy\_slots} (Model: \texttt{UserBusySlot}, 13 cột): Cấu hình khung thời gian bận định kỳ của sinh viên (lịch học cố định, ca làm thêm) phục vụ thuật toán phát hiện xung đột lịch. Gồm khóa chính \texttt{id} (UUID); chủ sở hữu \texttt{user\_id} (UUID, FK $\rightarrow$ \texttt{users.id}, ON DELETE CASCADE); tên lịch bận \texttt{title} (VARCHAR(150)); kiểu lặp \texttt{recurrence} (VARCHAR(20), gồm: \texttt{once}, \texttt{weekly}); khung thời gian tuyệt đối khi lặp một lần gồm \texttt{start\_datetime} và \texttt{end\_datetime}; khung thời gian định kỳ hàng tuần gồm thứ trong tuần \texttt{day\_of\_week} (INTEGER: $0 \rightarrow 6$), giờ bắt đầu \texttt{start\_time\_of\_day} và kết thúc \texttt{end\_time\_of\_day} (TIME); khoảng thời gian áp dụng trong học kỳ gồm \texttt{valid\_from} và \texttt{valid\_until} (DATE); cùng dấu thời gian \texttt{created\_at}, \texttt{updated\_at}.
+        \item \texttt{busy\_slot\_exceptions} (Model: \texttt{BusySlotException}, 3 cột): Các ngày ngoại lệ hủy bỏ cảnh báo bận định kỳ (ngày lễ, buổi học được dời lịch). Gồm khóa chính \texttt{id} (UUID); khung giờ bận liên kết \texttt{busy\_slot\_id} (UUID, FK $\rightarrow$ \texttt{user\_busy\_slots.id}, ON DELETE CASCADE); và ngày ngoại lệ cụ thể \texttt{skip\_date} (DATE).
+        \item \texttt{user\_vacation\_periods} (Model: \texttt{UserVacationPeriod}, 7 cột): Quản lý các kỳ nghỉ dài ngày (nghỉ hè, nghỉ Tết) của sinh viên. Gồm khóa chính \texttt{id} (UUID); người dùng \texttt{user\_id} (UUID, FK $\rightarrow$ \texttt{users.id}, ON DELETE CASCADE); tiêu đề kỳ nghỉ \texttt{title} (VARCHAR(100)); ngày bắt đầu \texttt{start\_date} và kết thúc \texttt{end\_date} (DATE); cùng \texttt{created\_at}, \texttt{updated\_at}.
     \end{itemize}
 
-    \item Chatbot session
-    Thực thể này đóng vai trò là một "ngữ cảnh hội thoại" giữa người dùng và Trợ lý AI. Việc chia theo từng phiên giúp người dùng quản lý các chủ đề hỏi đáp khác nhau (ví dụ: một phiên hỏi về học phí, một phiên hỏi về sơ đồ trường) mà không bị lẫn lộn nội dung.
+    \item \textbf{Nhóm Trò chơi hóa và Thành tích (Gamification \& Trophies):}
     \begin{itemize}
-        \item ID: Mã định danh duy nhất của phiên chat.
-
-        \item User ID: Khóa ngoại liên kết tới người sở hữu phiên chat. Một người dùng có thể có nhiều phiên hỏi đáp khác nhau.
-        
-        \item Title: Tiêu đề của phiên chat, thường được hệ thống tự động sinh ra từ câu hỏi đầu tiên để người dùng dễ dàng tìm lại lịch sử.
-        
-        \item Created At: Thời điểm bắt đầu phiên hội thoại.
+        \item \texttt{trophies} (Model: \texttt{Trophy}, 6 cột): Quản lý danh hiệu và huy hiệu vinh danh gắn với hoạt động. Gồm khóa chính \texttt{id} (UUID); hoạt động thiết lập trao thưởng \texttt{activity\_id} (UUID, Nullable, FK $\rightarrow$ \texttt{activities.id}, ON DELETE CASCADE); tên danh hiệu duy nhất \texttt{name} (VARCHAR(100), UNIQUE); mô tả ý nghĩa \texttt{description} (TEXT); cùng dấu thời gian \texttt{created\_at}, \texttt{updated\_at}.
+        \item \texttt{user\_trophies} (Model: \texttt{UserTrophy}, 6 cột): Bảng ghi nhận chứng nhận danh hiệu đã trao cho sinh viên sau khi hoàn thành điểm danh hợp lệ. Gồm khóa chính \texttt{id} (UUID); sinh viên thụ hưởng \texttt{user\_id} (UUID, FK $\rightarrow$ \texttt{users.id}, ON DELETE CASCADE); danh hiệu tương ứng \texttt{trophy\_id} (UUID, FK $\rightarrow$ \texttt{trophies.id}, ON DELETE CASCADE); sự kiện đạt được \texttt{activity\_id} (UUID, Nullable, FK $\rightarrow$ \texttt{activities.id}, ON DELETE CASCADE); cùng dấu thời gian \texttt{created\_at}, \texttt{updated\_at}. Ràng buộc: \texttt{UNIQUE(user\_id, trophy\_id)}.
     \end{itemize}
 
-    \item Chatbot message
-    Lưu trữ chi tiết từng lượt trao đổi trong một phiên chat. Đây là nguồn dữ liệu quan trọng để hệ thống "nhắc lại" ngữ cảnh cho mô hình ngôn ngữ (LLM) trong các câu hỏi tiếp theo.
+    \item \textbf{Nhóm Quản trị, Thông báo và Giám sát (Administration \& Notifications):}
     \begin{itemize}
-        \item ID: Mã định danh duy nhất của tin nhắn.
-
-        \item Session ID: Khóa ngoại liên kết chặt chẽ với phiên chat tương ứng. Khi xóa phiên chat, toàn bộ tin nhắn liên quan sẽ bị xóa theo (Cascade).
-
-        \item Role: Vai trò của thực thể gửi tin nhắn (User - Người dùng hoặc Assistant - Trợ lý AI). Đây là thông tin bắt buộc để AI hiểu đâu là câu hỏi và đâu là câu trả lời cũ.
-
-        \item Content: Nội dung văn bản của tin nhắn.
-
-        \item Created At: Ghi lại thời gian để sắp xếp thứ tự các câu thoại theo đúng trình tự thời gian.
+        \item \texttt{notifications} (Model: \texttt{Notification}, 10 cột): Hệ thống thông báo định danh và đẩy tin theo thời gian thực. Gồm khóa chính \texttt{id} (UUID); người nhận thông báo \texttt{user\_id} (UUID, FK $\rightarrow$ \texttt{users.id}, ON DELETE CASCADE); tác nhân kích hoạt \texttt{actor\_id} (UUID, Nullable, FK $\rightarrow$ \texttt{users.id}, ON DELETE SET NULL); sự kiện liên quan \texttt{activity\_id} (UUID, Nullable, FK $\rightarrow$ \texttt{activities.id}, ON DELETE SET NULL); phân loại sự kiện \texttt{type} (VARCHAR(50)); nội dung thông báo \texttt{message} (TEXT); đường dẫn điều hướng động khi nhấp \texttt{action\_url} (VARCHAR(255)); cờ kiểm soát đã đọc \texttt{is\_read} (BOOLEAN, mặc định: False); cùng dấu thời gian \texttt{created\_at}, \texttt{updated\_at}.
+        \item \texttt{reports} (Model: \texttt{Report}, 11 cột): Quản lý các báo cáo tố cáo vi phạm nội dung và hành vi từ người dùng. Gồm khóa chính \texttt{id} (UUID); sinh viên gửi báo cáo \texttt{reporter\_id} (UUID, FK $\rightarrow$ \texttt{users.id}, ON DELETE CASCADE); loại đối tượng bị báo cáo \texttt{target\_type} (VARCHAR(50), gồm: \texttt{activity}, \texttt{user}, \texttt{comment}, \texttt{group}); định danh mục tiêu bị tố cáo \texttt{target\_id} (UUID); lý do tố cáo \texttt{reason} (VARCHAR(100)); nội dung giải trình chi tiết \texttt{description} (TEXT); trạng thái xử lý \texttt{status} (VARCHAR(50), gồm: \texttt{pending}, \texttt{resolved}, \texttt{dismissed}); ghi chú kết luận của Admin \texttt{admin\_note} (TEXT); quản trị viên trực tiếp thụ lý \texttt{resolved\_by} (UUID, Nullable, FK $\rightarrow$ \texttt{users.id}, ON DELETE SET NULL); cùng dấu thời gian \texttt{created\_at}, \texttt{updated\_at}.
+        \item \texttt{admin\_audit\_logs} (Model: \texttt{AdminAuditLog}, 7 cột): Nhật ký kiểm toán bảo mật lưu vết mọi hành vi can thiệp dữ liệu nhạy cảm của ban quản trị. Gồm khóa chính \texttt{id} (UUID); quản trị viên thực hiện thao tác \texttt{actor\_id} (UUID, Nullable, FK $\rightarrow$ \texttt{users.id}, ON DELETE SET NULL); tên hành vi can thiệp \texttt{action} (VARCHAR(100), gồm: \texttt{verify\_organization}, \texttt{reject\_organization}, \texttt{deactivate\_user}, \texttt{activate\_user}, \texttt{change\_user\_role}, \texttt{resolve\_report}, \texttt{dismiss\_report}, \texttt{hide\_activity}); phân loại thực thể chịu tác động \texttt{target\_type} (VARCHAR(50), gồm: \texttt{user}, \texttt{activity}, \texttt{report}, \texttt{verification}); định danh đối tượng \texttt{target\_id} (UUID); dữ liệu ảnh chụp trạng thái trước và sau can thiệp \texttt{metadata\_json} (JSONB); cùng dấu thời gian ghi nhật ký bất biến \texttt{created\_at} (TIMESTAMP WITH TIME ZONE).
     \end{itemize}
 \end{enumerate}
 
-\subsubsection{Mô tả các mối quan hệ}
+\noindent\textit{Ghi chú về phân tách phạm vi:} Hai bảng còn lại trong CSDL PostgreSQL là \texttt{alembic\_version} (lưu vết mã băm phiên bản di chuyển lược đồ CSDL) và \texttt{spatial\_ref\_sys} (bảng danh mục hệ quy chiếu không gian EPSG:4326 của tiện ích mở rộng PostGIS) là các bảng vận hành hạ tầng của hệ quản trị, do đó hoàn toàn tách biệt khỏi 22 thực thể thuộc miền nghiệp vụ phần mềm (Domain ERD).
 
-\setlist[itemize]{leftmargin=*, nosep, topsep=0pt} % Tối ưu khoảng cách trong list
+\subsubsection{Mô tả các mối quan hệ thực thể}
 
-\begin{longtable}{|p{0.25\textwidth}|p{0.15\textwidth}|p{0.53\textwidth}|}
-    \caption{Bảng tổng hợp các mối quan hệ giữa các thực thể trong hệ thống} \label{tab:relationship_summary} \\
+\setlist[itemize]{leftmargin=*, nosep, topsep=0pt}
+
+\begin{longtable}{|p{0.28\textwidth}|p{0.18\textwidth}|p{0.48\textwidth}|}
+    \caption{Bảng tổng hợp các mối quan hệ giữa các thực thể nghiệp vụ (Domain Relationships)} \label{tab:relationship_summary} \\
     
     \hline
-    \textbf{Thực thể tham gia} & \textbf{Quan hệ} & \textbf{Giải thích ý nghĩa \& Ràng buộc} \\ \hline
+    \textbf{Thực thể tham gia} & \textbf{Quan hệ \& Lực lượng} & \textbf{Giải thích ý nghĩa \& Ràng buộc khóa ngoại (FK)} \\ \hline
     \endfirsthead
+
+    \hline
+    \textbf{Thực thể tham gia} & \textbf{Quan hệ \& Lực lượng} & \textbf{Giải thích ý nghĩa \& Ràng buộc khóa ngoại (FK)} \\ \hline
+    \endhead
+
+    \hline
+    \endfoot
 
     \hline
     \endlastfoot
 
-    % --- Dữ liệu bảng ---
-    \textbf{User -- Activity} & \textbf{Create} \newline (1 -- N) & 
+    \texttt{users} -- \texttt{activities} & Host / Own \newline (1 -- N) & 
     \begin{itemize}
-        \item Một \textbf{User} có thể tổ chức/quản lý nhiều \textbf{Activity}.
-        \item Một \textbf{Activity} bắt buộc phải được sở hữu bởi duy nhất một \textbf{User} (Owner).
+        \item Một người dùng có thể tạo và chủ trì nhiều hoạt động ngoại khóa.
+        \item Mỗi hoạt động bắt buộc có duy nhất một người chủ trì (\texttt{activities.host\_id} $\rightarrow$ \texttt{users.id}, ON DELETE CASCADE).
+    \end{itemize} \\ \hline
+
+    \texttt{groups} -- \texttt{activities} & Organize \newline (0..1 -- N) & 
+    \begin{itemize}
+        \item Một nhóm sinh viên có thể đứng tên chủ trì tổ chức nhiều sự kiện.
+        \item Hoạt động có thể do một nhóm đứng tên hoặc do cá nhân tạo (\texttt{activities.group\_id} $\rightarrow$ \texttt{groups.id}, Nullable, ON DELETE SET NULL).
+    \end{itemize} \\ \hline
+
+    \texttt{users} -- \texttt{user\_follows} & Follow \newline (1 -- N) & 
+    \begin{itemize}
+        \item Một sinh viên có thể theo dõi nhiều người khác hoặc có nhiều người theo dõi.
+        \item Khóa chính kép tự tham chiếu: \texttt{(follower\_id, following\_id)} trỏ về \texttt{users.id} (ON DELETE CASCADE).
     \end{itemize} \\ \hline
     
-    \textbf{User -- Activity} & \textbf{Participate} \newline (N -- N) & 
+    \texttt{users} -- \texttt{activities} \newline (qua \texttt{join\_requests}) & Participate \newline (N -- N) & 
     \begin{itemize}
-        \item Một \textbf{User} có thể tham gia nhiều \textbf{Activity} khác nhau.
-        \item Một \textbf{Activity} có thể có nhiều người tham gia thông qua thực thể trung gian \textbf{ActivityParticipant}.
+        \item Sinh viên đăng ký tham gia nhiều hoạt động; hoạt động có nhiều sinh viên tham gia.
+        \item Thực thể trung gian \texttt{join\_requests} lưu trữ trạng thái duyệt đơn (\texttt{status}) và chứng nhận hoàn thành điểm danh (\texttt{attendance\_confirmed}). Ràng buộc: \texttt{UNIQUE(activity\_id, user\_id)}.
     \end{itemize} \\ \hline
 
-    \textbf{User -- Resource} & \textbf{Create} \newline (1 -- N) & 
+    \texttt{activities} -- \texttt{groups} \newline (qua \texttt{activity\_cohosts}) & Co-host \newline (N -- N) & 
     \begin{itemize}
-        \item Một \textbf{User} có thể đăng tải nhiều tài liệu học tập (\textbf{Resource}).
-        \item Một \textbf{Resource} bắt buộc phải thuộc về một tác giả xác định.
+        \item Một hoạt động có thể liên kết đồng tổ chức với nhiều nhóm đối tác.
+        \item Bảng \texttt{activity\_cohosts} cấp quyền ủy nhiệm mở điểm danh cho ban quản trị nhóm đối tác. Ràng buộc: \texttt{UNIQUE(activity\_id, group\_id)}.
     \end{itemize} \\ \hline
 
-    \textbf{User -- Resource} & \textbf{Like} \newline (1 -- N) & 
+    \texttt{activities} -- \texttt{groups} \newline (qua \texttt{activity\_cohost\_invitations}) & Co-host Invite \newline (N -- N) & 
     \begin{itemize}
-        \item Một \textbf{User} có thể thích nhiều tài liệu học tập (\textbf{Resource}).
-        \item Một \textbf{Resource} có thể được thích bởi nhiều người dùng.
+        \item Nhóm chủ trì (\texttt{host\_group\_id}) gửi lời mời đồng tổ chức sự kiện tới nhóm đối tác (\texttt{invited\_group\_id}).
+        \item Lưu vết trạng thái phản hồi lời mời (\texttt{status}: pending, accepted, rejected).
     \end{itemize} \\ \hline
 
-    \textbf{User -- Resource} & \textbf{Comment} \newline (1 -- N) & 
+    \texttt{groups} -- \texttt{users} \newline (qua \texttt{group\_members}) & Member \newline (N -- N) & 
     \begin{itemize}
-        \item Một \textbf{User} có thể bình luận trong nhiều tài liệu học tập (\textbf{Resource}).
-        \item Một \textbf{Resource} có thể nhận bình luận bởi nhiều người dùng.
+        \item Người dùng là thành viên của nhiều nhóm với vai trò xác định (\texttt{role}: admin, member). Quyền sở hữu nhóm do \texttt{groups.owner\_id} quản lý.
+        \item Bảng \texttt{group\_members} ràng buộc: \texttt{UNIQUE(group\_id, user\_id)}.
     \end{itemize} \\ \hline
 
-    \textbf{Conversation -- Message} & \textbf{Has} \newline (1 -- N) & 
+    \texttt{groups} -- \texttt{users} \newline (qua \texttt{group\_join\_requests}) & Join Group \newline (N -- N) & 
     \begin{itemize}
-        \item Một cuộc hội thoại (\textbf{Has}) chứa nhiều tin nhắn \textbf{DirectMessage}.
-        \item Một \textbf{DirectMessage} bắt buộc phải nằm trong một cuộc hội thoại cụ thể.
+        \item Đơn đăng ký gia nhập nhóm từ sinh viên kèm câu trả lời khảo sát (\texttt{form\_responses}), quản lý theo trạng thái \texttt{status} (pending, approved, rejected).
+        \item Ràng buộc: \texttt{UNIQUE(group\_id, user\_id)}.
     \end{itemize} \\ \hline
 
-    \textbf{User -- Chatbot Session} & \textbf{Has} \newline (1 -- N) & 
+    \texttt{users} -- \texttt{organization\_verification\_requests} & Request Verification \newline (1 -- N) & 
     \begin{itemize}
-        \item Một \textbf{User} có thể khởi tạo nhiều phiên hỏi đáp với Trợ lý AI (\textbf{ChatSession}).
-        \item Mỗi phiên chat bắt buộc gắn liền với một người dùng cụ thể.
+        \item Sinh viên đại diện nhóm nộp hồ sơ minh chứng pháp lý xin cấp huy hiệu chính thức (\texttt{user\_id} $\rightarrow$ \texttt{users.id}).
+        \item Quản trị viên thẩm định và phê duyệt lưu tại \texttt{reviewed\_by} $\rightarrow$ \texttt{users.id} (Nullable).
     \end{itemize} \\ \hline
 
-    \textbf{User -- Conversation} & \textbf{Has} \newline (1 -- N) & 
+    \texttt{activities} -- \texttt{trophies} & Reward \newline (1 -- N) & 
     \begin{itemize}
-        \item Một \textbf{User} có thể khởi tạo nhiều phiên trò chuyện với những người dùng khác.
-        \item Mỗi phiên chat bắt buộc gắn liền với một người dùng cụ thể.
+        \item Mỗi hoạt động có thể thiết lập các danh hiệu vinh danh trao tặng cho sinh viên hoàn thành (\texttt{trophies.activity\_id} $\rightarrow$ \texttt{activities.id}, ON DELETE CASCADE).
     \end{itemize} \\ \hline
 
-    \textbf{ChatSession -- Message} & \textbf{Has} \newline (1 -- N) & 
+    \texttt{users} -- \texttt{trophies} \newline (qua \texttt{user\_trophies}) & Achieve / Earn \newline (N -- N) & 
     \begin{itemize}
-        \item Một phiên hỏi đáp (\textbf{ChatSession}) bao gồm nhiều lượt gửi tin nhắn \textbf{ChatMessage}.
-        \item Mỗi \textbf{ChatMessage} lưu trữ nội dung hội thoại theo vai trò (User/Assistant).
+        \item Người dùng tích lũy nhiều danh hiệu \texttt{trophies}; danh hiệu được trao cho nhiều sinh viên.
+        \item Bảng \texttt{user\_trophies} lưu mốc thời gian trao tặng và hoạt động đạt được (\texttt{activity\_id}), ràng buộc \texttt{UNIQUE(user\_id, trophy\_id)}.
     \end{itemize} \\ \hline
 
-    \textbf{User -- Notification} & \textbf{Has} \newline (1 -- N) & 
+    \texttt{users} -- \texttt{user\_busy\_slots} & Busy Schedule \newline (1 -- N) & 
     \begin{itemize}
-        \item Một \textbf{User} có thể nhận được nhiều thông báo (\textbf{Notification}).
-        \item Mỗi thông báo được gửi đích danh đến một người nhận (Recipient).
+        \item Sinh viên cấu hình các khung giờ bận trong tuần (lịch học cố định, ca trực) phục vụ phát hiện xung đột thời gian (\texttt{user\_id} $\rightarrow$ \texttt{users.id}, ON DELETE CASCADE).
     \end{itemize} \\ \hline
 
-    \textbf{User -- Report} & \textbf{Create} \newline (1 -- N) & 
+    \texttt{user\_busy\_slots} -- \texttt{busy\_slot\_exceptions} & Has Exception \newline (1 -- N) & 
     \begin{itemize}
-        \item Một \textbf{User} có thể gửi nhiều báo cáo vi phạm (\textbf{Report}).
-        \item Một báo cáo bắt buộc phải được tạo bởi một \textbf{User} xác định.
+        \item Một khung giờ bận định kỳ có thể có các ngày ngoại lệ nghỉ lễ hoặc dời buổi học (\texttt{busy\_slot\_id} $\rightarrow$ \texttt{user\_busy\_slots.id}, ON DELETE CASCADE).
     \end{itemize} \\ \hline
 
-    \textbf{User -- Activity comment} & \textbf{Create} \newline (1 -- N) & 
+    \texttt{users} -- \texttt{user\_vacation\_periods} & Vacation \newline (1 -- N) & 
     \begin{itemize}
-        \item Một \textbf{User} có thể bình luận trên các nội dung.
-        \item Một bình luận được tạo bởi một người dùng cụ thể.
+        \item Sinh viên quản lý các kỳ nghỉ dài ngày (\texttt{start\_date <= end\_date}) để hệ thống tạm ngắt cảnh báo bận (\texttt{user\_id} $\rightarrow$ \texttt{users.id}, ON DELETE CASCADE).
     \end{itemize} \\ \hline
-    
-    \textbf{User -- Activity comment} & \textbf{Like} \newline (N -- N) & 
+
+    \texttt{activities} -- \texttt{custom\_forms} & Has Form \newline (0..1 -- 1) & 
     \begin{itemize}
-        \item Một \textbf{User} có thể thích bình luận trong nội dung.
-        \item Một bình luận hoạt động được thích bởi nhiều người dùng.
+        \item Hoạt động có thể liên kết với một biểu mẫu đăng ký tùy biến (\texttt{activities.custom\_form\_id} $\rightarrow$ \texttt{custom\_forms.id}, Nullable, ON DELETE SET NULL).
+    \end{itemize} \\ \hline
+
+    \texttt{groups} -- \texttt{custom\_forms} & Has Form \newline (0..1 -- 1) & 
+    \begin{itemize}
+        \item Nhóm có thể liên kết với một biểu mẫu tuyển thành viên tùy biến (\texttt{groups.custom\_form\_id} $\rightarrow$ \texttt{custom\_forms.id}, Nullable, ON DELETE SET NULL).
+    \end{itemize} \\ \hline
+
+    \texttt{custom\_forms} -- \texttt{form\_fields} & Contains \newline (1 -- N) & 
+    \begin{itemize}
+        \item Biểu mẫu tùy biến chứa nhiều câu hỏi và trường nhập liệu (\texttt{form\_fields.form\_id} $\rightarrow$ \texttt{custom\_forms.id}, ON DELETE CASCADE).
+    \end{itemize} \\ \hline
+
+    \texttt{activities} -- \texttt{comments} & Discussion \newline (1 -- N) & 
+    \begin{itemize}
+        \item Hoạt động chứa luồng thảo luận gồm nhiều bình luận của sinh viên (\texttt{comments.activity\_id} $\rightarrow$ \texttt{activities.id}, ON DELETE CASCADE).
+    \end{itemize} \\ \hline
+
+    \texttt{users} -- \texttt{comments} & Author \newline (1 -- N) & 
+    \begin{itemize}
+        \item Người dùng đăng tải nhiều bình luận trao đổi trong các hoạt động (\texttt{comments.user\_id} $\rightarrow$ \texttt{users.id}, ON DELETE CASCADE).
+    \end{itemize} \\ \hline
+
+    \texttt{comments} -- \texttt{comments} & Reply \newline (1 -- N) & 
+    \begin{itemize}
+        \item Mối quan hệ tự thân hỗ trợ cấu trúc thảo luận phân cấp lồng nhau đa tầng (\texttt{comments.parent\_id} $\rightarrow$ \texttt{comments.id}, Nullable, ON DELETE CASCADE).
+    \end{itemize} \\ \hline
+
+    \texttt{users} -- \texttt{notifications} & Receive \newline (1 -- N) & 
+    \begin{itemize}
+        \item Người dùng nhận được nhiều thông báo hệ thống và tương tác theo thời gian thực (\texttt{notifications.user\_id} $\rightarrow$ \texttt{users.id}, ON DELETE CASCADE).
+        \item Thông báo liên kết tùy chọn với hoạt động (\texttt{activity\_id} $\rightarrow$ \texttt{activities.id}, ON DELETE SET NULL) và điều hướng động qua \texttt{action\_url}.
+    \end{itemize} \\ \hline
+
+    \texttt{users} -- \texttt{reports} & File Report \newline (1 -- N) & 
+    \begin{itemize}
+        \item Người dùng gửi nhiều báo cáo vi phạm nội dung (\texttt{reporter\_id} $\rightarrow$ \texttt{users.id}, ON DELETE CASCADE).
+        \item Trường \texttt{target\_type} và \texttt{target\_id} sử dụng cơ chế định danh đa hình (Polymorphic Reference).
+        \item Quản trị viên xử lý lưu tại \texttt{resolved\_by} $\rightarrow$ \texttt{users.id} (Nullable, ON DELETE SET NULL).
+    \end{itemize} \\ \hline
+
+    \texttt{users} -- \texttt{content\_likes} & Like Activity \newline (1 -- N) & 
+    \begin{itemize}
+        \item Người dùng bày tỏ cảm xúc yêu thích hoạt động ngoại khóa. Ràng buộc khóa ngoại trực tiếp \texttt{content\_likes.activity\_id} ($\rightarrow$ \texttt{activities.id}, ON DELETE CASCADE) và \texttt{UNIQUE(activity\_id, user\_id)}.
+    \end{itemize} \\ \hline
+
+    \texttt{users} -- \texttt{admin\_audit\_logs} & Audit Trail \newline (1 -- N) & 
+    \begin{itemize}
+        \item Lưu vết chi tiết từng thao tác quản trị viên phục vụ giám sát và kiểm toán bảo mật (\texttt{admin\_audit\_logs.actor\_id} $\rightarrow$ \texttt{users.id}, ON DELETE SET NULL).
     \end{itemize} \\ \hline
 \end{longtable}
 
-\subsection{Activity diagram}
+\subsection{Biểu đồ hoạt động (Activity Diagram)}
+
+Nhằm mô hình hóa chi tiết động thái xử lý nghiệp vụ, sự phối hợp giữa người dùng và các phân hệ bên trong kiến trúc phần mềm, hệ thống UniConnect xây dựng 8 Biểu đồ hoạt động (Activity Diagram / Flowchart) bao quát toàn bộ 8 ca sử dụng và các quy tắc nghiệp vụ then chốt:
+
+\subsubsection{Quy trình Khởi tạo và Xuất bản hoạt động trên Bản đồ số}
+
+Quy trình tạo mới hoạt động (Hình~\ref{fig:activity_tao_hoat_dong}) mô tả tuần tự luồng tương tác giữa người dùng và hệ thống, từ thao tác chọn vị trí trên bản đồ học đường đến khi sự kiện được lưu trữ và lập chỉ mục ngữ nghĩa:
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\textwidth]{Images/activity-join-activity.png} 
-    \caption{Activity Diagram quy trình đăng ký tham gia hoạt động}
+    \includegraphics[width=0.85\textwidth]{Images/activity-create-activity.png} 
+    \caption{Activity Diagram: Quy trình Khởi tạo và Xuất bản hoạt động trên Bản đồ số}
+    \label{fig:activity_tao_hoat_dong}
+\end{figure}
+
+Người dùng khởi tạo luồng bằng việc chọn vị trí trên bản đồ, mở biểu mẫu và nhập thông tin sự kiện cùng các cấu hình điểm danh. Khi người dùng nhấn nút xuất bản, hệ thống kiểm tra tính hợp lệ của dữ liệu (hình thoi quyết định): nếu dữ liệu sai thiếu, hệ thống hiển thị cảnh báo lỗi nhập liệu; nếu hợp lệ, yêu cầu được chuyển tiếp lên máy chủ. Tại máy chủ, hệ thống tiến hành xác thực danh tính và kiểm tra quyền hạn tổ chức. Nếu không đủ quyền hạn, yêu cầu bị từ chối; nếu hợp lệ, dữ liệu sự kiện được lưu trữ vào cơ sở dữ liệu và phân nhánh song song (\texttt{fork}) thành hai luồng: phản hồi kết quả để máy khách hiển thị điểm ghim mới lên bản đồ, đồng thời kích hoạt tác vụ ngầm tạo và lưu trữ vector nhúng ngữ nghĩa phục vụ trợ lý ảo AI.
+
+\subsubsection{Quy trình Đăng ký tham gia hoạt động}
+
+Hình~\ref{fig:activity_tham_gia_hoat_dong} thể hiện chi tiết luồng xử lý yêu cầu đăng ký tham gia sự kiện của sinh viên:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.82\textwidth]{Images/activity-join-activity.png} 
+    \caption{Activity Diagram: Quy trình đăng ký tham gia hoạt động}
     \label{fig:activity_tham_gia_hoat_dong}
 \end{figure}
 
+Khi sinh viên nhấn "Tham gia", hệ thống kiểm tra các ràng buộc tiên quyết: sĩ số tối đa (\texttt{max\_participants}) và thời hạn mở đăng ký. Nếu hợp lệ, hệ thống kiểm tra thuộc tính \texttt{require\_approval}: nếu hoạt động ở chế độ mở (Auto-approve), sinh viên lập tức được cấp trạng thái \texttt{approved}; nếu yêu cầu xét duyệt, yêu cầu được chuyển vào hàng đợi \texttt{pending} và gửi thông báo tức thời tới Host để phê duyệt hoặc từ chối.
+
+\subsubsection{Quy trình Điểm danh chống gian lận đa chế độ (HMAC QR \& Geofencing)}
+
+Hình~\ref{fig:activity_diem_danh_da_che_do} mô tả kiến trúc điểm danh bảo mật kết hợp hai cơ chế: mã QR xoay động 30 giây bảo vệ bằng thuật toán HMAC-SHA256 và hàng rào địa lý GPS Geofencing:
+
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\textwidth]{Images/activity-hoi-chatbot.png} 
-    \caption{Activity Diagram quy trình hỏi đáp với trợ lý AI}
+    \includegraphics[width=0.92\textwidth]{Images/activity-diem-danh-da-che-do.png}
+    \caption{Activity Diagram: Quy trình điểm danh chống gian lận đa chế độ (HMAC QR và Geofencing)}
+    \label{fig:activity_diem_danh_da_che_do}
+\end{figure}
+
+\subsubsection{Quy trình Xuất và Kiểm chứng Giấy chứng nhận CTXH trực tuyến}
+
+Nhằm số hóa toàn diện quy trình công nhận ngày CTXH và cấp chứng chỉ rèn luyện, Hình~\ref{fig:activity_xuat_kiem_chung_chung_nhan} biểu diễn vòng đời tạo lập, kết xuất văn bản số và kiểm chứng chứng nhận qua mã QR công khai:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.80\textwidth]{Images/activity-verify-certificate.png} 
+    \caption{Activity Diagram: Quy trình Xuất và Kiểm chứng Giấy chứng nhận CTXH trực tuyến}
+    \label{fig:activity_xuat_kiem_chung_chung_nhan}
+\end{figure}
+
+Hệ thống thiết lập hàng rào kiểm soát chặt chẽ: chỉ khi sinh viên có cờ \texttt{attendance\_confirmed = True} và trạng thái \texttt{approved} thì quyền xuất chứng chỉ mới được mở. Máy chủ tạo mã định danh duy nhất UUID (\texttt{UC-...}), sinh mã QR điều hướng tới cổng xác thực \texttt{/verify-certificate?id=UUID} và kết xuất file PDF A4 Landscape kèm dấu chứng thực. Bất kỳ bên thứ ba nào (nhà tuyển dụng, ban thi đua) chỉ cần quét mã QR để đối soát trực tiếp với cơ sở dữ liệu gốc, ngăn chặn triệt để tình trạng làm giả giấy xác nhận phong trào.
+
+\subsubsection{Quy trình Điều phối ủy quyền Đồng tổ chức (Co-hosting Workflow)}
+
+Hình~\ref{fig:activity_cohost_workflow} thể hiện luồng liên kết nghiệp vụ giữa các nhóm khi cùng phối hợp tổ chức sự kiện:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{Images/activity-cohost-workflow.png} 
+    \caption{Activity Diagram: Quy trình mời và phê duyệt ủy nhiệm quyền Đồng tổ chức sự kiện}
+    \label{fig:activity_cohost_workflow}
+\end{figure}
+
+Nhóm chủ trì (Host) phát lời mời tới Nhóm đối tác thông qua mã định danh \texttt{group\_id}. Lời mời được lưu ở trạng thái \texttt{pending}. Khi ban quản trị Nhóm đối tác chấp thuận, hệ thống thiết lập liên kết trong bảng \texttt{activity\_cohosts}, đồng thời phân bổ quyền quản trị ủy nhiệm (RBAC Delegation) cho phép đối tác cùng mở phiên điểm danh QR và phê duyệt danh sách thành viên.
+
+\clearpage
+\subsubsection{Thuật toán Phát hiện xung đột lịch dựa trên vị từ giao nhau thời gian}
+
+Hình~\ref{fig:flowchart_phat_hien_xung_dot_lich} mô tả thuật toán kiểm tra tính khả thi của lịch trình khi sinh viên chuẩn bị đăng ký một hoạt động mới:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.88\textwidth]{Images/flowchart-xung-dot-lich.png}
+    \caption{Flowchart: Thuật toán phát hiện xung đột lịch dựa trên vị từ giao nhau thời gian}
+    \label{fig:flowchart_phat_hien_xung_dot_lich}
+\end{figure}
+
+\clearpage
+\subsubsection{Quy trình Xử lý hỏi đáp tự động với Trợ lý AI (ReAct \& RAG)}
+
+Hình~\ref{fig:activity_hoi_dap_chatbot} mô tả chu trình tiếp nhận câu hỏi tự nhiên và cơ chế suy luận kết hợp tìm kiếm ngữ nghĩa tương đồng (Retrieval-Augmented Generation):
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.82\textwidth]{Images/activity-hoi-chatbot.png} 
+    \caption{Activity Diagram: Quy trình xử lý hỏi đáp tự động với trợ lý AI (ReAct \& RAG)}
     \label{fig:activity_hoi_dap_chatbot}
 \end{figure}
 
-\subsection{Sequence diagram}
+Hệ thống nhúng câu hỏi người dùng thành vector, thực hiện truy vấn khoảng cách Cosine trên \texttt{pgvector} để trích xuất các thông tin quy chế và sự kiện tương đồng cao nhất. Sau đó, ngữ cảnh (Context) này được tổng hợp cùng câu hỏi gốc vào Prompt đưa tới Google Gemini API để sinh câu trả lời chính xác, giảm thiểu hiện tượng ảo giác (Hallucination).
+
+\subsubsection{Quy trình Kiểm duyệt nội dung và Xử lý Báo cáo vi phạm (Moderation Workflow)}
+
+Để bảo đảm môi trường mạng xã hội học đường an toàn và lành mạnh, Hình~\ref{fig:activity_kiem_duyet_bao_cao} thể hiện toàn bộ quy trình tiếp nhận, thẩm tra và xử lý chế tài đối với các nội dung bị báo cáo:
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\textwidth]{Images/sequence_join_activity.png} 
+    \includegraphics[width=0.82\textwidth]{Images/activity-moderation-report.png} 
+    \caption{Activity Diagram: Quy trình Kiểm duyệt nội dung và Xử lý Báo cáo vi phạm}
+    \label{fig:activity_kiem_duyet_bao_cao}
+\end{figure}
+
+Người dùng khi phát hiện nội dung tiêu cực (bình luận quấy rối, hoạt động sai sự thật, gian lận điểm danh) có thể gửi báo cáo đa hình trỏ tới mục tiêu tương ứng (\texttt{target\_type}, \texttt{target\_id}). Quản trị viên (Admin) tiếp nhận tại bảng điều khiển, xem xét nội dung thực tế và quyết định:
+\begin{itemize}
+    \item \textbf{Bác bỏ (Dismiss):} Đóng báo cáo mà không thay đổi dữ liệu gốc nếu nội dung hoàn toàn hợp lệ.
+    \item \textbf{Áp dụng chế tài:} Tùy mức độ để gỡ bỏ nội dung (\texttt{is\_active = False} hoặc xóa mềm) hoặc khóa tài khoản vi phạm. Mọi thao tác cưỡng chế bắt buộc được ghi vết tự động vào bảng \texttt{admin\_audit\_logs} để phục vụ kiểm tra trách nhiệm quản trị.
+\end{itemize}
+
+\clearpage
+\subsection{Biểu đồ trình tự (Sequence Diagrams)}
+
+Nhằm cụ thể hóa sự tương tác động giữa các tác nhân (Client SPA, API Gateway/Routers, Business Services và tầng cơ sở dữ liệu PostgreSQL) theo trục thời gian, hệ thống UniConnect được thiết kế với các biểu đồ trình tự mô tả chi tiết các chu trình nghiệp vụ trọng yếu nhất.
+
+\subsubsection{Trình tự Đăng ký tham gia hoạt động và Đối soát sức chứa}
+
+Biểu đồ tại Hình~\ref{fig:sequence_tham_gia_hoat_dong} mô tả quy trình tiếp nhận yêu cầu tham gia sự kiện của sinh viên, bao gồm các bước xác thực người dùng, kiểm tra điều kiện sức chứa tối đa, ghi nhận biểu mẫu đăng ký tùy biến và trả về trạng thái phê duyệt:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.88\textwidth]{Images/sequence_join_activity.png} 
     \caption{Sequence Diagram quy trình đăng ký tham gia hoạt động}
     \label{fig:sequence_tham_gia_hoat_dong}
 \end{figure}
 
+\clearpage
+\subsubsection{Trình tự Xác thực điểm danh HMAC và Trao thưởng Gamification}
+
+Hình~\ref{fig:sequence_diem_danh_gamification} thể hiện chu trình xác thực kép chống gian lận: tiếp nhận mã token HMAC-SHA256 xoay vòng và tọa độ GPS thực tế từ Client, kiểm tra tính toàn vẹn trong cửa sổ thời gian trôi, cập nhật trạng thái tham dự và kích hoạt dịch vụ Gamification để trao tặng Trophy cùng ngày CTXH tích lũy trong một giao dịch nguyên tử:
+
+\begin{figure}[H]
+\centering
+\resizebox{0.92\textwidth}{!}{
+\begin{tikzpicture}[
+    >=Stealth,
+    font=\footnotesize,
+    lifeline/.style={draw=gray!70, dashed, thick},
+    actor/.style={rectangle, rounded corners=3pt, draw=blue!80!black, fill=blue!15, minimum width=2.3cm, minimum height=0.8cm, font=\bfseries\footnotesize, align=center},
+    msg/.style={->, thick, >=stealth},
+    reply/.style={<--, dashed, thick, >=stealth}
+]
+
+% Lifelines coordinates
+\node[actor] (student) at (0,0) {Sinh viên\\(Client App)};
+\node[actor] (router) at (3.5,0) {Cổng điều phối\\(API Gateway)};
+\node[actor] (att_svc) at (7.0,0) {Dịch vụ Điểm danh\\(Attendance Service)};
+\node[actor] (gam_svc) at (10.5,0) {Dịch vụ Vinh danh\\(Gamification Service)};
+\node[actor] (db) at (13.8,0) {Cơ sở Dữ liệu\\(PostgreSQL)};
+
+% Vertical Lifelines
+\draw[lifeline] (student) -- (0,-11.3);
+\draw[lifeline] (router) -- (3.5,-11.3);
+\draw[lifeline] (att_svc) -- (7.0,-11.3);
+\draw[lifeline] (gam_svc) -- (10.5,-11.3);
+\draw[lifeline] (db) -- (13.8,-11.3);
+
+% Messages
+\draw[msg] (0,-1.0) -- node[above] {1. Gửi dữ liệu điểm danh (Mã QR động / GPS)} (3.5,-1.0);
+\draw[msg] (3.5,-1.7) -- node[above] {2. Chuyển tiếp yêu cầu xác thực điểm danh} (7.0,-1.7);
+
+\draw[msg] (7.0,-2.4) -- node[above] {3. Truy vấn trạng thái đăng ký và dữ liệu sự kiện} (13.8,-2.4);
+\draw[reply] (7.0,-3.0) -- node[above] {4. Trả về thông tin đăng ký hợp lệ} (13.8,-3.0);
+
+\draw[msg] (7.0,-3.6) -- ++(1.0,0) |- node[pos=0.5, right=2pt, font=\scriptsize] {5. Kiểm tra Invariant (HMAC 30s, GPS Geofence)} (7.0,-4.3);
+
+\draw[msg] (7.0,-5.0) -- node[above] {6. Cập nhật trạng thái xác nhận đã tham gia (Attended)} (13.8,-5.0);
+\draw[reply] (7.0,-5.6) -- node[above] {7. Xác nhận ghi nhận điểm danh thành công} (13.8,-5.6);
+
+\draw[msg] (7.0,-6.3) -- node[above] {8. Kích hoạt tính toán ngày CTXH và danh hiệu} (10.5,-6.3);
+
+\draw[msg] (10.5,-6.9) -- ++(1.0,0) |- node[pos=0.5, right=2pt, font=\scriptsize] {9. Xử lý Gamification (Cộng CTXH, Mở Trophy)} (10.5,-7.6);
+
+\draw[msg] (10.5,-8.3) -- node[above] {10. Ghi nhận Trophy mới và cập nhật thành tích} (13.8,-8.3);
+\draw[reply] (10.5,-8.9) -- node[above] {11. Xác nhận giao dịch hoàn tất (Atomic Commit)} (13.8,-8.9);
+
+\draw[reply] (7.0,-9.5) -- node[above] {12. Trả về kết quả vinh danh và ngày CTXH} (10.5,-9.5);
+\draw[reply] (3.5,-10.1) -- node[above] {13. Phản hồi hoàn tất điểm danh kèm phần thưởng} (7.0,-10.1);
+\draw[reply] (0,-10.7) -- node[above] {14. Thông báo thành công \& Mở khóa Trophy} (3.5,-10.7);
+
+\end{tikzpicture}
+}
+\caption{Sequence Diagram: Luồng tích hợp xác thực điểm danh và phân bổ phần thưởng Gamification}
+\label{fig:sequence_diem_danh_gamification}
+\end{figure}
+
+\clearpage
+\subsubsection{Trình tự Phân quyền ủy nhiệm Đồng tổ chức (Co-hosting RBAC)}
+
+Hình~\ref{fig:sequence_cohost_rbac} mô tả luồng điều phối liên kết giữa ban tổ chức chủ trì và nhóm đối tác đồng tổ chức: từ bước gửi lời mời phối hợp, phê duyệt lời mời đến việc kích hoạt cơ chế phân quyền ủy nhiệm (RBAC Delegation) cho phép nhóm đối tác cùng mở phiên điểm danh và duyệt danh sách tham gia:
+
+\begin{figure}[H]
+\centering
+\resizebox{0.92\textwidth}{!}{
+\begin{tikzpicture}[
+    >=Stealth,
+    font=\footnotesize,
+    lifeline/.style={draw=gray!70, dashed, thick},
+    actor/.style={rectangle, rounded corners=3pt, draw=blue!80!black, fill=blue!15, minimum width=2.4cm, minimum height=0.8cm, font=\bfseries\footnotesize, align=center},
+    msg/.style={->, thick, >=stealth},
+    reply/.style={<--, dashed, thick, >=stealth}
+]
+
+% Participants
+\node[actor] (owner) at (0,0) {Ban Tổ chức Chủ trì\\(Host Group)};
+\node[actor] (cohost) at (3.5,0) {Ban Phối hợp\\(Co-host Group)};
+\node[actor] (service) at (7.0,0) {Dịch vụ Hoạt động\\(Activity Service)};
+\node[actor] (rbac) at (10.5,0) {Động cơ Phân quyền\\(RBAC Engine)};
+\node[actor] (db) at (13.8,0) {Cơ sở Dữ liệu\\(Database)};
+
+% Vertical Lifelines
+\draw[lifeline] (owner) -- (0,-9.8);
+\draw[lifeline] (cohost) -- (3.5,-9.8);
+\draw[lifeline] (service) -- (7.0,-9.8);
+\draw[lifeline] (rbac) -- (10.5,-9.8);
+\draw[lifeline] (db) -- (13.8,-9.8);
+
+% Sequence
+\draw[msg] (0,-1.0) -- node[above] {1. Gửi lời mời đồng tổ chức (mã nhóm đối tác)} (7.0,-1.0);
+\draw[msg] (7.0,-1.5) -- node[above] {2. Kiểm tra thẩm quyền chủ trì (Host Permission)} (10.5,-1.5);
+\draw[reply] (7.0,-2.0) -- node[above] {3. Xác nhận tư cách chủ trì hợp lệ (Primary Owner)} (10.5,-2.0);
+\draw[msg] (7.0,-2.5) -- node[above] {4. Lưu trữ lời mời liên kết (Trạng thái: Chờ duyệt)} (13.8,-2.5);
+\draw[reply] (3.5,-3.1) -- node[above] {5. Phát thông báo mời liên kết tới nhóm đối tác} (7.0,-3.1);
+
+\draw[msg] (3.5,-3.8) -- node[above] {6. Ban quản trị đối tác chấp thuận lời mời} (7.0,-3.8);
+\draw[msg] (7.0,-4.3) -- node[above] {7. Cập nhật trạng thái liên kết (Đã chấp thuận)} (13.8,-4.3);
+
+\draw[msg] (7.0,-4.9) -- node[above] {8. Thiết lập cờ ủy quyền RBAC (can\_open\_checkin, can\_manage)} (10.5,-4.9);
+\draw[reply] (7.0,-5.4) -- node[above] {9. Xác nhận kích hoạt phân quyền ủy nhiệm thành công} (10.5,-5.4);
+
+\draw[reply] (0,-6.0) -- node[above] {10. Thông báo xác lập quan hệ phối hợp thành công} (7.0,-6.0);
+
+\draw[msg] (3.5,-6.7) -- node[above] {11. Yêu cầu kích hoạt phiên điểm danh sự kiện} (7.0,-6.7);
+\draw[msg] (7.0,-7.2) -- node[above] {12. Đối soát thẩm quyền ủy nhiệm (Co-host Delegation)} (10.5,-7.2);
+\draw[reply] (7.0,-7.7) -- node[above] {13. Phê chuẩn quyền hợp lệ (Nhóm đồng tổ chức chính thức)} (10.5,-7.7);
+
+\draw[msg] (7.0,-8.3) -- node[above] {14. Khởi tạo phiên điểm danh (Mã QR xoay động / Geofence)} (13.8,-8.3);
+\draw[reply] (3.5,-8.9) -- node[above] {15. Xác nhận phiên điểm danh đã mở sẵn sàng tiếp nhận sinh viên} (7.0,-8.9);
+
+\end{tikzpicture}
+}
+\caption{Sequence Diagram: Quy trình phân quyền ủy nhiệm Đồng tổ chức (Co-hosting RBAC)}
+\label{fig:sequence_cohost_rbac}
+\end{figure}
+
+\clearpage
+\subsubsection{Trình tự Điều phối ReAct Agent và Truy vấn Vector tương đồng (RAG)}
+
+Hình~\ref{fig:sequence_hoi_dap_chatbot} thể hiện chu trình xử lý hội thoại thông minh: Client gửi câu hỏi tự nhiên, Router xác thực JWT và kiểm tra hạn ngạch Rate Limit, Trợ lý AI thực thi vòng lặp suy luận ReAct, kích hoạt Tool gọi truy vấn ngữ nghĩa trên cơ sở dữ liệu vector pgvector và tổng hợp câu trả lời gửi về người dùng:
+
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\textwidth]{Images/sequence-hoi-dap-chatbot.png} 
-    \caption{Sequence Diagram quy trình hỏi đáp với trợ lý AI}
+    \includegraphics[width=0.90\textwidth]{Images/sequence-hoi-dap-chatbot.png} 
+    \caption{Sequence Diagram: Quy trình điều phối ReAct Agent và tìm kiếm tương đồng vector (pgvector) với trợ lý AI}
     \label{fig:sequence_hoi_dap_chatbot}
 \end{figure}
+
+\clearpage
+\subsubsection{Trình tự Kết xuất PDF và Kiểm chứng Giấy chứng nhận CTXH}
+
+Hình~\ref{fig:sequence_verify_certificate} mô tả quy trình kết xuất bản ghi chứng nhận thành file PDF A4 Landscape kèm mã định danh duy nhất và mã QR, cùng luồng xử lý của cổng tra cứu công khai khi bên thứ ba quét mã đối soát trực tiếp với cơ sở dữ liệu:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.90\textwidth]{Images/sequence-verify-certificate.png} 
+    \caption{Sequence Diagram: Quy trình kết xuất PDF và kiểm chứng Giấy chứng nhận CTXH trực tuyến}
+    \label{fig:sequence_verify_certificate}
+\end{figure}

@@ -83,10 +83,14 @@ export default function ActivityDetail() {
   const [certificateTargetUserId, setCertificateTargetUserId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
+    if (id === 'create' || id === 'new') {
+      navigate('/activities/create', { replace: true });
+      return;
+    }
     if (id) {
       loadData();
     }
-  }, [id]);
+  }, [id, navigate]);
 
   useEffect(() => {
     let timer: any;
@@ -420,10 +424,10 @@ export default function ActivityDetail() {
 
           <div className="flex-col gap-3">
             <div className="stat-box">
-              <span className="stat-label">Địa điểm</span>
+              <span className="stat-label">Điểm hẹn / Địa điểm</span>
               <span className="stat-value flex items-center gap-1">
                 <MapPin size={15} className="text-red-500" />
-                {activity.location_name || 'TBD'}
+                {activity.meeting_location || activity.location_name || 'TBD'}
               </span>
             </div>
             <div className="flex-row gap-3">
@@ -464,8 +468,8 @@ export default function ActivityDetail() {
                   >
                     <span>@{p.user?.username}</span>
                     {p.attendance_confirmed ? (
-                      <span className="text-xs px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1" title="Đã xác nhận có mặt">
-                        <CheckCircle2 size={12} /> Đã đến
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 font-semibold flex items-center gap-1" title="Đã xác nhận có mặt">
+                        <CheckCircle2 size={12} className="text-emerald-600 dark:text-emerald-400" /> Đã đến
                       </span>
                     ) : (
                       <span className="text-xs px-1.5 py-0.5 rounded bg-gray-500/10 text-gray-500 font-normal">
@@ -606,9 +610,9 @@ export default function ActivityDetail() {
                   {myRequest.status === 'approved' && (
                     <>
                       {myRequest.attendance_confirmed ? (
-                        <div className="mt-4 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-center">
-                          <CheckCircle2 size={32} className="text-emerald-500 mx-auto mb-1" />
-                          <div className="font-bold text-emerald-600 dark:text-emerald-400">Đã xác nhận có mặt!</div>
+                        <div className="mt-4 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-300 dark:border-emerald-800 text-center">
+                          <CheckCircle2 size={32} className="text-emerald-600 dark:text-emerald-400 mx-auto mb-1" />
+                          <div className="font-bold text-emerald-800 dark:text-emerald-200">Đã xác nhận có mặt!</div>
                           {activity.trophy && (
                             <div className="text-xs text-[var(--color-text-secondary)] mt-1 flex items-center justify-center gap-1">
                               <Trophy size={14} className="text-amber-500" /> Đã nhận Trophy: <strong>{activity.trophy.name}</strong> (+{activity.trophy.points} điểm).
@@ -787,7 +791,7 @@ export default function ActivityDetail() {
             </div>
 
             {/* Rotating token countdown */}
-            <div className="flex items-center gap-2 mt-4 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
+            <div className="flex items-center gap-2 mt-4 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 text-xs font-semibold">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
               <span>Mã đổi sau: {qrCountdown}s</span>
             </div>

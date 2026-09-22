@@ -14,16 +14,15 @@ from app.modules.interactions.models import Comment, ContentLike
 
 async def create_comment(
     db: AsyncSession,
-    target_type: str,
-    target_id: uuid.UUID,
+    activity_id: uuid.UUID,
     user_id: uuid.UUID,
     content: str,
     parent_id: uuid.UUID | None = None,
+    **kwargs,
 ) -> Comment:
-    """Insert a new comment."""
+    """Insert a new comment on an activity."""
     comment = Comment(
-        target_type=target_type,
-        target_id=target_id,
+        activity_id=activity_id,
         user_id=user_id,
         content=content,
         parent_id=parent_id,
@@ -57,26 +56,21 @@ async def get_comment_by_id(db: AsyncSession, comment_id: uuid.UUID) -> Comment 
 
 async def list_comments(
     db: AsyncSession,
-    target_type: str,
-    target_id: uuid.UUID,
+    activity_id: uuid.UUID,
     limit: int = 20,
     offset: int = 0,
+    **kwargs,
 ) -> tuple[list[Comment], int]:
-    """List top-level comments for a target with their replies.
+    """List top-level comments for an activity with their replies.
 
     Returns (comments, total_count).
     """
-    target_filter = (
-        Comment.target_type == target_type,
-        Comment.target_id == target_id,
-    )
-
     # Count total top-level comments
     count_q = (
         select(func.count())
         .select_from(Comment)
         .where(
-            *target_filter,
+            Comment.activity_id == activity_id,
             Comment.parent_id.is_(None),
             Comment.is_deleted.is_(False),
         )
@@ -91,7 +85,7 @@ async def list_comments(
             joinedload(Comment.replies).joinedload(Comment.user),
         )
         .where(
-            *target_filter,
+            Comment.activity_id == activity_id,
             Comment.parent_id.is_(None),
             Comment.is_deleted.is_(False),
         )
@@ -119,14 +113,13 @@ async def soft_delete_comment(db: AsyncSession, comment: Comment) -> Comment:
     return comment
 
 
-async def count_comments(db: AsyncSession, target_type: str, target_id: uuid.UUID) -> int:
-    """Count all non-deleted comments for a target."""
+async def count_comments(db: AsyncSession, activity_id: uuid.UUID, **kwargs) -> int:
+    """Count all non-deleted comments for an activity."""
     result = await db.execute(
         select(func.count())
         .select_from(Comment)
         .where(
-            Comment.target_type == target_type,
-            Comment.target_id == target_id,
+            Comment.activity_id == activity_id,
             Comment.is_deleted.is_(False),
         )
     )
@@ -137,13 +130,12 @@ async def count_comments(db: AsyncSession, target_type: str, target_id: uuid.UUI
 
 
 async def toggle_like(
-    db: AsyncSession, target_type: str, target_id: uuid.UUID, user_id: uuid.UUID
+    db: AsyncSession, activity_id: uuid.UUID, user_id: uuid.UUID, **kwargs
 ) -> bool:
     """Toggle like. Returns True if liked, False if unliked."""
     existing = await db.execute(
         select(ContentLike).where(
-            ContentLike.target_type == target_type,
-            ContentLike.target_id == target_id,
+            ContentLike.activity_id == activity_id,
             ContentLike.user_id == user_id,
         )
     )
@@ -154,35 +146,33 @@ async def toggle_like(
         await db.flush()
         return False
     else:
-        db.add(ContentLike(target_type=target_type, target_id=target_id, user_id=user_id))
+        db.add(ContentLike(activity_id=activity_id, user_id=user_id))
         await db.flush()
         return True
 
 
 async def is_liked_by_user(
-    db: AsyncSession, target_type: str, target_id: uuid.UUID, user_id: uuid.UUID
+    db: AsyncSession, activity_id: uuid.UUID, user_id: uuid.UUID, **kwargs
 ) -> bool:
-    """Check if a user has liked a target."""
+    """Check if a user has liked an activity."""
     result = await db.execute(
         select(func.count())
         .select_from(ContentLike)
         .where(
-            ContentLike.target_type == target_type,
-            ContentLike.target_id == target_id,
+            ContentLike.activity_id == activity_id,
             ContentLike.user_id == user_id,
         )
     )
     return (result.scalar() or 0) > 0
 
 
-async def count_likes(db: AsyncSession, target_type: str, target_id: uuid.UUID) -> int:
-    """Count total likes for a target."""
+async def count_likes(db: AsyncSession, activity_id: uuid.UUID, **kwargs) -> int:
+    """Count total likes for an activity."""
     result = await db.execute(
         select(func.count())
         .select_from(ContentLike)
         .where(
-            ContentLike.target_type == target_type,
-            ContentLike.target_id == target_id,
+            ContentLike.activity_id == activity_id,
         )
     )
     return result.scalar() or 0

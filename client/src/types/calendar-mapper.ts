@@ -101,7 +101,7 @@ export function mapCalendarEventToViewModel(event: CalendarEventItem): CalendarE
     isRecurring: event.is_recurring,
     activityId: event.activity_id,
     category: event.category,
-    locationName: event.location_name,
+    locationName: event.meeting_location || event.location_name,
     rawEvent: event,
   };
 }

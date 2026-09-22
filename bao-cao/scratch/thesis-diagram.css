@@ -1,0 +1,828 @@
+/*
+ * UniConnect Thesis Diagram Design System
+ * Target: A4 Landscape (297 x 210 mm)
+ * Output: HTML/CSS/SVG -> vector PDF/SVG for LaTeX
+ *
+ * Principles:
+ * - Academic, monochrome/slate, print-safe
+ * - High contrast and grayscale-safe
+ * - No decorative gradients or color-dependent semantics
+ * - Consistent typography, spacing, notation and line weights
+ * - Diagram is a verifiable projection of the thesis source of truth
+ */
+
+:root {
+  /* A4 landscape canvas */
+  --page-width: 297mm;
+  --page-height: 210mm;
+  --page-padding-x: 10mm;
+  --page-padding-y: 9mm;
+
+  /* Typography */
+  --font-sans: "Arial", "Helvetica Neue", Helvetica, sans-serif;
+  --font-mono: "Consolas", "Liberation Mono", "Courier New", monospace;
+
+  --font-size-title: 16px;
+  --font-size-subtitle: 11px;
+  --font-size-body: 9px;
+  --font-size-small: 8px;
+  --font-size-tiny: 7px;
+
+  --line-height-body: 1.25;
+
+  /* Academic monochrome / slate palette */
+  --ink: #111827;
+  --ink-soft: #374151;
+  --muted: #6b7280;
+  --border: #374151;
+  --border-light: #9ca3af;
+  --paper: #ffffff;
+  --surface: #f3f4f6;
+  --surface-dark: #e5e7eb;
+
+  /* Semantic fills remain distinguishable in grayscale */
+  --actor-fill: #ffffff;
+  --entity-fill: #f9fafb;
+  --system-fill: #f3f4f6;
+  --external-fill: #ffffff;
+  --decision-fill: #f3f4f6;
+  --success-fill: #e5e7eb;
+  --warning-fill: #f9fafb;
+
+  /* Geometry */
+  --radius: 3px;
+  --radius-large: 5px;
+  --stroke: 1.2px;
+  --stroke-thin: 0.8px;
+  --stroke-heavy: 1.6px;
+
+  /* UML / sequence */
+  --lifeline-stroke: #6b7280;
+  --activation-fill: #e5e7eb;
+
+  /* Crow's Foot */
+  --crow-stroke: #111827;
+  --fk-fill: #f3f4f6;
+
+  /* Layout */
+  --gap-xs: 3mm;
+  --gap-sm: 5mm;
+  --gap-md: 8mm;
+  --gap-lg: 12mm;
+  --gap-xl: 18mm;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Page / print                                                               */
+/* -------------------------------------------------------------------------- */
+
+@page {
+  size: A4 landscape;
+  margin: 0;
+}
+
+html,
+body {
+  width: var(--page-width);
+  min-height: var(--page-height);
+  margin: 0;
+  padding: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+body {
+  box-sizing: border-box;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+.diagram-page {
+  position: relative;
+  width: var(--page-width);
+  height: var(--page-height);
+  min-width: var(--page-width);
+  min-height: var(--page-height);
+  overflow: hidden;
+  padding: var(--page-padding-y) var(--page-padding-x);
+  background: var(--paper);
+}
+
+.diagram-page + .diagram-page {
+  page-break-before: always;
+}
+
+/* Hide helper content from print if required by a renderer. */
+.no-print {
+  display: none !important;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Diagram title / metadata                                                   */
+/* -------------------------------------------------------------------------- */
+
+.diagram-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gap-md);
+  margin-bottom: 4mm;
+}
+
+.diagram-title {
+  margin: 0;
+  font-size: var(--font-size-title);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: 0.1px;
+}
+
+.diagram-subtitle {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--font-size-subtitle);
+  font-weight: 400;
+}
+
+.diagram-meta {
+  color: var(--muted);
+  font-size: var(--font-size-small);
+  white-space: nowrap;
+}
+
+.diagram-canvas {
+  position: relative;
+  width: 100%;
+  height: calc(
+    var(--page-height)
+    - (2 * var(--page-padding-y))
+    - 14mm
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Generic node system                                                        */
+/* -------------------------------------------------------------------------- */
+
+.node {
+  position: absolute;
+  border: var(--stroke) solid var(--border);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.node-title {
+  font-weight: 700;
+}
+
+.node-label {
+  font-weight: 600;
+}
+
+.node-note {
+  color: var(--ink-soft);
+  font-size: var(--font-size-small);
+}
+
+.node-muted {
+  color: var(--muted);
+}
+
+.system-node {
+  background: var(--system-fill);
+}
+
+.external-node {
+  background: var(--external-fill);
+  border-style: dashed;
+}
+
+.decision-node {
+  background: var(--decision-fill);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Use Case diagrams                                                          */
+/* -------------------------------------------------------------------------- */
+
+.usecase-system {
+  position: absolute;
+  border: var(--stroke-heavy) solid var(--border);
+  border-radius: var(--radius-large);
+  background: var(--paper);
+}
+
+.usecase-system-title {
+  position: absolute;
+  top: -7mm;
+  left: 4mm;
+  padding: 0 2mm;
+  background: var(--paper);
+  font-weight: 700;
+  font-size: var(--font-size-subtitle);
+}
+
+.usecase {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2mm 4mm;
+  border: var(--stroke) solid var(--border);
+  border-radius: 50%;
+  background: var(--paper);
+  text-align: center;
+  line-height: 1.15;
+}
+
+.actor {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 24mm;
+  text-align: center;
+  font-size: var(--font-size-small);
+  font-weight: 600;
+}
+
+.actor .actor-head {
+  width: 7mm;
+  height: 7mm;
+  margin-bottom: 1.5mm;
+  border: var(--stroke) solid var(--border);
+  border-radius: 50%;
+  background: var(--paper);
+}
+
+.actor .actor-body {
+  position: relative;
+  width: 10mm;
+  height: 11mm;
+}
+
+.actor .actor-body::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 0;
+  height: 8mm;
+  border-left: var(--stroke) solid var(--border);
+  transform: translateX(-50%);
+}
+
+.actor .actor-body::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 3mm;
+  width: 9mm;
+  height: 7mm;
+  border-left: var(--stroke) solid var(--border);
+  border-right: var(--stroke) solid var(--border);
+  transform: translateX(-50%) skewX(-25deg);
+}
+
+.relationship-line {
+  fill: none;
+  stroke: var(--border);
+  stroke-width: 1.2;
+  vector-effect: non-scaling-stroke;
+}
+
+.relationship-line.dashed {
+  stroke-dasharray: 5 4;
+}
+
+.relationship-label {
+  fill: var(--ink-soft);
+  font-size: var(--font-size-small);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Activity / flowchart diagrams                                               */
+/* -------------------------------------------------------------------------- */
+
+.flow-node {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2mm 4mm;
+  min-width: 28mm;
+  min-height: 11mm;
+  border: var(--stroke) solid var(--border);
+  border-radius: var(--radius);
+  background: var(--paper);
+  text-align: center;
+  font-weight: 600;
+}
+
+.flow-start,
+.flow-end {
+  width: 7mm;
+  height: 7mm;
+  min-width: 7mm;
+  min-height: 7mm;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--ink);
+}
+
+.flow-end {
+  position: relative;
+  background: var(--paper);
+}
+
+.flow-end::after {
+  content: "";
+  width: 4mm;
+  height: 4mm;
+  border-radius: 50%;
+  background: var(--ink);
+}
+
+.flow-decision {
+  width: 24mm;
+  height: 24mm;
+  min-width: 24mm;
+  min-height: 24mm;
+  padding: 3mm;
+  border: var(--stroke) solid var(--border);
+  background: var(--decision-fill);
+  transform: rotate(45deg);
+}
+
+.flow-decision > span {
+  transform: rotate(-45deg);
+  text-align: center;
+}
+
+.flow-edge {
+  fill: none;
+  stroke: var(--border);
+  stroke-width: 1.2;
+  vector-effect: non-scaling-stroke;
+}
+
+.flow-edge-label {
+  fill: var(--ink-soft);
+  font-size: var(--font-size-small);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Sequence diagrams                                                          */
+/* -------------------------------------------------------------------------- */
+
+.sequence-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.sequence-participant {
+  position: absolute;
+  top: 0;
+  min-width: 32mm;
+  padding: 2mm 3mm;
+  border: var(--stroke) solid var(--border);
+  border-radius: var(--radius);
+  background: var(--system-fill);
+  text-align: center;
+  font-weight: 700;
+}
+
+.sequence-lifeline {
+  fill: none;
+  stroke: var(--lifeline-stroke);
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+  vector-effect: non-scaling-stroke;
+}
+
+.sequence-activation {
+  fill: var(--activation-fill);
+  stroke: var(--border);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.sequence-message {
+  fill: none;
+  stroke: var(--border);
+  stroke-width: 1.2;
+  marker-end: url("#arrow-head");
+  vector-effect: non-scaling-stroke;
+}
+
+.sequence-message.return {
+  stroke-dasharray: 5 4;
+}
+
+.sequence-message-label {
+  fill: var(--ink);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-small);
+}
+
+.sequence-group {
+  fill: none;
+  stroke: var(--border-light);
+  stroke-width: 1;
+  stroke-dasharray: 5 4;
+  vector-effect: non-scaling-stroke;
+}
+
+.sequence-group-label {
+  fill: var(--ink-soft);
+  font-size: var(--font-size-small);
+  font-weight: 700;
+}
+
+/* -------------------------------------------------------------------------- */
+/* State machine                                                              */
+/* -------------------------------------------------------------------------- */
+
+.state {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30mm;
+  min-height: 12mm;
+  padding: 2mm 4mm;
+  border: var(--stroke) solid var(--border);
+  border-radius: 6mm;
+  background: var(--paper);
+  text-align: center;
+  font-weight: 600;
+}
+
+.state.initial {
+  width: 7mm;
+  height: 7mm;
+  min-width: 7mm;
+  min-height: 7mm;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--ink);
+}
+
+.state.final {
+  width: 8mm;
+  height: 8mm;
+  min-width: 8mm;
+  min-height: 8mm;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--paper);
+}
+
+.state.final::after {
+  content: "";
+  width: 5mm;
+  height: 5mm;
+  border-radius: 50%;
+  background: var(--ink);
+}
+
+.state-terminal {
+  border-width: var(--stroke-heavy);
+  background: var(--success-fill);
+}
+
+.state-transition {
+  fill: none;
+  stroke: var(--border);
+  stroke-width: 1.2;
+  marker-end: url("#arrow-head");
+  vector-effect: non-scaling-stroke;
+}
+
+.state-transition-label {
+  fill: var(--ink-soft);
+  font-size: var(--font-size-small);
+}
+
+/* -------------------------------------------------------------------------- */
+/* ERD - Crow's Foot / Information Engineering                               */
+/* -------------------------------------------------------------------------- */
+
+.erd-canvas {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.erd-entity {
+  position: absolute;
+  min-width: 42mm;
+  border: var(--stroke-heavy) solid var(--border);
+  border-radius: var(--radius);
+  background: var(--paper);
+  overflow: hidden;
+}
+
+.erd-entity-header {
+  padding: 2.2mm 3mm;
+  border-bottom: var(--stroke) solid var(--border);
+  background: var(--entity-fill);
+  font-weight: 700;
+  font-size: var(--font-size-subtitle);
+}
+
+.erd-entity-row {
+  display: grid;
+  grid-template-columns: 6mm 1fr auto;
+  gap: 1.5mm;
+  align-items: center;
+  min-height: 5.5mm;
+  padding: 1mm 2.5mm;
+  border-bottom: var(--stroke-thin) solid #d1d5db;
+  font-size: var(--font-size-small);
+}
+
+.erd-entity-row:last-child {
+  border-bottom: 0;
+}
+
+.erd-key {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-tiny);
+  font-weight: 700;
+}
+
+.erd-pk {
+  color: var(--ink);
+}
+
+.erd-fk {
+  color: var(--ink-soft);
+}
+
+.erd-column {
+  overflow-wrap: anywhere;
+}
+
+.erd-type {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-tiny);
+  white-space: nowrap;
+}
+
+.erd-relationship {
+  fill: none;
+  stroke: var(--crow-stroke);
+  stroke-width: 1.2;
+  vector-effect: non-scaling-stroke;
+}
+
+.erd-relationship-soft {
+  stroke: var(--border-light);
+  stroke-dasharray: 5 4;
+}
+
+.erd-cardinality {
+  fill: var(--ink);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-small);
+  font-weight: 700;
+}
+
+.erd-domain-boundary {
+  position: absolute;
+  border: var(--stroke-thin) dashed var(--border-light);
+  border-radius: var(--radius-large);
+  background: transparent;
+  pointer-events: none;
+}
+
+.erd-domain-label {
+  position: absolute;
+  top: -4mm;
+  left: 3mm;
+  padding: 0 2mm;
+  background: var(--paper);
+  color: var(--ink-soft);
+  font-size: var(--font-size-small);
+  font-weight: 700;
+}
+
+/*
+ * Polymorphic relationships are not forced into fake FK columns.
+ * Use a dashed relationship and an explicit note such as:
+ * target_type + target_id
+ */
+.erd-polymorphic {
+  stroke-dasharray: 6 4;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Deployment / architecture diagrams                                          */
+/* -------------------------------------------------------------------------- */
+
+.deployment-boundary {
+  position: absolute;
+  border: var(--stroke-heavy) dashed var(--border);
+  border-radius: var(--radius-large);
+  background: transparent;
+}
+
+.deployment-boundary-title {
+  position: absolute;
+  top: -5mm;
+  left: 4mm;
+  padding: 0 2mm;
+  background: var(--paper);
+  font-size: var(--font-size-small);
+  font-weight: 700;
+}
+
+.deployment-node {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 38mm;
+  min-height: 16mm;
+  padding: 2.5mm 3mm;
+  border: var(--stroke) solid var(--border);
+  border-radius: var(--radius);
+  background: var(--paper);
+  text-align: center;
+}
+
+.deployment-node.primary {
+  border-width: var(--stroke-heavy);
+  background: var(--system-fill);
+}
+
+.deployment-node-title {
+  font-weight: 700;
+  font-size: var(--font-size-subtitle);
+}
+
+.deployment-node-detail {
+  margin-top: 1mm;
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-tiny);
+}
+
+.deployment-edge {
+  fill: none;
+  stroke: var(--border);
+  stroke-width: 1.2;
+  marker-end: url("#arrow-head");
+  vector-effect: non-scaling-stroke;
+}
+
+.trust-boundary {
+  border-style: dashed;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Legend                                                                     */
+/* -------------------------------------------------------------------------- */
+
+.legend {
+  position: absolute;
+  right: var(--page-padding-x);
+  bottom: 5mm;
+  display: flex;
+  align-items: center;
+  gap: 5mm;
+  color: var(--ink-soft);
+  font-size: var(--font-size-tiny);
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 1.5mm;
+}
+
+.legend-line {
+  width: 9mm;
+  border-top: 1.2px solid var(--border);
+}
+
+.legend-line.dashed {
+  border-top-style: dashed;
+}
+
+.legend-box {
+  width: 8mm;
+  height: 4mm;
+  border: 1px solid var(--border);
+  background: var(--paper);
+}
+
+.legend-box.filled {
+  background: var(--surface);
+}
+
+/* -------------------------------------------------------------------------- */
+/* SVG defaults                                                               */
+/* -------------------------------------------------------------------------- */
+
+svg.diagram-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  shape-rendering: geometricPrecision;
+  text-rendering: geometricPrecision;
+}
+
+svg.diagram-svg text {
+  fill: var(--ink);
+  font-family: var(--font-sans);
+}
+
+svg.diagram-svg .mono {
+  font-family: var(--font-mono);
+}
+
+svg.diagram-svg .muted {
+  fill: var(--muted);
+}
+
+svg.diagram-svg .small {
+  font-size: var(--font-size-small);
+}
+
+svg.diagram-svg .tiny {
+  font-size: var(--font-size-tiny);
+}
+
+svg.diagram-svg .bold {
+  font-weight: 700;
+}
+
+svg.diagram-svg .line {
+  fill: none;
+  stroke: var(--border);
+  stroke-width: 1.2;
+  vector-effect: non-scaling-stroke;
+}
+
+svg.diagram-svg .line-thin {
+  fill: none;
+  stroke: var(--border-light);
+  stroke-width: 0.8;
+  vector-effect: non-scaling-stroke;
+}
+
+svg.diagram-svg .line-dashed {
+  stroke-dasharray: 5 4;
+}
+
+/* Reusable SVG marker. Each diagram can reference #arrow-head. */
+svg.diagram-svg defs marker#arrow-head path {
+  fill: var(--border);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Print / renderer safeguards                                                */
+/* -------------------------------------------------------------------------- */
+
+@media print {
+  html,
+  body {
+    width: var(--page-width);
+    height: var(--page-height);
+    overflow: hidden;
+  }
+
+  .diagram-page {
+    break-after: page;
+  }
+
+  .diagram-page:last-child {
+    break-after: auto;
+  }
+}
+
+@media screen {
+  body {
+    background: #d1d5db;
+  }
+
+  .diagram-page {
+    margin: 8mm auto;
+    box-shadow: 0 2mm 8mm rgba(0, 0, 0, 0.15);
+  }
+}

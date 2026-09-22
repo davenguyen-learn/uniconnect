@@ -1,0 +1,27 @@
+@startuml
+left to right direction
+skinparam backgroundColor #FFFFFF
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam arrowColor #333333
+
+actor "Người dùng" as User
+actor "Google Gemini API" as Gemini <<External Service>>
+
+rectangle "Hệ thống UniConnect" {
+  usecase "Hỏi đáp và tra cứu thông minh" as UC
+  usecase "Truy xuất ngữ nghĩa học liệu" as UC1
+  usecase "Truy xuất dữ liệu hoạt động" as UC2
+  usecase "Tổng hợp câu trả lời (LLM)" as UC3
+}
+
+User -- UC
+
+UC ..> UC1 : <<include>>
+UC ..> UC2 : <<include>>
+UC ..> UC3 : <<include>>
+
+UC3 -- Gemini
+@enduml

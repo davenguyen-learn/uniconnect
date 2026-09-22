@@ -114,7 +114,7 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
 
                     <div className="cert-meta-row">
                       <span><strong>Ngày tổ chức:</strong> {data.activity_date}</span>
-                      {data.location_name && <span>• <strong>Địa điểm:</strong> {data.location_name}</span>}
+                      {(data.meeting_location || data.location_name) && <span>• <strong>Địa điểm:</strong> {data.meeting_location || data.location_name}</span>}
                       <span>• <strong>Đơn vị tổ chức:</strong> {data.host_name}</span>
                     </div>
 

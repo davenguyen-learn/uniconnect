@@ -68,6 +68,7 @@ class CalendarEventItem(BaseModel):
     event_type: str  # 'busy_slot' | 'activity_joined' | 'activity_hosted'
     activity_id: uuid.UUID | None = None
     category: str | None = None
+    meeting_location: str | None = None
     location_name: str | None = None
     is_recurring: bool = False
     color_tag: str = "busy"  # 'busy' (orange/gray), 'joined' (blue), 'hosted' (purple)

@@ -1,0 +1,29 @@
+@startuml
+left to right direction
+skinparam backgroundColor #FFFFFF
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam arrowColor #333333
+
+actor "Người dùng" as User
+
+rectangle "Hệ thống UniConnect" {
+  usecase "Quản lý hoạt động" as UC
+  
+  usecase "Sửa thông tin hoạt động" as UC1
+  usecase "Xóa/Hủy hoạt động" as UC2
+  usecase "Duyệt thành viên" as UC3
+  usecase "Loại bỏ thành viên" as UC4
+  usecase "Mời thành viên" as UC5
+
+  UC <.down. UC1 : <<extend>>
+  UC <.down. UC2 : <<extend>>
+  UC <.down. UC3 : <<extend>>
+  UC <.down. UC4 : <<extend>>
+  UC <.down. UC5 : <<extend>>
+}
+
+User -- UC
+@enduml

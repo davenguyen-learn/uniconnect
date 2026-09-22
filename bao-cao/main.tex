@@ -1,4 +1,4 @@
-\documentclass[a4paper]{article}
+\documentclass[13pt,a4paper]{extarticle}
 \usepackage{longtable}
 \usepackage{hcmut}
 \usepackage{float}
@@ -7,7 +7,8 @@
 \usepackage{indentfirst}
 \usepackage[most]{tcolorbox}
 \usepackage[numbers,sort&compress]{natbib}
-
+\usepackage{tikz}
+\usetikzlibrary{arrows,backgrounds,shapes.geometric,shapes.misc,positioning,arrows.meta,calc,fit,decorations.pathreplacing}
 
 \renewcommand{\listfigurename}{Danh mục hình ảnh}
 \renewcommand{\listtablename}{Danh sách bảng biểu}
@@ -39,6 +40,7 @@
     drop shadow
 }
 \setlength{\parindent}{1cm}
+\onehalfspacing
 \tolerance=1
 \emergencystretch=\maxdimen
 \hyphenpenalty=10000
@@ -52,6 +54,10 @@
 \include{Sections/0.5-Muc-luc}
 \include{Sections/0.6-Danh-muc-hinh-anh}
 \include{Sections/0.7-Danh-muc-bang-bieu}
+\include{Sections/0.8-Danh-muc-tu-viet-tat}
+
+\setcounter{table}{0}
+\setcounter{figure}{0}
 
 \include{Sections/1-Tong-quan-de-tai}
 
@@ -67,9 +73,16 @@
 
 \include{Sections/7-Hien-thuc-chatbot}
 
-\include{Sections/8-Ket-luan}
+\include{Sections/8-Kiem-thu-va-danh-gia}
+
+\include{Sections/9-Ket-luan}
 
 \bibliographystyle{ieeetr} 
 \bibliography{tai-lieu}
+
+\appendix
+\include{Sections/Appendix-A-UseCases}
+\include{Sections/Appendix-B-Database}
+\include{Sections/Appendix-C-API}
 
 \end{document}

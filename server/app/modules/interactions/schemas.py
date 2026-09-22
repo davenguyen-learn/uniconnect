@@ -3,7 +3,7 @@
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 # ── Shared ──
@@ -28,8 +28,9 @@ class CommentUpdate(BaseModel):
 
 class CommentResponse(BaseModel):
     id: uuid.UUID
-    target_type: str
-    target_id: uuid.UUID
+    activity_id: uuid.UUID
+    target_type: str = "activity"
+    target_id: uuid.UUID | None = None
     user_id: uuid.UUID
     parent_id: uuid.UUID | None
     content: str
@@ -40,6 +41,12 @@ class CommentResponse(BaseModel):
     replies: list["CommentResponse"] = []
 
     model_config = {"from_attributes": True}
+
+    @model_validator(mode="after")
+    def populate_target(self) -> "CommentResponse":
+        if self.target_id is None:
+            self.target_id = self.activity_id
+        return self
 
 
 class CommentListResponse(BaseModel):

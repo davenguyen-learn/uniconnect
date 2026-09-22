@@ -40,6 +40,7 @@ export default function CreateActivity() {
     description: '',
     private_description: '',
     category: '',
+    meeting_location: '',
     location_name: '',
     start_time: '',
     end_time: '',
@@ -151,7 +152,8 @@ export default function CreateActivity() {
         description: formData.description,
         private_description: formData.private_description || undefined,
         category: formData.category || undefined,
-        location_name: formData.location_name || undefined,
+        meeting_location: formData.meeting_location || formData.location_name || undefined,
+        location_name: formData.meeting_location || formData.location_name || undefined,
         start_time: start.toISOString(),
         end_time: end.toISOString(),
         max_participants: Number(formData.max_participants),
@@ -506,15 +508,15 @@ export default function CreateActivity() {
           )}
 
           <div className="form-group">
-            <label htmlFor="location_name">Tên địa điểm</label>
+            <label htmlFor="meeting_location">Điểm hẹn / Địa điểm tập trung</label>
             <input
               type="text"
-              id="location_name"
-              name="location_name"
+              id="meeting_location"
+              name="meeting_location"
               className="form-input"
-              value={formData.location_name}
+              value={formData.meeting_location || formData.location_name}
               onChange={handleChange}
-              placeholder="Ví dụ: KTX Khu A, Sân bóng, v.v."
+              placeholder="Ví dụ: Cổng 1 Lý Thường Kiệt, Hội trường A5, v.v."
               maxLength={100}
             />
           </div>

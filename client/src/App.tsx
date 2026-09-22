@@ -69,8 +69,10 @@ function App() {
                     <Route path="/chat" element={<Chat />} />
                     <Route path="/groups" element={<Groups />} />
                     <Route path="/groups/new" element={<CreateGroup />} />
+                    <Route path="/groups/create" element={<CreateGroup />} />
                     <Route path="/groups/:id" element={<GroupDetail />} />
                     <Route path="/activities/new" element={<CreateActivity />} />
+                    <Route path="/activities/create" element={<CreateActivity />} />
                     <Route path="/activities/:id/edit" element={<EditActivity />} />
                     <Route path="/activities/:id" element={<ActivityDetail />} />
                     <Route path="/my-activities" element={<MyActivities />} />

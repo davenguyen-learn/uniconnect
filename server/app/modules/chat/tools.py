@@ -90,10 +90,10 @@ async def search_activities_tool(
         point = ST_SetSRID(ST_MakePoint(lng, lat), 4326)
         base_filter = and_(
             base_filter,
-            Activity.location.is_not(None),
-            ST_DWithin(Activity.location, point, radius_meters),
+            Activity.marker_location.is_not(None),
+            ST_DWithin(Activity.marker_location, point, radius_meters),
         )
-        distance_col = ST_Distance(Activity.location, point).label("distance_meters")
+        distance_col = ST_Distance(Activity.marker_location, point).label("distance_meters")
 
     query = select(Activity)
 
@@ -192,7 +192,8 @@ async def search_activities_tool(
                 title=activity.title,
                 start_time=activity.start_time.isoformat() if activity.start_time else "",
                 end_time=activity.end_time.isoformat() if activity.end_time else "",
-                location_name=activity.location_name or "Khuôn viên trường",
+                meeting_location=getattr(activity, "meeting_location", None) or getattr(activity, "location_name", None) or "Khuôn viên trường",
+                location_name=getattr(activity, "meeting_location", None) or getattr(activity, "location_name", None) or "Khuôn viên trường",
                 social_work_days=activity.social_work_days,
                 distance_meters=dist_m,
                 distance_status=dist_status,

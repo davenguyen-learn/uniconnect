@@ -75,7 +75,7 @@ export function mapActivityToCardViewModel(
     category: activity.category || 'Chung',
     coverUrl: null, // Default placeholder gradient or image
     startTimeFormatted,
-    locationName: activity.location_name || 'Khuôn viên trường',
+    locationName: activity.meeting_location || activity.location_name || 'Khuôn viên trường',
     currentParticipants,
     maxParticipants,
     percentFilled,

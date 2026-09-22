@@ -1,0 +1,267 @@
+import plantuml
+
+s = plantuml.PlantUML('http://www.plantuml.com/plantuml/img/')
+
+dot_code = """@startdot
+graph G {
+  layout=neato;
+  overlap=false;
+  splines=true;
+
+  // Defaults
+  node [fontname="Arial", fontsize=11, fontcolor="#000000"];
+  edge [fontname="Arial", fontsize=9, color="#546E7A", penwidth=1.2];
+
+  // 1. Entities (Rectangles)
+  node [shape=box, style="filled,rounded", fillcolor="#B3E5FC", color="#0288D1", penwidth=2.0, margin="0.15,0.08"];
+  User [label="User", fontsize=13];
+  Activity [label="Activity", fontsize=13];
+  Group [label="Group", fontsize=13];
+  Comment [label="Comment", fontsize=12];
+  CustomForm [label="CustomForm", fontsize=12];
+  FormField [label="FormField", fontsize=12];
+  UserBusySlot [label="UserBusySlot", fontsize=12];
+  UserVacationPeriod [label="UserVacationPeriod", fontsize=12];
+  Trophy [label="Trophy", fontsize=12];
+  Notification [label="Notification", fontsize=12];
+  Report [label="Report", fontsize=12];
+  OrgVerification [label="OrgVerification", fontsize=12];
+  AdminAuditLog [label="AdminAuditLog", fontsize=12];
+
+  // 2. Relationships (Diamonds)
+  node [shape=diamond, style="filled", fillcolor="#FFF59D", color="#FBC02D", penwidth=1.5, margin="0.1,0.05", fontsize=10];
+  rel_host [label="Host"];
+  rel_organize [label="Organize"];
+  rel_join [label="Join / Register"];
+  rel_cohost [label="Co-Host"];
+  rel_member [label="Member of"];
+  rel_follow [label="Follows"];
+  rel_comment [label="Writes"];
+  rel_like [label="Likes"];
+  rel_form [label="Has Form"];
+  rel_field [label="Contains"];
+  rel_schedule [label="Schedules"];
+  rel_vacation [label="Takes"];
+  rel_earn [label="Earns"];
+  rel_create_trophy [label="Creates"];
+  rel_notify [label="Receives"];
+  rel_report [label="Submits"];
+  rel_verify [label="Requests"];
+  rel_audit [label="Audit"];
+
+  // 3. Attributes (Ellipses - Packed close to entities)
+  node [shape=ellipse, style="filled", fillcolor="#E1F5FE", color="#039BE5", penwidth=1.0, height=0.28, width=0.7, fontsize=9.5];
+
+  // User attrs
+  u_id [label=<<u>id</u>>];
+  u_email [label="email"];
+  u_uname [label="username"];
+  u_pwd [label="password_hash"];
+  u_name [label="full_name"];
+  u_role [label="role"];
+  u_active [label="is_active"];
+  u_verified [label="is_verified"];
+
+  edge [len=0.35, weight=60, color="#81D4FA", penwidth=1.0];
+  User -- u_id;
+  User -- u_email;
+  User -- u_uname;
+  User -- u_pwd;
+  User -- u_name;
+  User -- u_role;
+  User -- u_active;
+  User -- u_verified;
+
+  // Activity attrs
+  a_id [label=<<u>id</u>>];
+  a_title [label="title"];
+  a_desc [label="description"];
+  a_loc [label="location (PostGIS)"];
+  a_emb [label="embedding (pgvector)"];
+  a_start [label="start_time"];
+  a_end [label="end_time"];
+  a_cap [label="max_participants"];
+  a_ctxh [label="social_work_days (CTXH)"];
+  a_mode [label="attendance_mode"];
+  a_code [label="check_in_code"];
+
+  Activity -- a_id;
+  Activity -- a_title;
+  Activity -- a_desc;
+  Activity -- a_loc;
+  Activity -- a_emb;
+  Activity -- a_start;
+  Activity -- a_end;
+  Activity -- a_cap;
+  Activity -- a_ctxh;
+  Activity -- a_mode;
+  Activity -- a_code;
+
+  // Group attrs
+  g_id [label=<<u>id</u>>];
+  g_name [label="name"];
+  g_desc [label="description"];
+  g_priv [label="privacy"];
+  g_appr [label="require_approval"];
+
+  Group -- g_id;
+  Group -- g_name;
+  Group -- g_desc;
+  Group -- g_priv;
+  Group -- g_appr;
+
+  // Trophy attrs
+  t_id [label=<<u>id</u>>];
+  t_name [label="name"];
+  t_pts [label="points"];
+  t_icon [label="icon"];
+
+  Trophy -- t_id;
+  Trophy -- t_name;
+  Trophy -- t_pts;
+  Trophy -- t_icon;
+
+  // Comment attrs
+  c_id [label=<<u>id</u>>];
+  c_content [label="content"];
+  c_target [label="target_type"];
+
+  Comment -- c_id;
+  Comment -- c_content;
+  Comment -- c_target;
+
+  // CustomForm & FormField attrs
+  f_id [label=<<u>id</u>>];
+  f_title [label="title"];
+  CustomForm -- f_id;
+  CustomForm -- f_title;
+
+  ff_id [label=<<u>id</u>>];
+  ff_label [label="label"];
+  ff_type [label="field_type"];
+  FormField -- ff_id;
+  FormField -- ff_label;
+  FormField -- ff_type;
+
+  // Calendar attrs
+  b_id [label=<<u>id</u>>];
+  b_title [label="title"];
+  b_rec [label="recurrence"];
+  b_day [label="day_of_week"];
+  UserBusySlot -- b_id;
+  UserBusySlot -- b_title;
+  UserBusySlot -- b_rec;
+  UserBusySlot -- b_day;
+
+  v_id [label=<<u>id</u>>];
+  v_title [label="title"];
+  v_start [label="start_date"];
+  v_end [label="end_date"];
+  UserVacationPeriod -- v_id;
+  UserVacationPeriod -- v_title;
+  UserVacationPeriod -- v_start;
+  UserVacationPeriod -- v_end;
+
+  // Notification attrs
+  n_id [label=<<u>id</u>>];
+  n_type [label="type"];
+  n_msg [label="message"];
+  n_read [label="is_read"];
+  Notification -- n_id;
+  Notification -- n_type;
+  Notification -- n_msg;
+  Notification -- n_read;
+
+  // Report attrs
+  r_id [label=<<u>id</u>>];
+  r_reason [label="reason"];
+  r_status [label="status"];
+  Report -- r_id;
+  Report -- r_reason;
+  Report -- r_status;
+
+  // OrgVerification attrs
+  ov_id [label=<<u>id</u>>];
+  ov_name [label="org_name"];
+  ov_status [label="status"];
+  OrgVerification -- ov_id;
+  OrgVerification -- ov_name;
+  OrgVerification -- ov_status;
+
+  // AdminAuditLog attrs
+  al_id [label=<<u>id</u>>];
+  al_act [label="action"];
+  al_tgt [label="target_type"];
+  AdminAuditLog -- al_id;
+  AdminAuditLog -- al_act;
+  AdminAuditLog -- al_tgt;
+
+  // 4. Relationships connecting Entities
+  edge [len=1.4, weight=1, color="#37474F", penwidth=1.3];
+
+  User -- rel_host [label="1"];
+  rel_host -- Activity [label="N"];
+
+  Group -- rel_organize [label="0..1"];
+  rel_organize -- Activity [label="N"];
+
+  User -- rel_join [label="N"];
+  rel_join -- Activity [label="M"];
+
+  Activity -- rel_cohost [label="N"];
+  rel_cohost -- Group [label="M"];
+
+  User -- rel_member [label="N"];
+  rel_member -- Group [label="M"];
+
+  User -- rel_follow [label="1 (Follower)"];
+  rel_follow -- User [label="N (Following)"];
+
+  User -- rel_comment [label="1"];
+  rel_comment -- Comment [label="N"];
+  Activity -- Comment [label="1..N"];
+
+  User -- rel_like [label="1"];
+  rel_like -- Activity [label="N"];
+
+  Activity -- rel_form [label="1"];
+  rel_form -- CustomForm [label="1"];
+
+  CustomForm -- rel_field [label="1"];
+  rel_field -- FormField [label="N"];
+
+  User -- rel_schedule [label="1"];
+  rel_schedule -- UserBusySlot [label="N"];
+
+  User -- rel_vacation [label="1"];
+  rel_vacation -- UserVacationPeriod [label="N"];
+
+  User -- rel_earn [label="N"];
+  rel_earn -- Trophy [label="M"];
+
+  User -- rel_create_trophy [label="1"];
+  rel_create_trophy -- Trophy [label="N"];
+
+  User -- rel_notify [label="N"];
+  rel_notify -- Notification [label="1"];
+
+  User -- rel_report [label="1"];
+  rel_report -- Report [label="N"];
+
+  User -- rel_verify [label="1"];
+  rel_verify -- OrgVerification [label="N"];
+
+  User -- rel_audit [label="1"];
+  rel_audit -- AdminAuditLog [label="N"];
+}
+@enddot"""
+
+with open("scratch/erd.puml", "w", encoding="utf-8") as f:
+    f.write(dot_code)
+
+print("Generating compact neato Chen ERD...")
+data = s.processes(dot_code)
+with open("Images/erd.png", "wb") as f:
+    f.write(data)
+
+print(f"Rendered Images/erd.png successfully! Size: {len(data)} bytes")

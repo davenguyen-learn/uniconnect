@@ -33,7 +33,8 @@ export interface ActivityResponse {
   category: string | null;
   latitude: number;
   longitude: number;
-  location_name: string | null;
+  meeting_location?: string | null;
+  location_name?: string | null;
   start_time: string;
   end_time: string;
   max_participants: number;
@@ -61,6 +62,7 @@ export interface ActivityCreate {
   category?: string;
   latitude: number;
   longitude: number;
+  meeting_location?: string;
   location_name?: string;
   start_time: string;
   end_time: string;
@@ -81,6 +83,7 @@ export interface ActivityUpdate {
   category?: string;
   latitude?: number;
   longitude?: number;
+  meeting_location?: string;
   location_name?: string;
   start_time?: string;
   end_time?: string;

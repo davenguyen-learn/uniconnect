@@ -45,7 +45,7 @@ async def update(db: AsyncSession, activity: Activity, data: dict) -> Activity:
     # Handle location update if lat/lng provided
     if "latitude" in data and "longitude" in data:
         lat, lng = data["latitude"], data["longitude"]
-        activity.location = f"SRID=4326;POINT({lng} {lat})"
+        activity.marker_location = f"SRID=4326;POINT({lng} {lat})"
     elif "latitude" in data or "longitude" in data:
         # Need both for a valid point — get existing values
         pass  # Handled by service layer validation
@@ -158,8 +158,8 @@ async def find_within_radius(
     base_filter = and_(
         Activity.is_deleted == False,  # noqa: E712
         Activity.end_time > now,
-        Activity.location.isnot(None),
-        ST_DWithin(Activity.location, point, radius_meters),
+        Activity.marker_location.isnot(None),
+        ST_DWithin(Activity.marker_location, point, radius_meters),
         access_filter,
     )
 
@@ -178,7 +178,7 @@ async def find_within_radius(
     total = (await db.execute(count_q)).scalar() or 0
 
     # Fetch with distance
-    distance_col = ST_Distance(Activity.location, point).label("distance_meters")
+    distance_col = ST_Distance(Activity.marker_location, point).label("distance_meters")
     
     order_clauses = []
     if followed_user_ids:
@@ -206,7 +206,7 @@ async def get_coordinates(activity: Activity) -> tuple[float, float] | None:
     Since we store as WKB, we need to use ST_X/ST_Y to extract.
     Returns None if location is not set.
     """
-    if activity.location is None:
+    if activity.marker_location is None:
         return None
 
     # For activities loaded from DB, location is a WKBElement
@@ -220,8 +220,8 @@ async def get_coordinates_from_db(db: AsyncSession, activity_id: uuid.UUID) -> t
     from sqlalchemy import cast
     result = await db.execute(
         select(
-            ST_Y(cast(Activity.location, Geometry)).label("lat"),
-            ST_X(cast(Activity.location, Geometry)).label("lng"),
+            ST_Y(cast(Activity.marker_location, Geometry)).label("lat"),
+            ST_X(cast(Activity.marker_location, Geometry)).label("lng"),
         ).where(Activity.id == activity_id)
     )
     row = result.one_or_none()

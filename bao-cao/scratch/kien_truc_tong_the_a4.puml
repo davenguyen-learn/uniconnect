@@ -1,0 +1,43 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName "Arial"
+skinparam defaultFontSize 11
+skinparam roundCorner 8
+skinparam shadowing false
+skinparam linetype ortho
+
+skinparam rectangle {
+    BorderThickness 1.2
+    BorderColor #475569
+    BackgroundColor #FFFFFF
+    FontColor #0F172A
+}
+
+' ========================================================
+' 6 KHỐI KIẾN TRÚC LÕI (OVERALL SYSTEM ARCHITECTURE)
+' ========================================================
+
+rectangle "==WEB CLIENT==\n--\nReact • TypeScript • Leaflet\n//(Responsive Web Client)//" as Client #EFF6FF
+
+rectangle "==NGINX — Ingress / Reverse Proxy==\n--\nStatic Web Serving • Reverse Proxy" as Nginx #F0FDFA
+
+rectangle "==FASTAPI MODULAR MONOLITH==\n--\n**API • Business Logic • Data Access**\n\nActivity · Groups · Attendance · Calendar\nCertificate · AI Assistant · Administration" as FastAPI #FAF5FF
+
+rectangle "==PostgreSQL 16==\n--\n**Unified Datastore**\nRelational • PostGIS • pgvector" as Postgres #F0FDF4
+
+rectangle "==Google Gemini API==\n--\n**External AI Service**\nLLM Inference • Embedding" as Gemini #FFFBEB
+
+rectangle "==OpenStreetMap==\n--\n**External Map Service**\nMap Tiles (Direct Client)" as OSM #FFFBEB
+
+' ========================================================
+' LUỒNG GIAO TIẾP DỮ LIỆU
+' ========================================================
+Client -down-> Nginx : "HTTP"
+Client -right-> OSM : "HTTPS"
+
+Nginx -down-> FastAPI : "HTTP (Internal)"
+
+FastAPI -down-> Postgres : "TCP / asyncpg"
+FastAPI -right-> Gemini : "HTTPS"
+
+@enduml

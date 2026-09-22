@@ -11,9 +11,10 @@ export interface NotificationResponse {
   id: string;
   user_id: string;
   actor_id: string | null;
+  activity_id?: string | null;
   type: string;
-  target_type: string;
-  target_id: string;
+  target_type?: string;
+  target_id?: string;
   message: string;
   is_read: boolean;
   created_at: string;

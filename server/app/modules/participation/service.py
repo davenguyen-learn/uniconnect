@@ -223,15 +223,17 @@ async def list_requests(
 
 async def _award_trophy_if_eligible(db: AsyncSession, activity, user_id: uuid.UUID) -> bool:
     """Award trophy to user if activity has a trophy attached and not yet awarded."""
-    if not activity.trophy_id:
-        return False
     from app.modules.trophies.models import UserTrophy, Trophy
     from sqlalchemy import select
+
+    trophy = await db.scalar(select(Trophy).where(Trophy.activity_id == activity.id))
+    if not trophy:
+        return False
 
     existing = await db.scalar(
         select(UserTrophy).where(
             UserTrophy.user_id == user_id,
-            UserTrophy.trophy_id == activity.trophy_id,
+            UserTrophy.trophy_id == trophy.id,
             UserTrophy.activity_id == activity.id,
         )
     )
@@ -240,13 +242,11 @@ async def _award_trophy_if_eligible(db: AsyncSession, activity, user_id: uuid.UU
 
     user_trophy = UserTrophy(
         user_id=user_id,
-        trophy_id=activity.trophy_id,
+        trophy_id=trophy.id,
         activity_id=activity.id,
     )
     db.add(user_trophy)
 
-    # Get trophy title for notification
-    trophy = await db.scalar(select(Trophy).where(Trophy.id == activity.trophy_id))
     trophy_name = trophy.name if trophy else "Danh hiệu mới"
 
     # Send in-app notification
@@ -257,12 +257,12 @@ async def _award_trophy_if_eligible(db: AsyncSession, activity, user_id: uuid.UU
             user_id=user_id,
             actor_id=activity.host_id,
             type="trophy_awarded",
-            target_type="activity",
-            target_id=activity.id,
-            message=f"Chúc mừng! Bạn đã nhận được Trophy '{trophy_name}' từ hoạt động '{activity.title}'! 🏆",
+            activity_id=activity.id,
+            action_url="/profile",
+            message=f"Chúc mừng! Bạn đã nhận được danh hiệu '{trophy_name}' từ hoạt động '{activity.title}'.",
         )
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning(f"Failed to send trophy notification to {user_id}: {e}")
 
     return True
 
@@ -462,13 +462,14 @@ async def update_participant_attendance(
         trophy_awarded = await _award_trophy_if_eligible(db, activity, target_user_id)
     else:
         # Revoke trophy if attended set to False
-        if activity.trophy_id:
-            from app.modules.trophies.models import UserTrophy
-            from sqlalchemy import delete
+        from app.modules.trophies.models import UserTrophy, Trophy
+        from sqlalchemy import delete
+        trophy = await db.scalar(select(Trophy).where(Trophy.activity_id == activity.id))
+        if trophy:
             await db.execute(
                 delete(UserTrophy).where(
                     UserTrophy.user_id == target_user_id,
-                    UserTrophy.trophy_id == activity.trophy_id,
+                    UserTrophy.trophy_id == trophy.id,
                     UserTrophy.activity_id == activity.id,
                 )
             )
@@ -557,12 +558,11 @@ async def get_certificate_data(
     trophy_name = None
     trophy_icon = None
     trophy_points = None
-    if activity.trophy_id:
-        trophy = await db.scalar(select(Trophy).where(Trophy.id == activity.trophy_id))
-        if trophy:
-            trophy_name = trophy.name
-            trophy_icon = trophy.icon
-            trophy_points = trophy.points
+    trophy = await db.scalar(select(Trophy).where(Trophy.activity_id == activity.id))
+    if trophy:
+        trophy_name = trophy.name
+        trophy_icon = trophy.icon
+        trophy_points = trophy.points
 
     act_part = str(activity.id).replace('-', '')[:6].upper()
     user_part = str(effective_user_id).replace('-', '')[:6].upper()
@@ -579,7 +579,8 @@ async def get_certificate_data(
         "participant_university": participant.university,
         "activity_title": activity.title,
         "activity_date": start_str,
-        "location_name": activity.location_name,
+        "meeting_location": getattr(activity, "meeting_location", None) or getattr(activity, "location_name", None),
+        "location_name": getattr(activity, "meeting_location", None) or getattr(activity, "location_name", None),
         "host_name": host_name,
         "host_university": host_university,
         "social_work_days": activity.social_work_days,

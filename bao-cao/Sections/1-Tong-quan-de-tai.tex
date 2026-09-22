@@ -2,9 +2,9 @@
 \subsection{Giới thiệu đề tài}
 \subsubsection{Bối cảnh}
 
-Sự phát triển bùng nổ của các nền tảng mạng xã hội đã thay đổi hoàn toàn thói quen giao tiếp và cập nhật thông tin của giới trẻ. Đối với cộng đồng sinh viên tại các trường đại học, không gian mạng không chỉ là nơi giải trí mà còn là môi trường trao đổi học thuật chủ đạo. Mặc dù vậy, các mạng xã hội thống lĩnh thị trường hiện tại (như Facebook, Instagram hay X) chủ yếu được thiết kế để duy trì những mối quan hệ đã được thiết lập từ trước, hoặc phân phối nội dung định hướng dựa trên mức độ tương tác trực tuyến của người dùng. \cite{tac-dong-cua-mang-xa-hoi}
+Sự phát triển bùng nổ của các nền tảng mạng xã hội đã thay đổi hoàn toàn thói quen giao tiếp và cập nhật thông tin của giới trẻ. Đối với cộng đồng sinh viên tại các trường đại học, không gian mạng không chỉ là nơi giải trí mà còn là môi trường trao đổi học thuật chủ đạo. Mặc dù vậy, các mạng xã hội thống lĩnh thị trường hiện tại (như Facebook, Instagram hay X) chủ yếu được thiết kế để duy trì những mối quan hệ đã được thiết lập từ trước, hoặc phân phối nội dung định hướng dựa trên mức độ tương tác trực tuyến của người dùng\cite{tac-dong-cua-mang-xa-hoi, manca2020snss}.
 
-Cơ chế này vô tình tạo ra một nghịch lý: sinh viên có thể kết nối với thế giới rất nhanh chóng trên không gian mạng ảo, nhưng lại gặp khó khăn trong việc tìm kiếm và giao lưu với những người bạn mới có cùng sở thích chuyên sâu, cùng định hướng chuyên môn ngay tại môi trường học đường thực tế.
+Cơ chế này vô tình tạo ra một nghịch lý: sinh viên có thể kết nối với thế giới rất nhanh chóng trên không gian mạng ảo, nhưng lại gặp khó khăn trong việc tìm kiếm và giao lưu với những người bạn mới có cùng sở thích chuyên sâu, cùng định hướng chuyên môn ngay tại môi trường học đường thực tế. Các nghiên cứu nền tảng về phát triển giáo dục đại học của Astin\cite{astin1984involvement} và Tinto\cite{tinto1993leaving} đã chứng minh rằng mức độ gắn kết và hòa nhập vào các hoạt động phong trào học đường đóng vai trò quyết định đến sự thành công và chất lượng trải nghiệm của người học.
 
 Bên cạnh đó, việc nắm bắt thông tin về các hoạt động ngoại khóa, hội nhóm hay các sự kiện học thuật diễn ra xung quanh khu vực khuôn viên trường cũng đang gặp nhiều trở ngại. Thông tin thường bị phân mảnh trên nhiều nhóm chat hoặc diễn đàn rời rạc, thiếu đi tính trực quan về mặt không gian (Location-based) và tính kịp thời. Điều này dẫn đến việc nhiều sinh viên bỏ lỡ cơ hội tham gia các hoạt động hữu ích diễn ra ngay gần mình chỉ vì không tiếp cận đúng luồng thông báo.\cite{bao2015recommendations}
 
@@ -12,7 +12,7 @@ Bên cạnh đó, việc nắm bắt thông tin về các hoạt động ngoại
 
 \subsubsection{Nhu cầu xây dựng hệ thống}
 
-Từ những phân tích về bối cảnh hiện tại, có thể thấy rõ một khoảng trống lớn trong hệ sinh thái các ứng dụng phục vụ đời sống sinh viên. Hiện nay, khi một sinh viên muốn tìm kiếm một nhóm học tập môn chuyên ngành, một câu lạc bộ đang sinh hoạt, hay đơn giản là một người bạn để tham gia hoạt động thể thao tại khu vực khuôn viên trường, họ thường phải trải qua nhiều bước thủ công. Việc đăng bài tìm kiếm trên các hội nhóm chung của trường thường kém hiệu quả do lượng thông tin quá tải, bài viết dễ bị trôi và thiếu đi tính xác thực về mặt khoảng cách địa lý tại thời điểm thực.
+Từ những phân tích về bối cảnh hiện tại, có thể thấy rõ một khoảng trống lớn trong hệ sinh thái các ứng dụng phục vụ đời sống sinh viên. Hiện nay, khi một sinh viên muốn tìm kiếm một nhóm học tập môn chuyên ngành, một nhóm sinh viên đang sinh hoạt, hay đơn giản là một người bạn để tham gia hoạt động thể thao tại khu vực khuôn viên trường, họ thường phải trải qua nhiều bước thủ công. Việc đăng bài tìm kiếm trên các hội nhóm chung của trường thường kém hiệu quả do lượng thông tin quá tải, bài viết dễ bị trôi và thiếu đi tính xác thực về mặt khoảng cách địa lý tại thời điểm thực.
 
 Mặt khác, các ứng dụng bản đồ hiện hành (như Google Maps) chỉ mạnh về việc tra cứu các địa điểm tĩnh (tòa nhà, quán ăn) mà không hỗ trợ hiển thị các "thực thể sống" như sự kiện hoặc nhóm người dùng đang hoạt động. Ngược lại, các mạng xã hội lại thiếu đi góc nhìn trực quan về không gian. Sự thiếu đồng bộ này khiến sinh viên mất nhiều thời gian trong việc tìm kiếm thông tin và cản trở việc hình thành các cộng đồng học thuật, giải trí mang tính cục bộ\cite{scellato2011socio}.
 
@@ -54,7 +54,7 @@ Hệ thống được thiết kế hệ thống phân quyền rõ ràng, tối �
 \begin{itemize}
     \item Người dùng phổ thông (Sinh viên): Là đối tượng trung tâm của nền tảng. Đây là những cá nhân có nhu cầu mở rộng mạng lưới quan hệ học thuật và xã hội, tìm kiếm các hoạt động ngoại khóa hoặc cần sự hỗ trợ giải đáp thông tin từ trợ lý ảo. Tài khoản của người dùng sẽ lưu trữ các trường dữ liệu mang tính đặc thù của sinh viên như: chuyên ngành đang theo học, kỹ năng mềm, môn học đang quan tâm và sở thích cá nhân.
 
-    \item Tổ chức, đoàn thể nhà trường (Ban công tác xã hội, Đoàn Thanh niên, Hội Sinh viên): Đây là nhóm người dùng mang tính tổ chức (Organization Account). Nhóm đối tượng này được hệ thống cấp quyền hạn đặc biệt để khởi tạo, quản lý và điều phối các chiến dịch tình nguyện, hoạt động công tác xã hội quy mô lớn. Việc tích hợp nhóm đối tượng này giúp UniConnect trở thành một kênh truyền thông chính thống, hỗ trợ nhà trường lan tỏa các giá trị cộng đồng, đồng thời giúp sinh viên dễ dàng tiếp cận và đăng ký tham gia các hoạt động lấy điểm rèn luyện một cách minh bạch, trực quan.
+    \item Tổ chức, đoàn thể nhà trường (Ban công tác xã hội, Đoàn Thanh niên, Hội Sinh viên): Đây là nhóm người dùng mang tính tổ chức (Organization Account). Nhóm đối tượng này được hệ thống cấp quyền hạn đặc biệt để khởi tạo, quản lý và điều phối các chiến dịch tình nguyện, hoạt động công tác xã hội quy mô lớn. Việc tích hợp nhóm đối tượng này giúp UniConnect trở thành một kênh truyền thông chính thống, hỗ trợ nhà trường lan tỏa các giá trị cộng đồng, đồng thời giúp sinh viên dễ dàng tiếp cận và đăng ký tham gia các hoạt động tích lũy ngày Công tác Xã hội (CTXH) một cách minh bạch, trực quan.
 
     \item Quản trị viên hệ thống (System Admin): Đối tượng chịu trách nhiệm giám sát luồng dữ liệu toàn hệ thống, quản lý danh mục các loại hình hoạt động chuẩn và can thiệp xử lý các báo cáo vi phạm tiêu chuẩn cộng đồng để duy trì một môi trường kết nối số an toàn, lành mạnh.
 \end{itemize}
@@ -80,25 +80,25 @@ Hệ thống hỗ trợ đa dạng các loại hình sự kiện, từ quy mô n
     
     \item Hoạt động thể chất và thể thao: Tìm kiếm đối tác tham gia các môn thể thao đối kháng hoặc đồng đội như cầu lông, bóng rổ, bóng đá, chạy bộ xung quanh khu vực.
     
-    \item Hoạt động ngoại khóa và giải trí: Các buổi sinh hoạt của câu lạc bộ, các buổi giao lưu âm nhạc tự phát hoặc hẹn gặp gỡ giao lưu bạn mới có cùng sở thích.
+    \item Hoạt động ngoại khóa và giải trí: Các buổi sinh hoạt của các nhóm sinh viên, các buổi giao lưu âm nhạc tự phát hoặc hẹn gặp gỡ giao lưu bạn mới có cùng sở thích.
 \end{itemize}
 
 \subsubsection{Tính năng cốt lõi}
 
-Quản lý tài khoản và Hồ sơ sinh viên (User \& Profile Management): Cho phép đăng ký, định danh, và quản lý thông tin cá nhân. Đặc biệt, hệ thống sẽ thu thập các dữ liệu phi cấu trúc (ngành học, kỹ năng, sở thích) để làm đầu vào cho mô hình ngôn ngữ chuyển đổi thành các vector (embeddings).
+Quản lý tài khoản và Hồ sơ sinh viên (User \& Profile Management): Cho phép đăng ký, định danh, và quản lý thông tin cá nhân. Đặc biệt, hệ thống thu thập các dữ liệu phi cấu trúc (ngành học, kỹ năng, sở thích) để làm đầu vào cho mô hình ngôn ngữ chuyển đổi thành các vector (embeddings).
 
-Quản lý hoạt động và Tương tác không gian (Activity \& Spatial Management): Xử lý logic tạo mới, chỉnh sửa và quản lý vòng đời của một hoạt động. Cung cấp API để đánh dấu tọa độ lên bản đồ số (Location-based). Tích hợp sẵn không gian lưu trữ cục bộ cho từng hoạt động, cho phép các thành viên tham gia có thể đăng tải tài liệu (file đính kèm) và nhắn tin/thảo luận (chat/comment) trực tiếp trong phạm vi sự kiện đó.
+Quản lý hoạt động và Tương tác không gian (Activity \& Spatial Management): Xử lý logic tạo mới, chỉnh sửa và quản lý vòng đời của một hoạt động. Cung cấp API để đánh dấu tọa độ lên bản đồ số (Location-based). Tích hợp sẵn cơ chế điểm danh chống gian lận đa tầng (Mã QR xoay động 30 giây HMAC kết hợp GPS Geofencing), đồng thời hỗ trợ kênh trao đổi và bình luận tương tác (Activity Discussion) trực tiếp trong phạm vi sự kiện đó.
 
 Hệ thống khớp nối và Gợi ý thông minh (Smart Matching Engine): Ứng dụng kỹ thuật truy vấn vector trên PostgreSQL để tự động đo lường độ tương đồng giữa các hồ sơ sinh viên, hoặc giữa sinh viên với các hoạt động xung quanh, từ đó trả về danh sách đề xuất phù hợp nhất.
 
-Trợ lý ảo thông minh (AI Chatbot): Cung cấp giao diện giao tiếp tự nhiên bằng văn bản, giúp người dùng tra cứu nhanh các thông tin trên hệ thống (tìm sự kiện, hỏi về tài liệu đã chia sẻ, hướng dẫn tham gia hoạt động) thay vì phải sử dụng bộ lọc tìm kiếm truyền thống.
+Trợ lý ảo thông minh (AI Chatbot): Cung cấp giao diện giao tiếp tự nhiên bằng văn bản, giúp người dùng tra cứu nhanh các thông tin trên hệ thống (tìm sự kiện, hỏi về tiêu chí ngày CTXH, tư vấn các khoảng thời gian khả dụng để tham gia hoạt động) thay vì phải sử dụng bộ lọc tìm kiếm truyền thống.
 
 \subsubsection{Chatbot hỏi đáp}
 
 Trợ lý ảo thông minh và Tư vấn học đường (AI Chatbot \& Campus Assistant): Cung cấp giao diện tương tác bằng ngôn ngữ tự nhiên, được xây dựng dựa trên kỹ thuật tạo văn bản tăng cường truy xuất (RAG). Phạm vi hỗ trợ của chatbot được quy định rõ ràng như sau:
 
 \begin{itemize}
-    \item Hỗ trợ thông tin và gợi ý: Trực tiếp phân tích câu hỏi của người dùng để truy xuất, đề xuất các hoạt động, sự kiện, nhóm học tập hoặc các tài liệu đang lưu hành trên hệ thống UniConnect sao cho khớp với vị trí và thời gian thực.
+    \item Hỗ trợ thông tin và gợi ý: Trực tiếp phân tích câu hỏi của người dùng để truy xuất, đề xuất các hoạt động, sự kiện, nhóm học tập hoặc các Nhóm đang hoạt động trên hệ thống UniConnect sao cho khớp với vị trí, sở thích và lịch trống thực tế của sinh viên.
     
     \item Tư vấn quy trình và giải đáp thắc mắc (FAQ): Đóng vai trò như một tư vấn viên cơ bản, hướng dẫn sinh viên các quy trình tham gia công tác xã hội, cách thức đăng ký sự kiện của nhà trường, hoặc giải đáp các thắc mắc về cách sử dụng nền tảng.
     
@@ -110,7 +110,7 @@ Trợ lý ảo thông minh và Tư vấn học đường (AI Chatbot \& Campus A
 Với đặc thù là một mạng xã hội thu thập thông tin cá nhân và dữ liệu tọa độ không gian, hệ thống UniConnect được thiết kế dựa trên các nguyên tắc đạo đức công nghệ (Tech Ethics) và bảo vệ người dùng nghiêm ngặt. Phạm vi đạo đức của đồ án được xác định qua các tiêu chí sau:
 
 \begin{itemize}
-    \item Quyền tự quyết về dữ liệu vị trí (Location Autonomy): Hệ thống tôn trọng tuyệt đối quyền riêng tư về mặt không gian của sinh viên. Việc chia sẻ tọa độ lên bản đồ số là hoàn toàn tự nguyện (Opt-in). Người dùng được cung cấp tính năng "Ẩn danh vị trí" (Ghost Mode/Invisible Mode), cho phép họ tắt định vị bất cứ lúc nào, hoặc chỉ hiển thị vị trí ước lượng (khoảng cách tương đối) thay vì tọa độ chính xác, nhằm ngăn chặn triệt để các rủi ro về theo dõi lén (stalking) hay quấy rối ngoài đời thực\cite{krumm2009a}.
+    \item Quyền tự quyết về dữ liệu vị trí (Location Autonomy): Hệ thống tôn trọng tuyệt đối quyền riêng tư về mặt không gian của sinh viên. Việc chia sẻ tọa độ lên bản đồ số là hoàn toàn tự nguyện (Opt-in). Người dùng được cung cấp tính năng "Ẩn danh vị trí" (Ghost Mode/Invisible Mode), cho phép họ tắt định vị bất cứ lúc nào, hoặc chỉ hiển thị vị trí ước lượng (khoảng cách tương đối) thay vì tọa độ chính xác, nhằm ngăn chặn triệt để các rủi ro về hành vi bám đuôi, theo dõi trái phép (stalking) hoặc quấy rối trong đời thực\cite{krumm2009a}.
 
     \item Tính minh bạch và công bằng của AI (AI Fairness \& Transparency): Thuật toán tìm kiếm vector (Vector Search) và hệ thống gợi ý ghép cặp được giới hạn chỉ phân tích dựa trên các biến số mang tính học thuật và sở thích công khai (ngành học, môn học, hoạt động quan tâm). Hệ thống tuyệt đối không thu thập, phân tích hay đưa ra các đề xuất phân biệt đối xử dựa trên giới tính, tôn giáo, tín ngưỡng, hay xuất thân của sinh viên, đảm bảo một môi trường kết nối bình đẳng.
     
@@ -143,7 +143,7 @@ Với đặc thù là một mạng xã hội thu thập thông tin cá nhân và
 
 Kiến tạo môi trường đại học gắn kết và năng động: Đối với sinh viên, UniConnect giải quyết trực tiếp "nỗi đau" về sự đứt gãy thông tin và sự cô lập trong môi trường học đường rộng lớn. Bằng cách số hóa và trực quan hóa các hoạt động lên bản đồ, hệ thống khuyến khích sinh viên bước ra khỏi không gian mạng ảo để tham gia vào các tương tác thực tế\cite{hampton2003living}. Điều này không chỉ giúp nâng cao chất lượng học tập (thông qua các nhóm học thuật) mà còn cải thiện đời sống tinh thần, giảm thiểu cảm giác lạc lõng của tân sinh viên.
 
-Hỗ trợ chuyển đổi số trong công tác quản lý phong trào: Đối với nhà trường và các tổ chức Đoàn, Hội, nền tảng cung cấp một công cụ hiện đại và tập trung để truyền thông, điều phối các chiến dịch tình nguyện và sự kiện công tác xã hội. Việc này giúp các phong trào tiếp cận đúng đối tượng mục tiêu một cách nhanh chóng, minh bạch hóa quá trình đăng ký tham gia và góp phần xây dựng một hệ sinh thái học đường thông minh, hiện đại.
+Hỗ trợ chuyển đổi số trong công tác quản lý phong trào: Đối với nhà trường và các tổ chức Đoàn, Hội, nền tảng cung cấp một công cụ hiện đại và tập trung để truyền thông, điều phối các chiến dịch tình nguyện và sự kiện công tác xã hội, bám sát các tiêu chí đánh giá kết quả rèn luyện của Bộ Giáo dục và Đào tạo\cite{thongtu16bgd}. Việc này giúp các phong trào tiếp cận đúng đối tượng mục tiêu một cách nhanh chóng, minh bạch hóa quá trình đăng ký tham gia và góp phần xây dựng một hệ sinh thái học đường thông minh, hiện đại.
 
 \subsubsection{Ý nghĩa khoa học và công nghệ}
 
@@ -151,11 +151,11 @@ Chứng minh tính khả thi của mô hình Mạng xã hội cục bộ (Hyper-
 
 Ứng dụng thành công AI và tìm kiếm ngữ nghĩa vào hệ thống truyền thống: Đề tài mang ý nghĩa quan trọng trong việc hiện thực hóa các lý thuyết về trí tuệ nhân tạo vào một sản phẩm ứng dụng. Việc kết hợp phương pháp nhúng vector (Vector Embedding) và kỹ thuật RAG (Retrieval-Augmented Generation) ngay trên nền tảng cơ sở dữ liệu quan hệ (PostgreSQL) chứng minh rằng các hệ thống vừa và nhỏ hoàn toàn có thể sở hữu các tính năng gợi ý thông minh, thấu hiểu ngữ nghĩa mà không cần đến các kiến trúc hạ tầng Dữ liệu lớn (Big Data) quá tốn kém\cite{pagliaro2021rag}.
 
-\subsubsection{Ý nghĩa đối với bản thân sinh viên thực hiện}
+\subsubsection{Ý nghĩa đối với người thực hiện đề tài}
 
-Tổng hợp và vận dụng toàn diện kiến thức: Quá trình thực hiện đồ án là cơ hội quý báu để em xâu chuỗi và áp dụng thực tế những kiến thức đã được đào tạo trong suốt 4 năm học viện. Từ tư duy thiết kế hệ thống, phân tích cơ sở dữ liệu, lập trình thuật toán (Python, Vector Search) cho đến việc xây dựng giao diện tương tác (React.js) và triển khai vận hành (Docker).
+Tổng hợp và vận dụng toàn diện kiến thức: Quá trình thực hiện đồ án là cơ hội quý báu để tác giả hệ thống hóa và vận dụng toàn diện các kiến thức đã được đào tạo trong suốt chương trình học tại Trường Đại học Bách khoa. Từ phương pháp thiết kế kiến trúc phần mềm, phân tích cơ sở dữ liệu quan hệ và không gian, tối ưu hóa thuật toán (Python, Vector Search) cho đến việc xây dựng giao diện người dùng tương tác (React.js) và đóng gói triển khai (Docker).
 
-Trang bị kỹ năng giải quyết bài toán thực tế: Khác với các bài tập môn học có sẵn dữ liệu và khuôn mẫu, việc tự tay xây dựng UniConnect từ con số không đã rèn luyện cho em khả năng phân tích yêu cầu người dùng, xử lý các lỗi hệ thống phức tạp (bugs) và tư duy phát triển sản phẩm (Product Thinking). Đây là hành trang thực tiễn vô cùng vững chắc để em tự tin bước vào con đường kỹ sư phần mềm chuyên nghiệp sau khi tốt nghiệp.
+Trang bị kỹ năng giải quyết bài toán kỹ thuật thực tế: Khác với các bài tập học phần có sẵn dữ liệu và khuôn mẫu giả lập, quá trình xây dựng nền tảng UniConnect đòi hỏi việc khảo sát thực tế, phân tích và chuẩn hóa yêu cầu nghiệp vụ học đường, xử lý các thách thức kỹ thuật về tính toán đồng thời và tính nhất quán dữ liệu. Đây là nền tảng thực nghiệm vững chắc phục vụ cho công tác nghiên cứu và phát triển phần mềm chuyên nghiệp.
 
 \subsection{Kết luận chương}
 

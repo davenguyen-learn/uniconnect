@@ -1,0 +1,47 @@
+\section*{PHỤ LỤC A: DANH MỤC USE CASE VÀ ĐẶC TẢ CHI TIẾT}
+\addcontentsline{toc}{section}{Phụ lục A: Danh mục Use Case và Đặc tả chi tiết}
+
+Phụ lục này tổng hợp toàn bộ các ca sử dụng (Use Cases) của hệ thống UniConnect, được phân loại theo từng nhóm tác nhân chính: Sinh viên (Student), Ban điều hành Nhóm / Cán bộ trường (Staff/Organizer), Quản trị viên hệ thống (Administrator) và Tác nhân Hệ thống tự động (System Engine).
+
+\subsection*{A.1 Bảng tổng hợp Danh mục Ca sử dụng (Use Case Inventory)}
+
+\begingroup
+\singlespacing
+\small
+\renewcommand{\arraystretch}{1.05}
+\begin{xltabular}{\textwidth}{|l|p{4.2cm}|l|X|c|}
+\hline
+\textbf{Mã UC} & \textbf{Tên ca sử dụng} & \textbf{Tác nhân} & \textbf{Mô tả tóm tắt} & \textbf{Độ ưu tiên} \\ \hline
+\endfirsthead
+\hline
+\textbf{Mã UC} & \textbf{Tên ca sử dụng} & \textbf{Tác nhân} & \textbf{Mô tả tóm tắt} & \textbf{Độ ưu tiên} \\ \hline
+\endhead
+\hline
+\endfoot
+\hline
+\endlastfoot
+UC-AUTH-01 & Đăng ký tài khoản sinh viên & Sinh viên & Tạo tài khoản mới bằng email trường học. & Cao \\ \hline
+UC-AUTH-02 & Đăng nhập và Cấp phát JWT & Người dùng & Xác thực mật khẩu Bcrypt, cấp Access/Refresh token. & Cao \\ \hline
+UC-AUTH-03 & Đăng nhập Google OAuth2 & Người dùng & Xác thực liên kết tài khoản Google học đường. & Trung bình \\ \hline
+UC-MAP-01 & Khám phá hoạt động trên Bản đồ & Sinh viên & Xem các điểm ghim sự kiện lân cận qua PostGIS. & Cao \\ \hline
+UC-MAP-02 & Lọc sự kiện theo danh mục & Sinh viên & Lọc hoạt động theo Thể thao, Học thuật, CTXH. & Cao \\ \hline
+UC-ACT-01 & Khởi tạo sự kiện / hoạt động & Sinh viên / BTC & Tạo hoạt động ghim tọa độ, thời gian, giới hạn chỗ. & Cao \\ \hline
+UC-ACT-02 & Đăng ký tham gia hoạt động & Sinh viên & Gửi yêu cầu tham gia, kiểm tra slot trống. & Cao \\ \hline
+UC-ACT-03 & Hủy đăng ký hoạt động & Sinh viên & Rút tên khỏi danh sách tham gia trước hạn chót. & Trung bình \\ \hline
+UC-CAL-01 & Đối soát xung đột lịch trình & Hệ thống & Áp dụng vị từ khoảng thời gian giao nhau cảnh báo trùng lặp. & Cao \\ \hline
+UC-CAL-02 & Xuất lịch cá nhân chuẩn \texttt{.ics} & Sinh viên & Tải file iCalendar đồng bộ vào Google Calendar. & Trung bình \\ \hline
+UC-ATT-01 & Tạo mã QR xoay động 30s HMAC & Ban tổ chức & Sinh mã QR bảo mật tự làm mới mỗi chu kỳ 30 giây. & Cao \\ \hline
+UC-ATT-02 & Điểm danh qua quét mã QR & Sinh viên & Quét mã QR xoay động, gửi token lên máy chủ. & Cao \\ \hline
+UC-ATT-03 & Điểm danh định vị GPS Geofencing & Sinh viên & Gửi tọa độ GPS vệ tinh, đối soát bán kính $d \le 100$m. & Cao \\ \hline
+UC-ATT-04 & Tra cứu chứng nhận trực tuyến & Công chúng & Kiểm tra mã chứng nhận tại \texttt{/verify-certificate}. & Trung bình \\ \hline
+UC-COH-01 & Mời Nhóm Đồng tổ chức & Nhóm chủ trì & Gửi lời mời Co-hosting cho Nhóm đối tác. & Cao \\ \hline
+UC-COH-02 & Phê chuẩn lời mời Đồng tổ chức & Nhóm đối tác & Chấp thuận hoặc từ chối tư cách Đồng tổ chức. & Cao \\ \hline
+UC-COH-03 & Điểm danh ủy nhiệm Co-host & Nhóm đối tác & Ban điều hành Nhóm đối tác mở phiên điểm danh sự kiện. & Cao \\ \hline
+UC-GAM-01 & Tự động tích lũy ngày CTXH & Hệ thống & Cộng dồn số ngày CTXH sau khi xác nhận điểm danh. & Cao \\ \hline
+UC-GAM-02 & Mở khóa huy hiệu danh dự & Hệ thống & Trao Trophy khi sinh viên đạt mốc thành tích. & Trung bình \\ \hline
+UC-RAG-01 & Tư vấn quy chế và hoạt động & Sinh viên & Đặt câu hỏi cho Trợ lý AI qua kiến trúc RAG. & Cao \\ \hline
+UC-ADM-01 & Quản trị người dùng và vai trò & Quản trị viên & Khóa tài khoản, nâng cấp vai trò Cán bộ/Admin. & Cao \\ \hline
+UC-ADM-02 & Kiểm duyệt nội dung vi phạm & Quản trị viên & Xử lý báo cáo, gỡ bỏ bình luận/sự kiện vi phạm. & Cao \\ \hline
+UC-ADM-03 & Xuất danh sách sinh viên CSV & Quản trị viên & Trích xuất dữ liệu sinh viên và ngày CTXH chuẩn UTF-8 BOM. & Cao \\ \hline
+\end{xltabular}
+\endgroup

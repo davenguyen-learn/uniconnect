@@ -19,7 +19,7 @@ Dữ liệu không gian (Spatial Data) biểu diễn vị trí địa lý của 
 
 \subsubsection{Cơ chế xử lý và tối ưu hóa toán học khoảng cách địa lý trong PostgreSQL}
 
-Để thực thi các truy vấn không gian trong bán kính xác định cho hàng vạn sinh viên cùng lúc, hệ thống không áp dụng các công thức lượng giác cầu truyền thống (như Haversine) một cách tuần tự do chi phí tính toán các hàm số lượng giác (sin, cos, acos) trên tầng CPU là cực kỳ lớn. Thay vào đó, hệ quản trị cơ sở dữ liệu PostgreSQL tối ưu hóa quy trình này bằng các cơ chế hình học máy tính chuyên sâu thông qua hai hướng tiếp cận kỹ thuật\cite{orlandini2024postgresql}:
+Để thực thi các truy vấn không gian trong bán kính xác định cho số lượng lớn sinh viên đồng thời, hệ thống không áp dụng các công thức lượng giác cầu truyền thống (như Haversine) một cách tuần tự do chi phí tính toán các hàm số lượng giác (sin, cos, acos) trên tầng CPU là rất đáng kể. Thay vào đó, hệ quản trị cơ sở dữ liệu PostgreSQL tối ưu hóa quy trình này bằng các cơ chế hình học máy tính chuyên sâu thông qua hai hướng tiếp cận kỹ thuật\cite{orlandini2024postgresql}:
 
 Đại số hóa không gian 3 chiều (Giải pháp mã hóa Cube):
 
@@ -68,7 +68,7 @@ Trong kỷ nguyên xử lý ngôn ngữ tự nhiên (NLP) hiện đại, văn b�
 
 \subsection{Kỹ thuật lập chỉ mục Vector (Vector Indexing)}
 
-Việc tính toán khoảng cách giữa một truy vấn và toàn bộ cơ sở dữ liệu (Brute-force) có độ phức tạp $\mathcal{O}(N \cdot d)$, gây tắc nghẽn khi dữ liệu lớn. Hệ thống UniConnect áp dụng các thuật toán lập chỉ mục tìm kiếm hàng xóm gần nhất xấp xỉ (Approximate Nearest Neighbor - ANN).
+Việc tính toán khoảng cách giữa một truy vấn và toàn bộ cơ sở dữ liệu (Brute-force) có độ phức tạp $\mathcal{O}(N \cdot d)$, gây tắc nghẽn khi dữ liệu lớn. Hệ thống UniConnect áp dụng các thuật toán lập chỉ mục tìm kiếm hàng xóm gần nhất xấp xỉ (Approximate Nearest Neighbor - ANN)\cite{johnson2021billion, douze2024faiss}.
 
 \subsubsection{Thuật toán IVFFlat (Inverted File with Flat Compression)}
 
@@ -108,19 +108,65 @@ Quy trình xử lý một câu hỏi của sinh viên thông qua RAG được ch
 
 \begin{enumerate}
     \item Giai đoạn Truy xuất (Retrieval):
-    Khi sinh viên nhập một câu hỏi (ví dụ: "Chiều nay có nhóm nào đá bóng không?"), hệ thống không đưa thẳng câu hỏi này cho AI. Trước tiên, câu hỏi được chuyển đổi thành một vector truy vấn. Hệ thống sử dụng tìm kiếm vector trên PostgreSQL để quét trong cơ sở dữ liệu và tìm ra các mẩu tin liên quan nhất (thông tin về các trận bóng, thời gian, địa điểm cụ thể).
+    Khi sinh viên nhập câu hỏi tự nhiên (ví dụ: "Chiều nay có hoạt động thể thao hoặc học tập nào diễn ra không?"), hệ thống chuyển đổi câu hỏi thành vector biểu diễn ngữ nghĩa. Sau đó, hệ thống thực thi truy vấn vector tương đồng trên PostgreSQL (pgvector) để tìm kiếm các bản ghi dữ liệu hoạt động có liên quan nhất (tiêu đề, thời gian, địa điểm cụ thể).
     
     \item Giai đoạn Tăng cường (Augmentation):
-    Sau khi tìm được dữ liệu thực tế, hệ thống sẽ đóng gói dữ liệu đó cùng với câu hỏi gốc của sinh viên vào một cấu trúc gọi là "Prompt ngữ cảnh". Lúc này, thông tin thô từ cơ sở dữ liệu được trình bày lại một cách mạch lạc để chuẩn bị đưa vào mô hình ngôn ngữ.
+    Sau khi truy xuất được dữ liệu thực tế từ hệ thống, phân hệ xử lý sẽ tổng hợp dữ liệu này cùng với câu hỏi gốc thành một cấu trúc Prompt ngữ cảnh (Contextual Prompt) chuẩn hóa, bảo đảm cung cấp đầy đủ dữ kiện kiểm chứng cho mô hình ngôn ngữ.
     
     \item Giai đoạn Sinh văn bản (Generation):
-    Mô hình AI sẽ đọc "Prompt ngữ cảnh" bao gồm: [Câu hỏi của sinh viên] + [Dữ liệu thực tế từ hệ thống]. Nhiệm vụ của AI lúc này chỉ là tổng hợp lại thông tin một cách tự nhiên và chính xác. Kết quả trả về sẽ là một câu trả lời thân thiện nhưng cực kỳ sát thực tế thay vì những câu trả lời chung chung.
+    Mô hình ngôn ngữ tiếp nhận Prompt ngữ cảnh gồm câu hỏi và dữ liệu hoạt động xác thực để tổng hợp câu trả lời tự nhiên, chính xác và bám sát thực tế, hạn chế tối đa nguy cơ sai lệch thông tin.
 \end{enumerate}
 
 \subsubsection{Ưu điểm của RAG trong hệ thống UniConnect}
 
-Tính cập nhật tức thì: AI không cần phải được huấn luyện lại mỗi khi có sự kiện mới. Chỉ cần dữ liệu được lưu vào PostgreSQL, Chatbot sẽ "biết" và phản hồi được ngay.
+Tính cập nhật tức thời: Mô hình không yêu cầu quá trình tái huấn luyện (fine-tuning) phức tạp khi có sự kiện mới phát sinh; các hoạt động vừa được ghi nhận vào cơ sở dữ liệu PostgreSQL sẽ lập tức được đưa vào không gian tìm kiếm.
 
-Độ tin cậy cao: AI bị bắt buộc phải trả lời dựa trên các tài liệu tìm thấy. Nếu hệ thống không tìm thấy hoạt động nào phù hợp, AI sẽ báo là "Không tìm thấy" thay vì tự bịa ra thông tin.
+Độ tin cậy và hạn chế ảo giác (Hallucination mitigation): Câu trả lời được kiểm soát chặt chẽ dựa trên dữ liệu truy xuất từ cơ sở dữ liệu. Trường hợp không tìm thấy hoạt động thỏa mãn điều kiện, hệ thống sẽ chủ động phản hồi không có dữ liệu phù hợp thay vì tự động suy diễn sai lệch.
 
-Tiết kiệm tài nguyên: Thay vì phải thuê các dịch vụ AI đắt đỏ để huấn luyện riêng cho trường học, UniConnect chỉ cần sử dụng API có sẵn kết hợp với bộ máy tìm kiếm vector nội bộ để đạt được hiệu quả tương đương.
+Tối ưu chi phí và tài nguyên tính toán: Thay vì triển khai hoặc vận hành các mô hình ngôn ngữ lớn tùy biến tốn kém, giải pháp kết hợp API mô hình nền tảng cùng cơ chế tìm kiếm vector cục bộ mang lại hiệu năng cao và tiết kiệm tài nguyên vận hành\cite{karpukhin2020dense}.
+
+\subsection{Cơ sở mật mã học trong xác thực điểm danh: Thuật toán TOTP và mã phản hồi nhanh QR Code}
+
+Để đảm bảo tính toàn vẹn và chống gian lận trong công tác điểm danh phong trào học đường, hệ thống UniConnect kết hợp các chuẩn mật mã học hiện đại nhằm tạo ra mã xác thực một lần theo thời gian (Time-Based One-Time Password - TOTP).
+
+\subsubsection{Nguyên lý thuật toán TOTP (RFC 6238) và HMAC (RFC 4226)}
+
+Thuật toán TOTP là sự mở rộng của thuật toán sinh mật khẩu một lần dựa trên bộ đếm (HMAC-Based One-Time Password - HOTP)\cite{mraihi2005hotp}. Thay vì sử dụng biến đếm tăng dần $C$, TOTP sử dụng số lượng khoảng thời gian trôi qua kể từ mốc thời gian Unix Epoch ($T_0 = 0$) với kích thước bước thời gian quy định là $T_X$ (trong UniConnect, $T_X = 30$ giây)\cite{krawczyk2011totp}:
+
+\begin{equation}
+T = \left\lfloor \frac{\text{CurrentTime} - T_0}{T_X} \right\rfloor
+\end{equation}
+
+Giá trị băm xác thực thông điệp có khóa (Keyed-Hash Message Authentication Code - HMAC) được tính toán dựa trên hàm băm mật mã an toàn (SHA-256) kết hợp giữa khóa bí mật $K$ của hoạt động và biến thời gian $T$:
+
+\begin{equation}
+\text{HMAC}(K, T) = \text{Hash}\big((K \oplus \text{opad}) \parallel \text{Hash}((K \oplus \text{ipad}) \parallel T)\big)
+\end{equation}
+
+Chuỗi băm sau đó được cắt động (Dynamic Truncation) để trích xuất mã token xác thực ngắn hạn. Nhờ đó, mã điểm danh sẽ tự động vô hiệu hóa sau mỗi 30 giây, ngăn chặn triệt để hành vi chụp ảnh màn hình hoặc gửi mã ra ngoài khu vực sự kiện.
+
+\subsubsection{Tiêu chuẩn mã vạch hai chiều QR Code (ISO/IEC 18004)}
+
+Mã QR (Quick Response Code) được chuẩn hóa theo tiêu chuẩn quốc tế ISO/IEC 18004\cite{iso18004qr}. Dữ liệu token TOTP cùng mã định danh hoạt động được mã hóa thành ma trận điểm ảnh vuông 2D tích hợp cơ chế sửa lỗi Reed-Solomon (mức sửa lỗi Medium 15\% hoặc Quartile 25\%). Điều này bảo đảm thiết bị di động của sinh viên có thể nhận diện và quét mã nhanh chóng ngay cả trong điều kiện ánh sáng yếu hoặc góc chụp nghiêng.
+
+\subsection{Thuật toán phát hiện xung đột lịch dựa trên khoảng thời gian nửa mở}
+
+Để hỗ trợ sinh viên quản lý lịch trình và tự động cảnh báo khi có sự kiện trùng giờ, UniConnect áp dụng vị từ giao thoa khoảng thời gian nửa mở (Half-Open Interval Overlap Predicate) kết hợp cùng chuẩn dữ liệu lịch biểu toàn cầu iCalendar (RFC 5545)\cite{desruisseaux2009ical}.
+
+\subsubsection{Vị từ giao thoa khoảng thời gian nửa mở $[start, end)$}
+
+Trong thực tế xếp lịch học đường, các mốc thời gian sự kiện được mô hình hóa dưới dạng khoảng nửa mở $[s, e)$, nghĩa là bao gồm thời điểm bắt đầu $s$ nhưng không bao gồm thời điểm kết thúc $e$. Với hai khoảng thời gian $A = [s_A, e_A)$ (sự kiện hiện có trong lịch) và $B = [s_B, e_B)$ (sự kiện sinh viên dự định tham gia), điều kiện để hai sự kiện xảy ra xung đột cứng (Hard Conflict) được xác định bằng biểu thức:
+
+\begin{equation}
+\text{Conflict}(A, B) \iff \max(s_A, s_B) < \min(e_A, e_B)
+\end{equation}
+
+Nguyên lý nửa mở này đảm bảo tính đúng đắn toán học: hai sự kiện tiếp giáp liên tiếp (Adjacent Intervals), ví dụ sự kiện $A$ diễn ra từ 10:00--11:00 và sự kiện $B$ diễn ra từ 11:00--12:00, sẽ có $\max(10:00, 11:00) = 11:00$ và $\min(11:00, 12:00) = 11:00$, do đó điều kiện $11:00 < 11:00$ là False $\rightarrow$ Hoàn toàn không bị xem là xung đột.
+
+Đối với trường hợp hai sự kiện tiếp giáp hoặc cách nhau một khoảng nghỉ ngắn hơn thời gian di chuyển ước tính $t_{\text{travel}}$ giữa hai địa điểm trên bản đồ, hệ thống gắn cờ cảnh báo xung đột mềm (Soft Conflict):
+
+\begin{equation}
+\text{SoftConflict}(A, B) \iff 0 \le (s_B - e_A) < t_{\text{travel}} \quad (\text{với } s_B \ge e_A)
+\end{equation}
+
+Hệ thống sử dụng các vị từ trên để duyệt qua toàn bộ lịch trình cá nhân (\texttt{user\_busy\_slots}, \texttt{busy\_slot\_exceptions}, \texttt{user\_vacation\_periods}) nhằm cảnh báo kịp thời trên giao diện, đồng thời tuân thủ bất biến kiến trúc: cảnh báo xung đột lịch không trực tiếp thay đổi (mutate) trạng thái đăng ký tham gia hoạt động của sinh viên.

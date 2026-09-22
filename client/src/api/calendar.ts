@@ -8,6 +8,7 @@ export interface CalendarEventItem {
   event_type: 'busy_slot' | 'activity_joined' | 'activity_hosted';
   activity_id?: string | null;
   category?: string | null;
+  meeting_location?: string | null;
   location_name?: string | null;
   is_recurring: boolean;
   color_tag: 'busy' | 'joined' | 'hosted';

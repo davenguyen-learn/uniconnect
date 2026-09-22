@@ -11,6 +11,7 @@ class ActivitySimple(BaseModel):
 class TrophyCreate(BaseModel):
     name: str = Field(min_length=2, max_length=100)
     description: str | None = None
+    activity_id: uuid.UUID | None = None
     points: int = Field(default=0, ge=0)
     icon: str | None = None
 
@@ -18,9 +19,10 @@ class TrophyResponse(BaseModel):
     id: uuid.UUID
     name: str
     description: str | None = None
-    points: int
-    icon: str | None = None
-    creator_id: uuid.UUID
+    activity_id: uuid.UUID | None = None
+    points: int = 0
+    icon: str | None = "🏆"
+    creator_id: uuid.UUID | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}

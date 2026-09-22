@@ -356,8 +356,18 @@
 
 .ctxh-stat-percent {
   font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  color: #059669; /* Green success */
+  font-weight: var(--font-weight-bold);
+  color: #047857; /* High contrast green */
+}
+
+:root[class~="dark"] .ctxh-stat-percent {
+  color: #34d399;
+}
+
+@media (prefers-color-scheme: dark) {
+  .ctxh-stat-percent {
+    color: #34d399;
+  }
 }
 
 .ctxh-progress-bar {

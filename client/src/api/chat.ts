@@ -6,6 +6,7 @@ export interface ChatEventCardDTO {
   title: string;
   start_time: string;
   end_time: string;
+  meeting_location?: string;
   location_name: string;
   social_work_days?: number | null;
   distance_meters?: number | null;
