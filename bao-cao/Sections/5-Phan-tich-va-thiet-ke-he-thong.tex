@@ -845,18 +845,6 @@ Hình~\ref{fig:activity_cohost_workflow} thể hiện luồng liên kết nghi�
 Nhóm chủ trì (Host) phát lời mời tới Nhóm đối tác thông qua mã định danh \texttt{group\_id}. Lời mời được lưu ở trạng thái \texttt{pending}. Khi ban quản trị Nhóm đối tác chấp thuận, hệ thống thiết lập liên kết trong bảng \texttt{activity\_cohosts}, đồng thời phân bổ quyền quản trị ủy nhiệm (RBAC Delegation) cho phép đối tác cùng mở phiên điểm danh QR và phê duyệt danh sách thành viên.
 
 \clearpage
-\subsubsection{Thuật toán Phát hiện xung đột lịch dựa trên vị từ giao nhau thời gian}
-
-Hình~\ref{fig:flowchart_phat_hien_xung_dot_lich} mô tả thuật toán kiểm tra tính khả thi của lịch trình khi sinh viên chuẩn bị đăng ký một hoạt động mới:
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.88\textwidth]{Images/flowchart-xung-dot-lich.png}
-    \caption{Flowchart: Thuật toán phát hiện xung đột lịch dựa trên vị từ giao nhau thời gian}
-    \label{fig:flowchart_phat_hien_xung_dot_lich}
-\end{figure}
-
-\clearpage
 \subsubsection{Quy trình Xử lý hỏi đáp tự động với Trợ lý AI (ReAct \& RAG)}
 
 Hình~\ref{fig:activity_hoi_dap_chatbot} mô tả chu trình tiếp nhận câu hỏi tự nhiên và cơ chế suy luận kết hợp tìm kiếm ngữ nghĩa tương đồng (Retrieval-Augmented Generation):
