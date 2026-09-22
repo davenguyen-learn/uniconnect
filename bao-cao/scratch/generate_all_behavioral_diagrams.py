@@ -385,16 +385,10 @@ if (Thông tin hợp lệ?) then ([Không])
 else ([Hợp lệ])
   :Gửi yêu cầu tạo hoạt động lên máy chủ;
   :Lưu thông tin hoạt động và tọa độ vị trí (PostGIS);
-  
-  fork
-    :Phản hồi tạo hoạt động thành công;
-    :Cập nhật điểm ghim (Marker) mới lên bản đồ;
-    stop
-  fork again
-    :Tác vụ ngầm: Sinh vector nhúng ngữ nghĩa;
-    :Lưu trữ vector hoạt động vào pgvector;
-    stop
-  end fork
+  :Kích hoạt tác vụ ngầm tạo vector nhúng ngữ nghĩa (pgvector);
+  :Phản hồi tạo hoạt động thành công;
+  :Cập nhật điểm ghim (Marker) mới lên bản đồ;
+  stop
 endif
 @enduml"""
 
