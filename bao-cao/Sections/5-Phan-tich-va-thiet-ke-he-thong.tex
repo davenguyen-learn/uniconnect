@@ -783,7 +783,7 @@ Nhằm mô hình hóa chi tiết động thái xử lý nghiệp vụ, sự ph�
 
 \subsubsection{Quy trình tạo hoạt động}
 
-Quy trình tạo mới hoạt động (Hình~\ref{fig:activity_tao_hoat_dong}) mô tả tuần tự luồng tương tác giữa người dùng và hệ thống, từ thao tác chọn vị trí trên bản đồ học đường đến khi sự kiện được lưu trữ và lập chỉ mục ngữ nghĩa:
+Quy trình tạo mới hoạt động (Hình~\ref{fig:activity_tao_hoat_dong}) mô tả tuần tự luồng tương tác giữa người dùng và hệ thống, từ thao tác chọn vị trí trên bản đồ học đường đến khi hoạt động được lưu trữ và lập chỉ mục ngữ nghĩa:
 
 \begin{figure}[H]
     \centering
@@ -792,7 +792,7 @@ Quy trình tạo mới hoạt động (Hình~\ref{fig:activity_tao_hoat_dong}) m
     \label{fig:activity_tao_hoat_dong}
 \end{figure}
 
-Người dùng khởi tạo luồng bằng việc chọn vị trí trên bản đồ, mở biểu mẫu và nhập thông tin sự kiện cùng các cấu hình điểm danh. Khi người dùng nhấn nút xuất bản, hệ thống kiểm tra tính hợp lệ của dữ liệu (hình thoi quyết định): nếu dữ liệu sai thiếu, hệ thống hiển thị cảnh báo lỗi nhập liệu; nếu hợp lệ, yêu cầu được chuyển tiếp lên máy chủ. Tại máy chủ, hệ thống tiến hành xác thực danh tính và kiểm tra quyền hạn tổ chức. Nếu không đủ quyền hạn, yêu cầu bị từ chối; nếu hợp lệ, dữ liệu sự kiện được lưu trữ vào cơ sở dữ liệu và phân nhánh song song (\texttt{fork}) thành hai luồng: phản hồi kết quả để máy khách hiển thị điểm ghim mới lên bản đồ, đồng thời kích hoạt tác vụ ngầm tạo và lưu trữ vector nhúng ngữ nghĩa phục vụ trợ lý ảo AI.
+Người dùng khởi tạo luồng bằng việc chọn vị trí trên bản đồ học đường, mở biểu mẫu và nhập thông tin hoạt động (tiêu đề, thời gian, mô tả, số lượng) cùng cấu hình duyệt thành viên và hình thức điểm danh. Khi người dùng nhấn nút \textit{''Tạo hoạt động''}, giao diện kiểm tra tính hợp lệ của dữ liệu: nếu dữ liệu thiếu hoặc không hợp lệ, hệ thống hiển thị cảnh báo lỗi nhập liệu để người dùng bổ sung; nếu hợp lệ, yêu cầu được gửi lên máy chủ. Tại máy chủ, hệ thống lưu trữ thông tin hoạt động và tọa độ vị trí (PostGIS) vào cơ sở dữ liệu, đồng thời phân nhánh song song (\texttt{fork}) thành hai luồng độc lập: phản hồi kết quả để máy khách hiển thị điểm ghim (Marker) mới lên bản đồ, và kích hoạt tác vụ chạy ngầm tạo vector nhúng ngữ nghĩa lưu vào pgvector phục vụ tính năng tìm kiếm thông minh của trợ lý AI.
 
 \subsubsection{Quy trình Đăng ký tham gia hoạt động}
 

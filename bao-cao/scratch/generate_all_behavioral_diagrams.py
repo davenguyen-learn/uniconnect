@@ -373,34 +373,27 @@ title Quy trình tạo hoạt động
 
 start
 :Chọn vị trí trên bản đồ;
-:Mở biểu mẫu tạo sự kiện;
-:Nhập thông tin sự kiện;
-:Cấu hình duyệt và điểm danh;
-:Nhấn xuất bản sự kiện;
+:Mở biểu mẫu tạo hoạt động;
+:Nhập thông tin hoạt động\n(Tiêu đề, thời gian, mô tả, số lượng);
+:Cấu hình duyệt thành viên và hình thức điểm danh;
+:Nhấn nút "Tạo hoạt động";
 
 if (Thông tin hợp lệ?) then ([Không])
-  :Hiển thị lỗi nhập liệu;
+  :Hiển thị cảnh báo lỗi nhập liệu;
   stop
 else ([Hợp lệ])
-  :Gửi yêu cầu lên máy chủ;
-  :Xác thực danh tính người dùng;
+  :Gửi yêu cầu tạo hoạt động lên máy chủ;
+  :Lưu thông tin hoạt động và tọa độ vị trí (PostGIS);
   
-  if (Quyền hạn hợp lệ?) then ([Không])
-    :Từ chối và báo lỗi phân quyền;
+  fork
+    :Phản hồi tạo hoạt động thành công;
+    :Cập nhật điểm ghim (Marker) mới lên bản đồ;
     stop
-  else ([Hợp lệ])
-    :Lưu dữ liệu sự kiện;
-    
-    fork
-      :Phản hồi tạo thành công;
-      :Cập nhật điểm ghim bản đồ;
-      stop
-    fork again
-      :Tạo vector nhúng ngữ nghĩa;
-      :Lưu trữ vector sự kiện;
-      stop
-    end fork
-  endif
+  fork again
+    :Tác vụ ngầm: Sinh vector nhúng ngữ nghĩa;
+    :Lưu trữ vector hoạt động vào pgvector;
+    stop
+  end fork
 endif
 @enduml"""
 
