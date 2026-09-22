@@ -425,7 +425,7 @@ skinparam conditionBorderColor #FFA000
 skinparam conditionFontColor #B78103
 skinparam conditionFontSize 11
 
-title Quy trình Xuất và Kiểm chứng Giấy chứng nhận CTXH trực tuyến
+title Quy trình Xuất và Kiểm chứng Giấy chứng nhận tham gia hoạt động
 
 start
 :Sinh viên yêu cầu cấp giấy chứng nhận;
@@ -444,7 +444,7 @@ else ([Hợp lệ])
     :Cảnh báo chứng nhận không hợp lệ;
     stop
   else ([Hợp lệ])
-    :Hiển thị xác thực và chi tiết CTXH;
+    :Hiển thị xác thực và thông tin hoạt động\\n(kèm minh chứng CTXH nếu có);
     stop
   endif
 endif

@@ -41,7 +41,7 @@ Phụ lục này tài liệu hóa chi tiết các giao diện lập trình ứng
 \texttt{GET} & \texttt{/api/v1/activities/\{id\}/check-in-code} & Bearer & Tạo mã QR xoay động 30s HMAC-SHA256 (dành cho BTC). \\ \hline
 \texttt{POST} & \texttt{/api/v1/activities/\{id\}/check-in} & Bearer & Điểm danh sinh viên: đối soát mã QR HMAC hoặc tọa độ GPS. \\ \hline
 \texttt{GET} & \texttt{/api/v1/activities/\{id\}/participants} & Bearer & Danh sách sinh viên tham dự kèm trạng thái điểm danh thực tế. \\ \hline
-\texttt{GET} & \texttt{/api/v1/certificates/verify/\{code\}} & Không & Cổng công khai đối soát tính nguyên bản của Giấy chứng nhận CTXH. \\ \hline
+\texttt{GET} & \texttt{/api/v1/certificates/verify/\{code\}} & Không & Cổng công khai đối soát tính nguyên bản của Giấy chứng nhận tham gia hoạt động. \\ \hline
 
 \multicolumn{4}{|l|}{\textbf{4. Phân hệ Lịch thông minh (Smart Calendar)}} \\ \hline
 \texttt{GET} & \texttt{/api/v1/calendar/events} & Bearer & Lấy danh sách sự kiện đã đăng ký trong tháng của sinh viên. \\ \hline

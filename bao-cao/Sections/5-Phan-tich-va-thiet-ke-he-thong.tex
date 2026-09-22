@@ -371,14 +371,14 @@ Sơ đồ phản ánh thiết kế tổng thể gồm 3 tác nhân chính tươn
 
 \end{xltabular}
 
-\subsubsection{Xuất Giấy chứng nhận CTXH và Tra cứu trực tuyến}
+\subsubsection{Xuất Giấy chứng nhận tham gia hoạt động và Tra cứu trực tuyến}
 
 \renewcommand{\arraystretch}{1.5}
 \begin{xltabular}{\textwidth}{|>{\bfseries}p{3.5cm}|X|}
-    \caption{Đặc tả Use case Xuất Giấy chứng nhận CTXH và Tra cứu trực tuyến} \label{tab:uc_chungnhan} \\
+    \caption{Đặc tả Use case Xuất Giấy chứng nhận tham gia hoạt động và Tra cứu trực tuyến} \label{tab:uc_chungnhan} \\
     \hline
     \endfirsthead
-    \caption[]{Đặc tả Use case Xuất Giấy chứng nhận CTXH và Tra cứu trực tuyến} \\
+    \caption[]{Đặc tả Use case Xuất Giấy chứng nhận tham gia hoạt động và Tra cứu trực tuyến} \\
     \hline
     \endhead
     \hline
@@ -386,18 +386,18 @@ Sơ đồ phản ánh thiết kế tổng thể gồm 3 tác nhân chính tươn
     \hline
     \endlastfoot
 
-    Use case name & Xuất Giấy chứng nhận CTXH và Tra cứu trực tuyến \\ \hline
+    Use case name & Xuất Giấy chứng nhận tham gia hoạt động và Tra cứu trực tuyến \\ \hline
     Actor & Người dùng, Nhà tuyển dụng / Đơn vị thẩm định (Verifier) \\ \hline
-    Description & Cho phép người dùng xuất Giấy chứng nhận tham gia hoạt động và minh chứng ngày Công tác Xã hội (CTXH) dưới định dạng file PDF chuẩn A4 Landscape. Mỗi chứng nhận được gán một mã định danh duy nhất (Certificate UUID) và mã QR dẫn về cổng tra cứu công khai trực tiếp trên hệ thống UniConnect để bất kỳ bên thứ ba nào cũng có thể kiểm chứng tính nguyên bản, chống làm giả. \\ \hline
+    Description & Cho phép người dùng xuất Giấy chứng nhận tham gia hoạt động (kèm minh chứng ngày Công tác Xã hội - CTXH nếu có) dưới định dạng file PDF chuẩn A4 Landscape. Mỗi chứng nhận được gán một mã định danh duy nhất (Certificate UUID) và mã QR dẫn về cổng tra cứu công khai trực tiếp trên hệ thống UniConnect để bất kỳ bên thứ ba nào cũng có thể kiểm chứng tính nguyên bản, chống làm giả. \\ \hline
     Preconditions & Người dùng đã hoàn thành hoạt động và có trạng thái điểm danh \texttt{approved} kết hợp \texttt{attendance\_confirmed = True}. \\ \hline
     Postconditions & Tệp tin PDF Giấy chứng nhận được tải về máy người dùng; đường link xác thực được lưu trữ công khai trong CSDL hệ thống. \\ \hline
     
     \textbf{Normal Flow} & 1. Người dùng truy cập vào mục "Hồ sơ cá nhân" hoặc "Lịch sử hoạt động đã tham gia". \\ 
-    & 2. Người dùng chọn một sự kiện đã hoàn thành điểm danh và nhấn nút "Xuất chứng nhận CTXH". \\ 
-    & 3. Máy chủ (Backend) kiểm tra tính hợp lệ của bản ghi điểm danh, truy xuất thông tin người dùng (Họ tên, Đơn vị/Khoa), thông tin sự kiện (Tên hoạt động, Ban tổ chức, Số ngày CTXH, Ngày diễn ra). \\ 
+    & 2. Người dùng chọn một sự kiện đã hoàn thành điểm danh và nhấn nút "Xuất giấy chứng nhận". \\ 
+    & 3. Máy chủ (Backend) kiểm tra tính hợp lệ của bản ghi điểm danh, truy xuất thông tin người dùng (Họ tên, Đơn vị/Khoa), thông tin sự kiện (Tên hoạt động, Ban tổ chức, Số ngày CTXH nếu có, Ngày diễn ra). \\ 
     & 4. Hệ thống sinh mã xác thực duy nhất (Certificate UUID) và tạo mã QR liên kết tới URL: \texttt{https://uniconnect.vn/verify-certificate?id=<Certificate\_UUID>}. \\ 
     & 5. Máy chủ kết xuất file PDF đồ họa chuẩn A4 Landscape với đầy đủ chữ ký số của Ban tổ chức, logo trường và mã QR tra cứu, sau đó truyền tải trực tiếp về trình duyệt của người dùng. \\ 
-    & 6. Khi nhà tuyển dụng hoặc đơn vị thẩm định quét mã QR trên chứng nhận (bản giấy hoặc bản số), hệ thống chuyển hướng đến trang công khai \texttt{/verify-certificate}, hiển thị trạng thái "Chứng nhận hợp lệ", thông tin người dùng và số ngày CTXH đã được công nhận. \\ \hline
+    & 6. Khi nhà tuyển dụng hoặc đơn vị thẩm định quét mã QR trên chứng nhận (bản giấy hoặc bản số), hệ thống chuyển hướng đến trang công khai \texttt{/verify-certificate}, hiển thị trạng thái "Chứng nhận hợp lệ", thông tin người dùng và kết quả tham gia (bao gồm ngày CTXH nếu hoạt động có áp dụng). \\ \hline
     
     Alternative flow & Xem trước trực tuyến: Người dùng có thể chọn "Xem trước chứng nhận" trên modal giao diện Web mà không cần tải file PDF về thiết bị. \\ \hline
     Exception & Chưa hoàn thành điểm danh: Nếu người dùng chưa ở trạng thái \texttt{approved} kết hợp \texttt{attendance\_confirmed = True}, nút "Xuất chứng nhận" sẽ bị vô hiệu hóa kèm thông báo "Hoạt động chưa được xác nhận điểm danh". \\ \hline
@@ -818,14 +818,14 @@ Hình~\ref{fig:activity_diem_danh_da_che_do} mô tả kiến trúc điểm danh 
     \label{fig:activity_diem_danh_da_che_do}
 \end{figure}
 
-\subsubsection{Quy trình Xuất và Kiểm chứng Giấy chứng nhận CTXH trực tuyến}
+\subsubsection{Quy trình Xuất và Kiểm chứng Giấy chứng nhận tham gia hoạt động trực tuyến}
 
-Nhằm số hóa toàn diện quy trình công nhận ngày CTXH và cấp chứng chỉ rèn luyện, Hình~\ref{fig:activity_xuat_kiem_chung_chung_nhan} biểu diễn vòng đời tạo lập, kết xuất văn bản số và kiểm chứng chứng nhận qua mã QR công khai:
+Nhằm số hóa toàn diện quy trình ghi nhận tham gia phong trào và minh chứng ngày CTXH (nếu có), Hình~\ref{fig:activity_xuat_kiem_chung_chung_nhan} biểu diễn vòng đời tạo lập, kết xuất văn bản số và kiểm chứng chứng nhận qua mã QR công khai:
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.80\textwidth]{Images/activity-verify-certificate.png} 
-    \caption{Activity Diagram: Quy trình Xuất và Kiểm chứng Giấy chứng nhận CTXH trực tuyến}
+    \caption{Activity Diagram: Quy trình Xuất và Kiểm chứng Giấy chứng nhận tham gia hoạt động trực tuyến}
     \label{fig:activity_xuat_kiem_chung_chung_nhan}
 \end{figure}
 
@@ -1066,7 +1066,7 @@ Hình~\ref{fig:sequence_hoi_dap_chatbot} thể hiện chu trình xử lý hội 
 \end{figure}
 
 \clearpage
-\subsubsection{Trình tự Kết xuất PDF và Kiểm chứng Giấy chứng nhận CTXH}
+\subsubsection{Trình tự Kết xuất PDF và Kiểm chứng Giấy chứng nhận tham gia hoạt động}
 
 Hình~\ref{fig:sequence_verify_certificate} mô tả quy trình kết xuất bản ghi chứng nhận thành file PDF A4 Landscape kèm mã định danh duy nhất và mã QR, cùng luồng xử lý của cổng tra cứu công khai khi bên thứ ba quét mã đối soát trực tiếp với cơ sở dữ liệu:
 
@@ -1097,11 +1097,11 @@ Hình~\ref{fig:sequence_verify_certificate} mô tả quy trình kết xuất b�
 \draw[lifeline] (verifier) -- (13.8,-11.2);
 
 % Luồng 1: Kết xuất Giấy chứng nhận
-\draw[msg] (0,-1.0) -- node[above] {1. Yêu cầu xuất Giấy chứng nhận CTXH} (3.5,-1.0);
+\draw[msg] (0,-1.0) -- node[above] {1. Yêu cầu xuất Giấy chứng nhận tham gia hoạt động} (3.5,-1.0);
 \draw[msg] (3.5,-1.6) -- node[above] {2. Chuyển tiếp yêu cầu kết xuất chứng nhận} (7.0,-1.6);
 
 \draw[msg] (7.0,-2.2) -- node[above] {3. Đối soát điều kiện hoàn thành sự kiện \& điểm danh} (10.5,-2.2);
-\draw[reply] (7.0,-2.8) -- node[above] {4. Dữ liệu chứng thực hợp lệ (Số ngày CTXH)} (10.5,-2.8);
+\draw[reply] (7.0,-2.8) -- node[above] {4. Dữ liệu chứng thực hợp lệ (Số ngày CTXH nếu có)} (10.5,-2.8);
 
 \draw[msg] (7.0,-3.4) -- ++(1.0,0) |- node[pos=0.5, right=2pt, font=\scriptsize] {5. Khởi tạo Certificate UUID \& Mã QR tra cứu} (7.0,-4.0);
 \draw[msg] (7.0,-4.6) -- ++(1.0,0) |- node[pos=0.5, right=2pt, font=\scriptsize] {6. Kết xuất file PDF A4 Landscape (Chữ ký số + QR)} (7.0,-5.2);
@@ -1124,6 +1124,6 @@ Hình~\ref{fig:sequence_verify_certificate} mô tả quy trình kết xuất b�
 
 \end{tikzpicture}
 }
-\caption{Sequence Diagram: Quy trình kết xuất PDF và kiểm chứng Giấy chứng nhận CTXH trực tuyến}
+\caption{Sequence Diagram: Quy trình kết xuất PDF và kiểm chứng Giấy chứng nhận tham gia hoạt động trực tuyến}
 \label{fig:sequence_verify_certificate}
 \end{figure}
