@@ -63,8 +63,7 @@ export const BusySlotManagerModal: React.FC<BusySlotManagerModalProps> = ({
       <div className="modal-content busy-manager-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div className="busy-manager-header-title">
-            <h3>Quản Lý Lịch Bận Cá Nhân</h3>
-            <span className="busy-manager-badge">{rules.length} quy tắc</span>
+            <h3>Quản lý lịch bận</h3>
           </div>
           <button
             type="button"
@@ -142,16 +141,6 @@ export const BusySlotManagerModal: React.FC<BusySlotManagerModalProps> = ({
         </div>
 
         <div className="modal-footer">
-          <button
-            type="button"
-            className="btn-primary"
-            onClick={() => {
-              onClose();
-              onOpenCreateModal();
-            }}
-          >
-            <Plus size={16} /> Thêm Lịch Bận Mới
-          </button>
           <button type="button" className="btn-secondary" onClick={onClose}>
             Đóng
           </button>

@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Calendar as CalendarIcon,
-  CalendarDays,
   ListFilter,
   ChevronLeft,
   ChevronRight,
@@ -32,7 +31,7 @@ export default function CalendarPage() {
   const toast = useToast();
 
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
-  const [viewMode, setViewMode] = useState<'week' | 'month' | 'agenda'>('week');
+  const [viewMode, setViewMode] = useState<'week' | 'agenda'>('week');
   const [events, setEvents] = useState<CalendarEventViewModel[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -79,23 +78,6 @@ export default function CalendarPage() {
         viewEndDate: sunday.toISOString().split('T')[0],
         weekDays: days,
       };
-    } else if (viewMode === 'month') {
-      const year = currentDate.getFullYear();
-      const month = currentDate.getMonth();
-      const firstDay = new Date(year, month, 1);
-
-      const startDayOffset = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
-      const calStart = new Date(firstDay);
-      calStart.setDate(firstDay.getDate() - startDayOffset);
-
-      const calEnd = new Date(calStart);
-      calEnd.setDate(calStart.getDate() + 41);
-
-      return {
-        viewStartDate: calStart.toISOString().split('T')[0],
-        viewEndDate: calEnd.toISOString().split('T')[0],
-        weekDays: [],
-      };
     } else {
       // Agenda View: from Monday of current week to +35 days
       const d = new Date(currentDate);
@@ -138,8 +120,6 @@ export default function CalendarPage() {
     const d = new Date(currentDate);
     if (viewMode === 'week') {
       d.setDate(d.getDate() - 7);
-    } else if (viewMode === 'month') {
-      d.setMonth(d.getMonth() - 1);
     } else {
       d.setDate(d.getDate() - 14);
     }
@@ -150,8 +130,6 @@ export default function CalendarPage() {
     const d = new Date(currentDate);
     if (viewMode === 'week') {
       d.setDate(d.getDate() + 7);
-    } else if (viewMode === 'month') {
-      d.setMonth(d.getMonth() + 1);
     } else {
       d.setDate(d.getDate() + 14);
     }
@@ -237,8 +215,6 @@ export default function CalendarPage() {
     const year = currentDate.getFullYear();
     if (viewMode === 'week') {
       return `Tháng ${month}, ${year}`;
-    } else if (viewMode === 'month') {
-      return `Tháng ${month} năm ${year}`;
     }
     return `Lịch trình Tháng ${month}, ${year}`;
   };
@@ -259,7 +235,7 @@ export default function CalendarPage() {
             aria-label="Quản lý các quy tắc lịch bận"
           >
             <SlidersHorizontal size={16} />
-            <span>Quản Lý Lịch Bận</span>
+            <span>Quản lý lịch bận</span>
           </button>
 
           <button
@@ -310,16 +286,6 @@ export default function CalendarPage() {
           >
             <CalendarIcon size={15} />
             <span>Tuần</span>
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={viewMode === 'month'}
-            className={`view-tab ${viewMode === 'month' ? 'active' : ''}`}
-            onClick={() => setViewMode('month')}
-          >
-            <CalendarDays size={15} />
-            <span>Tháng</span>
           </button>
           <button
             type="button"
@@ -426,64 +392,6 @@ export default function CalendarPage() {
         </div>
       )}
 
-      {/* View: Month Grid */}
-      {viewMode === 'month' && (
-        <div className="month-grid">
-          <div className="month-days-header">
-            {DAYS_OF_WEEK_VI.map((d, i) => (
-              <div key={i}>{d}</div>
-            ))}
-          </div>
-
-          <div className="month-cells-grid">
-            {Array.from({ length: 42 }).map((_, i) => {
-              const cellDate = new Date(viewStartDate);
-              cellDate.setDate(cellDate.getDate() + i);
-              const dateStr = cellDate.toISOString().split('T')[0];
-              const isCurrentMonth = cellDate.getMonth() === currentDate.getMonth();
-              const isToday = cellDate.toDateString() === new Date().toDateString();
-
-              const dayEvents = events.filter((ev) => ev.dateKey === dateStr);
-
-              return (
-                <div
-                  key={i}
-                  className={`month-cell ${!isCurrentMonth ? 'is-other-month' : ''} ${isToday ? 'is-today' : ''
-                    }`}
-                >
-                  <div className="month-cell-header">
-                    <span className="month-cell-num">{cellDate.getDate()}</span>
-                  </div>
-                  <div className="month-cell-content">
-                    {dayEvents.slice(0, 3).map((ev) => (
-                      <div
-                        key={ev.id}
-                        className={`month-event-pill pill-${ev.colorTag}`}
-                        title={`${ev.title} (${ev.timeRange})`}
-                        onClick={() => setSelectedEvent(ev)}
-                      >
-                        <span className="pill-time">{ev.timeRange.split(' - ')[0]}</span>
-                        <span className="pill-title">{ev.title}</span>
-                      </div>
-                    ))}
-                    {dayEvents.length > 3 && (
-                      <span
-                        className="month-more-count"
-                        onClick={() => {
-                          setCurrentDate(cellDate);
-                          setViewMode('agenda');
-                        }}
-                      >
-                        +{dayEvents.length - 3} lịch khác
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       {/* View: Agenda View */}
       {viewMode === 'agenda' && (
