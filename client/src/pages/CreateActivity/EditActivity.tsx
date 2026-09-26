@@ -522,9 +522,9 @@ export default function EditActivity() {
           </div>
 
           {isOrg && (
-            <div className="flex flex-col gap-3">
+            <div className={`toggle-panel-card toggle-panel-card--amber ${hasTrophy ? 'active' : ''}`}>
               <div
-                className={`approval-toggle-card approval-toggle-card--amber ${hasTrophy ? 'active' : ''}`}
+                className="toggle-panel-header"
                 onClick={() => setHasTrophy(!hasTrophy)}
               >
                 <div className="approval-toggle-content">
@@ -542,7 +542,7 @@ export default function EditActivity() {
               </div>
 
               {hasTrophy && (
-                <div className="flex flex-col gap-3 p-4 border border-amber-500/20 bg-amber-500/5 rounded-xl">
+                <div className="toggle-panel-body flex flex-col gap-3">
                   <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                     <div className="sm:col-span-3 flex flex-col gap-1">
                       <label className="text-sm font-medium text-[var(--color-text-primary)]">

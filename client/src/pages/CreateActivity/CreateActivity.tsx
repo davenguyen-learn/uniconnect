@@ -483,9 +483,9 @@ export default function CreateActivity() {
           </div>
 
           {(user?.role === 'edu_org' || user?.role === 'admin') && (
-            <div className="flex flex-col gap-3">
+            <div className={`toggle-panel-card toggle-panel-card--emerald ${isSocialWork ? 'active' : ''}`}>
               <div
-                className={`approval-toggle-card approval-toggle-card--emerald ${isSocialWork ? 'active' : ''}`}
+                className="toggle-panel-header"
                 onClick={() => {
                   const nextState = !isSocialWork;
                   setIsSocialWork(nextState);
@@ -509,7 +509,7 @@ export default function CreateActivity() {
               </div>
 
               {isSocialWork && (
-                <div className="flex items-center gap-3 p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-xl">
+                <div className="toggle-panel-body flex items-center gap-3">
                   <label htmlFor="social_work_days" className="text-sm font-medium text-[var(--color-text-primary)]">
                     Số ngày CTXH được cấp:
                   </label>
@@ -536,9 +536,9 @@ export default function CreateActivity() {
           )}
 
           {isOrg && (
-            <div className="flex flex-col gap-3">
+            <div className={`toggle-panel-card toggle-panel-card--amber ${hasTrophy ? 'active' : ''}`}>
               <div
-                className={`approval-toggle-card approval-toggle-card--amber ${hasTrophy ? 'active' : ''}`}
+                className="toggle-panel-header"
                 onClick={() => setHasTrophy(!hasTrophy)}
               >
                 <div className="approval-toggle-content">
@@ -556,7 +556,7 @@ export default function CreateActivity() {
               </div>
 
               {hasTrophy && (
-                <div className="flex flex-col gap-3 p-4 border border-amber-500/20 bg-amber-500/5 rounded-xl">
+                <div className="toggle-panel-body flex flex-col gap-3">
                   <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                     <div className="sm:col-span-3 flex flex-col gap-1">
                       <label className="text-sm font-medium text-[var(--color-text-primary)]">
