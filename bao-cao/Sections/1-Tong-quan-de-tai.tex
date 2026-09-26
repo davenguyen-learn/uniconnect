@@ -1,6 +1,6 @@
-\section{Tổng quan đề tài}
-\subsection{Giới thiệu đề tài}
-\subsubsection{Bối cảnh}
+\chapter{Tổng quan đề tài}
+\section{Giới thiệu đề tài}
+\subsection{Bối cảnh}
 
 Sự phát triển bùng nổ của các nền tảng mạng xã hội đã thay đổi hoàn toàn thói quen giao tiếp và cập nhật thông tin của giới trẻ. Đối với cộng đồng sinh viên tại các trường đại học, không gian mạng không chỉ là nơi giải trí mà còn là môi trường trao đổi học thuật chủ đạo. Mặc dù vậy, các mạng xã hội thống lĩnh thị trường hiện tại (như Facebook, Instagram hay X) chủ yếu được thiết kế để duy trì những mối quan hệ đã được thiết lập từ trước, hoặc phân phối nội dung định hướng dựa trên mức độ tương tác trực tuyến của người dùng\cite{tac-dong-cua-mang-xa-hoi, manca2020snss}.
 
@@ -10,7 +10,7 @@ Bên cạnh đó, việc nắm bắt thông tin về các hoạt động ngoại
 
 Để giải quyết bài toán đứt gãy kết nối giữa "không gian số" và "không gian thực" này, việc ứng dụng các công nghệ xử lý dữ liệu hiện đại đang trở thành một xu hướng tất yếu. Cụ thể, thay vì yêu cầu người dùng tìm kiếm thông tin thông qua các từ khóa thủ công khô khan, công nghệ tìm kiếm ngữ nghĩa (Vector Search) kết hợp định vị không gian cho phép hệ thống thấu hiểu sâu sắc hồ sơ, kỹ năng và nguyện vọng của từng cá nhân\cite{johnson2021billion}. Bằng cách chuyển đổi đặc điểm người dùng thành các biểu diễn toán học đa chiều, các hệ thống công nghệ hoàn toàn có thể tính toán mức độ tương đồng và tự động đề xuất những kết nối phù hợp nhất đang có mặt tại khu vực lân cận một cách thông minh và tự nhiên\cite{chandar2020using}.
 
-\subsubsection{Nhu cầu xây dựng hệ thống}
+\subsection{Nhu cầu xây dựng hệ thống}
 
 Từ những phân tích về bối cảnh hiện tại, có thể thấy rõ một khoảng trống lớn trong hệ sinh thái các ứng dụng phục vụ đời sống sinh viên. Hiện nay, khi một sinh viên muốn tìm kiếm một nhóm học tập môn chuyên ngành, một nhóm sinh viên đang sinh hoạt, hay đơn giản là một người bạn để tham gia hoạt động thể thao tại khu vực khuôn viên trường, họ thường phải trải qua nhiều bước thủ công. Việc đăng bài tìm kiếm trên các hội nhóm chung của trường thường kém hiệu quả do lượng thông tin quá tải, bài viết dễ bị trôi và thiếu đi tính xác thực về mặt khoảng cách địa lý tại thời điểm thực.
 
@@ -22,12 +22,12 @@ Bên cạnh đó, với sự phát triển của trí tuệ nhân tạo, nhu c�
 
 Để đáp ứng toàn diện những nhu cầu thực tiễn nêu trên, việc nghiên cứu và xây dựng kiến trúc máy chủ (Backend) cho nền tảng UniConnect là một bước đi thiết yếu. Việc ứng dụng linh hoạt cơ sở dữ liệu PostgreSQL kết hợp cùng công nghệ Vector Search và các phương pháp ảo hóa hiện đại không chỉ giải quyết triệt để bài toán kết nối tức thời, mà còn tạo ra một hệ thống phần mềm có tính sẵn sàng cao, bảo mật tốt và dễ dàng mở rộng, góp phần kiến tạo một cộng đồng sinh viên gắn kết và năng động hơn.
 
-\subsection{Mục tiêu dự án}
-\subsubsection{Mục tiêu tổng quát}
+\section{Mục tiêu dự án}
+\subsection{Mục tiêu tổng quát}
 
 Mục tiêu tổng quát của đồ án là nghiên cứu, thiết kế và phát triển hoàn chỉnh kiến trúc phân hệ máy chủ (Backend) cho nền tảng mạng xã hội UniConnect. Hệ thống được định hướng trở thành một giải pháp công nghệ nền tảng, giải quyết triệt để bài toán kết nối cộng đồng sinh viên thông qua sự giao thoa giữa dữ liệu không gian (spatial data) và dữ liệu ngữ nghĩa (semantic data). Qua đó, đồ án không chỉ dừng lại ở việc xây dựng một ứng dụng quản lý thông tin thông thường, mà còn hướng tới việc tạo ra một hệ thống cốt lõi thông minh, có khả năng thấu hiểu hồ sơ người dùng và tự động đề xuất các hoạt động, sự kiện hoặc những người bạn mới một cách chính xác dựa trên tọa độ địa lý thực tế.
 
-\subsubsection{Mục tiêu cụ thể}
+\subsection{Mục tiêu cụ thể}
 
 Để hiện thực hóa tầm nhìn chiến lược nêu trên và đảm bảo hệ thống vận hành trơn tru ở mức độ sản xuất (production-level), quá trình thực hiện đồ án được chia nhỏ thành các mục tiêu kỹ thuật chuyên sâu như sau:
 
@@ -46,8 +46,8 @@ Xây dựng một phân hệ giao tiếp bằng ngôn ngữ tự nhiên đóng v
 Thứ năm, về mặt đóng gói, ảo hóa và vận hành kiến trúc:
 Áp dụng triệt để tư duy phát triển phần mềm hiện đại thông qua công nghệ Container hóa (Containerization). Mục tiêu là viết các kịch bản Dockerfile và cấu hình Docker Compose để đóng gói hoàn toàn mã nguồn Python, môi trường thực thi, cùng với hệ thống cơ sở dữ liệu PostgreSQL thành các khối dịch vụ độc lập (containers). Việc này đảm bảo tính nhất quán tuyệt đối của hệ thống khi di chuyển giữa môi trường phát triển cục bộ (local development) lên các máy chủ triển khai (deployment servers), đồng thời tạo tiền đề vững chắc cho việc mở rộng quy mô hệ thống (scaling) trong các giai đoạn phát triển tiếp theo của dự án\cite{merkel2014docker}.
 
-\subsection{Phạm vi đề tài}
-\subsubsection{Đối tượng sử dụng}
+\section{Phạm vi đề tài}
+\subsection{Đối tượng sử dụng}
 
 Hệ thống được thiết kế hệ thống phân quyền rõ ràng, tối ưu hóa luồng trải nghiệm (User Flow) hướng tới ba nhóm đối tượng chính\cite{sandhu1996role}:
 
@@ -59,7 +59,7 @@ Hệ thống được thiết kế hệ thống phân quyền rõ ràng, tối �
     \item Quản trị viên hệ thống (System Admin): Đối tượng chịu trách nhiệm giám sát luồng dữ liệu toàn hệ thống, quản lý danh mục các loại hình hoạt động chuẩn và can thiệp xử lý các báo cáo vi phạm tiêu chuẩn cộng đồng để duy trì một môi trường kết nối số an toàn, lành mạnh.
 \end{itemize}
 
-\subsubsection{Phạm vi hoạt động}
+\subsection{Phạm vi hoạt động}
 
 Khác với các mạng xã hội diện rộng, UniConnect là một nền tảng mang tính cục bộ cao (Hyper-local). Phạm vi hoạt động của hệ thống được giới hạn và tối ưu hóa như sau\cite{schmidt2011hyperlocal}:
 
@@ -69,7 +69,7 @@ Khác với các mạng xã hội diện rộng, UniConnect là một nền tả
     \item Không gian trọng tâm mà hệ thống hướng tới là các khuôn viên trường đại học, cao đẳng, khu đô thị sinh viên hoặc ký túc xá – nơi có mật độ sinh viên tập trung cao và dễ dàng chuyển hóa từ "kết nối trực tuyến" (online matching) sang "gặp gỡ thực tế" (offline meeting)\cite{cho2011friendship}.
 \end{itemize}
 
-\subsubsection{Các loại hình hoạt động}
+\subsection{Các loại hình hoạt động}
 
 Hệ thống hỗ trợ đa dạng các loại hình sự kiện, từ quy mô nhóm nhỏ tự phát đến quy mô phong trào cấp trường. Các loại hình hoạt động được khoanh vùng bao gồm:
 
@@ -83,7 +83,7 @@ Hệ thống hỗ trợ đa dạng các loại hình sự kiện, từ quy mô n
     \item Hoạt động ngoại khóa và giải trí: Các buổi sinh hoạt của các nhóm sinh viên, các buổi giao lưu âm nhạc tự phát hoặc hẹn gặp gỡ giao lưu bạn mới có cùng sở thích.
 \end{itemize}
 
-\subsubsection{Tính năng cốt lõi}
+\subsection{Tính năng cốt lõi}
 
 Quản lý tài khoản và Hồ sơ sinh viên (User \& Profile Management): Cho phép đăng ký, định danh, và quản lý thông tin cá nhân. Đặc biệt, hệ thống thu thập các dữ liệu phi cấu trúc (ngành học, kỹ năng, sở thích) để làm đầu vào cho mô hình ngôn ngữ chuyển đổi thành các vector (embeddings).
 
@@ -93,7 +93,7 @@ Hệ thống khớp nối và Gợi ý thông minh (Smart Matching Engine): Ứn
 
 Trợ lý ảo thông minh (AI Chatbot): Cung cấp giao diện giao tiếp tự nhiên bằng văn bản, giúp người dùng tra cứu nhanh các thông tin trên hệ thống (tìm sự kiện, hỏi về tiêu chí ngày CTXH, tư vấn các khoảng thời gian khả dụng để tham gia hoạt động) thay vì phải sử dụng bộ lọc tìm kiếm truyền thống.
 
-\subsubsection{Chatbot hỏi đáp}
+\subsection{Chatbot hỏi đáp}
 
 Trợ lý ảo thông minh và Tư vấn học đường (AI Chatbot \& Campus Assistant): Cung cấp giao diện tương tác bằng ngôn ngữ tự nhiên, được xây dựng dựa trên kỹ thuật tạo văn bản tăng cường truy xuất (RAG). Phạm vi hỗ trợ của chatbot được quy định rõ ràng như sau:
 
@@ -105,7 +105,7 @@ Trợ lý ảo thông minh và Tư vấn học đường (AI Chatbot \& Campus A
     \item Giới hạn tư vấn: Chatbot được giới hạn nghiêm ngặt trong khuôn khổ dữ liệu của mạng xã hội học đường. Hệ thống không hỗ trợ các tư vấn mang tính chuyên môn sâu ngoài phạm vi dữ liệu (như tư vấn tâm lý y khoa, tư vấn lộ trình học thuật/đăng ký tín chỉ phức tạp hay định hướng nghề nghiệp chuyên sâu), nhằm tránh tình trạng AI ảo giác (hallucination) và đảm bảo tính an toàn thông tin cho sinh viên\cite{ji2023survey}.
 \end{itemize}
 
-\subsubsection{Pháp lý và đạo đức}
+\subsection{Pháp lý và đạo đức}
 
 Với đặc thù là một mạng xã hội thu thập thông tin cá nhân và dữ liệu tọa độ không gian, hệ thống UniConnect được thiết kế dựa trên các nguyên tắc đạo đức công nghệ (Tech Ethics) và bảo vệ người dùng nghiêm ngặt. Phạm vi đạo đức của đồ án được xác định qua các tiêu chí sau:
 
@@ -119,7 +119,7 @@ Với đặc thù là một mạng xã hội thu thập thông tin cá nhân và
     \item Tính toàn vẹn của mục đích sử dụng (Purpose Limitation): Mọi dữ liệu do sinh viên cung cấp (hồ sơ, điểm số tích lũy nếu có, lịch sử hoạt động) chỉ được lưu trữ và xử lý duy nhất cho mục đích tối ưu hóa luồng kết nối trên UniConnect. Hệ thống cam kết không chia sẻ hoặc chuyển giao các tệp dữ liệu này cho bất kỳ bên thứ ba nào nằm ngoài phạm vi quản lý của nhà trường và hệ thống.
 \end{itemize}
 
-\subsubsection{Công nghệ sử dụng}
+\subsection{Công nghệ sử dụng}
 
 Để hiện thực hóa các tính năng cốt lõi và đảm bảo tính khả thi cho một hệ thống mạng xã hội không gian phức tạp, đề tài lựa chọn và giới hạn các công nghệ áp dụng vào ba phân lớp kiến trúc chính bao gồm: Giao diện người dùng (Frontend), Máy chủ logic (Backend) và Cơ sở dữ liệu (Database), kết hợp cùng các giải pháp trí tuệ nhân tạo và đóng gói hệ thống:
 
@@ -135,29 +135,29 @@ Với đặc thù là một mạng xã hội thu thập thông tin cá nhân và
     \item Đóng gói và Triển khai (Containerization \& Deployment): Toàn bộ môi trường thực thi của mã nguồn máy chủ Python, ứng dụng giao diện React.js và hệ quản trị PostgreSQL được quy chuẩn hóa và đóng gói độc lập thông qua công nghệ ảo hóa Docker. Các dịch vụ này được liên kết mạng nội bộ và điều phối vận hành đồng bộ thông qua Docker Compose, giúp hệ thống có khả năng khởi chạy nhất quán, loại bỏ sự xung đột về môi trường thực thi trên các máy chủ thử nghiệm cục bộ khác nhau.
 \end{itemize}
 
-\subsection{Ý nghĩa của đề tài}
+\section{Ý nghĩa của đề tài}
 
 Đồ án "Xây dựng nền tảng UniConnect" không chỉ dừng lại ở việc phát triển một hệ thống phần mềm đáp ứng các yêu cầu kỹ thuật cơ bản, mà còn mang lại những giá trị sâu sắc trên cả ba phương diện: thực tiễn đời sống, khoa học công nghệ và quá trình đào tạo học thuật.
 
-\subsubsection{Ý nghĩa thực tiễn đối với cộng đồng và xã hội}
+\subsection{Ý nghĩa thực tiễn đối với cộng đồng và xã hội}
 
 Kiến tạo môi trường đại học gắn kết và năng động: Đối với sinh viên, UniConnect giải quyết trực tiếp "nỗi đau" về sự đứt gãy thông tin và sự cô lập trong môi trường học đường rộng lớn. Bằng cách số hóa và trực quan hóa các hoạt động lên bản đồ, hệ thống khuyến khích sinh viên bước ra khỏi không gian mạng ảo để tham gia vào các tương tác thực tế\cite{hampton2003living}. Điều này không chỉ giúp nâng cao chất lượng học tập (thông qua các nhóm học thuật) mà còn cải thiện đời sống tinh thần, giảm thiểu cảm giác lạc lõng của tân sinh viên.
 
 Hỗ trợ chuyển đổi số trong công tác quản lý phong trào: Đối với nhà trường và các tổ chức Đoàn, Hội, nền tảng cung cấp một công cụ hiện đại và tập trung để truyền thông, điều phối các chiến dịch tình nguyện và sự kiện công tác xã hội, bám sát các tiêu chí đánh giá kết quả rèn luyện của Bộ Giáo dục và Đào tạo\cite{thongtu16bgd}. Việc này giúp các phong trào tiếp cận đúng đối tượng mục tiêu một cách nhanh chóng, minh bạch hóa quá trình đăng ký tham gia và góp phần xây dựng một hệ sinh thái học đường thông minh, hiện đại.
 
-\subsubsection{Ý nghĩa khoa học và công nghệ}
+\subsection{Ý nghĩa khoa học và công nghệ}
 
 Chứng minh tính khả thi của mô hình Mạng xã hội cục bộ (Hyper-local Social Network): Đề tài đóng góp một góc nhìn mới về xu hướng phát triển mạng xã hội, chuyển dịch từ việc kết nối toàn cầu (global) sang tập trung vào những kết nối mang tính địa phương, hẹp và sâu (hyper-local)\cite{kwon2014what}.
 
 Ứng dụng thành công AI và tìm kiếm ngữ nghĩa vào hệ thống truyền thống: Đề tài mang ý nghĩa quan trọng trong việc hiện thực hóa các lý thuyết về trí tuệ nhân tạo vào một sản phẩm ứng dụng. Việc kết hợp phương pháp nhúng vector (Vector Embedding) và kỹ thuật RAG (Retrieval-Augmented Generation) ngay trên nền tảng cơ sở dữ liệu quan hệ (PostgreSQL) chứng minh rằng các hệ thống vừa và nhỏ hoàn toàn có thể sở hữu các tính năng gợi ý thông minh, thấu hiểu ngữ nghĩa mà không cần đến các kiến trúc hạ tầng Dữ liệu lớn (Big Data) quá tốn kém\cite{pagliaro2021rag}.
 
-\subsubsection{Ý nghĩa đối với người thực hiện đề tài}
+\subsection{Ý nghĩa đối với người thực hiện đề tài}
 
 Tổng hợp và vận dụng toàn diện kiến thức: Quá trình thực hiện đồ án là cơ hội quý báu để tác giả hệ thống hóa và vận dụng toàn diện các kiến thức đã được đào tạo trong suốt chương trình học tại Trường Đại học Bách khoa. Từ phương pháp thiết kế kiến trúc phần mềm, phân tích cơ sở dữ liệu quan hệ và không gian, tối ưu hóa thuật toán (Python, Vector Search) cho đến việc xây dựng giao diện người dùng tương tác (React.js) và đóng gói triển khai (Docker).
 
 Trang bị kỹ năng giải quyết bài toán kỹ thuật thực tế: Khác với các bài tập học phần có sẵn dữ liệu và khuôn mẫu giả lập, quá trình xây dựng nền tảng UniConnect đòi hỏi việc khảo sát thực tế, phân tích và chuẩn hóa yêu cầu nghiệp vụ học đường, xử lý các thách thức kỹ thuật về tính toán đồng thời và tính nhất quán dữ liệu. Đây là nền tảng thực nghiệm vững chắc phục vụ cho công tác nghiên cứu và phát triển phần mềm chuyên nghiệp.
 
-\subsection{Kết luận chương}
+\section{Kết luận chương}
 
 Chương 1 đã khái quát toàn bộ bối cảnh, nhu cầu thực tiễn và lý do dẫn đến việc hình thành nền tảng mạng xã hội học đường UniConnect. Việc xác định rõ ràng các mục tiêu tổng quát, phạm vi nghiệp vụ và ranh giới công nghệ đã giúp định hình khung phát triển chuẩn xác cho toàn bộ hệ thống. Những phân tích tổng quan này là tiền đề vững chắc để đồ án tiếp tục đi sâu vào nghiên cứu cơ sở lý thuyết, các mô hình thuật toán và công nghệ lõi.
 

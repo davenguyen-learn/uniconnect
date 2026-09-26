@@ -1,10 +1,10 @@
-\section{Phân tích và thiết kế hệ thống}
+\chapter{Phân tích và thiết kế hệ thống}
 
-\subsection{Xác định các bên liên quan và tác nhân hệ thống}
+\section{Xác định các bên liên quan và tác nhân hệ thống}
 
 Trong một hệ thống mạng xã hội học đường tích hợp AI và Bản đồ số, việc xác định rõ thực thể tham gia giúp định hình phạm vi thiết kế và các luồng xử lý dữ liệu (đặc biệt là dữ liệu cá nhân, quản lý điểm danh chống gian lận và ngày công tác xã hội). 
 
-\subsubsection{Các bên liên quan (Stakeholders)}
+\subsection{Các bên liên quan (Stakeholders)}
 
 Stakeholders là những cá nhân hoặc tổ chức có lợi ích trực tiếp hoặc gián tiếp từ sự thành công của dự án:
 
@@ -16,7 +16,7 @@ Stakeholders là những cá nhân hoặc tổ chức có lợi ích trực ti�
     \item Đoàn thanh niên, Hội sinh viên và các Nhóm: Là đơn vị trực tiếp điều phối các hoạt động ngoại khóa. Họ cần công cụ trực quan để công bố sự kiện trên bản đồ số, phối hợp liên nhóm (Đồng tổ chức -- Co-hosting), tổ chức điểm danh chống gian lận và quản lý thành viên hiệu quả.
 \end{itemize}
 
-\subsubsection{Các tác nhân hệ thống (Actors)}
+\subsection{Các tác nhân hệ thống (Actors)}
 
 Tác nhân là những thực thể tương tác trực tiếp với các chức năng của UniConnect. Hệ thống được mô hình hóa tinh giản và chuẩn xác theo nguyên tắc phân tách giữa ranh giới ca sử dụng (Use Case) và cơ chế phân quyền (RBAC), bao gồm 3 tác nhân chính sau:
 
@@ -59,11 +59,11 @@ Tác nhân là những thực thể tương tác trực tiếp với các chức
     \end{itemize}
 \end{enumerate}
 
-\subsection{Yêu cầu chức năng (Functional requirements)}
+\section{Yêu cầu chức năng (Functional requirements)}
 
 Các yêu cầu chức năng của hệ thống UniConnect được phân tích, đặc tả và phân loại theo phương pháp kỹ thuật phần mềm tiêu chuẩn của Sommerville\cite{sommerville2015software}, phân định rõ trách nhiệm giữa các nhóm tác nhân:
 
-\subsubsection{Nhóm chức năng nghiệp vụ Người dùng (User)}
+\subsection{Nhóm chức năng nghiệp vụ Người dùng (User)}
 
 Toàn bộ các tài khoản học đường khi tham gia hệ thống đều có quyền tiếp cận các phân hệ chức năng cốt lõi sau:
 
@@ -87,7 +87,7 @@ Toàn bộ các tài khoản học đường khi tham gia hệ thống đều c�
     \item \textbf{Hỏi đáp và Tra cứu thông minh:} Tương tác với trợ lý AI để tra cứu sự kiện, đối soát lịch bận và nhận khuyến nghị hoạt động thông minh.
 \end{itemize}
 
-\subsubsection{Nhóm chức năng dành cho Quản trị viên (Admin)}
+\subsection{Nhóm chức năng dành cho Quản trị viên (Admin)}
 
 \begin{itemize}
     \item \textbf{Quản trị người dùng và Phân quyền:} Kích hoạt, khóa tài khoản vi phạm và phê duyệt nâng cấp tài khoản lên vai trò Tổ chức giáo dục / Nhóm chính thức (\texttt{edu\_org}).
@@ -99,7 +99,7 @@ Toàn bộ các tài khoản học đường khi tham gia hệ thống đều c�
     \item \textbf{Giám sát hệ thống:} Theo dõi mật độ hoạt động, thống kê tổng thể và kiểm tra vết nhật ký kiểm toán (Audit Logs).
 \end{itemize}
 
-\subsubsection{Năng lực hỗ trợ của Dịch vụ Ngoại vi AI (Google GenAI)}
+\subsection{Năng lực hỗ trợ của Dịch vụ Ngoại vi AI (Google GenAI)}
 
 \begin{itemize}
     \item \textbf{Sinh vector nhúng (Embedding):} Chuyển đổi nội dung sự kiện và truy vấn người dùng thành vector đặc trưng 768 chiều phục vụ tìm kiếm ngữ nghĩa tương đồng qua pgvector.
@@ -107,9 +107,9 @@ Toàn bộ các tài khoản học đường khi tham gia hệ thống đều c�
     \item \textbf{Suy luận ngôn ngữ tự nhiên (LLM Inference):} Phân tích ngữ cảnh hội thoại, nhận diện ý định và trả lời câu hỏi của sinh viên dựa trên kết quả thực thi các công cụ dữ liệu nội bộ.
 \end{itemize}
 
-\subsection{Yêu cầu phi chức năng (Non-functional requirements)}
+\section{Yêu cầu phi chức năng (Non-functional requirements)}
 
-\subsubsection{Yêu cầu về hiệu năng và khả năng đáp ứng (Performance)} 
+\subsection{Yêu cầu về hiệu năng và khả năng đáp ứng (Performance)} 
 \begin{itemize}
     \item Tốc độ xử lý Vector: Thời gian để hệ thống thực hiện nhúng (Embedding) một đoạn văn bản và tìm kiếm các kết quả tương đồng trong cơ sở dữ liệu pgvector không được vượt quá 300ms.
 
@@ -119,7 +119,7 @@ Toàn bộ các tài khoản học đường khi tham gia hệ thống đều c�
 \end{itemize}
 
 
-\subsubsection{Yêu cầu về tính tin cậy và khả năng phục hồi (Reliability)} 
+\subsection{Yêu cầu về tính tin cậy và khả năng phục hồi (Reliability)} 
 \begin{itemize}
     \item Tính toàn vẹn dữ liệu: Hệ thống phải đảm bảo không mất dữ liệu khi xảy ra sự cố đột ngột của các Container Backend. Sử dụng cơ chế Docker Volumes để lưu trữ dữ liệu PostgreSQL tách biệt khỏi vòng đời của Container.
 
@@ -127,7 +127,7 @@ Toàn bộ các tài khoản học đường khi tham gia hệ thống đều c�
 \end{itemize}
 
 
-\subsubsection{Yêu cầu về bảo mật và quyền riêng tư chuyên sâu} 
+\subsection{Yêu cầu về bảo mật và quyền riêng tư chuyên sâu} 
 \begin{itemize}
     \item Phân quyền đa tầng: * Tầng dữ liệu: Sinh viên tuyệt đối không thể truy cập trực tiếp vào các hàm trích xuất Email/MSSV của hệ thống.
 
@@ -139,7 +139,7 @@ Toàn bộ các tài khoản học đường khi tham gia hệ thống đều c�
 \end{itemize}
 
 
-\subsubsection{Yêu cầu về khả năng mở rộng và bảo trì (Scalability)} 
+\subsection{Yêu cầu về khả năng mở rộng và bảo trì (Scalability)} 
 \begin{itemize}
     \item Kiến trúc Micro-services ready: Các thành phần được đóng gói riêng biệt bằng Docker Compose, cho phép dễ dàng tách riêng Database hoặc AI Worker ra các máy chủ độc lập khi số lượng người dùng tăng lên (ví dụ: mở rộng cho toàn bộ các cơ sở của trường).
 
@@ -147,14 +147,14 @@ Toàn bộ các tài khoản học đường khi tham gia hệ thống đều c�
 \end{itemize}
 
 
-\subsubsection{Yêu cầu về tính chính xác và đạo đức AI (AI Ethics)}
+\subsection{Yêu cầu về tính chính xác và đạo đức AI (AI Ethics)}
 \begin{itemize}
     \item Độ chính xác của RAG: Câu trả lời của Trợ lý ảo phải dựa trên ít nhất 80\% dữ liệu từ kho tri thức nội bộ. Nếu không tìm thấy thông tin, AI phải trả lời "Tôi không biết" thay vì tự dự đoán thông tin sai lệch.
 
     \item Kiểm soát nội dung độc hại: Hệ thống nhúng (Embedding) cần có bộ lọc để nhận diện và cảnh báo các nội dung nhạy cảm, vi phạm thuần phong mỹ tục ngay khi người dùng đăng tải.
 \end{itemize}
 
-\subsection{Use case diagram tổng quát}
+\section{Use case diagram tổng quát}
 
 Sơ đồ Use Case tổng quát của hệ thống UniConnect được xây dựng nhằm mô tả ranh giới hệ thống (System Boundary) và các luồng tương tác chức năng cốt lõi giữa các tác nhân và hệ thống, được thể hiện tại Hình~\ref{fig:usecase_tongquat}.
 
@@ -187,8 +187,8 @@ Sơ đồ phản ánh thiết kế tổng thể gồm 3 tác nhân chính tươn
 
 \noindent \textbf{Nguyên tắc mô hình hóa UML:} Toàn bộ các mối quan hệ giữa Actor và Use Case trên sơ đồ được biểu diễn bằng đường liên kết thuần túy (Association -- không có mũi tên định hướng theo chuẩn UML 2.5). Hệ thống không áp đặt các quan hệ phụ thuộc giả định như \texttt{<<include>>} hay \texttt{<<extend>>} giữa các ca sử dụng nhằm giữ vững tính khái quát cao nhất ở cấp độ sơ đồ tổng thể, phản ánh trung thực kiến trúc phần mềm và mã nguồn hiện thực của dự án.
 
-\subsection{Đặc tả Use case}
-\subsubsection{Tạo hoạt động trên bản đồ}
+\section{Đặc tả Use case}
+\subsection{Tạo hoạt động trên bản đồ}
 
 \begin{figure}[H]
     \centering
@@ -233,7 +233,7 @@ Sơ đồ phản ánh thiết kế tổng thể gồm 3 tác nhân chính tươn
 
 \end{xltabular}
 
-\subsubsection{Quản lý hoạt động}
+\subsection{Quản lý hoạt động}
 
 \begin{figure}[H]
     \centering
@@ -283,7 +283,7 @@ Sơ đồ phản ánh thiết kế tổng thể gồm 3 tác nhân chính tươn
 
 \end{xltabular}
 
-\subsubsection{Tương tác với hoạt động}
+\subsection{Tương tác với hoạt động}
 
 \begin{figure}[H]
     \centering
@@ -331,7 +331,7 @@ Sơ đồ phản ánh thiết kế tổng thể gồm 3 tác nhân chính tươn
 
 \end{xltabular}
 
-\subsubsection{Điểm danh đa chế độ chống gian lận và Trao danh hiệu}
+\subsection{Điểm danh đa chế độ chống gian lận và Trao danh hiệu}
 
 \renewcommand{\arraystretch}{1.5}
 \begin{xltabular}{\textwidth}{|>{\bfseries}p{3.5cm}|X|}
@@ -372,7 +372,7 @@ Sơ đồ phản ánh thiết kế tổng thể gồm 3 tác nhân chính tươn
 
 \end{xltabular}
 
-\subsubsection{Xuất Giấy chứng nhận tham gia hoạt động và Tra cứu trực tuyến}
+\subsection{Xuất Giấy chứng nhận tham gia hoạt động và Tra cứu trực tuyến}
 
 \renewcommand{\arraystretch}{1.5}
 \begin{xltabular}{\textwidth}{|>{\bfseries}p{3.5cm}|X|}
@@ -405,7 +405,7 @@ Sơ đồ phản ánh thiết kế tổng thể gồm 3 tác nhân chính tươn
 
 \end{xltabular}
 
-\subsubsection{Hỏi đáp tri thức và tra cứu thông minh}
+\subsection{Hỏi đáp tri thức và tra cứu thông minh}
 
 \begin{figure}[H]
     \centering
@@ -448,7 +448,7 @@ Sơ đồ phản ánh thiết kế tổng thể gồm 3 tác nhân chính tươn
 
 \end{xltabular}
 
-\subsubsection{Quản trị và kiểm duyệt}
+\subsection{Quản trị và kiểm duyệt}
 
 \begin{figure}[H]
     \centering
@@ -496,7 +496,7 @@ Sơ đồ phản ánh thiết kế tổng thể gồm 3 tác nhân chính tươn
 
 \end{xltabular}
 
-\subsection{Kiến trúc tổng thể hệ thống}
+\section{Kiến trúc tổng thể hệ thống}
 
 Nhằm đáp ứng đồng thời các yêu cầu về hiệu năng cao, khả năng bảo trì và tính mở rộng linh hoạt, kiến trúc của hệ thống UniConnect được xây dựng theo mô hình \textbf{Modular Monolith phân tầng kết hợp hướng dịch vụ tích hợp}. Toàn bộ hệ sinh thái được phân định rõ ràng giữa tầng hiển thị phía máy khách (Client-side), cổng điều phối trung gian (Ingress), tầng nghiệp vụ ứng dụng lõi (Backend Application), kho lưu trữ dữ liệu thống nhất (Multi-model Datastore) và các dịch vụ ngoại vi chuyên trách (External Services). Sơ đồ kiến trúc tổng thể hệ thống và các luồng giao tiếp cốt lõi được thể hiện trực quan tại Hình~\ref{fig:kien_truc_tong_the}.
 
@@ -521,7 +521,7 @@ Kiến trúc tổng thể tại Hình~\ref{fig:kien_truc_tong_the} cho phép ng�
     \item \textbf{External Services (Dịch vụ ngoại vi):} Bao gồm OpenStreetMap (cung cấp lớp bản đồ nền cho Web Client) và Google Gemini API (tiếp nhận yêu cầu từ FastAPI qua HTTPS bằng SDK chính thức để thực hiện suy luận ngôn ngữ tự nhiên và sinh vector nhúng ngữ nghĩa).
 \end{enumerate}
 
-\subsection{Mô tả mô hình thực thể kết hợp (ERD)}
+\section{Mô tả mô hình thực thể kết hợp (ERD)}
 
 Thiết kế cơ sở dữ liệu của hệ thống UniConnect được phân tầng rõ ràng theo hai cấp độ trừu tượng chuẩn mực trong kỹ nghệ dữ liệu:
 \begin{enumerate}
@@ -563,7 +563,7 @@ Sơ đồ tại Hình~\ref{fig:mo_hinh_erd_chen} biểu diễn phân hệ tươn
     \label{fig:mo_hinh_erd}
 \end{figure}
 
-\subsubsection{Danh sách thực thể và thuộc tính (23 Domain Entities)}
+\subsection{Danh sách thực thể và thuộc tính (23 Domain Entities)}
 
 Nhằm bảo đảm tính chính xác kỹ thuật tuyệt đối và loại bỏ hoàn toàn sai lệch tài liệu (documentation drift), danh mục 23 thực thể nghiệp vụ (Domain Entities) dưới đây được trích xuất và ánh xạ trực tiếp từ các lớp mô hình ORM (SQLAlchemy Models) thuộc mã nguồn hệ thống UniConnect:
 
@@ -626,7 +626,7 @@ Nhằm bảo đảm tính chính xác kỹ thuật tuyệt đối và loại b�
 
 \noindent\textit{Ghi chú về phân tách phạm vi:} Hai bảng còn lại trong CSDL PostgreSQL là \texttt{alembic\_version} (lưu vết mã băm phiên bản di chuyển lược đồ CSDL) và \texttt{spatial\_ref\_sys} (bảng danh mục hệ quy chiếu không gian EPSG:4326 của tiện ích mở rộng PostGIS) là các bảng vận hành hạ tầng của hệ quản trị, do đó hoàn toàn tách biệt khỏi 22 thực thể thuộc miền nghiệp vụ phần mềm (Domain ERD).
 
-\subsubsection{Mô tả các mối quan hệ thực thể}
+\subsection{Mô tả các mối quan hệ thực thể}
 
 \setlist[itemize]{leftmargin=*, nosep, topsep=0pt}
 
@@ -781,11 +781,11 @@ Nhằm bảo đảm tính chính xác kỹ thuật tuyệt đối và loại b�
     \end{itemize} \\ \hline
 \end{longtable}
 
-\subsection{Biểu đồ hoạt động (Activity Diagram)}
+\section{Biểu đồ hoạt động (Activity Diagram)}
 
 Nhằm mô hình hóa chi tiết động thái xử lý nghiệp vụ, sự phối hợp giữa người dùng và các phân hệ bên trong kiến trúc phần mềm, hệ thống UniConnect xây dựng 7 Biểu đồ hoạt động (Activity Diagram / Flowchart) bao quát các ca sử dụng và các quy tắc nghiệp vụ then chốt:
 
-\subsubsection{Quy trình tạo hoạt động}
+\subsection{Quy trình tạo hoạt động}
 
 Quy trình tạo mới hoạt động (Hình~\ref{fig:activity_tao_hoat_dong}) mô tả tuần tự luồng tương tác giữa người dùng và hệ thống từ khi mở biểu mẫu đến khi hoạt động được lưu trữ và lập chỉ mục ngữ nghĩa:
 
@@ -798,7 +798,7 @@ Quy trình tạo mới hoạt động (Hình~\ref{fig:activity_tao_hoat_dong}) m
 
 Người dùng khởi tạo luồng bằng việc nhấn nút \textit{''Tạo hoạt động mới''} trên giao diện ứng dụng. Hệ thống hiển thị biểu mẫu tạo hoạt động, cho phép người dùng nhập các thông tin cơ bản (tiêu đề, thời gian, mô tả, số lượng), chọn vị trí tổ chức trên bản đồ học đường thông qua bộ định vị tích hợp (\texttt{LocationPicker}) và cấu hình duyệt thành viên, hình thức điểm danh. Khi người dùng nhấn nút \textit{''Tạo hoạt động''}, giao diện kiểm tra tính hợp lệ của dữ liệu: nếu dữ liệu thiếu hoặc không hợp lệ, hệ thống hiển thị cảnh báo lỗi nhập liệu để người dùng bổ sung; nếu hợp lệ, yêu cầu được gửi lên máy chủ. Tại máy chủ, hệ thống lưu trữ thông tin hoạt động và tọa độ vị trí (PostGIS) vào cơ sở dữ liệu, kích hoạt tác vụ chạy ngầm tạo vector nhúng ngữ nghĩa lưu vào pgvector (phục vụ trợ lý AI), đồng thời phản hồi kết quả để máy khách hiển thị điểm ghim (Marker) mới lên bản đồ học đường.
 
-\subsubsection{Quy trình Đăng ký tham gia hoạt động}
+\subsection{Quy trình Đăng ký tham gia hoạt động}
 
 Hình~\ref{fig:activity_tham_gia_hoat_dong} thể hiện chi tiết luồng xử lý yêu cầu đăng ký tham gia sự kiện của sinh viên:
 
@@ -811,7 +811,7 @@ Hình~\ref{fig:activity_tham_gia_hoat_dong} thể hiện chi tiết luồng xử
 
 Khi sinh viên nhấn "Tham gia", hệ thống kiểm tra các ràng buộc tiên quyết: sĩ số tối đa (\texttt{max\_participants}) và thời hạn mở đăng ký. Nếu hợp lệ, hệ thống kiểm tra thuộc tính \texttt{require\_approval}: nếu hoạt động ở chế độ mở (Auto-approve), sinh viên lập tức được cấp trạng thái \texttt{approved}; nếu yêu cầu xét duyệt, yêu cầu được chuyển vào hàng đợi \texttt{pending} và gửi thông báo tức thời tới Host để phê duyệt hoặc từ chối.
 
-\subsubsection{Quy trình Điểm danh chống gian lận đa chế độ (HMAC QR \& Geofencing)}
+\subsection{Quy trình Điểm danh chống gian lận đa chế độ (HMAC QR \& Geofencing)}
 
 Hình~\ref{fig:activity_diem_danh_da_che_do} mô tả kiến trúc điểm danh bảo mật kết hợp hai cơ chế: mã QR xoay động 30 giây bảo vệ bằng thuật toán HMAC-SHA256 và hàng rào địa lý GPS Geofencing:
 
@@ -822,7 +822,7 @@ Hình~\ref{fig:activity_diem_danh_da_che_do} mô tả kiến trúc điểm danh 
     \label{fig:activity_diem_danh_da_che_do}
 \end{figure}
 
-\subsubsection{Quy trình Xuất và Kiểm chứng Giấy chứng nhận tham gia hoạt động trực tuyến}
+\subsection{Quy trình Xuất và Kiểm chứng Giấy chứng nhận tham gia hoạt động trực tuyến}
 
 Nhằm số hóa toàn diện quy trình ghi nhận tham gia phong trào và minh chứng ngày CTXH (nếu có), Hình~\ref{fig:activity_xuat_kiem_chung_chung_nhan} biểu diễn vòng đời tạo lập, kết xuất văn bản số và kiểm chứng chứng nhận qua mã QR công khai:
 
@@ -835,7 +835,7 @@ Nhằm số hóa toàn diện quy trình ghi nhận tham gia phong trào và min
 
 Hệ thống thiết lập hàng rào kiểm soát chặt chẽ: chỉ khi sinh viên có cờ \texttt{attendance\_confirmed = True} và trạng thái \texttt{approved} thì quyền xuất chứng chỉ mới được mở. Máy chủ tạo mã định danh duy nhất UUID (\texttt{UC-...}), sinh mã QR điều hướng tới cổng xác thực \texttt{/verify-certificate?id=UUID} và kết xuất file PDF A4 Landscape kèm dấu chứng thực. Bất kỳ bên thứ ba nào (nhà tuyển dụng, ban thi đua) chỉ cần quét mã QR để đối soát trực tiếp với cơ sở dữ liệu gốc, ngăn chặn triệt để tình trạng làm giả giấy xác nhận phong trào.
 
-\subsubsection{Quy trình Điều phối ủy quyền Đồng tổ chức (Co-hosting Workflow)}
+\subsection{Quy trình Điều phối ủy quyền Đồng tổ chức (Co-hosting Workflow)}
 
 Hình~\ref{fig:activity_cohost_workflow} thể hiện luồng liên kết nghiệp vụ giữa các nhóm khi cùng phối hợp tổ chức sự kiện:
 
@@ -849,7 +849,7 @@ Hình~\ref{fig:activity_cohost_workflow} thể hiện luồng liên kết nghi�
 Nhóm chủ trì (Host) phát lời mời tới Nhóm đối tác thông qua mã định danh \texttt{group\_id}. Lời mời được lưu ở trạng thái \texttt{pending}. Khi ban quản trị Nhóm đối tác chấp thuận, hệ thống thiết lập liên kết trong bảng \texttt{activity\_cohosts}, đồng thời phân bổ quyền quản trị ủy nhiệm (RBAC Delegation) cho phép đối tác cùng mở phiên điểm danh QR và phê duyệt danh sách thành viên.
 
 \clearpage
-\subsubsection{Quy trình Xử lý hỏi đáp tự động với Trợ lý AI (ReAct \& RAG)}
+\subsection{Quy trình Xử lý hỏi đáp tự động với Trợ lý AI (ReAct \& RAG)}
 
 Hình~\ref{fig:activity_hoi_dap_chatbot} mô tả chu trình tiếp nhận câu hỏi tự nhiên và cơ chế suy luận kết hợp tìm kiếm ngữ nghĩa tương đồng (Retrieval-Augmented Generation):
 
@@ -862,7 +862,7 @@ Hình~\ref{fig:activity_hoi_dap_chatbot} mô tả chu trình tiếp nhận câu 
 
 Hệ thống nhúng câu hỏi người dùng thành vector, thực hiện truy vấn khoảng cách Cosine trên \texttt{pgvector} để trích xuất các thông tin quy chế và sự kiện tương đồng cao nhất. Sau đó, ngữ cảnh (Context) này được tổng hợp cùng câu hỏi gốc vào Prompt đưa tới Google Gemini API để sinh câu trả lời chính xác, giảm thiểu hiện tượng ảo giác (Hallucination).
 
-\subsubsection{Quy trình Kiểm duyệt nội dung và Xử lý Báo cáo vi phạm (Moderation Workflow)}
+\subsection{Quy trình Kiểm duyệt nội dung và Xử lý Báo cáo vi phạm (Moderation Workflow)}
 
 Để bảo đảm môi trường mạng xã hội học đường an toàn và lành mạnh, Hình~\ref{fig:activity_kiem_duyet_bao_cao} thể hiện toàn bộ quy trình tiếp nhận, thẩm tra và xử lý chế tài đối với các nội dung bị báo cáo:
 
@@ -880,11 +880,11 @@ Người dùng khi phát hiện nội dung tiêu cực (bình luận quấy rố
 \end{itemize}
 
 \clearpage
-\subsection{Biểu đồ trình tự (Sequence Diagrams)}
+\section{Biểu đồ trình tự (Sequence Diagrams)}
 
 Nhằm cụ thể hóa sự tương tác động giữa các tác nhân (Client SPA, API Gateway/Routers, Business Services và tầng cơ sở dữ liệu PostgreSQL) theo trục thời gian, hệ thống UniConnect được thiết kế với các biểu đồ trình tự mô tả chi tiết các chu trình nghiệp vụ trọng yếu nhất.
 
-\subsubsection{Trình tự Đăng ký tham gia hoạt động và Đối soát sức chứa}
+\subsection{Trình tự Đăng ký tham gia hoạt động và Đối soát sức chứa}
 
 Biểu đồ tại Hình~\ref{fig:sequence_tham_gia_hoat_dong} mô tả quy trình tiếp nhận yêu cầu tham gia sự kiện của sinh viên, bao gồm các bước xác thực người dùng, kiểm tra điều kiện sức chứa tối đa, ghi nhận biểu mẫu đăng ký tùy biến và trả về trạng thái phê duyệt:
 
@@ -896,7 +896,7 @@ Biểu đồ tại Hình~\ref{fig:sequence_tham_gia_hoat_dong} mô tả quy trì
 \end{figure}
 
 \clearpage
-\subsubsection{Trình tự Xác thực điểm danh HMAC và Trao thưởng Gamification}
+\subsection{Trình tự Xác thực điểm danh HMAC và Trao thưởng Gamification}
 
 Hình~\ref{fig:sequence_diem_danh_gamification} thể hiện chu trình xác thực kép chống gian lận: tiếp nhận mã token HMAC-SHA256 xoay vòng và tọa độ GPS thực tế từ Client, kiểm tra tính toàn vẹn trong cửa sổ thời gian trôi, cập nhật trạng thái tham dự (\texttt{attended}) và cộng dồn ngày CTXH tích lũy trong một giao dịch nguyên tử (Atomic Transaction). Quy trình xét duyệt Trophy được phân tách xử lý độc lập sau khi sự kiện kết thúc qua các bước: chốt điểm danh (Finalize), kiểm tra túc số $N \ge 10$ và Quản trị viên phê duyệt:
 
@@ -956,7 +956,7 @@ Hình~\ref{fig:sequence_diem_danh_gamification} thể hiện chu trình xác th�
 \end{figure}
 
 \clearpage
-\subsubsection{Trình tự Phân quyền ủy nhiệm Đồng tổ chức (Co-hosting RBAC)}
+\subsection{Trình tự Phân quyền ủy nhiệm Đồng tổ chức (Co-hosting RBAC)}
 
 Hình~\ref{fig:sequence_cohost_rbac} mô tả luồng điều phối liên kết giữa ban tổ chức chủ trì và nhóm đối tác đồng tổ chức: từ bước gửi lời mời phối hợp, phê duyệt lời mời đến việc kích hoạt cơ chế phân quyền ủy nhiệm (RBAC Delegation) cho phép nhóm đối tác cùng mở phiên điểm danh và duyệt danh sách tham gia:
 
@@ -1015,7 +1015,7 @@ Hình~\ref{fig:sequence_cohost_rbac} mô tả luồng điều phối liên kết
 \end{figure}
 
 \clearpage
-\subsubsection{Trình tự Điều phối ReAct Agent và Truy vấn Vector tương đồng (RAG)}
+\subsection{Trình tự Điều phối ReAct Agent và Truy vấn Vector tương đồng (RAG)}
 
 Hình~\ref{fig:sequence_hoi_dap_chatbot} thể hiện chu trình xử lý hội thoại thông minh: Client gửi câu hỏi tự nhiên, Router xác thực JWT và kiểm tra hạn ngạch Rate Limit, Trợ lý AI thực thi vòng lặp suy luận ReAct, kích hoạt Tool gọi truy vấn ngữ nghĩa trên cơ sở dữ liệu vector pgvector và tổng hợp câu trả lời gửi về người dùng:
 
@@ -1070,7 +1070,7 @@ Hình~\ref{fig:sequence_hoi_dap_chatbot} thể hiện chu trình xử lý hội 
 \end{figure}
 
 \clearpage
-\subsubsection{Trình tự Kết xuất PDF và Kiểm chứng Giấy chứng nhận tham gia hoạt động}
+\subsection{Trình tự Kết xuất PDF và Kiểm chứng Giấy chứng nhận tham gia hoạt động}
 
 Hình~\ref{fig:sequence_verify_certificate} mô tả quy trình kết xuất bản ghi chứng nhận thành file PDF A4 Landscape kèm mã định danh duy nhất và mã QR, cùng luồng xử lý của cổng tra cứu công khai khi bên thứ ba quét mã đối soát trực tiếp với cơ sở dữ liệu:
 
@@ -1130,4 +1130,4 @@ Hình~\ref{fig:sequence_verify_certificate} mô tả quy trình kết xuất b�
 }
 \caption{Sequence Diagram: Quy trình kết xuất PDF và kiểm chứng Giấy chứng nhận tham gia hoạt động trực tuyến}
 \label{fig:sequence_verify_certificate}
-\end{figure}
+\end{figure}

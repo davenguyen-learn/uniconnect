@@ -1,6 +1,6 @@
-\section{Kiểm thử và đánh giá hệ thống}
+\chapter{Kiểm thử và đánh giá hệ thống}
 
-\subsection{Chiến lược và Quy trình kiểm thử}
+\section{Chiến lược và Quy trình kiểm thử}
 Nhằm đảm bảo chất lượng, độ tin cậy và tính toàn vẹn của nền tảng UniConnect trước khi đưa vào vận hành thực tế, đồ án thiết lập quy trình kiểm thử phần mềm chuẩn hóa tham chiếu các nguyên tắc tài liệu kiểm thử theo tiêu chuẩn IEEE 829\cite{ieee829test}. Chiến lược kiểm thử được xây dựng theo mô hình Kim tự tháp kiểm thử (Test Pyramid), bao gồm nhiều cấp độ kiểm tra chặt chẽ:
 \begin{itemize}
     \item \textbf{Kiểm thử đơn vị và tích hợp Backend (Unit \& Integration Tests):} Xác minh tính đúng đắn của từng hàm nghiệp vụ, cấu hình bảo mật, giao dịch cơ sở dữ liệu và các ràng buộc bất biến (invariants) giữa các phân hệ.
@@ -10,7 +10,7 @@ Nhằm đảm bảo chất lượng, độ tin cậy và tính toàn vẹn của
     \item \textbf{Kiểm thử chấp nhận người dùng (User Acceptance Testing - UAT):} Thực nghiệm các kịch bản người dùng thực tế trên môi trường container tương đương production.
 \end{itemize}
 
-\subsection{Kiểm thử tự động Backend (Automated Backend Testing)}
+\section{Kiểm thử tự động Backend (Automated Backend Testing)}
 Hệ thống backend của UniConnect được kiểm thử tự động toàn diện bằng framework \texttt{pytest} kết hợp thư viện \texttt{pytest-asyncio} và client HTTP bất đồng bộ \texttt{httpx.AsyncClient}. Bộ kiểm thử sử dụng cơ chế session-scoped database fixture với SQLite in-memory và transaction rollback độc lập cho từng ca kiểm thử, loại bỏ hoàn toàn sự phụ thuộc chéo giữa các bài test.
 
 Toàn bộ \textbf{94 ca kiểm thử tự động} được phân bổ trong 14 bộ kiểm thử (Test Suites) chuyên biệt tại thư mục \texttt{server/tests/}, đạt tỷ lệ vượt qua 100\% (94/94 passed). Bảng~\ref{tab:backend_test_suites} tổng hợp chi tiết kết quả kiểm thử của từng phân hệ:
@@ -55,7 +55,7 @@ Vòng đời Trophy \& Quyền riêng tư & \texttt{test\_\allowbreak trophy\_\a
 \end{xltabular}
 \endgroup
 
-\subsubsection{Đặc tả kỹ thuật về Kiểm thử Chu kỳ sống Connection Pool}
+\subsection{Đặc tả kỹ thuật về Kiểm thử Chu kỳ sống Connection Pool}
 Trong phân hệ quản trị kết nối dữ liệu (\texttt{test\_database\_observability.py}), hệ thống thực hiện kiểm thử cấu hình và lifecycle của connection pool với các tham số cấu hình production:
 \begin{itemize}
     \item Tham số thiết lập: \texttt{pool\_size = 20}, \texttt{max\_overflow = 10}, \texttt{pool\_recycle = 1800}, \texttt{pool\_pre\_ping = True}.
@@ -63,7 +63,7 @@ Trong phân hệ quản trị kết nối dữ liệu (\texttt{test\_database\_o
     \item \textbf{Lưu ý phương pháp luận:} Kết quả kiểm thử này chứng minh tính đúng đắn về mặt cấu hình, tính an toàn của chu kỳ sống kết nối và khả năng tự phục hồi (Lifecycle and Resilience Test). Đây là kiểm thử hồi quy logic kiến trúc, không phải là thử nghiệm đánh giá hiệu năng chịu tải dưới áp lực đồng thời cực hạn (Load/Concurrency Benchmark).
 \end{itemize}
 
-\subsection{Kiểm thử tự động Giao diện Frontend (Frontend Component Testing)}
+\section{Kiểm thử tự động Giao diện Frontend (Frontend Component Testing)}
 Giao diện người dùng Web Client được kiểm thử tự động thông qua công cụ Vitest kết hợp cùng thư viện React Testing Library và môi trường mô phỏng JSDOM. Các ca kiểm thử tập trung vào tính tương tác và tính nhất quán dữ liệu của client:
 \begin{itemize}
     \item \textbf{Kiểm thử xác thực và quản lý token:} Kiểm tra cơ chế lưu trữ và sử dụng Access Token JWT, tự động gắn Bearer Token vào các yêu cầu API và xử lý các trạng thái xác thực không hợp lệ.
@@ -71,7 +71,7 @@ Giao diện người dùng Web Client được kiểm thử tự động thông 
     \item \textbf{Kiểm thử bộ điều hướng và bảo vệ tuyến đường (Route Guards):} Đảm bảo các trang chức năng yêu cầu quyền (như trang Quản trị viên, trang Tổ chức sự kiện) chặn điều hướng và chuyển hướng chính xác về màn hình đăng nhập khi người dùng chưa xác thực.
 \end{itemize}
 
-\subsection{Đánh giá Tối ưu hóa Hiệu năng Frontend (Bundle Optimization)}
+\section{Đánh giá Tối ưu hóa Hiệu năng Frontend (Bundle Optimization)}
 Trong môi trường mạng học đường di động (3G/4G), kích thước gói tài nguyên JavaScript ban đầu ảnh hưởng quyết định đến thời gian hiển thị nội dung đầu tiên (First Contentful Paint - FCP). Nhằm nâng cao trải nghiệm sinh viên, hệ thống đã ứng dụng kỹ thuật phân tách mã nguồn động (Code-splitting) thông qua cơ chế \texttt{React.lazy()} và cấu hình chia nhỏ gói (Chunking Strategy) của Vite/Rollup. 
 
 Bảng~\ref{tab:bundle_optimization} thể hiện dữ liệu đo lường thực tế kích thước gói mã nguồn trước và sau khi thực hiện tối ưu hóa:
@@ -93,7 +93,7 @@ Thời gian hoàn tất tải trang (3G mạng chậm) & $\approx$ 4.2 giây & $
 
 Kết quả đo lường khẳng định việc giảm tới 72\% kích thước file mã nguồn ban đầu giúp ứng dụng khởi động tức thì, tối ưu hóa mức tiêu thụ băng thông và mang lại trải nghiệm mượt mà cho người dùng ngay cả trong điều kiện mạng yếu tại các khu vực xa trung tâm giảng đường.
 
-\subsection{Ma trận Kiểm thử Chấp nhận Người dùng (User Acceptance Testing - UAT)}
+\section{Ma trận Kiểm thử Chấp nhận Người dùng (User Acceptance Testing - UAT)}
 Nhằm thiết lập bộ tiêu chuẩn đối soát nghiệm thu các yêu cầu nghiệp vụ của hệ thống, đồ án xây dựng Ma trận kiểm thử chấp nhận người dùng (User Acceptance Testing Matrix) gồm 10 kịch bản cốt lõi. Các kịch bản này bao quát toàn bộ các nhóm vai trò (Người dùng, Ban điều hành Nhóm, Quản trị viên và Khách vãng lai), định hình các điều kiện tiên quyết, hành động thực hiện và tiêu chuẩn nghiệm thu tương ứng. Chi tiết được trình bày trong Bảng~\ref{tab:uat_matrix}.
 
 \begingroup

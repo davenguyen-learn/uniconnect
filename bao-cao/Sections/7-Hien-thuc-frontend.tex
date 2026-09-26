@@ -1,6 +1,6 @@
-\section{Hiện thực giao diện người dùng (Frontend)}
+\chapter{Hiện thực giao diện người dùng (Frontend)}
 
-\subsection{Công nghệ và kiến trúc giao diện}
+\section{Công nghệ và kiến trúc giao diện}
 Giao diện người dùng của nền tảng UniConnect được xây dựng theo mô hình ứng dụng đơn trang (Single Page Application - SPA) hiện đại, đáp ứng các tiêu chuẩn về tính tương tác thời gian thực, độ mượt mà và khả năng thích ứng đa nền tảng (Responsive Web Design).
 
 Các công nghệ và thư viện chủ chốt được ứng dụng trong phân hệ Frontend bao gồm:
@@ -13,10 +13,10 @@ Các công nghệ và thư viện chủ chốt được ứng dụng trong phân
     \item \textbf{Bộ biểu tượng Lucide Icons \& Xử lý Markdown:} Tích hợp bộ icon vector chuẩn hóa đồng bộ nhận diện trực quan cùng thư viện \texttt{react-markdown} kết hợp \texttt{remark-gfm} để hiển thị nội dung định dạng phong phú từ các bài đăng và câu trả lời thông minh của Trợ lý AI.
 \end{itemize}
 
-\subsection{Chi tiết các màn hình chức năng cốt lõi}
+\section{Chi tiết các màn hình chức năng cốt lõi}
 Dưới đây là chi tiết các màn hình chức năng tiêu biểu đã được hiện thực hóa và vận hành ổn định trên hệ thống:
 
-\subsubsection{Màn hình Bảng điều khiển và Khám phá Hoạt động (Student Dashboard)}
+\subsection{Màn hình Bảng điều khiển và Khám phá Hoạt động (Student Dashboard)}
 Giao diện trung tâm cho phép sinh viên theo dõi toàn bộ các sự kiện học đường và phong trào tình nguyện sắp diễn ra. Hệ thống cung cấp bộ lọc đa tiêu chí (học thuật, thể thao, tình nguyện, CTXH), thanh tìm kiếm thông minh và các thẻ hoạt động trực quan hiển thị đầy đủ thông tin thời gian, địa điểm cũng như số ngày CTXH tích lũy.
 
 \begin{figure}[H]
@@ -26,7 +26,7 @@ Giao diện trung tâm cho phép sinh viên theo dõi toàn bộ các sự kiệ
     \label{fig:ui_dashboard}
 \end{figure}
 
-\subsubsection{Màn hình Chi tiết Hoạt động và Đăng ký tham gia (Activity Details)}
+\subsection{Màn hình Chi tiết Hoạt động và Đăng ký tham gia (Activity Details)}
 Cung cấp đầy đủ thông tin chi tiết về sự kiện: thời gian diễn ra, địa điểm tập trung, câu lạc bộ hoặc đơn vị tổ chức, số lượng suất tham gia còn lại và danh sách sinh viên tham dự. Hệ thống tự động đối soát lịch trình cá nhân theo thời gian thực để cảnh báo khả năng xung đột thời gian và cung cấp nút đăng ký tham gia trực tiếp.
 
 \begin{figure}[H]
@@ -37,7 +37,7 @@ Cung cấp đầy đủ thông tin chi tiết về sự kiện: thời gian di�
 \end{figure}
 
 \clearpage
-\subsubsection{Màn hình Khởi tạo và Thiết lập Hoạt động (Create Activity)}
+\subsection{Màn hình Khởi tạo và Thiết lập Hoạt động (Create Activity)}
 Giao diện dành cho ban tổ chức và ban chủ nhiệm các câu lạc bộ để thiết lập sự kiện mới. Biểu mẫu hỗ trợ cấu hình toàn diện các thông số: tiêu đề, mô tả chi tiết, danh mục, thời gian diễn ra, địa điểm tổ chức trên bản đồ, số lượng người tham gia tối đa, định mức ngày CTXH và tùy chọn phê duyệt đơn tham gia.
 
 \begin{figure}[H]
@@ -47,7 +47,7 @@ Giao diện dành cho ban tổ chức và ban chủ nhiệm các câu lạc bộ
     \label{fig:ui_tao_hoat_dong}
 \end{figure}
 
-\subsubsection{Màn hình Lịch Thông minh và Quản lý Lịch trình (Smart Calendar Schedule)}
+\subsection{Màn hình Lịch Thông minh và Quản lý Lịch trình (Smart Calendar Schedule)}
 Hiển thị trực quan lịch trình cá nhân của sinh viên theo các chế độ xem linh hoạt (tuần/tháng), tích hợp đồng thời các khung giờ bận cố định (thời khóa biểu học tập) cùng các sự kiện ngoại khóa đã xác nhận tham gia. Hệ thống hỗ trợ chức năng xuất nhanh tệp chuẩn \texttt{.ics} để đồng bộ lịch trình hai chiều vào Google Calendar hoặc Apple Calendar.
 
 \begin{figure}[H]
@@ -58,7 +58,7 @@ Hiển thị trực quan lịch trình cá nhân của sinh viên theo các ch�
 \end{figure}
 
 \clearpage
-\subsubsection{Màn hình Trợ lý Học đường AI Thông minh (AI Assistant Chatbot)}
+\subsection{Màn hình Trợ lý Học đường AI Thông minh (AI Assistant Chatbot)}
 Giao diện tương tác trò chuyện với Trợ lý AI UniConnect. Người dùng có thể đặt câu hỏi tự nhiên để nhờ tìm kiếm sự kiện phù hợp, đối soát lịch bận cá nhân hoặc tra cứu các câu lạc bộ học đường. Phản hồi của Trợ lý AI cung cấp đầy đủ thông tin súc tích kèm theo các đường dẫn (hyperlink) điều hướng trực tiếp đến trang chi tiết hoạt động và câu lạc bộ tương ứng.
 
 \begin{figure}[H]
@@ -68,7 +68,7 @@ Giao diện tương tác trò chuyện với Trợ lý AI UniConnect. Người d
     \label{fig:ui_chatbot}
 \end{figure}
 
-\subsubsection{Màn hình Cộng đồng và Câu lạc bộ Sinh viên (Student Communities \& Clubs)}
+\subsection{Màn hình Cộng đồng và Câu lạc bộ Sinh viên (Student Communities \& Clubs)}
 Không gian kết nối và sinh hoạt của các câu lạc bộ, đội nhóm phong trào trong toàn trường. Người dùng có thể tra cứu thông tin giới thiệu, mục tiêu hoạt động, số lượng thành viên của từng CLB và nộp đơn đăng ký tham gia cộng đồng.
 
 \begin{figure}[H]
@@ -79,7 +79,7 @@ Không gian kết nối và sinh hoạt của các câu lạc bộ, đội nhóm
 \end{figure}
 
 \clearpage
-\subsubsection{Màn hình Hồ sơ Cá nhân và Vinh danh Thành tích (Gamification Profile)}
+\subsection{Màn hình Hồ sơ Cá nhân và Vinh danh Thành tích (Gamification Profile)}
 Không gian vinh danh nỗ lực tham gia hoạt động của sinh viên: hiển thị tổng số ngày Công tác Xã hội (CTXH) tích lũy, cấp bậc thứ hạng sinh viên, tủ trưng bày bộ sưu tập danh hiệu Trophy đã mở khóa và lịch sử chi tiết các sự kiện sinh viên đã tham gia.
 
 \begin{figure}[H]
@@ -89,7 +89,7 @@ Không gian vinh danh nỗ lực tham gia hoạt động của sinh viên: hiể
     \label{fig:ui_profile}
 \end{figure}
 
-\subsubsection{Màn hình Giấy xác nhận Tham gia Hoạt động (Activity Participation Certificate)}
+\subsection{Màn hình Giấy xác nhận Tham gia Hoạt động (Activity Participation Certificate)}
 Biểu mẫu hành chính điện tử công nhận sự tham gia của sinh viên sau khi hoàn thành hoạt động. Giấy xác nhận được trình bày theo thể thức văn bản chuẩn mực, bao gồm tên đơn vị tổ chức, tên hoạt động, số ngày CTXH ghi nhận, mã tra cứu xác thực và nút tải trực tiếp tệp tin PDF về máy phục vụ cho việc nộp minh chứng điểm rèn luyện.
 
 \begin{figure}[H]
@@ -99,5 +99,5 @@ Biểu mẫu hành chính điện tử công nhận sự tham gia của sinh vi�
     \label{fig:ui_certificate_modal}
 \end{figure}
 
-\subsection{Kết luận chương}
+\section{Kết luận chương}
 Chương này đã trình bày toàn diện quá trình hiện thực hóa giao diện người dùng Frontend của nền tảng UniConnect. Bằng việc ứng dụng React 18, TypeScript, Vite và ngôn ngữ thiết kế chuẩn mực, hệ thống mang lại trải nghiệm tương tác trực quan, mượt mà và thích ứng linh hoạt đa thiết bị. Toàn bộ 8 màn hình chức năng cốt lõi đã được hoàn thiện chỉn chu, tối ưu hóa kích thước gói tải, bảo đảm tính toàn vẹn dữ liệu và sẵn sàng phục vụ nhu cầu phong trào thực tế của sinh viên.

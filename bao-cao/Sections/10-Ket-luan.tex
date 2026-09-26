@@ -1,6 +1,6 @@
-\section{Kết luận và hướng phát triển}
+\chapter{Kết luận và hướng phát triển}
 
-\subsection{Kết quả đạt được}
+\section{Kết quả đạt được}
 Sau thời gian nghiên cứu, phân tích kiến trúc và hiện thực hóa toàn diện giải pháp, tác giả đề tài đã hoàn thành tốt các mục tiêu đề ra cho nền tảng \textbf{UniConnect: Hệ thống kết nối hoạt động sinh viên dựa trên bản đồ số và trợ lý ảo thông minh}. Các kết quả cụ thể đạt được bao gồm:
 
 \begin{itemize}[leftmargin=*]
@@ -21,7 +21,7 @@ Sau thời gian nghiên cứu, phân tích kiến trúc và hiện thực hóa t
     \item \textbf{Hạ tầng đóng gói Deployment-Ready \& Bảo đảm chất lượng tham chiếu IEEE 829:} Đóng gói hệ thống theo kiến trúc Multi-stage Docker Container, thực thi dưới người dùng bảo mật không đặc quyền (\texttt{appuser:1001}), Nginx reverse proxy bảo vệ phân vùng tin cậy mạng (trust boundary), và vượt qua 100\% bộ kiểm thử tự động toàn diện tham chiếu các nguyên tắc tài liệu kiểm thử theo tiêu chuẩn phần mềm IEEE 829\cite{ieee829test} bao gồm \textbf{94 ca kiểm thử tự động Backend} (thuộc 14 test suites) cùng quy trình đóng gói Frontend tối ưu hóa không phát sinh lỗi TypeScript hay bundling.
 \end{itemize}
 
-\subsection{Hạn chế còn tồn tại}
+\section{Hạn chế còn tồn tại}
 Bên cạnh các kết quả tích cực đã đạt được, hệ thống vẫn còn một số mặt hạn chế cần tiếp tục hoàn thiện:
 
 \begin{enumerate}[leftmargin=*, noitemsep]
@@ -31,10 +31,10 @@ Bên cạnh các kết quả tích cực đã đạt được, hệ thống vẫ
     \item \textbf{Phạm vi dữ liệu và tích hợp liên trường:} Hệ thống hiện thử nghiệm trong khuôn viên Đại học Bách Khoa, chưa tích hợp trực tiếp vào cổng đăng nhập tập trung (Single Sign-On VNU-ID) để liên thông chứng nhận ngày CTXH giữa các trường thành viên trong khối ĐHQG-HCM.
 \end{enumerate}
 
-\subsection{Định hướng phát triển trong tương lai}
+\section{Định hướng phát triển trong tương lai}
 Để nền tảng UniConnect phát triển toàn diện, bền vững và sẵn sàng phục vụ cộng đồng sinh viên trên quy mô lớn, tác giả định hướng mở rộng hệ thống theo hai nhóm phương diện chính:
 
-\subsubsection{Phát triển và mở rộng tính năng ứng dụng}
+\subsection{Phát triển và mở rộng tính năng ứng dụng}
 \begin{itemize}[leftmargin=*, noitemsep]
     \item \textbf{Phát hành ứng dụng Native Mobile (Flutter / React Native):} Xây dựng ứng dụng di động độc lập đưa lên Google Play và Apple App Store, khai thác camera quét mã QR dưới 100ms, thông báo đẩy (FCM/APNs) và cơ chế chống giả lập GPS (Mock Location Detection).
     \item \textbf{Tích hợp xác thực sinh trắc học vào điểm danh:} Nghiên cứu bổ sung xác thực khuôn mặt (Face Verification) hoặc chuẩn WebAuthn/FIDO2 kết hợp mã QR HMAC và Geofencing, tạo chu trình xác minh 3 lớp chặt chẽ cho sự kiện quy mô lớn.
@@ -42,7 +42,7 @@ Bên cạnh các kết quả tích cực đã đạt được, hệ thống vẫ
     \item \textbf{Liên thông kết quả phong trào và Ngày CTXH toàn ĐHQG-HCM:} Mở rộng tích hợp hệ thống VNU-ID, cho phép sinh viên các trường thành viên đăng ký chéo hoạt động và đồng bộ kết quả ngày CTXH tự động về phòng Công tác Sinh viên.
 \end{itemize}
 
-\subsubsection{Nâng cấp hạ tầng kỹ thuật, bảo mật và trí tuệ nhân tạo}
+\subsection{Nâng cấp hạ tầng kỹ thuật, bảo mật và trí tuệ nhân tạo}
 \begin{itemize}[leftmargin=*, noitemsep]
     \item \textbf{Huấn luyện mô hình AI nội bộ (On-premise LLM):} Tinh chỉnh mô hình nguồn mở tiếng Việt (PhoGPT, Llama-3-Vietnamese) triển khai trên máy chủ Nhà trường, kết hợp tìm kiếm lai (Hybrid Search: BM25 + pgvector) nhằm giảm độ trễ dưới 500ms và bảo mật tuyệt đối dữ liệu học vụ.
     \item \textbf{Hỗ trợ hệ thống định vị hỗn hợp trong nhà (Indoor Positioning System):} Tích hợp thêm Bluetooth Low Energy (BLE Beacons) hoặc nhận diện mạng Wi-Fi giảng đường để định vị chính xác tại các hội trường kín nơi tín hiệu GPS bị che khuất.

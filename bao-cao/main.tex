@@ -1,4 +1,5 @@
-\documentclass[13pt,a4paper]{extarticle}
+\documentclass[a4paper]{report}
+\usepackage[fontsize=13pt]{scrextend}
 \usepackage{longtable}
 \usepackage{hcmut}
 \usepackage{float}
@@ -48,6 +49,11 @@
 \begin{document}
 
 \include{Sections/0.1-Title}
+
+\pagenumbering{roman}
+\setcounter{page}{1}
+\pagestyle{frontmatter}
+
 \include{Sections/0.2-Loi-cam-doan}
 \include{Sections/0.3-Loi-cam-on}
 \include{Sections/0.4-Tom-tat-de-tai}
@@ -56,8 +62,10 @@
 \include{Sections/0.7-Danh-muc-bang-bieu}
 \include{Sections/0.8-Danh-muc-tu-viet-tat}
 
-\setcounter{table}{0}
-\setcounter{figure}{0}
+\newpage
+\pagenumbering{arabic}
+\setcounter{page}{1}
+\pagestyle{fancy}
 
 \include{Sections/1-Tong-quan-de-tai}
 
@@ -79,12 +87,15 @@
 
 \include{Sections/10-Ket-luan}
 
+\newpage
+\addcontentsline{toc}{chapter}{Tài liệu tham khảo}
 \bibliographystyle{ieeetr} 
 \bibliography{tai-lieu}
 
-\appendix
+\begin{appendices}
 \include{Sections/Appendix-A-UseCases}
 \include{Sections/Appendix-B-Database}
 \include{Sections/Appendix-C-API}
+\end{appendices}
 
 \end{document}

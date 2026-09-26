@@ -1,12 +1,12 @@
-\section{Cơ sở lý thuyết}
-\subsection{Dịch vụ dựa trên vị trí (Location-Based Services - LBS)}
-\subsubsection{Khái niệm và mô hình mạng xã hội cục bộ (Hyper-local)}
+\chapter{Cơ sở lý thuyết}
+\section{Dịch vụ dựa trên vị trí (Location-Based Services - LBS)}
+\subsection{Khái niệm và mô hình mạng xã hội cục bộ (Hyper-local)}
 
 Dịch vụ dựa trên vị trí (LBS) là một kiến trúc phần mềm tích hợp khả năng xử lý thông tin địa lý nhằm cung cấp các dịch vụ hoặc nội dung chuyên biệt cho người dùng dựa trên tọa độ thực tế của họ tại một thời điểm nhất định. Trong khuôn khổ của đề tài, LBS không chỉ dừng lại ở việc xác định vị trí tĩnh mà được nâng cấp thành mô hình Mạng xã hội cục bộ (Hyper-local Social Network).
 
 Mô hình này dịch chuyển trọng tâm của sự tương tác từ "đồ thị mối quan hệ ảo" (vốn không biên giới) sang "đồ thị không gian thực". Hệ thống sẽ xem tọa độ địa lý của người dùng là một biến số động, liên tục thay đổi và sử dụng biến số này làm bộ lọc tiên quyết để phân phối luồng dữ liệu. Việc giới hạn không gian tương tác trong một bán kính cụ thể giúp cô đặc mật độ thông tin, tăng xác suất chuyển hóa từ các tương tác trực tuyến sang các hoạt động giao lưu, học tập ngoài đời thực của sinh viên.
 
-\subsubsection{Biểu diễn dữ liệu không gian trong kiến trúc máy tính}
+\subsection{Biểu diễn dữ liệu không gian trong kiến trúc máy tính}
 
 Dữ liệu không gian (Spatial Data) biểu diễn vị trí địa lý của các thực thể trên bề mặt Trái Đất. Trong các hệ thống công nghệ thông tin, mô hình tọa độ phổ biến nhất là Hệ tọa độ địa lý WGS 84 (World Geodetic System 1984), sử dụng hai thông số cơ bản\cite{national1984department}:
 
@@ -17,7 +17,7 @@ Dữ liệu không gian (Spatial Data) biểu diễn vị trí địa lý của 
 
 Để máy tính có thể lưu trữ và truyền tải dữ liệu này giữa Client (React.js) và Server (Python) một cách đồng bộ, cấu trúc định dạng GeoJSON chuẩn hóa được áp dụng\cite{butler2016geojson}. Một điểm vị trí (Point) hoặc một vùng không gian hoạt động (Polygon) sẽ được mã hóa dưới dạng các cặp giá trị số thực [longitude, latitude]. Tầng cơ sở dữ liệu sẽ chịu trách nhiệm chuyển đổi các cặp số thực này thành các đối tượng hình học (Geometry) hoặc địa lý (Geography) để thực thi các phép toán không gian.
 
-\subsubsection{Cơ chế xử lý và tối ưu hóa toán học khoảng cách địa lý trong PostgreSQL}
+\subsection{Cơ chế xử lý và tối ưu hóa toán học khoảng cách địa lý trong PostgreSQL}
 
 Để thực thi các truy vấn không gian trong bán kính xác định cho số lượng lớn sinh viên đồng thời, hệ thống không áp dụng các công thức lượng giác cầu truyền thống (như Haversine) một cách tuần tự do chi phí tính toán các hàm số lượng giác (sin, cos, acos) trên tầng CPU là rất đáng kể. Thay vào đó, hệ quản trị cơ sở dữ liệu PostgreSQL tối ưu hóa quy trình này bằng các cơ chế hình học máy tính chuyên sâu thông qua hai hướng tiếp cận kỹ thuật\cite{orlandini2024postgresql}:
 
@@ -45,12 +45,12 @@ Mô hình toán học Elipsoid chính xác cao (Giải pháp PostGIS):
 
 Trong trường hợp hệ thống yêu cầu độ chính xác tuyệt đối, các hàm định vị cao cấp trong PostgreSQL sẽ áp dụng thuật toán hình học lặp (Vincenty's formulae)\cite{vincenty1975direct}. Thuật toán này không coi Trái Đất là một hình cầu phẳng đều, mà coi là một hình elipsoid có độ dẹt ở hai cực (chuẩn WGS 84). Thuật toán sẽ tính toán các đường trắc địa trên mặt cong elip bằng phương pháp thiết lập chuỗi số lặp cho đến khi độ sai số đạt mức dưới $0.5$ milimet, đảm bảo tính chính xác tối đa cho các dịch vụ định vị không gian.
 
-\subsection{Kỹ thuật nhúng dữ liệu văn bản (Text Embedding)}
-\subsubsection{Bản chất của Vector Embedding}
+\section{Kỹ thuật nhúng dữ liệu văn bản (Text Embedding)}
+\subsection{Bản chất của Vector Embedding}
 
 Trong kỷ nguyên xử lý ngôn ngữ tự nhiên (NLP) hiện đại, văn bản được biểu diễn dưới dạng các vector liên tục đa chiều trong không gian số thực $\mathbb{R}^d$ (thường gọi là Dense Vectors). Khác với các phương pháp truyền thống dựa trên tần suất từ vựng, Embedding cho phép lượng hóa các đặc trưng ngữ nghĩa. Các văn bản có nội dung hoặc ngữ cảnh tương đồng sẽ được ánh xạ vào các điểm nằm gần nhau trong không gian toán học đa chiều.Đối với UniConnect, việc nhúng hồ sơ sinh viên và mô tả hoạt động thành vector giúp hệ thống "hiểu" được sự liên quan giữa các thực thể mà không cần sự trùng khớp tuyệt đối về mặt từ khóa.
 
-\subsubsection{Đo lường độ tương đồng trong không gian đa chiều}
+\subsection{Đo lường độ tương đồng trong không gian đa chiều}
 
 Để xác định mức độ phù hợp giữa người dùng và các sự kiện, hệ thống áp dụng các phép toán đo lường khoảng cách giữa các đầu mút vector\cite{cha2007comprehensive}.
 
@@ -66,11 +66,11 @@ Trong kỷ nguyên xử lý ngôn ngữ tự nhiên (NLP) hiện đại, văn b�
 
 \begin{equation}d(\mathbf{A}, \mathbf{B}) = \sqrt{\sum_{i=1}^{n} (A_i - B_i)^2}\end{equation}
 
-\subsection{Kỹ thuật lập chỉ mục Vector (Vector Indexing)}
+\section{Kỹ thuật lập chỉ mục Vector (Vector Indexing)}
 
 Việc tính toán khoảng cách giữa một truy vấn và toàn bộ cơ sở dữ liệu (Brute-force) có độ phức tạp $\mathcal{O}(N \cdot d)$, gây tắc nghẽn khi dữ liệu lớn. Hệ thống UniConnect áp dụng các thuật toán lập chỉ mục tìm kiếm hàng xóm gần nhất xấp xỉ (Approximate Nearest Neighbor - ANN)\cite{johnson2021billion, douze2024faiss}.
 
-\subsubsection{Thuật toán IVFFlat (Inverted File with Flat Compression)}
+\subsection{Thuật toán IVFFlat (Inverted File with Flat Compression)}
 
 IVFFlat hoạt động dựa trên cơ chế phân cụm (Clustering). Không gian vector được chia thành $k$ cụm dựa trên thuật toán K-means với tâm cụm $C$:
 
@@ -78,11 +78,11 @@ IVFFlat hoạt động dựa trên cơ chế phân cụm (Clustering). Không gi
 
 Khi truy vấn, hệ thống chỉ quét qua các cụm gần nhất, giúp giảm đáng kể số lượng phép tính\cite{sivic2003video}.
 
-\subsubsection{Thuật toán HNSW (Hierarchical Navigable Small World)}
+\subsection{Thuật toán HNSW (Hierarchical Navigable Small World)}
 
 HNSW là thuật toán dựa trên đồ thị phân tầng, cho phép tìm kiếm với độ phức tạp xấp xỉ $\mathcal{O}(\log N)$\cite{malkov2018efficient}.Cấu trúc này cho phép hệ thống nhanh chóng thu hẹp vùng tìm kiếm ở các tầng cao (links thưa thớt) và tìm kiếm chính xác ở tầng thấp nhất (links dày đặc), đảm bảo tốc độ phản hồi thời gian thực cho tính năng gợi ý kết nối.
 
-\subsubsection{So sánh và ứng dụng trong UniConnect}
+\subsection{So sánh và ứng dụng trong UniConnect}
 
 Để tối ưu cho đề tài, chúng ta có thể so sánh hai thuật toán này như sau:
 
@@ -96,13 +96,13 @@ HNSW là thuật toán dựa trên đồ thị phân tầng, cho phép tìm ki�
 
 Định hướng áp dụng trong UniConnect: Trong phạm vi hiện tại, UniConnect sử dụng cơ chế tìm kiếm chính xác Exact Nearest Neighbor (dựa trên toán tử Cosine Distance của pgvector) do quy mô dữ liệu học đường ban đầu còn nhỏ, bảo đảm độ chính xác tuyệt đối 100\% mà không tốn chi phí xây dựng chỉ mục. Thuật toán HNSW được lựa chọn làm phương án mở rộng khi số lượng vector sự kiện và người dùng tăng trưởng quy mô lớn, nhằm giảm chi phí tính toán truy vấn.
 
-\subsection{Kiến trúc tạo văn bản tăng cường truy xuất (RAG)}
+\section{Kiến trúc tạo văn bản tăng cường truy xuất (RAG)}
 
 Trong các hệ thống AI truyền thống, các Mô hình ngôn ngữ lớn (LLM) thường gặp phải hiện tượng "ảo giác" (hallucination) – tức là trả lời rất tự tin nhưng thông tin lại không có thực hoặc đã lỗi thời. Để giải quyết vấn đề này trong môi trường học đường yêu cầu tính chính xác cao, UniConnect áp dụng kiến trúc RAG\cite{lewis2020retrieval}.
 
 Về bản chất, RAG cung cấp cho AI một "cuốn sách giáo khoa" (dữ liệu nội bộ của hệ thống) để nó tra cứu trước khi đưa ra câu trả lời cho sinh viên.
 
-\subsubsection{Quy trình vận hành của mô hình RAG}
+\subsection{Quy trình vận hành của mô hình RAG}
 
 Quy trình xử lý một câu hỏi của sinh viên thông qua RAG được chia làm 3 giai đoạn chính:
 
@@ -117,7 +117,7 @@ Quy trình xử lý một câu hỏi của sinh viên thông qua RAG được ch
     Mô hình ngôn ngữ tiếp nhận Prompt ngữ cảnh gồm câu hỏi và dữ liệu hoạt động xác thực để tổng hợp câu trả lời tự nhiên, chính xác và bám sát thực tế, hạn chế tối đa nguy cơ sai lệch thông tin.
 \end{enumerate}
 
-\subsubsection{Ưu điểm của RAG trong hệ thống UniConnect}
+\subsection{Ưu điểm của RAG trong hệ thống UniConnect}
 
 Tính cập nhật tức thời: Mô hình không yêu cầu quá trình tái huấn luyện (fine-tuning) phức tạp khi có sự kiện mới phát sinh; các hoạt động vừa được ghi nhận vào cơ sở dữ liệu PostgreSQL sẽ lập tức được đưa vào không gian tìm kiếm.
 
@@ -125,11 +125,11 @@ Tính cập nhật tức thời: Mô hình không yêu cầu quá trình tái hu
 
 Tối ưu chi phí và tài nguyên tính toán: Thay vì triển khai hoặc vận hành các mô hình ngôn ngữ lớn tùy biến tốn kém, giải pháp kết hợp API mô hình nền tảng cùng cơ chế tìm kiếm vector cục bộ mang lại hiệu năng cao và tiết kiệm tài nguyên vận hành\cite{karpukhin2020dense}.
 
-\subsection{Cơ sở mật mã học trong xác thực điểm danh: HMAC và mã QR Code xoay theo thời gian}
+\section{Cơ sở mật mã học trong xác thực điểm danh: HMAC và mã QR Code xoay theo thời gian}
 
 Để đảm bảo tính toàn vẹn và chống gian lận trong công tác điểm danh phong trào học đường, hệ thống UniConnect kết hợp cơ chế xác thực thông điệp có khóa dựa trên bước thời gian (Time-step Rolling HMAC Token) cùng chuẩn mã phản hồi nhanh QR Code.
 
-\subsubsection{Nguyên lý mã xác thực HMAC theo bước thời gian (Time-step)}
+\subsection{Nguyên lý mã xác thực HMAC theo bước thời gian (Time-step)}
 
 Cơ chế mã xác thực xoay vòng của UniConnect sử dụng hàm băm mật mã an toàn HMAC-SHA256 kết hợp giữa khóa bí mật $K$ của hoạt động cùng thông điệp động gắn với định danh hoạt động $\text{activity\_id}$ và chỉ số bước thời gian $step$. Bước thời gian được tính toán dựa trên số chu kỳ trôi qua kể từ mốc thời gian Unix Epoch với kích thước bước thời gian quy định là $T_X = 30$ giây:
 
@@ -157,15 +157,15 @@ Chuỗi băm hex được trích xuất 6 ký tự đầu để tạo thành mã
 
 Nhằm triệt tiêu ảnh hưởng của độ trễ đường truyền mạng và sự sai lệch đồng hồ giữa thiết bị của sinh viên và máy chủ, hệ thống áp dụng cửa sổ dung sai thời gian (drift tolerance window), chấp nhận cả mã token ở bước thời gian hiện tại ($step$) và bước liền trước ($step - 1$). Nhờ chu kỳ xoay ngắn 30 giây, mã điểm danh được vô hiệu hóa và làm mới liên tục, giảm thiểu đáng kể khả năng tái sử dụng mã QR bị chụp lại hoặc chia sẻ ra bên ngoài khu vực sự kiện.
 
-\subsubsection{Tiêu chuẩn mã vạch hai chiều QR Code (ISO/IEC 18004)}
+\subsection{Tiêu chuẩn mã vạch hai chiều QR Code (ISO/IEC 18004)}
 
 Mã QR (Quick Response Code) được chuẩn hóa theo tiêu chuẩn quốc tế ISO/IEC 18004\cite{iso18004qr}. Dữ liệu token HMAC xoay vòng cùng mã định danh hoạt động được mã hóa thành ma trận điểm ảnh vuông 2D tích hợp cơ chế sửa lỗi Reed-Solomon (mức sửa lỗi Medium 15\% hoặc Quartile 25\%). Điều này bảo đảm thiết bị di động của sinh viên có thể nhận diện và quét mã nhanh chóng ngay cả trong điều kiện ánh sáng yếu hoặc góc chụp nghiêng.
 
-\subsection{Thuật toán phát hiện xung đột lịch dựa trên khoảng thời gian nửa mở}
+\section{Thuật toán phát hiện xung đột lịch dựa trên khoảng thời gian nửa mở}
 
 Để hỗ trợ sinh viên quản lý lịch trình và tự động cảnh báo khi có sự kiện trùng giờ, UniConnect áp dụng vị từ giao thoa khoảng thời gian nửa mở (Half-Open Interval Overlap Predicate) kết hợp cùng chuẩn dữ liệu lịch biểu toàn cầu iCalendar (RFC 5545)\cite{desruisseaux2009ical}.
 
-\subsubsection{Vị từ giao thoa khoảng thời gian nửa mở $[start, end)$}
+\subsection{Vị từ giao thoa khoảng thời gian nửa mở $[start, end)$}
 
 Trong thực tế xếp lịch học đường, các mốc thời gian sự kiện được mô hình hóa dưới dạng khoảng nửa mở $[s, e)$, nghĩa là bao gồm thời điểm bắt đầu $s$ nhưng không bao gồm thời điểm kết thúc $e$. Với hai khoảng thời gian $A = [s_A, e_A)$ (sự kiện hiện có trong lịch) và $B = [s_B, e_B)$ (sự kiện sinh viên dự định tham gia), điều kiện để hai sự kiện xảy ra xung đột cứng (Hard Conflict) được xác định bằng biểu thức:
 

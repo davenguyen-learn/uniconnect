@@ -1,9 +1,9 @@
-\section*{PHỤ LỤC B: TỪ ĐIỂN DỮ LIỆU VÀ CƠ SỞ DỮ LIỆU CHI TIẾT}
-\addcontentsline{toc}{section}{Phụ lục B: Từ điển dữ liệu và Cơ sở dữ liệu chi tiết}
+\chapter{Từ điển dữ liệu và Cơ sở dữ liệu chi tiết}
+\label{apd:B}
 
 Database schema hiện tại gồm 25 bảng được kiểm kê trong môi trường kiểm thử production-equivalent, trong đó bao gồm 23 bảng domain và 2 bảng hệ thống/extension tương ứng (\texttt{alembic\_version}, \texttt{spatial\_ref\_sys}). Để đảm bảo tính chính xác học thuật tuyệt đối và loại bỏ hoàn toàn sai lệch tài liệu (documentation drift), toàn bộ dữ liệu dưới đây được trích xuất và đối soát trực tiếp từ các lớp mô hình ORM (SQLAlchemy Models) và migration Alembic thực tế trong mã nguồn backend hệ thống UniConnect.
 
-\subsection*{B.1 Bảng tổng hợp Lược đồ Cơ sở dữ liệu (Database Schema Master Table)}
+\section{Bảng tổng hợp Lược đồ Cơ sở dữ liệu (Database Schema Master Table)}
 
 \begingroup
 \singlespacing
@@ -48,13 +48,13 @@ Database schema hiện tại gồm 25 bảng được kiểm kê trong môi trư
 \end{xltabular}
 \endgroup
 
-\subsection*{B.2 Chi tiết các bảng nghiệp vụ trọng yếu}
+\section{Chi tiết các bảng nghiệp vụ trọng yếu}
 
 \begingroup
 \small
 \setlength{\parskip}{1pt}
 
-\subsubsection*{1. Bảng \texttt{activities} (Hoạt động ngoại khóa và sự kiện)}
+\subsection{Bảng \texttt{activities} (Hoạt động ngoại khóa và sự kiện)}
 Lưu trữ thông tin chi tiết của tất cả các hoạt động thể thao, học thuật, tình nguyện và phong trào được tổ chức trong khuôn viên:
 \begin{itemize}[leftmargin=*, noitemsep, topsep=1pt]
     \item \texttt{id} (UUID, Primary Key): Định danh duy nhất của hoạt động.
@@ -76,7 +76,7 @@ Lưu trữ thông tin chi tiết của tất cả các hoạt động thể thao
     \item \texttt{created\_at}, \texttt{updated\_at}, \texttt{is\_deleted}, \texttt{deleted\_at}: Dấu thời gian tạo lập và cơ chế xóa mềm (Soft-delete).
 \end{itemize}
 
-\subsubsection*{2. Bảng \texttt{join\_requests} (Đăng ký và Xác thực Điểm danh)}
+\subsection{Bảng \texttt{join\_requests} (Đăng ký và Xác thực Điểm danh)}
 Lưu trữ quan hệ đăng ký tham gia, đối soát thời gian và bằng chứng điểm danh chống gian lận:
 \begin{itemize}[leftmargin=*, noitemsep, topsep=1pt]
     \item \texttt{id} (UUID, Primary Key): Định danh bản ghi đăng ký tham gia.
@@ -88,7 +88,7 @@ Lưu trữ quan hệ đăng ký tham gia, đối soát thời gian và bằng ch
     \item \texttt{created\_at}, \texttt{responded\_at}: Thời điểm nộp đơn và thời điểm ban tổ chức phản hồi phê duyệt/từ chối.
 \end{itemize}
 
-\subsubsection*{3. Bảng \texttt{activity\_cohosts} \& \texttt{activity\_cohost\_invitations} (Đồng tổ chức và Ủy quyền RBAC)}
+\subsection{Bảng \texttt{activity\_cohosts} \& \texttt{activity\_cohost\_invitations} (Đồng tổ chức và Ủy quyền RBAC)}
 Hiện thực liên kết hợp tác giữa các nhóm sinh viên, phục vụ cơ chế phân quyền ủy nhiệm (Delegated RBAC):
 \begin{itemize}[leftmargin=*, noitemsep, topsep=1pt]
     \item \texttt{activity\_cohosts}: Lưu trữ quan hệ đồng tổ chức chính thức gồm \texttt{id} (UUID, PK), \texttt{activity\_id} (UUID, FK), \texttt{group\_id} (UUID, FK). Ràng buộc duy nhất: \texttt{UNIQUE(activity\_id, group\_id)}.
@@ -96,7 +96,7 @@ Hiện thực liên kết hợp tác giữa các nhóm sinh viên, phục vụ c
     \item Quyền hạn kế thừa: Thành viên có quyền quản trị thuộc nhóm Đồng tổ chức ở trạng thái \texttt{accepted} được cấp thẩm quyền mở phiên điểm danh và duyệt đơn sinh viên tham gia sự kiện.
 \end{itemize}
 
-\subsubsection*{4. Phân hệ Trò chơi hóa - Gamification (\texttt{trophies}, \texttt{user\_trophies}, \texttt{trophy\_grant\_requests})}
+\subsection{Phân hệ Trò chơi hóa - Gamification (\texttt{trophies}, \texttt{user\_trophies}, \texttt{trophy\_grant\_requests})}
 Quản lý hệ thống thành tích, danh hiệu và tiến trình phấn đấu ngoại khóa của sinh viên:
 \begin{itemize}[leftmargin=*, noitemsep, topsep=1pt]
     \item \texttt{trophies}: Danh hiệu vinh danh gồm \texttt{id} (UUID, PK), sự kiện trao thưởng \texttt{activity\_id} (UUID, Nullable, FK $\rightarrow$ \texttt{activities.id}, ON DELETE CASCADE, mỗi sự kiện liên kết tối đa một Trophy), tên danh hiệu \texttt{name} (VARCHAR(100), UNIQUE) và nội dung giải thích ý nghĩa \texttt{description} (TEXT).

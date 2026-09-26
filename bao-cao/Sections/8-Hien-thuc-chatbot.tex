@@ -1,8 +1,8 @@
-\section{Hiện thực hệ thống trợ lý AI và Gợi ý hoạt động}
+\chapter{Hiện thực hệ thống trợ lý AI và Gợi ý hoạt động}
 
 Hệ thống Trợ lý AI của UniConnect được xây dựng dựa trên kiến trúc RAG (Retrieval-Augmented Generation) kết hợp mô hình suy luận ReAct Agent và phân tích ngữ cảnh người dùng theo thời gian thực. Khác với các chatbot hỏi đáp thông thường, Trợ lý AI trong UniConnect có khả năng thấu hiểu lịch trình cá nhân, sở thích của người dùng và dữ liệu bản đồ hoạt động học đường để đưa ra các gợi ý chính xác và có thể thực thi được.
 
-\subsection{Kiến trúc Hybrid Context (Ngữ cảnh hỗn hợp)}
+\section{Kiến trúc Hybrid Context (Ngữ cảnh hỗn hợp)}
 
 Để sinh câu trả lời và đưa ra gợi ý chất lượng, hệ thống tổng hợp ngữ cảnh từ ba nguồn dữ liệu chính:
 \begin{enumerate}
@@ -13,7 +13,7 @@ Hệ thống Trợ lý AI của UniConnect được xây dựng dựa trên ki�
     \item \textbf{Social Context (Mạng lưới quan hệ):} Các hoạt động có sự tham gia của các Nhóm sinh viên mà người dùng đang là thành viên hoặc những người dùng mà người dùng đang theo dõi (\texttt{user\_follows}), giúp nắm bắt xu hướng phong trào trong cộng đồng.
 \end{enumerate}
 
-\subsection{Hiện thực luồng xử lý gợi ý hoạt động cá nhân hóa}
+\section{Hiện thực luồng xử lý gợi ý hoạt động cá nhân hóa}
 
 Khi người dùng mở giao diện Bản đồ hoặc yêu cầu Trợ lý AI gợi ý hoạt động, hệ thống thực hiện quy trình xử lý 4 giai đoạn:
 \begin{enumerate}
@@ -26,7 +26,7 @@ Khi người dùng mở giao diện Bản đồ hoặc yêu cầu Trợ lý AI g
     \item \textbf{Giai đoạn 4 -- Xếp hạng và Gợi ý (Ranking):} Tổng hợp điểm tương đồng ngữ nghĩa (Cosine Similarity), khoảng cách địa lý và độ ưu tiên từ mạng lưới bạn bè để trả về danh sách Top-K hoạt động tối ưu nhất cho người dùng.
 \end{enumerate}
 
-\subsection{Quy trình vận hành RAG Pipeline của Trợ lý AI}
+\section{Quy trình vận hành RAG Pipeline của Trợ lý AI}
 
 Khi người dùng đặt câu hỏi tự nhiên qua khung chat (ví dụ: \textit{"Thứ Bảy này tôi có thời gian trống vào buổi sáng, có hoạt động tình nguyện nào quanh khu vực trường cấp ngày CTXH không?"}), quy trình xử lý diễn ra như sau:
 \begin{enumerate}

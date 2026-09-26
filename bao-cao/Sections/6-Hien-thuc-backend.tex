@@ -1,6 +1,6 @@
-\section{Hiện thực hệ thống Backend}
+\chapter{Hiện thực hệ thống Backend}
 
-\subsection{Môi trường phát triển và công nghệ sử dụng}
+\section{Môi trường phát triển và công nghệ sử dụng}
 \begin{itemize}
     \item Ngôn ngữ: Python 3.10+.
 
@@ -16,7 +16,7 @@
 \end{itemize}
 
 \clearpage
-\subsection{Cấu trúc thư mục dự án}
+\section{Cấu trúc thư mục dự án}
 
 Để đảm bảo tính độc lập giữa các miền nghiệp vụ (Domain-Driven), dễ bảo trì và mở rộng khi phát triển quy mô lớn, mã nguồn của hệ thống Backend được tổ chức theo kiến trúc hướng Module (Modular Architecture). Mỗi phân hệ chức năng độc lập chứa toàn bộ mô hình dữ liệu (models), dịch vụ nghiệp vụ (services), lược đồ xác thực dữ liệu (schemas) và bộ định tuyến API (router). Cấu trúc thư mục chi tiết của dự án được tổ chức như sau:
 
@@ -49,7 +49,7 @@ server/
     requirements.txt        # Python backend dependencies
 \end{mycode}
 
-\subsection{Mô tả các thành phần hệ thống}
+\section{Mô tả các thành phần hệ thống}
 Việc tổ chức mã nguồn theo kiến trúc module trên giúp triệt tiêu sự phụ thuộc chéo và phân tách rõ ràng trách nhiệm giữa các miền nghiệp vụ:
 
 \begin{itemize}
@@ -62,9 +62,9 @@ Việc tổ chức mã nguồn theo kiến trúc module trên giúp triệt tiê
     \item \textbf{Docker và Containerization:} Toàn bộ hệ thống Backend và các dịch vụ bổ trợ (PostgreSQL, pgvector, PostGIS) được đóng gói trong các Container riêng biệt, giúp đồng nhất môi trường phát triển và môi trường vận hành thực tế.
 \end{itemize}
 
-\subsection{Hiện thực các tính năng cốt lõi}
+\section{Hiện thực các tính năng cốt lõi}
 
-\subsubsection{Xử lý dữ liệu không gian và Bản đồ (Geospatial Handling)}
+\subsection{Xử lý dữ liệu không gian và Bản đồ (Geospatial Handling)}
 Để quản lý các hoạt động trên bản đồ campus, hệ thống sử dụng tiện ích mở rộng \textit{PostGIS} của PostgreSQL kết hợp với thư viện \textit{GeoAlchemy2}. Dữ liệu tọa độ được lưu trữ dưới định dạng hình học \texttt{POINT} với hệ tọa độ \texttt{SRID 4326}.
 
 \begin{mycode}[Geospatial Field Definition in Activity Model]{Python}
@@ -91,7 +91,7 @@ def longitude(self):
 
 Việc hiện thực này cho phép hệ thống thực hiện các truy vấn không gian phức tạp như tìm kiếm các hoạt động trong bán kính nhất định xung quanh người dùng với hiệu năng tối ưu.
 
-\subsubsection{Hệ thống tìm kiếm ngữ nghĩa và Trợ lý AI (RAG)}
+\subsection{Hệ thống tìm kiếm ngữ nghĩa và Trợ lý AI (RAG)}
 Đây là tính năng thông minh của dự án, cho phép người dùng hỏi đáp về các hoạt động ngoại khóa, sự kiện và nhận gợi ý phù hợp với sở thích cá nhân. Hệ thống thực hiện quy trình RAG qua các bước:
 \begin{enumerate}[leftmargin=*]
     \item \textbf{Vector hóa:} Sử dụng mô hình Embedding để chuyển đổi nội dung tiêu đề, mô tả và đặc điểm sự kiện thành các Vector 768 chiều.
@@ -112,7 +112,7 @@ ORDER BY similarity DESC
 LIMIT 5;
 \end{mycode}
 
-\subsubsection{Hiện thực Điểm danh Chống gian lận (Mã QR xoay động HMAC \& GPS Geofencing)}
+\subsection{Hiện thực Điểm danh Chống gian lận (Mã QR xoay động HMAC \& GPS Geofencing)}
 
 Hệ thống hiện thực cơ chế điểm danh chống gian lận đa tầng:
 \begin{itemize}[leftmargin=*]
@@ -120,7 +120,7 @@ Hệ thống hiện thực cơ chế điểm danh chống gian lận đa tầng:
     \item \textbf{Đối soát Hàng rào địa lý GPS Geofencing:} Khi gửi mã xác nhận, máy khách tự động kích hoạt tiến trình quét định vị vệ tinh GPS và gửi kèm tọa độ kinh độ, vĩ độ cùng độ chính xác phần cứng ($accuracy$). Máy chủ tính toán khoảng cách Haversine giữa tọa độ người dùng với tọa độ sự kiện, từ chối điểm danh nếu khoảng cách vượt quá bán kính quy định ($check\_in\_radius$, mặc định 100m--300m) hoặc sai số thiết bị quá cao ($accuracy > 100$m).
 \end{itemize}
 
-\subsubsection{Hiện thực Phân hệ Trợ lý AI và Hội thoại Thông minh (ReAct Agent)}
+\subsection{Hiện thực Phân hệ Trợ lý AI và Hội thoại Thông minh (ReAct Agent)}
 
 Phân hệ trợ lý học đường AI được hiện thực hóa thông qua giao diện lập trình RESTful API kết hợp mô hình đại lý suy luận tự động (ReAct Agent Pattern) và kiểm soát tần suất truy vấn (Rate Limiter):
 \begin{itemize}[leftmargin=*]
@@ -129,7 +129,7 @@ Phân hệ trợ lý học đường AI được hiện thực hóa thông qua g
     \item Điều phối vòng lặp suy luận ReAct: Khi câu hỏi yêu cầu dữ liệu thực tế, mô hình tự động phát tín hiệu gọi Tool (Tool Calling) để thực thi truy vấn vector tương đồng trên bảng \texttt{activities} qua tiện ích mở rộng \texttt{pgvector}, sau đó tổng hợp ngữ cảnh sự kiện để trả lời tự nhiên định dạng Markdown.
 \end{itemize}
 
-\subsubsection{Authentication}
+\subsection{Authentication}
 
 Hệ thống triển khai cơ chế xác thực dựa trên tiêu chuẩn JSON Web Token (JWT). Mật khẩu người dùng được mã hóa bằng thuật toán bcrypt nhằm đảm bảo an toàn dữ liệu. Khi đăng nhập thành công, hệ thống cấp một mã định danh (Access Token) để người dùng thực hiện các yêu cầu tiếp theo thông qua lớp trung gian (Middleware).
 
@@ -152,7 +152,7 @@ def get_password_hash(password):
     return pwd_context.hash(password)
 \end{mycode}
 
-\subsubsection{Interactive API Documentation (Swagger UI)}
+\subsection{Interactive API Documentation (Swagger UI)}
 
 Một trong những ưu điểm cốt lõi của việc sử dụng FastAPI là khả năng tự động khởi tạo tài liệu API tương tác thông qua Swagger UI. Điều này giúp các nhà phát triển (đặc biệt là đội ngũ Frontend) dễ dàng theo dõi và thử nghiệm API mà không cần truy cập trực tiếp vào mã nguồn.
 
@@ -169,7 +169,7 @@ Một trong những ưu điểm cốt lõi của việc sử dụng FastAPI là 
     \label{fig:swagger}
 \end{figure}
 
-\subsubsection{Đóng gói ứng dụng với Docker trong môi trường sản xuất}
+\subsection{Đóng gói ứng dụng với Docker trong môi trường sản xuất}
 
 Để đảm bảo hệ thống vận hành ổn định và độc lập trên môi trường sản xuất, dự án được đóng gói thành các container Docker riêng biệt. Toàn bộ kiến trúc phân tầng bao gồm Nginx Reverse Proxy (phục vụ SPA tĩnh và ủy quyền chuyển tiếp), máy chủ FastAPI Backend và cơ sở dữ liệu PostgreSQL (tích hợp PostGIS/pgvector) được điều phối thông qua tệp cấu hình \texttt{docker-compose.prod.yml}:
 
@@ -212,7 +212,7 @@ volumes:
 
 Kiến trúc triển khai phân tách rõ ràng ranh giới mạng: dịch vụ Nginx đóng vai trò là điểm đón tiếp duy nhất (Ingress) mở cổng ra bên ngoài, trong khi máy chủ Backend và Cơ sở dữ liệu hoạt động hoàn toàn bên trong mạng nội bộ cô lập của Docker, gia tăng mức độ an toàn thông tin cho toàn bộ hệ thống.
 
-\subsection{Kết luận chương}
+\section{Kết luận chương}
 
 Chương này đã trình bày toàn diện quá trình hiện thực hóa kiến trúc Backend của UniConnect trên nền tảng FastAPI, SQLAlchemy 2.0 và PostgreSQL. Mô hình phân tầng hướng Module giúp tách biệt các miền nghiệp vụ, hỗ trợ phát triển và kiểm thử tự động thành công 100\% (94/94 test cases). Các tính năng then chốt gồm thuật toán đối soát lịch trình không xung đột, dữ liệu không gian PostGIS, tìm kiếm ngữ nghĩa pgvector và điểm danh kép chống gian lận (HMAC-SHA256 kết hợp GPS Geofencing) đều đạt độ trễ thấp và hiệu năng cao. Hệ thống được đóng gói hoàn chỉnh bằng Docker Compose với phân vùng mạng an toàn (Nginx Ingress, FastAPI và PostgreSQL), sẵn sàng triển khai thực tế phục vụ cộng đồng sinh viên.
 

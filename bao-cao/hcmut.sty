@@ -19,17 +19,20 @@
 \usepackage{setspace}
 \usepackage{epsfig}
 \usepackage{tikz}
-\usetikzlibrary{arrows,backgrounds}
+\usetikzlibrary{arrows,backgrounds,calc}
 \usepackage{hyperref}
 \usepackage{subcaption}
+\usepackage{titlesec}
+\usepackage{tocloft}
+\usepackage{appendix}
 
-% Định dạng lề trang chuẩn đồ án tốt nghiệp ĐH Bách Khoa
+% Định dạng lề trang chuẩn đồ án tốt nghiệp ĐH Bách Khoa (Left 35mm để đóng gáy luận văn)
 \geometry{
 	a4paper,
 	top=25mm,
-	bottom=25mm,
-	left=30mm,
-	right=20mm
+	bottom=30mm,
+	left=35mm,
+	right=25mm
 }
 \onehalfspacing % Dãn dòng 1.5 lines toàn bài
 \setlength{\parindent}{1cm}
@@ -46,6 +49,12 @@
 \captionsetup[figure]{name=Hình}
 \captionsetup[table]{name=Bảng}
 
+% Cấu hình tocloft hiển thị tên hình/bảng chuẩn Bách Khoa
+\renewcommand{\cftfigpresnum}{\figurename~}
+\renewcommand{\cftfignumwidth}{5.5em}
+\renewcommand{\cfttabpresnum}{\tablename~}
+\renewcommand{\cfttabnumwidth}{5.5em}
+
 \newtheorem{theorem}{{\bf Theorem}}
 \newtheorem{property}{{\bf Property}}
 \newtheorem{proposition}{{\bf Proposition}}
@@ -54,10 +63,39 @@
 
 \AtBeginDocument{\renewcommand*\contentsname{Mục lục}}
 \AtBeginDocument{\renewcommand*\refname{Tài liệu tham khảo}}
+\AtBeginDocument{\renewcommand*\bibname{Tài liệu tham khảo}}
+\AtBeginDocument{\renewcommand*\listfigurename{Danh mục hình ảnh}}
+\AtBeginDocument{\renewcommand*\listtablename{Danh sách bảng biểu}}
 \AtBeginDocument{\renewcommand*\figurename{Hình}}
 \AtBeginDocument{\renewcommand*\tablename{Bảng}}
+\AtBeginDocument{\renewcommand*\chaptername{Chương}}
+\AtBeginDocument{\renewcommand*\appendixname{Phụ lục}}
+
+% Định dạng tiêu đề Chương chuẩn mẫu Bách Khoa
+\titleformat{\chapter}[display]
+{\normalfont\huge\bfseries}{\chaptertitlename{} \thechapter}{12pt}{\Huge}
+\titlespacing*{\chapter}{0pt}{-10pt}{20pt}
 
 \setlength{\headheight}{40pt}
+
+% Kiểu trang cho phần phụ lục đầu đề (Front matter: La Mã, không header logo)
+\fancypagestyle{frontmatter}{
+  \fancyhf{}
+  \fancyfoot[C]{\thepage}
+  \renewcommand{\headrulewidth}{0pt}
+  \renewcommand{\footrulewidth}{0pt}
+}
+
+% Kiểu trang cho trang đầu tiên của mỗi chương
+\fancypagestyle{plain}{
+  \fancyhf{}
+  \fancyfoot[L]{\scriptsize Báo cáo đồ án tốt nghiệp}
+  \fancyfoot[R]{\scriptsize Trang {\thepage}/\pageref{LastPage}}
+  \renewcommand{\headrulewidth}{0pt}
+  \renewcommand{\footrulewidth}{0.3pt}
+}
+
+% Kiểu trang chính (Main matter)
 \pagestyle{fancy}
 \fancyhead{} % clear all header fields
 \fancyhead[L]{

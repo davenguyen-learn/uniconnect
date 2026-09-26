@@ -1,10 +1,10 @@
-\section{Công nghệ sử dụng}
+\chapter{Công nghệ sử dụng}
 
-\subsection{Công nghệ phía người dùng (Frontend)}
+\section{Công nghệ phía người dùng (Frontend)}
 
 Phần này trình bày các công nghệ được sử dụng để xây dựng giao diện tương tác. Mục tiêu là tạo ra một ứng dụng Web có tốc độ phản hồi nhanh, giao diện trực quan và khả năng quản lý dữ liệu phức tạp từ hệ thống bản đồ và AI.
 
-\subsubsection{Ngôn ngữ lập trình TypeScript (TS)}
+\subsection{Ngôn ngữ lập trình TypeScript (TS)}
 
 \textbf{Giới thiệu:} 
 
@@ -26,7 +26,7 @@ Phần này trình bày các công nghệ được sử dụng để xây dựng
     \item Tăng sự chuyên nghiệp trong việc quản lý bộ mã nguồn, tránh các lỗi sai kiểu dữ liệu thường gặp trong lập trình nhúng hay tự động hóa.
 \end{itemize}
 
-\subsubsection{Thư viện React.js}
+\subsection{Thư viện React.js}
 
 \textbf{Giới thiệu:} 
 
@@ -44,7 +44,7 @@ Phần này trình bày các công nghệ được sử dụng để xây dựng
 
 Đáp ứng yêu cầu về một giao diện hiện đại, tốc độ cao. Đặc biệt quan trọng khi cần tích hợp các luồng dữ liệu từ Chatbot RAG vốn cần cập nhật nội dung văn bản liên tục theo thời gian thực.
 
-\subsubsection{Framework thiết kế Tailwind CSS}
+\subsection{Framework thiết kế Tailwind CSS}
 
 \textbf{Giới thiệu:} 
 
@@ -62,7 +62,7 @@ Công cụ xử lý giao diện theo phương pháp Utility-first, loại bỏ v
 
 Rút ngắn thời gian dàn trang (layout), giúp tập trung nguồn lực vào các logic xử lý bản đồ và kết nối API phức tạp hơn.
 
-\subsubsection{Quản lý trạng thái dữ liệu với TanStack Query}
+\subsection{Quản lý trạng thái dữ liệu với TanStack Query}
 
 \textbf{Giới thiệu:} 
 
@@ -76,7 +76,7 @@ Rút ngắn thời gian dàn trang (layout), giúp tập trung nguồn lực và
     \item Quản lý trạng thái kết nối: Tự động xử lý các trường hợp mất mạng hoặc Server phản hồi chậm bằng các giao diện chờ (Loading skeleton), giúp người dùng không cảm thấy ứng dụng bị "đơ".
 \end{itemize}
 
-\subsubsection{Thư viện bản đồ số tương tác Leaflet và Tối ưu hóa hiệu năng}
+\subsection{Thư viện bản đồ số tương tác Leaflet và Tối ưu hóa hiệu năng}
 
 \textbf{Giới thiệu:}
 
@@ -93,15 +93,15 @@ Leaflet là thư viện JavaScript mã nguồn mở chuyên dụng cho việc tr
 
 Đem lại khả năng tương thích cao trên mọi trình duyệt hiện đại mà không yêu cầu cấu hình phức tạp, giúp người dùng tương tác mượt mà với các điểm hoạt động theo thời gian thực.
 
-\subsubsection{Kết luận}
+\subsection{Kết luận}
 
 Việc lựa chọn bộ công cụ Frontend dựa trên sự phối hợp giữa React.js và TypeScript không chỉ đảm bảo tính ổn định về mặt dữ liệu mà còn tối ưu hóa hiệu suất hiển thị cho một hệ thống đa tính năng như UniConnect. Sự kết hợp này cùng với các thư viện bổ trợ như Tailwind CSS, TanStack Query và Leaflet tạo nên một quy trình phát triển hiện đại, giúp giải quyết triệt để bài toán về giao diện bản đồ thời gian thực và trải nghiệm người dùng mượt mà. Đây là nền tảng quan trọng để hệ thống có thể mở rộng thêm các tính năng phức tạp trong tương lai mà vẫn duy trì được tốc độ xử lý và khả năng bảo trì mã nguồn tốt nhất.
 
-\subsection{Công nghệ phía máy chủ (Backend)}
+\section{Công nghệ phía máy chủ (Backend)}
 
 Hệ thống Backend của UniConnect đóng vai trò là trung tâm xử lý logic, quản lý dữ liệu không gian và vận hành các mô hình trí tuệ nhân tạo. Việc lựa chọn các công nghệ dưới đây tập trung vào tiêu chí: hiệu suất xử lý bất đồng bộ và khả năng tương thích với các thư viện AI hiện đại.
 
-\subsubsection{Ngôn ngữ lập trình Python}
+\subsection{Ngôn ngữ lập trình Python}
 
 \textbf{Giới thiệu:} 
 
@@ -119,7 +119,7 @@ Là ngôn ngữ lập trình bậc cao có cú pháp tinh gọn, được coi l�
 
 Python là cầu nối duy nhất giúp tích hợp trơn tru giữa logic nghiệp vụ thông thường (đăng bài, kết bạn) và các logic AI phức tạp (nhúng vector văn bản, truy vấn RAG) mà không cần qua các lớp chuyển đổi ngôn ngữ trung gian gây trễ hệ thống.
 
-\subsubsection{Web Framework FastAPI}
+\subsection{Web Framework FastAPI}
 
 \textbf{Giới thiệu:} 
 
@@ -139,7 +139,7 @@ Là một khung phần mềm (Framework) hiện đại giúp xây dựng API v�
 
 Đây là Framework nhanh nhất của Python hiện nay, đáp ứng được yêu cầu về độ trễ thấp (Low latency) cho tính năng bản đồ thời gian thực và phản hồi từ Chatbot.
 
-\subsubsection{Công cụ quản lý Cơ sở dữ liệu SQLAlchemy và Alembic}
+\subsection{Công cụ quản lý Cơ sở dữ liệu SQLAlchemy và Alembic}
 
 \textbf{Giới thiệu:} 
 
@@ -157,7 +157,7 @@ SQLAlchemy 2.0 đóng vai trò là bộ ánh xạ đối tượng - quan hệ (O
 
 Đảm bảo sự đồng bộ giữa mã nguồn Backend và cấu trúc Cơ sở dữ liệu. Đặc biệt quan trọng khi cần định nghĩa các kiểu dữ liệu đặc thù của pgvector ngay trong các Model của Python.
 
-\subsubsection{Cơ chế xác thực và bảo mật (JWT và RBAC)}
+\subsection{Cơ chế xác thực và bảo mật (JWT và RBAC)}
 
 \textbf{Giới thiệu:}
 
@@ -171,15 +171,15 @@ Hệ thống sử dụng cơ chế định danh dựa trên tài khoản email v
     \item Kiểm soát truy cập dựa trên vai trò (RBAC): Token chứa payload xác định vai trò của người dùng (Sinh viên, Ban điều hành Nhóm, Quản trị viên, Tổ chức giáo dục). Quyền hạn thực thi được kiểm soát chặt chẽ tại tầng Backend thông qua hệ thống phân quyền hướng phụ thuộc (Dependency Injection) của FastAPI.
 \end{itemize}
 
-\subsubsection{Kết luận} 
+\subsection{Kết luận} 
 
 Sự kết hợp giữa FastAPI và Python tạo nên một bộ máy Backend mạnh mẽ, có khả năng xử lý song song các tác vụ thông thường và các tác vụ AI nặng. Việc áp dụng SQLAlchemy giúp hệ thống quản lý dữ liệu một cách khoa học, an toàn, tạo tiền đề vững chắc cho việc triển khai các thuật toán tìm kiếm vector phức tạp trên cơ sở dữ liệu PostgreSQL ở các mục tiếp theo.
 
-\subsection{Công nghệ cơ sở dữ liệu và AI}
+\section{Công nghệ cơ sở dữ liệu và AI}
 
 Sự khác biệt cốt lõi của UniConnect nằm ở khả năng "hiểu" nội dung văn bản và tìm kiếm theo ngữ nghĩa thay vì chỉ so khớp từ khóa đơn thuần. Điều này được hiện thực hóa thông qua việc tích hợp trực tiếp công nghệ Vector vào hệ quản trị cơ sở dữ liệu quan hệ.
 
-\subsubsection{Hệ quản trị cơ sở dữ liệu PostgreSQL và pgvector}
+\subsection{Hệ quản trị cơ sở dữ liệu PostgreSQL và pgvector}
 
 \textbf{Giới thiệu:}
 
@@ -199,7 +199,7 @@ PostgreSQL là hệ quản trị cơ sở dữ liệu quan hệ mã nguồn mở
 
 Giúp hệ thống đạt được sự đồng nhất tuyệt đối. UniConnect không cần phải sử dụng một cơ sở dữ liệu AI rời rạc, từ đó giảm thiểu độ phức tạp khi triển khai, tiết kiệm tài nguyên máy chủ và đảm bảo tính toàn vẹn dữ liệu giữa thông tin cá nhân và dữ liệu vector.
 
-\subsubsection{Mô hình nhúng ngôn ngữ (Embedding Models)}
+\subsection{Mô hình nhúng ngôn ngữ (Embedding Models)}
 
 \textbf{Giới thiệu:}
 
@@ -217,7 +217,7 @@ Là các mô hình học sâu (Deep Learning) đã được huấn luyện trên
 
 Đóng vai trò là "bộ phiên dịch" giúp máy tính có thể so sánh và tính toán được sự tương đồng giữa những nhu cầu trừu tượng của sinh viên, từ đó đưa ra các gợi ý kết bạn và hoạt động chính xác nhất\cite{lewis2020retrieval}.
 
-\subsubsection{Kiến trúc RAG (Retrieval-Augmented Generation)}
+\subsection{Kiến trúc RAG (Retrieval-Augmented Generation)}
 
 \textbf{Giới thiệu:} 
 
@@ -235,15 +235,15 @@ RAG là kỹ thuật "Tạo văn bản tăng cường truy xuất". Thay vì đ�
 
 Đây là giải pháp tối ưu để xây dựng Trợ lý ảo cho UniConnect. Nó đảm bảo tính chính xác, cập nhật liên tục thông tin mà không cần phải huấn luyện lại (retrain) mô hình AI tốn kém và mất thời gian.
 
-\subsubsection{Kết luận}
+\subsection{Kết luận}
 
 Việc sử dụng PostgreSQL kết hợp với pgvector và kiến trúc RAG tạo nên một hệ thống quản trị dữ liệu thông minh, có khả năng xử lý đồng thời cả dữ liệu quan hệ truyền thống và dữ liệu trí tuệ nhân tạo. Đây chính là nền tảng kỹ thuật tiên tiến nhất, giúp UniConnect giải quyết triệt để bài toán kết nối người dùng dựa trên sự thấu hiểu ngữ nghĩa, tạo ra giá trị khác biệt hoàn toàn so với các mạng xã hội hiện có.
 
-\subsection{Công nghệ đóng gói và triển khai}
+\section{Công nghệ đóng gói và triển khai}
 
 Để đảm bảo UniConnect vận hành ổn định trên nhiều môi trường khác nhau (từ máy tính phát triển đến máy chủ trình chiếu), hệ thống ứng dụng công nghệ ảo hóa dạng container. Điều này giúp loại bỏ hoàn toàn các xung đột về phiên bản phần mềm và thư viện\cite{merkel2014docker}.
 
-\subsubsection{Công nghệ ảo hóa Docker}
+\subsection{Công nghệ ảo hóa Docker}
 
 \textbf{Giới thiệu:}
 
@@ -261,7 +261,7 @@ Docker là nền tảng mã nguồn mở cho phép đóng gói ứng dụng cùn
 
 Hệ thống UniConnect bao gồm nhiều thành phần phân tán với môi trường thực thi đa dạng (Python backend runtime, Node.js frontend build, PostgreSQL kết hợp pgvector và Cube extensions). Việc ứng dụng Docker giúp chuẩn hóa môi trường thực thi, cô lập hoàn toàn các gói phụ thuộc giữa các tầng dịch vụ và loại bỏ sự không tương thích về cấu hình môi trường, tạo điều kiện thuận lợi cho công tác kiểm thử, nghiệm thu và triển khai thực tế.
 
-\subsubsection{Công cụ điều phối Docker Compose}
+\subsection{Công cụ điều phối Docker Compose}
 
 \textbf{Giới thiệu:}
 
@@ -279,7 +279,7 @@ Là một công cụ đi kèm với Docker dùng để định nghĩa và vận 
 
 Chỉ với một câu lệnh docker-compose up, toàn bộ hệ sinh thái của UniConnect từ cơ sở dữ liệu đến giao diện người dùng sẽ tự động được lắp ghép và kích hoạt. Điều này thể hiện khả năng tổ chức hệ thống chuyên nghiệp và hiện đại.
 
-\subsubsection{Quy trình triển khai cục bộ (Local Container Deployment Flow)}
+\subsection{Quy trình triển khai cục bộ (Local Container Deployment Flow)}
 
 Trong giai đoạn phát triển cục bộ và kiểm thử nghiệm thu độc lập, hệ thống UniConnect được điều phối thông qua Docker Compose gồm 3 khối container chính:
 
@@ -291,7 +291,7 @@ Trong giai đoạn phát triển cục bộ và kiểm thử nghiệm thu độc
     \item \textbf{client-container (Frontend)}: Chứa ứng dụng React (TypeScript + Vite) được biên dịch thành gói phân phối tối ưu (Production Build), phục vụ giao diện người dùng qua máy chủ Web Nginx tĩnh với cấu hình nén gzip và bộ nhớ đệm HTTP.
 \end{itemize}
 
-\subsubsection{Kiến trúc triển khai sản xuất với Docker Compose (Production Architecture)}
+\subsection{Kiến trúc triển khai sản xuất với Docker Compose (Production Architecture)}
 
 Kiến trúc triển khai production của UniConnect sử dụng Docker Compose với ba thành phần chính gồm Nginx/Frontend, FastAPI Backend và PostgreSQL tích hợp PostGIS/pgvector. Nginx là điểm truy cập công khai duy nhất, chịu trách nhiệm phục vụ SPA và reverse proxy các yêu cầu API đến Backend. FastAPI và PostgreSQL hoạt động trong mạng nội bộ Docker, không trực tiếp công khai ra Internet. Cách triển khai này giúp thống nhất môi trường giữa kiểm thử và vận hành, đồng thời đơn giản hóa việc quản lý phụ thuộc và cấu hình hệ thống:
 
@@ -316,7 +316,7 @@ db (PostgreSQL) & 5432 (Internal) & Mạng nội bộ Docker & Lưu trữ quan h
 \end{tabular}
 \end{table}
 
-\subsection{Kết luận chương}
+\section{Kết luận chương}
 
 Chương 4 đã phân tích và luận chứng sâu sắc các quyết định lựa chọn công nghệ cho toàn bộ ngăn xếp kiến trúc của hệ thống UniConnect. Ở phía người dùng (Frontend), sự kết hợp giữa ngôn ngữ TypeScript và thư viện React 18 mang lại nền tảng phát triển an toàn kiểu dữ liệu, dễ bảo trì và hiệu năng cao. Việc ứng dụng linh hoạt các thư viện chuyên dụng như TanStack Query để đồng bộ trạng thái, Leaflet để trực quan hóa bản đồ không gian và kỹ thuật phân rã gói mã nguồn (Code-splitting) giúp giảm tới 72\% dung lượng tải ban đầu, bảo đảm trải nghiệm mượt mà ngay cả trên thiết bị di động trong môi trường mạng học đường.
 
