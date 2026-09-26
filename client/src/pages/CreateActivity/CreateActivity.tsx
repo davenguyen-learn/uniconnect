@@ -19,7 +19,7 @@ export default function CreateActivity() {
 
   const [loading, setLoading] = useState(false);
   const [isSocialWork, setIsSocialWork] = useState(false);
-  const [socialWorkDays, setSocialWorkDays] = useState<number>(1);
+  const [socialWorkDays, setSocialWorkDays] = useState<string>('1');
 
   // Trophy & Attendance state for Organization hosts
   const [hasTrophy, setHasTrophy] = useState(false);
@@ -75,7 +75,7 @@ export default function CreateActivity() {
         if (res.length > 0) {
           setSelectedTrophyId(res[0].id);
         }
-      }).catch(() => {});
+      }).catch(() => { });
     }
   }, [isOrg]);
 
@@ -176,6 +176,7 @@ export default function CreateActivity() {
     try {
       setLoading(true);
       const canAssignSocialWork = user?.role === 'edu_org' || user?.role === 'admin';
+      const parsedSocialWork = parseFloat(socialWorkDays);
       const data: ActivityCreate = {
         title: formData.title,
         description: formData.description,
@@ -190,7 +191,7 @@ export default function CreateActivity() {
         require_approval: formData.require_approval,
         latitude: location[0],
         longitude: location[1],
-        social_work_days: (canAssignSocialWork && isSocialWork && socialWorkDays > 0) ? socialWorkDays : undefined,
+        social_work_days: (canAssignSocialWork && isSocialWork && !isNaN(parsedSocialWork) && parsedSocialWork > 0) ? parsedSocialWork : undefined,
         attendance_mode: attendanceMode,
         check_in_radius: attendanceMode === 'qr_code' ? checkInRadius : 300,
       };
@@ -561,8 +562,8 @@ export default function CreateActivity() {
                 onClick={() => {
                   const nextState = !isSocialWork;
                   setIsSocialWork(nextState);
-                  if (nextState && socialWorkDays <= 0) {
-                    setSocialWorkDays(1);
+                  if (nextState && (!socialWorkDays || isNaN(parseFloat(socialWorkDays)) || parseFloat(socialWorkDays) <= 0)) {
+                    setSocialWorkDays('1');
                   }
                 }}
               >
@@ -571,8 +572,8 @@ export default function CreateActivity() {
                     <HeartHandshake size={18} />
                   </div>
                   <div className="approval-toggle-info">
-                    <span className="approval-toggle-title">Hoạt động cấp ngày Công tác Xã hội (CTXH)</span>
-                    <span className="approval-toggle-desc">Ghi nhận số ngày CTXH chính thức cho sinh viên sau khi hoàn thành điểm danh</span>
+                    <span className="approval-toggle-title">Hoạt động cấp ngày Công tác xã hội</span>
+                    <span className="approval-toggle-desc">Ghi nhận số ngày CTXH cho sinh viên sau khi hoàn thành điểm danh</span>
                   </div>
                 </div>
                 <div className={`approval-switch ${isSocialWork ? 'on' : ''}`}>
@@ -591,9 +592,15 @@ export default function CreateActivity() {
                     step="0.5"
                     min="0.5"
                     max="30"
+                    placeholder="1"
                     className="form-input !w-32 rounded-lg"
                     value={socialWorkDays}
-                    onChange={(e) => setSocialWorkDays(parseFloat(e.target.value) || 0)}
+                    onChange={(e) => setSocialWorkDays(e.target.value)}
+                    onBlur={() => {
+                      if (!socialWorkDays || isNaN(parseFloat(socialWorkDays)) || parseFloat(socialWorkDays) <= 0) {
+                        setSocialWorkDays('1');
+                      }
+                    }}
                   />
                   <span className="text-sm text-[var(--color-text-secondary)]">ngày</span>
                 </div>
@@ -612,8 +619,8 @@ export default function CreateActivity() {
                     <Trophy size={18} />
                   </div>
                   <div className="approval-toggle-info">
-                    <span className="approval-toggle-title">Hoạt động cấp Danh hiệu / Trophy vinh danh</span>
-                    <span className="approval-toggle-desc">Tặng huy hiệu và điểm thưởng thành tích cho người tham gia hoàn thành</span>
+                    <span className="approval-toggle-title">Hoạt động cấp danh hiệu</span>
+                    <span className="approval-toggle-desc">Tặng danh hiệu thành tích cho người tham gia hoàn thành</span>
                   </div>
                 </div>
                 <div className={`approval-switch ${hasTrophy ? 'on' : ''}`}>
