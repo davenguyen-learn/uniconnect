@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { activitiesApi, type ActivityUpdate } from '../../api/activities';
 import { calendarApi, type ReschedulePreviewResponse } from '../../api/calendar';
-import { trophiesApi, type TrophyResponse } from '../../api/trophies';
+import { trophiesApi } from '../../api/trophies';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../components/Toast/ToastContext';
 import { Trophy, UserCheck, Clock, QrCode, ShieldCheck, AlertTriangle, CheckCircle2, BarChart2 } from 'lucide-react';
@@ -29,18 +29,11 @@ export default function EditActivity() {
   
   // Trophy & Attendance state for Organization hosts
   const [hasTrophy, setHasTrophy] = useState(false);
-  const [selectedTrophyId, setSelectedTrophyId] = useState('');
-  const [availableTrophies, setAvailableTrophies] = useState<TrophyResponse[]>([]);
+  const [trophyName, setTrophyName] = useState('');
+  const [trophyIcon, setTrophyIcon] = useState('🏆');
+  const [trophyDescription, setTrophyDescription] = useState('');
   const [attendanceMode, setAttendanceMode] = useState<'manual' | 'auto' | 'qr_code'>('manual');
   const [checkInRadius, setCheckInRadius] = useState<number>(300);
-  const [showCreateTrophyModal, setShowCreateTrophyModal] = useState(false);
-  const [creatingTrophy, setCreatingTrophy] = useState(false);
-  const [newTrophy, setNewTrophy] = useState({
-    name: '',
-    icon: '🏆',
-    points: 50,
-    description: '',
-  });
 
   const [formData, setFormData] = useState({
     title: '',
@@ -70,11 +63,7 @@ export default function EditActivity() {
   const isEndTimeMissing = attemptedSubmit && !formData.end_time;
   const isLocationMissing = attemptedSubmit && !location;
 
-  useEffect(() => {
-    if (isOrg) {
-      trophiesApi.list().then(res => setAvailableTrophies(res)).catch(() => {});
-    }
-  }, [isOrg]);
+
 
   useEffect(() => {
     if (id) {
@@ -105,7 +94,9 @@ export default function EditActivity() {
           }
           if (act.trophy) {
             setHasTrophy(true);
-            setSelectedTrophyId(act.trophy.id);
+            setTrophyName(act.trophy.name || '');
+            setTrophyIcon(act.trophy.icon || '🏆');
+            setTrophyDescription(act.trophy.description || '');
           }
           if (act.attendance_mode) {
             setAttendanceMode(act.attendance_mode);
@@ -159,31 +150,7 @@ export default function EditActivity() {
     }
   };
 
-  const handleQuickCreateTrophy = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTrophy.name.trim()) {
-      toast.error('Vui lòng nhập tên Trophy');
-      return;
-    }
-    try {
-      setCreatingTrophy(true);
-      const created = await trophiesApi.create({
-        name: newTrophy.name.trim(),
-        description: newTrophy.description.trim() || undefined,
-        points: Number(newTrophy.points) || 0,
-        icon: newTrophy.icon || '🏆',
-      });
-      setAvailableTrophies(prev => [created, ...prev]);
-      setSelectedTrophyId(created.id);
-      setShowCreateTrophyModal(false);
-      setNewTrophy({ name: '', icon: '🏆', points: 50, description: '' });
-      toast.success('Đã tạo Trophy thành công!');
-    } catch {
-      toast.error('Không thể tạo Trophy (có thể tên đã tồn tại)');
-    } finally {
-      setCreatingTrophy(false);
-    }
-  };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -233,8 +200,35 @@ export default function EditActivity() {
         longitude: location[1],
       };
 
+      let finalTrophyId: string | null = null;
+      if (isOrg && hasTrophy) {
+        if (!trophyName.trim()) {
+          toast.error('Vui lòng nhập tên Danh hiệu / Trophy');
+          setLoading(false);
+          return;
+        }
+        if (trophyName.trim().length < 2) {
+          toast.error('Tên Danh hiệu / Trophy phải có ít nhất 2 ký tự');
+          setLoading(false);
+          return;
+        }
+        try {
+          const createdOrUpdatedTrophy = await trophiesApi.create({
+            name: trophyName.trim(),
+            description: trophyDescription.trim() || undefined,
+            icon: trophyIcon.trim() || '🏆',
+          });
+          finalTrophyId = createdOrUpdatedTrophy.id;
+        } catch (err: any) {
+          const detail = err.response?.data?.detail || 'Không thể lưu Danh hiệu / Trophy';
+          toast.error(detail);
+          setLoading(false);
+          return;
+        }
+      }
+
       if (isOrg) {
-        data.trophy_id = (hasTrophy && selectedTrophyId) ? selectedTrophyId : null;
+        data.trophy_id = (hasTrophy && finalTrophyId) ? finalTrophyId : null;
       }
       data.attendance_mode = attendanceMode;
       data.check_in_radius = attendanceMode === 'qr_code' ? checkInRadius : 300;
@@ -614,31 +608,46 @@ export default function EditActivity() {
 
               {hasTrophy && (
                 <div className="flex flex-col gap-3 p-4 border border-amber-500/20 bg-amber-500/5 rounded-xl">
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                    <div className="sm:col-span-3 flex flex-col gap-1">
+                      <label className="text-sm font-medium text-[var(--color-text-primary)]">
+                        Tên Danh hiệu / Trophy <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        className="form-input rounded-lg"
+                        placeholder="VD: Chiến sĩ tình nguyện xuất sắc, Top 1 Cuộc thi..."
+                        value={trophyName}
+                        onChange={(e) => setTrophyName(e.target.value)}
+                        maxLength={100}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-sm font-medium text-[var(--color-text-primary)]">
+                        Biểu tượng
+                      </label>
+                      <input
+                        type="text"
+                        className="form-input rounded-lg text-center text-lg"
+                        value={trophyIcon}
+                        onChange={(e) => setTrophyIcon(e.target.value)}
+                        placeholder="🏆"
+                        maxLength={10}
+                      />
+                    </div>
+                  </div>
                   <div className="flex flex-col gap-1">
                     <label className="text-sm font-medium text-[var(--color-text-primary)]">
-                      Chọn Trophy trao tặng:
+                      Mô tả vinh danh <span className="text-xs text-[var(--color-text-secondary)] font-normal">(tùy chọn)</span>
                     </label>
-                    <div className="flex items-center gap-2">
-                      <select
-                        className="form-input flex-1 !border !border-gray-300 rounded-lg"
-                        value={selectedTrophyId}
-                        onChange={(e) => setSelectedTrophyId(e.target.value)}
-                      >
-                        {availableTrophies.map(t => (
-                          <option key={t.id} value={t.id}>
-                            {t.name} (+{t.points} điểm)
-                          </option>
-                        ))}
-                      </select>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => setShowCreateTrophyModal(true)}
-                      >
-                        + Tạo Trophy mới
-                      </Button>
-                    </div>
+                    <input
+                      type="text"
+                      className="form-input rounded-lg"
+                      placeholder="Trao cho thành viên đã tham gia đầy đủ và tích cực..."
+                      value={trophyDescription}
+                      onChange={(e) => setTrophyDescription(e.target.value)}
+                      maxLength={200}
+                    />
                   </div>
                 </div>
               )}
@@ -751,72 +760,6 @@ export default function EditActivity() {
         </form>
       </div>
 
-      {showCreateTrophyModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm animate-fade-in">
-          <div className="glass bg-[var(--color-bg-surface)] p-6 rounded-2xl max-w-md w-full border border-white/20 shadow-2xl">
-            <h3 className="text-xl font-bold text-[var(--color-text-primary)] mb-4 flex items-center gap-2">
-              <Trophy size={20} className="text-amber-500" />
-              <span>Tạo Trophy mới</span>
-            </h3>
-            <form onSubmit={handleQuickCreateTrophy} className="flex flex-col gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Tên Trophy <span className="text-red-500">*</span></label>
-                <input
-                  type="text"
-                  className="form-input"
-                  placeholder="Ví dụ: Chiến binh Tình nguyện 2026"
-                  value={newTrophy.name}
-                  onChange={(e) => setNewTrophy({ ...newTrophy, name: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Biểu tượng (Icon/Emoji)</label>
-                  <input
-                    type="text"
-                    className="form-input text-center text-xl"
-                    value={newTrophy.icon}
-                    onChange={(e) => setNewTrophy({ ...newTrophy, icon: e.target.value })}
-                    maxLength={10}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Điểm thưởng</label>
-                  <input
-                    type="number"
-                    className="form-input"
-                    value={newTrophy.points}
-                    onChange={(e) => setNewTrophy({ ...newTrophy, points: parseInt(e.target.value) || 0 })}
-                    min={0}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Mô tả vinh danh</label>
-                <textarea
-                  className="form-input"
-                  rows={2}
-                  placeholder="Trao cho thành viên đã tham gia đầy đủ..."
-                  value={newTrophy.description}
-                  onChange={(e) => setNewTrophy({ ...newTrophy, description: e.target.value })}
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 mt-2">
-                <Button type="button" variant="secondary" onClick={() => setShowCreateTrophyModal(false)}>
-                  Hủy
-                </Button>
-                <Button type="submit" loading={creatingTrophy}>
-                  Tạo & Sử dụng ngay
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

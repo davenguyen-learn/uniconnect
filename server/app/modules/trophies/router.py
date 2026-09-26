@@ -28,6 +28,16 @@ async def create_trophy(
             detail="Chỉ Ban Quản trị hoặc Tổ chức Giáo dục (edu_org) mới có quyền tạo Trophy."
         )
     
+    existing = await db.scalar(select(Trophy).where(Trophy.name == data.name))
+    if existing:
+        if data.description is not None:
+            existing.description = data.description
+        if data.activity_id is not None:
+            existing.activity_id = data.activity_id
+        await db.commit()
+        await db.refresh(existing)
+        return existing
+
     trophy = Trophy(
         name=data.name,
         description=data.description,
