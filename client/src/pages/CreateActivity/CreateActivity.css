@@ -263,6 +263,25 @@
   background: #d97706;
 }
 
+.approval-toggle-card--indigo.active {
+  border-color: rgba(99, 102, 241, 0.3);
+  background: rgba(99, 102, 241, 0.03);
+}
+
+.approval-toggle-card--indigo .approval-toggle-icon {
+  background: rgba(99, 102, 241, 0.1);
+  color: #4f46e5;
+}
+
+.approval-toggle-card--indigo.active .approval-toggle-icon {
+  background: #4f46e5;
+  color: #ffffff;
+}
+
+.approval-toggle-card--indigo .approval-switch.on {
+  background: #4f46e5;
+}
+
 .private-field-callout {
   padding: var(--space-3);
   background: rgba(239, 68, 68, 0.05);

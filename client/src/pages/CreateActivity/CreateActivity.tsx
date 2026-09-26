@@ -5,7 +5,7 @@ import { calendarApi, type ConflictInfo } from '../../api/calendar';
 import { trophiesApi } from '../../api/trophies';
 import { useToast } from '../../components/Toast/ToastContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { Lock, Trophy, UserCheck, Clock, QrCode, ShieldCheck, AlertCircle, AlertTriangle, HeartHandshake } from 'lucide-react';
+import { Lock, Trophy, Clock, AlertCircle, AlertTriangle, HeartHandshake, UserCheck } from 'lucide-react';
 import Button from '../../components/Button/Button';
 import LocationPicker from '../../components/Map/LocationPicker';
 import './CreateActivity.css';
@@ -26,8 +26,7 @@ export default function CreateActivity() {
   const [trophyName, setTrophyName] = useState('');
   const [trophyIcon, setTrophyIcon] = useState('🏆');
   const [trophyDescription, setTrophyDescription] = useState('');
-  const [attendanceMode, setAttendanceMode] = useState<'manual' | 'auto' | 'qr_code'>('manual');
-  const [checkInRadius, setCheckInRadius] = useState<number>(300);
+  const [attendanceMode, setAttendanceMode] = useState<'manual' | 'auto'>('manual');
 
   const [formData, setFormData] = useState({
     title: '',
@@ -182,7 +181,6 @@ export default function CreateActivity() {
         social_work_days: (canAssignSocialWork && isSocialWork && !isNaN(parsedSocialWork) && parsedSocialWork > 0) ? parsedSocialWork : undefined,
         trophy_id: createdTrophyId,
         attendance_mode: attendanceMode,
-        check_in_radius: attendanceMode === 'qr_code' ? checkInRadius : 300,
       };
 
       const filledCustomFields = customFormFields.filter(f => f.label.trim().length > 0);
@@ -465,83 +463,23 @@ export default function CreateActivity() {
             </div>
           </div>
 
-          {/* Phương thức điểm danh (Áp dụng cho mọi hoạt động) */}
-          <div className="form-group flex flex-col gap-2">
-            <label className="font-semibold text-[var(--color-text-primary)] block">
-              Phương thức điểm danh người tham gia
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-              <label className={`p-3.5 rounded-xl border cursor-pointer text-sm transition-all ${attendanceMode === 'manual' ? 'border-primary-500 bg-primary-500/5 shadow-sm font-semibold' : 'border-[var(--color-border-subtle)] bg-[var(--color-bg-primary)] hover:border-gray-300'}`}>
-                <input
-                  type="radio"
-                  name="attendance_mode"
-                  value="manual"
-                  className="sr-only"
-                  checked={attendanceMode === 'manual'}
-                  onChange={() => setAttendanceMode('manual')}
-                />
-                <div className="flex items-center gap-2 text-[var(--color-text-primary)]">
-                  <UserCheck size={16} className={attendanceMode === 'manual' ? 'text-primary-600' : 'text-gray-400'} />
-                  <span>Thủ công</span>
-                </div>
-                <div className="text-xs text-[var(--color-text-secondary)] mt-1.5 font-normal">Host tự tick duyệt trong danh sách người tham gia</div>
-              </label>
-
-              <label className={`p-3.5 rounded-xl border cursor-pointer text-sm transition-all ${attendanceMode === 'auto' ? 'border-primary-500 bg-primary-500/5 shadow-sm font-semibold' : 'border-[var(--color-border-subtle)] bg-[var(--color-bg-primary)] hover:border-gray-300'}`}>
-                <input
-                  type="radio"
-                  name="attendance_mode"
-                  value="auto"
-                  className="sr-only"
-                  checked={attendanceMode === 'auto'}
-                  onChange={() => setAttendanceMode('auto')}
-                />
-                <div className="flex items-center gap-2 text-[var(--color-text-primary)]">
-                  <Clock size={16} className={attendanceMode === 'auto' ? 'text-primary-600' : 'text-gray-400'} />
-                  <span>Tự động</span>
-                </div>
-                <div className="text-xs text-[var(--color-text-secondary)] mt-1.5 font-normal">Tự động xác nhận có mặt khi hết giờ sự kiện</div>
-              </label>
-
-              <label className={`p-3.5 rounded-xl border cursor-pointer text-sm transition-all ${attendanceMode === 'qr_code' ? 'border-primary-500 bg-primary-500/5 shadow-sm font-semibold' : 'border-[var(--color-border-subtle)] bg-[var(--color-bg-primary)] hover:border-gray-300'}`}>
-                <input
-                  type="radio"
-                  name="attendance_mode"
-                  value="qr_code"
-                  className="sr-only"
-                  checked={attendanceMode === 'qr_code'}
-                  onChange={() => setAttendanceMode('qr_code')}
-                />
-                <div className="flex items-center gap-2 text-[var(--color-text-primary)]">
-                  <QrCode size={16} className={attendanceMode === 'qr_code' ? 'text-primary-600' : 'text-gray-400'} />
-                  <span>Quét QR + GPS</span>
-                </div>
-                <div className="text-xs text-[var(--color-text-secondary)] mt-1.5 font-normal">QR động đổi 30s & kiểm tra vị trí GPS tại sự kiện</div>
-              </label>
-            </div>
-
-            {attendanceMode === 'qr_code' && (
-              <div className="flex flex-col gap-1 p-3.5 bg-[var(--color-bg-secondary)] rounded-xl border border-[var(--color-border-subtle)] mt-1">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="font-medium text-[var(--color-text-primary)]">Bán kính GPS cho phép check-in:</span>
-                  <select
-                    className="form-input !w-36 text-sm !py-1 !px-2 rounded-lg"
-                    value={checkInRadius}
-                    onChange={(e) => setCheckInRadius(Number(e.target.value))}
-                  >
-                    <option value={100}>100 mét</option>
-                    <option value={200}>200 mét</option>
-                    <option value={300}>300 mét (Chuẩn)</option>
-                    <option value={500}>500 mét</option>
-                    <option value={1000}>1 km</option>
-                  </select>
-                </div>
-                <span className="text-xs text-[var(--color-text-secondary)] flex items-center gap-1.5 mt-0.5">
-                  <ShieldCheck size={14} className="text-primary-600 shrink-0" />
-                  <span>Người tham gia ở ngoài bán kính này sẽ bị từ chối điểm danh để chống gian lận ở nhà.</span>
-                </span>
+          {/* Tự động điểm danh khi kết thúc hoạt động */}
+          <div
+            className={`approval-toggle-card approval-toggle-card--indigo ${attendanceMode === 'auto' ? 'active' : ''}`}
+            onClick={() => setAttendanceMode(attendanceMode === 'auto' ? 'manual' : 'auto')}
+          >
+            <div className="approval-toggle-content">
+              <div className="approval-toggle-icon">
+                <Clock size={18} />
               </div>
-            )}
+              <div className="approval-toggle-info">
+                <span className="approval-toggle-title">Tự động điểm danh người tham gia khi kết thúc hoạt động</span>
+                <span className="approval-toggle-desc">Tự động xác nhận có mặt cho tất cả người tham gia hợp lệ khi hết giờ sự kiện</span>
+              </div>
+            </div>
+            <div className={`approval-switch ${attendanceMode === 'auto' ? 'on' : ''}`}>
+              <span className="approval-switch-handle" />
+            </div>
           </div>
 
           {(user?.role === 'edu_org' || user?.role === 'admin') && (
