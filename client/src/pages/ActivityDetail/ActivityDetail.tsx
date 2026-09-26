@@ -2,8 +2,6 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   Calendar as CalendarIcon,
-  MapPin,
-  GraduationCap,
   Trophy,
   Lock,
   Unlock,
@@ -11,15 +9,24 @@ import {
   AlertTriangle,
   FileText,
   QrCode,
-  Sparkles,
   Users,
+  Trash2,
+  X,
+  ShieldCheck,
+  Building2,
+  UserPlus,
+  Loader2,
+  Search,
+  Download,
 } from 'lucide-react';
 import { activitiesApi, type ActivityResponse } from '../../api/activities';
+import { groupsApi, type GroupResponse } from '../../api/groups';
 import { participationApi, type JoinRequestResponse, type JoinRequestCreate } from '../../api/participation';
 import { calendarApi, type ConflictInfo } from '../../api/calendar';
 import { interactionsApi, type CommentResponse } from '../../api/interactions';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../components/Toast/ToastContext';
+import { getFormFieldResponse } from '../../utils/formResponses';
 import Button from '../../components/Button/Button';
 import LikeButton from '../../components/LikeButton/LikeButton';
 import CommentSection from '../../components/CommentSection/CommentSection';
@@ -32,7 +39,10 @@ import {
   mapActivityToDetailViewModel,
   validateDynamicForm,
 } from '../../types/activity-detail-mapper';
+import { normalizeCategoryName } from '../../types/activity-mapper';
+import { formatCtxh } from '../../utils/format';
 import './ActivityDetail.css';
+import '../../components/groups/GroupModals.css';
 
 export default function ActivityDetail() {
   const { id } = useParams<{ id: string }>();
@@ -81,6 +91,42 @@ export default function ActivityDetail() {
   // Certificate Modal state
   const [showCertificateModal, setShowCertificateModal] = useState(false);
   const [certificateTargetUserId, setCertificateTargetUserId] = useState<string | undefined>(undefined);
+
+  // Manage Participants Modal state
+  const [showParticipantsModal, setShowParticipantsModal] = useState(false);
+  const [removingParticipantUserId, setRemovingParticipantUserId] = useState<string | null>(null);
+  const [isExportingCsv, setIsExportingCsv] = useState(false);
+  const [selectedReviewRequest, setSelectedReviewRequest] = useState<JoinRequestResponse | null>(null);
+
+  // Invite Co-Host Modal state
+  const [showInviteCoHostModal, setShowInviteCoHostModal] = useState(false);
+  const [coHostSearchQuery, setCoHostSearchQuery] = useState('');
+  const [coHostSearchResults, setCoHostSearchResults] = useState<GroupResponse[]>([]);
+  const [coHostSearchLoading, setCoHostSearchLoading] = useState(false);
+  const [invitingGroupId, setInvitingGroupId] = useState<string | null>(null);
+  const [coHostMessage, setCoHostMessage] = useState('');
+
+  const fetchCoHostCandidates = useCallback(async (query: string = '') => {
+    if (!id) return;
+    setCoHostSearchLoading(true);
+    try {
+      const results = await groupsApi.searchCoHostCandidates(id, {
+        search: query.trim() || undefined,
+        limit: 15,
+      });
+      setCoHostSearchResults(results);
+    } catch {
+      setCoHostSearchResults([]);
+    } finally {
+      setCoHostSearchLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    if (showInviteCoHostModal && id) {
+      fetchCoHostCandidates(coHostSearchQuery);
+    }
+  }, [showInviteCoHostModal, id, fetchCoHostCandidates]);
 
   useEffect(() => {
     if (id === 'create' || id === 'new') {
@@ -135,10 +181,14 @@ export default function ActivityDetail() {
         // filter pending locally if API doesn't filter
         setRequests(reqs.filter(r => r.status === 'pending'));
       } else {
-        // If not host, fetch my own request status
-        const myReqs = await participationApi.listByActivity(id!);
-        if (myReqs.length > 0) {
-          setMyRequest(myReqs[0]);
+        // If not host, fetch my own request status safely
+        try {
+          const myReqs = await participationApi.listByActivity(id!);
+          if (myReqs && myReqs.length > 0) {
+            setMyRequest(myReqs[0]);
+          }
+        } catch {
+          // Non-host users do not have full requests permission, which is expected
         }
 
         // Check schedule conflict
@@ -296,33 +346,51 @@ export default function ActivityDetail() {
     setShowCheckInModal(true);
   };
 
-  const handleToggleAttendance = async (participantUserId: string, currentStatus: boolean) => {
+  const handleSetAttendance = async (participantUserId: string, attended: boolean) => {
     if (!id) return;
     try {
       setUpdatingAttendanceUserId(participantUserId);
-      const res = await activitiesApi.updateAttendance(id, participantUserId, !currentStatus);
+      const res = await activitiesApi.updateAttendance(id, participantUserId, attended);
       toast.success(res.message);
       setParticipants(prev =>
-        prev.map(p => p.user_id === participantUserId ? { ...p, attendance_confirmed: !currentStatus } : p)
+        prev.map(p => p.user_id === participantUserId ? { ...p, attendance_confirmed: attended } : p)
       );
     } catch {
-      toast.error('Không thể cập nhật điểm danh');
+      toast.error('Không thể cập nhật trạng thái điểm danh');
     } finally {
       setUpdatingAttendanceUserId(null);
     }
   };
 
+  const handleRemoveParticipant = async (participantUserId: string, username: string) => {
+    if (!id) return;
+    const confirm = window.confirm(`Bạn có chắc muốn xóa @${username} khỏi hoạt động này?`);
+    if (!confirm) return;
+
+    try {
+      setRemovingParticipantUserId(participantUserId);
+      await participationApi.removeParticipant(id, participantUserId);
+      toast.success(`Đã xóa @${username} khỏi hoạt động`);
+      setParticipants(prev => prev.filter(p => p.user_id !== participantUserId));
+      setActivity(prev => prev ? { ...prev, current_participants: Math.max(1, prev.current_participants - 1) } : null);
+    } catch (error: any) {
+      toast.error(error?.message || 'Không thể xóa người tham gia');
+    } finally {
+      setRemovingParticipantUserId(null);
+    }
+  };
+
   async function handleDeleteActivity() {
     if (!id) return;
-    const confirm = window.confirm('Bạn có chắc chắn muốn xóa hoạt động này?');
+    const confirm = window.confirm('Bạn có chắc chắn muốn hủy hoạt động này? Hành động này không thể hoàn tác.');
     if (!confirm) return;
 
     try {
       await activitiesApi.delete(id);
-      toast.success('Đã xóa hoạt động');
+      toast.success('Đã hủy hoạt động thành công');
       navigate('/dashboard');
-    } catch (error) {
-      toast.error('Không thể xóa hoạt động');
+    } catch (error: any) {
+      toast.error(error?.message || 'Không thể hủy hoạt động');
     }
   }
 
@@ -357,7 +425,38 @@ export default function ActivityDetail() {
     return <div className="activity-detail-loading">Đang tải...</div>;
   }
 
-  const isHost = user?.id === activity.host_id;
+  const isHost = Boolean(
+    user && (
+      String(user.id) === String(activity.host_id) ||
+      (user.username && activity.host?.username && user.username.toLowerCase() === activity.host.username.toLowerCase())
+    )
+  );
+  const isAdmin = user?.role === 'admin' || user?.role === 'edu_org';
+  const canExport = Boolean(isHost || user?.role === 'admin');
+  const canManage = isHost || isAdmin;
+
+  const handleExportCsv = async () => {
+    if (!id || !activity) return;
+    setIsExportingCsv(true);
+    try {
+      const blob = await activitiesApi.exportParticipantsCsv(id);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const cleanTitle = (activity.title || 'hoat_dong').toLowerCase().replace(/[^\w\s-]/g, '').trim().replace(/[-\s]+/g, '_').slice(0, 30);
+      const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+      a.download = `danh_sach_tham_gia_${cleanTitle || 'hoat_dong'}_${dateStr}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      toast.success('Đã xuất danh sách CSV thành công!');
+    } catch (error: any) {
+      toast.error(error?.message || 'Không thể xuất danh sách người tham gia');
+    } finally {
+      setIsExportingCsv(false);
+    }
+  };
   const isFull = activity.current_participants >= activity.max_participants;
   const vm = mapActivityToDetailViewModel({
     activity,
@@ -366,37 +465,32 @@ export default function ActivityDetail() {
     conflictInfo,
   });
 
+  const allDisplayParticipants = [...participants]
+    .filter(p => p.user?.username && p.user?.username !== activity.host?.username)
+    .sort((a, b) => (a.user?.username || '').localeCompare(b.user?.username || '', 'vi', { sensitivity: 'base' }));
+
+  const formatEventTime = (startStr: string, endStr?: string) => {
+    const start = new Date(startStr);
+    const end = endStr ? new Date(endStr) : null;
+
+    const startT = start.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+    const startD = start.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+    if (!end) {
+      return `${startT} • ${startD}`;
+    }
+
+    const endT = end.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+    const endD = end.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+    if (startD === endD) {
+      return `${startT} - ${endT} • ${startD}`;
+    }
+    return `${startT} ${startD} - ${endT} ${endD}`;
+  };
+
   return (
     <div className="activity-detail-container">
-      <div className="activity-header glass">
-        <div className="activity-badges-row">
-          <div className="category-badge">{activity.category || 'Chung'}</div>
-          {activity.social_work_days && activity.social_work_days > 0 && (
-            <div className="social-work-badge flex items-center gap-1">
-              <GraduationCap size={14} />
-              {activity.social_work_days} ngày CTXH
-            </div>
-          )}
-        </div>
-        <h1 className="activity-title">{activity.title}</h1>
-        <div className="activity-meta">
-          <span>Được tổ chức bởi <Link to={`/profile/${activity.host_id}`} className="activity-host-link">@{activity.host?.username}</Link></span>
-          <span className="meta-dot">•</span>
-          <span className="flex items-center gap-1">
-            <CalendarIcon size={14} />
-            {new Date(activity.start_time).toLocaleString('vi-VN')}
-          </span>
-        </div>
-        <div className="activity-header-actions">
-          <LikeButton targetType="activities" targetId={id!} initialLiked={liked} initialCount={likeCount} />
-          {!isHost && (
-            <Button size="sm" variant="secondary" onClick={() => setIsReportModalOpen(true)}>
-              Báo cáo
-            </Button>
-          )}
-        </div>
-      </div>
-
       <ReportModal
         isOpen={isReportModalOpen}
         onClose={() => setIsReportModalOpen(false)}
@@ -406,131 +500,152 @@ export default function ActivityDetail() {
 
       <div className="activity-content-grid">
         <div className="activity-main glass">
-          <h3>Mô tả</h3>
-          <p className="activity-description">{activity.description}</p>
-
-          {activity.private_description ? (
-            <div className="callout">
-              <h4 className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-semibold">
-                <Unlock size={16} /> Nội dung dành cho thành viên
-              </h4>
-              <p className="text-pre-wrap">{activity.private_description}</p>
+          {/* Header section inside the main card */}
+          <div className="activity-header-section">
+            <div className="activity-badges-row">
+              <div className="category-badge">{normalizeCategoryName(activity.category)}</div>
+              <div className={`join-type-badge ${activity.require_approval ? 'join-type-badge--approval' : 'join-type-badge--free'}`}>
+                {activity.require_approval ? (
+                  <>
+                    <ShieldCheck size={13} />
+                    <span>Cần phê duyệt</span>
+                  </>
+                ) : (
+                  <span>Tham gia tự do</span>
+                )}
+              </div>
+              {typeof activity.social_work_days === 'number' && activity.social_work_days > 0 ? (
+                <div className="social-work-badge">
+                  {formatCtxh(activity.social_work_days)} ngày CTXH
+                </div>
+              ) : null}
+              {activity.trophy && (
+                <div 
+                  className="trophy-badge"
+                  title={activity.trophy.description ? `${activity.trophy.name}: ${activity.trophy.description}` : activity.trophy.name}
+                >
+                  <span className="trophy-badge-name">{activity.trophy.name}</span>
+                  {activity.trophy.points > 0 && (
+                    <span className="trophy-badge-points">+{activity.trophy.points}đ</span>
+                  )}
+                </div>
+              )}
             </div>
-          ) : activity.privacy === 'private' && !isHost && (
-            <div className="callout callout--muted flex items-center gap-1.5">
-              <Lock size={16} /> Thông tin riêng tư (Chỉ được tiết lộ cho người tổ chức và người tham gia được phê duyệt)
-            </div>
-          )}
 
-          <div className="flex-col gap-3">
-            <div className="stat-box">
-              <span className="stat-label">Điểm hẹn / Địa điểm</span>
-              <span className="stat-value flex items-center gap-1">
-                <MapPin size={15} className="text-red-500" />
-                {activity.meeting_location || activity.location_name || 'TBD'}
+            <h1 className="activity-title">{activity.title}</h1>
+
+            <div className="activity-meta">
+              <span>Được tổ chức bởi <Link to={`/profile/${activity.host_id}`} className="activity-host-link">@{activity.host?.username}</Link></span>
+              {activity.group && (
+                <>
+                  <span className="meta-dot">•</span>
+                  <Link to={`/groups/${activity.group.id}`} className="activity-group-link">
+                    <Building2 size={14} />
+                    {activity.group.name}
+                  </Link>
+                </>
+              )}
+              <span className="meta-dot">•</span>
+              <span className="flex items-center gap-1.5">
+                <CalendarIcon size={14} />
+                {formatEventTime(activity.start_time, activity.end_time)}
               </span>
             </div>
-            <div className="flex-row gap-3">
-              <div className="stat-box">
-                <span className="stat-label">Quyền riêng tư</span>
-                <span className="stat-value">{activity.privacy?.toUpperCase()}</span>
+
+            <div className="activity-header-actions">
+              <LikeButton targetType="activities" targetId={id!} initialLiked={liked} initialCount={likeCount} />
+              {canManage && (
+                <>
+                  {activity.group && (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="activity-invite-cohost-btn"
+                      onClick={() => setShowInviteCoHostModal(true)}
+                    >
+                      <UserPlus size={14} className="inline mr-1" /> Mời nhóm đồng tổ chức hoạt động
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    className="activity-edit-btn"
+                    onClick={() => navigate(`/activities/${id}/edit`)}
+                  >
+                    Chỉnh sửa
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="danger"
+                    className="activity-delete-btn"
+                    onClick={handleDeleteActivity}
+                  >
+                    <Trash2 size={14} className="inline mr-1" /> Hủy hoạt động
+                  </Button>
+                </>
+              )}
+              {!isHost && (
+                <Button size="sm" variant="secondary" className="activity-report-btn" onClick={() => setIsReportModalOpen(true)}>
+                  Báo cáo
+                </Button>
+              )}
+            </div>
+          </div>
+
+          <div className="activity-card-divider" />
+
+          {/* Description & Member content */}
+          <div className="activity-body-section">
+            <h3>Mô tả</h3>
+            <p className="activity-description">{activity.description}</p>
+
+            {activity.private_description ? (
+              <div className="callout">
+                <h4 className="flex items-center gap-1.5 text-emerald-600 font-semibold">
+                  <Unlock size={16} /> Nội dung dành cho thành viên
+                </h4>
+                <p className="text-pre-wrap">{activity.private_description}</p>
               </div>
-              <div className="stat-box">
-                <span className="stat-label">Trạng thái</span>
-                <span className={`stat-value ${isFull ? 'stat-status--full' : 'stat-status--open'}`}>
+            ) : activity.privacy === 'private' && !isHost && (
+              <div className="callout callout--muted flex items-center gap-1.5">
+                <Lock size={16} /> Thông tin riêng tư (Chỉ được tiết lộ cho người tổ chức và người tham gia được phê duyệt)
+              </div>
+            )}
+
+            {/* Clean text metadata: Điểm hẹn, Quyền riêng tư, Trạng thái */}
+            <div className="activity-info-list">
+              <div className="activity-info-item">
+                <span className="activity-info-label">Địa điểm:</span>
+                <span className="activity-info-value">
+                  {activity.meeting_location || activity.location_name || 'TBD'}
+                </span>
+              </div>
+              <div className="activity-info-item">
+                <span className="activity-info-label">Hình thức tham gia:</span>
+                <span className={`activity-info-value ${activity.require_approval ? 'text-indigo-600' : 'text-emerald-600'}`}>
+                  {activity.require_approval ? 'Cần xét duyệt (Host phê duyệt)' : 'Tham gia tự do (Không cần phê duyệt)'}
+                </span>
+              </div>
+              <div className="activity-info-item">
+                <span className="activity-info-label">Quyền riêng tư:</span>
+                <span className="activity-info-value">
+                  {activity.privacy?.toLowerCase() === 'private' ? 'Riêng tư' : 'Công khai'}
+                </span>
+              </div>
+              <div className="activity-info-item">
+                <span className="activity-info-label">Trạng thái:</span>
+                <span className={`activity-info-value ${isFull ? 'stat-status--full' : 'stat-status--open'}`}>
                   {isFull ? 'Đã đầy' : 'Đang mở'}
                 </span>
               </div>
             </div>
-
           </div>
-
-          {participants.length > 0 && (
-            <div className="participants-section">
-              <h3 className="flex items-center gap-1.5">
-                <Users size={18} />
-                Người tham gia
-              </h3>
-              <span className="stat-value">
-                {activity.current_participants} / {activity.max_participants}
-              </span>
-              <div className="participants-list">
-                <div
-                  className="participant-chip participant-chip--host"
-                  title="Host"
-                >
-                  <Sparkles size={13} className="inline mr-1 text-amber-500" /> @{activity.host?.username}
-                </div>
-                {participants.filter(p => p.user?.username !== activity.host?.username).map(p => (
-                  <div
-                    key={p.id}
-                    className={`participant-chip flex items-center gap-2 ${p.attendance_confirmed ? 'border-emerald-500 bg-emerald-500/10' : ''}`}
-                  >
-                    <span>@{p.user?.username}</span>
-                    {p.attendance_confirmed ? (
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 font-semibold flex items-center gap-1" title="Đã xác nhận có mặt">
-                        <CheckCircle2 size={12} className="text-emerald-600 dark:text-emerald-400" /> Đã đến
-                      </span>
-                    ) : (
-                      <span className="text-xs px-1.5 py-0.5 rounded bg-gray-500/10 text-gray-500 font-normal">
-                        Chưa điểm danh
-                      </span>
-                    )}
-                    {isHost && (
-                      <div className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          className={`text-xs px-2 py-0.5 rounded border transition-colors ${p.attendance_confirmed ? 'border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100' : 'border-indigo-300 text-indigo-700 bg-indigo-50 hover:bg-indigo-100'}`}
-                          disabled={updatingAttendanceUserId === p.user_id}
-                          onClick={() => handleToggleAttendance(p.user_id, !!p.attendance_confirmed)}
-                        >
-                          {updatingAttendanceUserId === p.user_id ? '...' : p.attendance_confirmed ? 'Hủy duyệt' : 'Xác nhận'}
-                        </button>
-                        {p.attendance_confirmed && (
-                          <button
-                            type="button"
-                            className="text-xs px-1.5 py-0.5 rounded border border-gray-300 bg-white hover:bg-gray-100 dark:bg-black/20"
-                            title="Xem giấy chứng nhận"
-                            onClick={() => {
-                              setCertificateTargetUserId(p.user_id);
-                              setShowCertificateModal(true);
-                            }}
-                          >
-                            <FileText size={13} />
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
         <div className="activity-sidebar glass">
-          {activity.trophy && (
-            <div className="trophy-card">
-              <h3 className="trophy-card__title">Kiếm cúp!</h3>
-              <div className="trophy-card__icon">
-                {activity.trophy.icon || '🏆'}
-              </div>
-              <h4 className="trophy-card__name">{activity.trophy.name}</h4>
-              {activity.trophy.description && (
-                <p className="trophy-card__description">
-                  {activity.trophy.description}
-                </p>
-              )}
-              <div className="trophy-card__points">
-                +{activity.trophy.points} Điểm
-              </div>
-            </div>
-          )}
-
-          {isHost ? (
+          {canManage ? (
             <div className="host-management">
-              <div className="host-actions flex flex-col gap-2">
-                {activity.attendance_mode === 'qr_code' && (
+              {isHost && activity.attendance_mode === 'qr_code' && (
+                <div className="host-actions mb-4">
                   <Button
                     variant="primary"
                     fullWidth
@@ -538,55 +653,55 @@ export default function ActivityDetail() {
                   >
                     <QrCode size={16} className="inline mr-1.5" /> Hiển thị QR Điểm danh
                   </Button>
-                )}
-                <Button
-                  variant="secondary"
-                  fullWidth
-                  onClick={() => navigate(`/activities/${id}/edit`)}
-                >
-                  Chỉnh sửa
-                </Button>
-                <Button
-                  fullWidth
-                  onClick={handleDeleteActivity}
-                  className="btn-danger-subtle"
-                >
-                  Xóa
-                </Button>
-              </div>
-
-              <h3>Yêu cầu tham gia</h3>
-              {requests.length === 0 ? (
-                <p className="no-requests">Không có yêu cầu đang chờ xử lý.</p>
-              ) : (
-                <div className="request-list">
-                  {requests.map((req) => (
-                    <div key={req.id} className="request-item">
-                      <div className="request-user">
-                        <strong>@{req.user?.username}</strong> muốn tham gia
-                      </div>
-                      {req.message && (
-                        <p className="request-message">"{req.message}"</p>
-                      )}
-                      <div className="request-actions">
-                        <Button
-                          size="sm"
-                          onClick={() => handleRespond(req.id, 'approved')}
-                          disabled={isFull}
-                        >
-                          Phê duyệt
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          onClick={() => handleRespond(req.id, 'declined')}
-                        >
-                          Từ chối
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
                 </div>
+              )}
+
+              {isHost && (
+                <>
+                  <h3>Yêu cầu tham gia</h3>
+                  {requests.length === 0 ? (
+                    <p className="no-requests">Không có yêu cầu đang chờ xử lý.</p>
+                  ) : (
+                    <div className="request-list">
+                      {requests.map((req) => (
+                        <div key={req.id} className="request-item">
+                          <div className="request-user">
+                            <strong>@{req.user?.username}</strong> {req.user?.full_name ? `(${req.user.full_name})` : ''} muốn tham gia
+                          </div>
+                          {req.message && (
+                            <p className="request-message">"{req.message}"</p>
+                          )}
+                          {req.form_responses && Object.keys(req.form_responses).length > 0 && (
+                            <button
+                              type="button"
+                              className="text-xs font-semibold text-primary-600 hover:text-primary-700 flex items-center gap-1.5 mt-1.5 mb-2 bg-primary-50 hover:bg-primary-100 py-1 px-2.5 rounded-lg border border-primary-200 transition-colors w-fit cursor-pointer"
+                              onClick={() => setSelectedReviewRequest(req)}
+                            >
+                              <FileText size={13} />
+                              <span>Xem câu trả lời biểu mẫu</span>
+                            </button>
+                          )}
+                          <div className="request-actions">
+                            <Button
+                              size="sm"
+                              onClick={() => handleRespond(req.id, 'approved')}
+                              disabled={isFull}
+                            >
+                              Phê duyệt
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => handleRespond(req.id, 'declined')}
+                            >
+                              Từ chối
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
               )}
             </div>
           ) : (
@@ -610,9 +725,9 @@ export default function ActivityDetail() {
                   {myRequest.status === 'approved' && (
                     <>
                       {myRequest.attendance_confirmed ? (
-                        <div className="mt-4 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-300 dark:border-emerald-800 text-center">
-                          <CheckCircle2 size={32} className="text-emerald-600 dark:text-emerald-400 mx-auto mb-1" />
-                          <div className="font-bold text-emerald-800 dark:text-emerald-200">Đã xác nhận có mặt!</div>
+                        <div className="mt-4 p-4 rounded-xl bg-emerald-50 border border-emerald-300 text-center">
+                          <CheckCircle2 size={32} className="text-emerald-600 mx-auto mb-1" />
+                          <div className="font-bold text-emerald-800">Đã xác nhận có mặt!</div>
                           {activity.trophy && (
                             <div className="text-xs text-[var(--color-text-secondary)] mt-1 flex items-center justify-center gap-1">
                               <Trophy size={14} className="text-amber-500" /> Đã nhận Trophy: <strong>{activity.trophy.name}</strong> (+{activity.trophy.points} điểm).
@@ -631,34 +746,35 @@ export default function ActivityDetail() {
                           </Button>
                         </div>
                       ) : (
-                        <div className="mt-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-center">
-                          <div className="text-sm font-semibold text-amber-700 dark:text-amber-400">Chưa xác nhận điểm danh</div>
-                          {activity.attendance_mode === 'qr_code' && (
-                            <div className="mt-2 flex flex-col gap-2">
-                              <p className="text-xs text-[var(--color-text-secondary)]">Quét mã QR hoặc nhập mã do Host hiển thị tại sự kiện.</p>
-                              <Button
-                                variant="primary"
-                                fullWidth
-                                onClick={handleOpenCheckInModal}
-                              >
-                                📍 Quét QR / Điểm danh tại sự kiện
-                              </Button>
-                            </div>
-                          )}
-                          {activity.attendance_mode === 'auto' && (
-                            <p className="text-xs text-[var(--color-text-secondary)] mt-1">
-                              🟢 Điểm danh tự động: Hệ thống sẽ tự ghi nhận tham gia sau khi sự kiện kết thúc.
-                            </p>
-                          )}
-                          {activity.attendance_mode === 'manual' && (
-                            <p className="text-xs text-[var(--color-text-secondary)] mt-1">
-                              👤 Vui lòng liên hệ Host tại sự kiện để được xác nhận điểm danh thủ công.
-                            </p>
-                          )}
-                        </div>
+                        new Date() >= new Date(activity.start_time) ? (
+                          <div className="mt-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-center">
+                            <div className="text-sm font-semibold text-amber-700">Chưa xác nhận điểm danh</div>
+                            {activity.attendance_mode === 'qr_code' && (
+                              <div className="mt-2 flex flex-col gap-2">
+                                <p className="text-xs text-[var(--color-text-secondary)]">Quét mã QR hoặc nhập mã do Host hiển thị tại sự kiện.</p>
+                                <Button
+                                  variant="primary"
+                                  fullWidth
+                                  onClick={handleOpenCheckInModal}
+                                >
+                                  📍 Quét QR / Điểm danh tại sự kiện
+                                </Button>
+                              </div>
+                            )}
+                            {activity.attendance_mode === 'auto' && (
+                              <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+                                🟢 Điểm danh tự động: Hệ thống sẽ tự ghi nhận tham gia sau khi sự kiện kết thúc.
+                              </p>
+                            )}
+                            {activity.attendance_mode === 'manual' && (
+                              <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+                                👤 Vui lòng liên hệ Host tại sự kiện để được xác nhận điểm danh thủ công.
+                              </p>
+                            )}
+                          </div>
+                        ) : null
                       )}
 
-                      <p className="success-message mt-4">Bạn đã tham gia! Kiểm tra vị trí chính xác trên bản đồ.</p>
                       <Button
                         variant="secondary"
                         fullWidth
@@ -744,6 +860,50 @@ export default function ActivityDetail() {
               )}
             </div>
           )}
+
+          {/* Participants list in sidebar */}
+          <div className="participants-section">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="flex items-center gap-1.5 mb-0">
+                <Users size={18} />
+                Người tham gia
+              </h3>
+              <span className="stat-value">
+                {activity.current_participants} / {activity.max_participants}
+              </span>
+            </div>
+
+            {(isHost || canExport) && (
+              <Button
+                variant="secondary"
+                size="sm"
+                fullWidth
+                className="mb-3"
+                onClick={() => setShowParticipantsModal(true)}
+              >
+                <Users size={14} className="inline mr-1.5" /> Quản lý người tham gia
+              </Button>
+            )}
+
+            <div className="participants-list">
+              <Link
+                to={`/profile/${activity.host_id}`}
+                className="participant-chip participant-chip--host"
+                title="Người tổ chức (Host)"
+              >
+                @{activity.host?.username}
+              </Link>
+              {allDisplayParticipants.map((p) => (
+                <Link
+                  key={p.user_id}
+                  to={`/profile/${p.user_id}`}
+                  className="participant-chip"
+                >
+                  @{p.user?.username}
+                </Link>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -768,7 +928,7 @@ export default function ActivityDetail() {
               <h3 className="text-lg font-bold text-[var(--color-text-primary)]">📱 Quét mã để điểm danh</h3>
               <button
                 onClick={() => setShowHostQrModal(false)}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-white text-xl font-bold p-1 cursor-pointer"
+                className="text-gray-400 hover:text-gray-600 text-xl font-bold p-1 cursor-pointer"
               >
                 ✕
               </button>
@@ -791,7 +951,7 @@ export default function ActivityDetail() {
             </div>
 
             {/* Rotating token countdown */}
-            <div className="flex items-center gap-2 mt-4 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 text-xs font-semibold">
+            <div className="flex items-center gap-2 mt-4 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-semibold">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
               <span>Mã đổi sau: {qrCountdown}s</span>
             </div>
@@ -799,12 +959,12 @@ export default function ActivityDetail() {
             {/* Token display */}
             <div className="mt-3">
               <span className="text-xs text-[var(--color-text-secondary)] uppercase tracking-wider block">Mã điểm danh trực tiếp:</span>
-              <div className="text-3xl font-black tracking-widest text-indigo-600 dark:text-indigo-400 mt-1 font-mono">
+              <div className="text-3xl font-black tracking-widest text-indigo-600 mt-1 font-mono">
                 {hostQrData?.rotating_token || '------'}
               </div>
             </div>
 
-            <div className="mt-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-300 text-left">
+            <div className="mt-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 text-left">
               🛡️ <strong>Chống gian lận từ xa:</strong> Hệ thống bắt buộc người quét phải ở trong bán kính <strong>{activity.check_in_radius || 300}m</strong> qua GPS & mã đổi liên tục mỗi 30s.
             </div>
 
@@ -846,6 +1006,162 @@ export default function ActivityDetail() {
         />
       )}
 
+      {/* Manage Participants Modal (Host Only) */}
+      {showParticipantsModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn"
+          onClick={() => setShowParticipantsModal(false)}
+        >
+          <div
+            className="bg-[var(--color-bg-primary)] rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header - No hlines */}
+            <div className="flex items-center justify-between p-5 pb-3">
+              <div>
+                <h3 className="text-lg font-bold text-[var(--color-text-primary)] flex items-center gap-2">
+                  <Users size={20} className="text-primary-500" /> Quản lý người tham gia
+                </h3>
+                <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
+                  Tổng cộng: {activity.current_participants} / {activity.max_participants} người tham gia
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                {canExport && (
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-primary-600 bg-primary-50 hover:bg-primary-100 rounded-lg transition-colors border border-primary-200 disabled:opacity-50 cursor-pointer"
+                    disabled={isExportingCsv}
+                    onClick={handleExportCsv}
+                    title="Xuất danh sách đăng ký ra file CSV UTF-8"
+                  >
+                    <Download size={14} className={isExportingCsv ? 'animate-spin' : ''} />
+                    <span>{isExportingCsv ? 'Đang xuất...' : 'Xuất danh sách CSV'}</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="p-1.5 rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-elevated)] transition-colors"
+                  onClick={() => setShowParticipantsModal(false)}
+                >
+                  <X size={20} />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5 pt-2 overflow-y-auto space-y-3">
+              {/* Host row - No avatar, shadow instead of border */}
+              <div className="flex items-center justify-between p-3.5 px-4 rounded-xl bg-primary-500/10 shadow-sm">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <Link
+                      to={`/profile/${activity.host_id}`}
+                      className="font-semibold text-primary-600 hover:underline"
+                    >
+                      @{activity.host?.username}
+                    </Link>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-primary-600 text-white font-semibold">
+                      Host
+                    </span>
+                  </div>
+                  {activity.host?.full_name && (
+                    <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">{activity.host.full_name}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Non-host participants - No avatar, shadow instead of border */}
+              {allDisplayParticipants.length === 0 ? (
+                <div className="text-center py-8 text-[var(--color-text-secondary)] text-sm">
+                  Chưa có người tham gia nào khác.
+                </div>
+              ) : (
+                allDisplayParticipants.map((p) => (
+                  <div
+                    key={p.id}
+                    className="flex items-center justify-between p-3.5 px-4 rounded-xl bg-[var(--color-bg-elevated)] shadow-sm hover:shadow transition-shadow"
+                  >
+                    <div className="min-w-0 pr-3">
+                      <Link
+                        to={`/profile/${p.user_id}`}
+                        className="font-semibold text-[var(--color-text-primary)] hover:underline truncate block"
+                      >
+                        @{p.user?.username}
+                      </Link>
+                      {p.user?.full_name && (
+                        <p className="text-xs text-[var(--color-text-secondary)] truncate mt-0.5">
+                          {p.user.full_name}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {/* Nút Điểm danh (nền xanh chữ trắng) */}
+                      <button
+                        type="button"
+                        className="btn-participant-action btn-participant-checkin"
+                        disabled={updatingAttendanceUserId === p.user_id}
+                        onClick={() => handleSetAttendance(p.user_id, true)}
+                      >
+                        {updatingAttendanceUserId === p.user_id ? '...' : 'Điểm danh'}
+                      </button>
+
+                      {/* Nút Vắng (nền cam chữ trắng) */}
+                      <button
+                        type="button"
+                        className="btn-participant-action btn-participant-absent"
+                        disabled={updatingAttendanceUserId === p.user_id}
+                        onClick={() => handleSetAttendance(p.user_id, false)}
+                      >
+                        {updatingAttendanceUserId === p.user_id ? '...' : 'Vắng'}
+                      </button>
+
+                      {/* Nút Xóa (nền đỏ chữ trắng) */}
+                      <button
+                        type="button"
+                        className="btn-participant-action btn-participant-remove"
+                        title="Xóa khỏi hoạt động"
+                        disabled={removingParticipantUserId === p.user_id}
+                        onClick={() => handleRemoveParticipant(p.user_id, p.user?.username || 'user')}
+                      >
+                        {removingParticipantUserId === p.user_id ? '...' : 'Xóa'}
+                      </button>
+
+                      {/* Minh chứng / chứng nhận nếu đã điểm danh */}
+                      {p.attendance_confirmed && (
+                        <button
+                          type="button"
+                          className="p-1.5 rounded-lg bg-[var(--color-bg-secondary)] hover:bg-[var(--color-bg-primary)] text-[var(--color-text-secondary)] shadow-sm transition-colors"
+                          title="Xem minh chứng / chứng nhận"
+                          onClick={() => {
+                            setCertificateTargetUserId(p.user_id);
+                            setShowCertificateModal(true);
+                          }}
+                        >
+                          <FileText size={15} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Modal Footer - No hlines */}
+            <div className="p-4 pt-2 flex justify-end">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setShowParticipantsModal(false)}
+              >
+                Đóng
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Conflict / Swap Confirmation Modal */}
       {conflictModalData && (
         <ConflictModal
@@ -859,6 +1175,273 @@ export default function ActivityDetail() {
             setConflictModalData(null);
           }}
         />
+      )}
+
+      {/* Invite Co-Host Modal */}
+      {showInviteCoHostModal && (
+        <div className="modal-overlay">
+          <div className="group-modal-container" style={{ maxWidth: 520 }}>
+            <div className="group-modal-header">
+              <div className="group-modal-header-info">
+                <div className="cohost-modal-icon-badge">
+                  <UserPlus className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="group-modal-title">Mời nhóm đồng tổ chức hoạt động</h2>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setShowInviteCoHostModal(false);
+                  setCoHostSearchQuery('');
+                  setCoHostSearchResults([]);
+                  setCoHostMessage('');
+                }}
+                className="group-modal-close-btn"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="group-modal-body">
+              {/* Search input */}
+              <div className="cohost-search-box">
+                <Search className="w-4 h-4" style={{ color: 'var(--color-text-tertiary)' }} />
+                <input
+                  type="text"
+                  placeholder="Tìm kiếm nhóm..."
+                  value={coHostSearchQuery}
+                  onChange={(e) => {
+                    const q = e.target.value;
+                    setCoHostSearchQuery(q);
+                    fetchCoHostCandidates(q);
+                  }}
+                  className="cohost-search-input"
+                />
+              </div>
+
+              {/* Optional message */}
+              <div style={{ marginTop: 'var(--space-3)' }}>
+                <label className="cohost-message-label">Lời nhắn (tùy chọn)</label>
+                <textarea
+                  value={coHostMessage}
+                  onChange={(e) => setCoHostMessage(e.target.value)}
+                  placeholder="Ví dụ: Kính mời nhóm cùng phối hợp tổ chức..."
+                  className="cohost-message-textarea"
+                  rows={2}
+                />
+              </div>
+
+              {/* Results */}
+              <div className="cohost-results" style={{ marginTop: 'var(--space-4)' }}>
+                {coHostSearchLoading ? (
+                  <div className="cohost-empty-state">
+                    <Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--color-primary)' }} />
+                    <p className="cohost-empty-desc" style={{ marginTop: 8 }}>Đang tìm kiếm...</p>
+                  </div>
+                ) : coHostSearchResults.length > 0 ? (
+                  <div className="group-modal-list">
+                    {coHostSearchResults.map((g) => (
+                      <div key={g.id} className="cohost-group-row">
+                        <div className="cohost-group-info">
+                          <div className="cohost-group-avatar">
+                            {g.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <div className="cohost-group-name">{g.name}</div>
+                            <div className="cohost-group-meta">
+                              {g.member_count} thành viên
+                              {g.privacy === 'private' && (
+                                <span className="cohost-private-tag"> • Riêng tư</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <button
+                          className="group-modal-btn group-modal-btn--primary"
+                          disabled={invitingGroupId === g.id}
+                          onClick={async () => {
+                            if (!id) return;
+                            setInvitingGroupId(g.id);
+                            try {
+                              await groupsApi.inviteCoHost(id, {
+                                invited_group_id: g.id,
+                                message: coHostMessage.trim() || undefined,
+                              });
+                              toast.success(`Đã gửi lời mời đồng tổ chức đến ${g.name}`);
+                              // Remove from results
+                              setCoHostSearchResults(prev => prev.filter(r => r.id !== g.id));
+                            } catch (err: any) {
+                              toast.error(err?.response?.data?.detail || 'Không thể gửi lời mời');
+                            } finally {
+                              setInvitingGroupId(null);
+                            }
+                          }}
+                        >
+                          {invitingGroupId === g.id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <UserPlus className="w-3.5 h-3.5" />
+                          )}
+                          Mời
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="cohost-empty-state">
+                    <div className="cohost-empty-icon-wrap">
+                      <Building2 className="w-5 h-5" />
+                    </div>
+                    <p className="cohost-empty-title">Không tìm thấy nhóm nào</p>
+                    <p className="cohost-empty-desc">
+                      {coHostSearchQuery.trim()
+                        ? 'Thử từ khóa khác để tìm kiếm'
+                        : 'Hiện chưa có nhóm khả dụng để mời'}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="group-modal-footer">
+              <button
+                onClick={() => {
+                  setShowInviteCoHostModal(false);
+                  setCoHostSearchQuery('');
+                  setCoHostSearchResults([]);
+                  setCoHostMessage('');
+                }}
+                className="group-modal-btn group-modal-btn--ghost"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Form Response Review Modal (Feature B) */}
+      {selectedReviewRequest && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn"
+          onClick={() => setSelectedReviewRequest(null)}
+        >
+          <div
+            className="bg-[var(--color-bg-primary)] rounded-2xl w-full max-w-lg max-h-[85vh] flex flex-col shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between p-5 pb-3">
+              <div>
+                <h3 className="text-lg font-bold text-[var(--color-text-primary)] flex items-center gap-2">
+                  <FileText size={20} className="text-primary-500" /> Câu trả lời biểu mẫu
+                </h3>
+                <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
+                  Người đăng ký: <span className="font-semibold text-[var(--color-text-primary)]">@{selectedReviewRequest.user?.username}</span>
+                  {selectedReviewRequest.user?.full_name && ` (${selectedReviewRequest.user.full_name})`}
+                </p>
+              </div>
+              <button
+                type="button"
+                className="p-1.5 rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-elevated)] transition-colors"
+                onClick={() => setSelectedReviewRequest(null)}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-5 pt-2 overflow-y-auto space-y-4">
+              {selectedReviewRequest.message && (
+                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                  <div className="text-xs font-semibold text-slate-500 mb-1">Lời nhắn đính kèm:</div>
+                  <div className="text-sm text-slate-700 italic">"{selectedReviewRequest.message}"</div>
+                </div>
+              )}
+
+              {activity.custom_form?.fields && activity.custom_form.fields.length > 0 ? (
+                <div className="space-y-3">
+                  {[...activity.custom_form.fields]
+                    .sort((a, b) => a.order - b.order)
+                    .map((field) => {
+                      const answer = getFormFieldResponse(field, selectedReviewRequest.form_responses);
+                      return (
+                        <div
+                          key={field.id}
+                          className="p-3.5 rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border-subtle)]"
+                        >
+                          <div className="text-xs font-semibold text-[var(--color-text-secondary)] mb-1 flex items-center gap-1">
+                            <span>{field.label}</span>
+                            {field.is_required && <span className="text-red-500">*</span>}
+                          </div>
+                          <div className="text-sm font-medium text-[var(--color-text-primary)] whitespace-pre-wrap break-words">
+                            {answer}
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              ) : selectedReviewRequest.form_responses && Object.keys(selectedReviewRequest.form_responses).length > 0 ? (
+                <div className="space-y-3">
+                  {Object.entries(selectedReviewRequest.form_responses).map(([key, val]) => (
+                    <div
+                      key={key}
+                      className="p-3.5 rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border-subtle)]"
+                    >
+                      <div className="text-xs font-semibold text-[var(--color-text-secondary)] mb-1">
+                        {key}
+                      </div>
+                      <div className="text-sm font-medium text-[var(--color-text-primary)] whitespace-pre-wrap break-words">
+                        {typeof val === 'boolean' ? (val ? 'Có' : 'Không') : String(val ?? 'Chưa trả lời')}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6 text-sm text-[var(--color-text-secondary)]">
+                  Người dùng không để lại câu trả lời biểu mẫu nào.
+                </div>
+              )}
+            </div>
+
+            {/* Footer with action buttons */}
+            <div className="p-4 pt-3 flex items-center justify-between border-t border-[var(--color-border-subtle)] bg-[var(--color-bg-secondary)]">
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="primary"
+                  onClick={async () => {
+                    const reqId = selectedReviewRequest.id;
+                    setSelectedReviewRequest(null);
+                    await handleRespond(reqId, 'approved');
+                  }}
+                  disabled={isFull}
+                >
+                  Phê duyệt
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={async () => {
+                    const reqId = selectedReviewRequest.id;
+                    setSelectedReviewRequest(null);
+                    await handleRespond(reqId, 'declined');
+                  }}
+                >
+                  Từ chối
+                </Button>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedReviewRequest(null)}
+              >
+                Đóng
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

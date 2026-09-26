@@ -94,7 +94,7 @@ HNSW là thuật toán dựa trên đồ thị phân tầng, cho phép tìm ki�
     \item Tài nguyên: IVFFlat nhẹ hơn, phù hợp cho máy chủ có RAM hạn chế.
 \end{itemize}
 
-Lựa chọn: Với quy mô một mạng xã hội sinh viên cần sự phản hồi tức thì khi người dùng lướt bản đồ hoặc hỏi chatbot, HNSW là sự lựa chọn tối ưu để đảm bảo trải nghiệm không bị trễ.
+Định hướng áp dụng trong UniConnect: Trong phạm vi hiện tại, UniConnect sử dụng cơ chế tìm kiếm chính xác Exact Nearest Neighbor (dựa trên toán tử Cosine Distance của pgvector) do quy mô dữ liệu học đường ban đầu còn nhỏ, bảo đảm độ chính xác tuyệt đối 100\% mà không tốn chi phí xây dựng chỉ mục. Thuật toán HNSW được lựa chọn làm phương án mở rộng khi số lượng vector sự kiện và người dùng tăng trưởng quy mô lớn, nhằm giảm chi phí tính toán truy vấn.
 
 \subsection{Kiến trúc tạo văn bản tăng cường truy xuất (RAG)}
 
@@ -125,29 +125,41 @@ Tính cập nhật tức thời: Mô hình không yêu cầu quá trình tái hu
 
 Tối ưu chi phí và tài nguyên tính toán: Thay vì triển khai hoặc vận hành các mô hình ngôn ngữ lớn tùy biến tốn kém, giải pháp kết hợp API mô hình nền tảng cùng cơ chế tìm kiếm vector cục bộ mang lại hiệu năng cao và tiết kiệm tài nguyên vận hành\cite{karpukhin2020dense}.
 
-\subsection{Cơ sở mật mã học trong xác thực điểm danh: Thuật toán TOTP và mã phản hồi nhanh QR Code}
+\subsection{Cơ sở mật mã học trong xác thực điểm danh: HMAC và mã QR Code xoay theo thời gian}
 
-Để đảm bảo tính toàn vẹn và chống gian lận trong công tác điểm danh phong trào học đường, hệ thống UniConnect kết hợp các chuẩn mật mã học hiện đại nhằm tạo ra mã xác thực một lần theo thời gian (Time-Based One-Time Password - TOTP).
+Để đảm bảo tính toàn vẹn và chống gian lận trong công tác điểm danh phong trào học đường, hệ thống UniConnect kết hợp cơ chế xác thực thông điệp có khóa dựa trên bước thời gian (Time-step Rolling HMAC Token) cùng chuẩn mã phản hồi nhanh QR Code.
 
-\subsubsection{Nguyên lý thuật toán TOTP (RFC 6238) và HMAC (RFC 4226)}
+\subsubsection{Nguyên lý mã xác thực HMAC theo bước thời gian (Time-step)}
 
-Thuật toán TOTP là sự mở rộng của thuật toán sinh mật khẩu một lần dựa trên bộ đếm (HMAC-Based One-Time Password - HOTP)\cite{mraihi2005hotp}. Thay vì sử dụng biến đếm tăng dần $C$, TOTP sử dụng số lượng khoảng thời gian trôi qua kể từ mốc thời gian Unix Epoch ($T_0 = 0$) với kích thước bước thời gian quy định là $T_X$ (trong UniConnect, $T_X = 30$ giây)\cite{krawczyk2011totp}:
-
-\begin{equation}
-T = \left\lfloor \frac{\text{CurrentTime} - T_0}{T_X} \right\rfloor
-\end{equation}
-
-Giá trị băm xác thực thông điệp có khóa (Keyed-Hash Message Authentication Code - HMAC) được tính toán dựa trên hàm băm mật mã an toàn (SHA-256) kết hợp giữa khóa bí mật $K$ của hoạt động và biến thời gian $T$:
+Cơ chế mã xác thực xoay vòng của UniConnect sử dụng hàm băm mật mã an toàn HMAC-SHA256 kết hợp giữa khóa bí mật $K$ của hoạt động cùng thông điệp động gắn với định danh hoạt động $\text{activity\_id}$ và chỉ số bước thời gian $step$. Bước thời gian được tính toán dựa trên số chu kỳ trôi qua kể từ mốc thời gian Unix Epoch với kích thước bước thời gian quy định là $T_X = 30$ giây:
 
 \begin{equation}
-\text{HMAC}(K, T) = \text{Hash}\big((K \oplus \text{opad}) \parallel \text{Hash}((K \oplus \text{ipad}) \parallel T)\big)
+step = \left\lfloor \frac{\text{CurrentTime}}{T_X} \right\rfloor
 \end{equation}
 
-Chuỗi băm sau đó được cắt động (Dynamic Truncation) để trích xuất mã token xác thực ngắn hạn. Nhờ đó, mã điểm danh sẽ tự động vô hiệu hóa sau mỗi 30 giây, ngăn chặn triệt để hành vi chụp ảnh màn hình hoặc gửi mã ra ngoài khu vực sự kiện.
+Thông điệp xác thực $msg$ được xây dựng bằng cách ghép định danh hoạt động và chỉ số bước thời gian hiện tại:
+
+\begin{equation}
+msg = \text{activity\_id} \parallel ":" \parallel step
+\end{equation}
+
+Giá trị băm xác thực thông điệp có khóa (Keyed-Hash Message Authentication Code - HMAC) được tính toán theo tiêu chuẩn Internet RFC 2104 trên cơ sở hàm băm bảo mật SHA-256:
+
+\begin{equation}
+\text{HMAC}(K, msg) = \text{SHA256}\big((K \oplus \text{opad}) \parallel \text{SHA256}((K \oplus \text{ipad}) \parallel msg)\big)
+\end{equation}
+
+Chuỗi băm hex được trích xuất 6 ký tự đầu để tạo thành mã token xác thực động 6 ký tự viết hoa:
+
+\begin{equation}
+\text{Token} = \text{Hex}\big(\text{HMAC}(K, msg)\big)[0:6]
+\end{equation}
+
+Nhằm triệt tiêu ảnh hưởng của độ trễ đường truyền mạng và sự sai lệch đồng hồ giữa thiết bị của sinh viên và máy chủ, hệ thống áp dụng cửa sổ dung sai thời gian (drift tolerance window), chấp nhận cả mã token ở bước thời gian hiện tại ($step$) và bước liền trước ($step - 1$). Nhờ chu kỳ xoay ngắn 30 giây, mã điểm danh được vô hiệu hóa và làm mới liên tục, giảm thiểu đáng kể khả năng tái sử dụng mã QR bị chụp lại hoặc chia sẻ ra bên ngoài khu vực sự kiện.
 
 \subsubsection{Tiêu chuẩn mã vạch hai chiều QR Code (ISO/IEC 18004)}
 
-Mã QR (Quick Response Code) được chuẩn hóa theo tiêu chuẩn quốc tế ISO/IEC 18004\cite{iso18004qr}. Dữ liệu token TOTP cùng mã định danh hoạt động được mã hóa thành ma trận điểm ảnh vuông 2D tích hợp cơ chế sửa lỗi Reed-Solomon (mức sửa lỗi Medium 15\% hoặc Quartile 25\%). Điều này bảo đảm thiết bị di động của sinh viên có thể nhận diện và quét mã nhanh chóng ngay cả trong điều kiện ánh sáng yếu hoặc góc chụp nghiêng.
+Mã QR (Quick Response Code) được chuẩn hóa theo tiêu chuẩn quốc tế ISO/IEC 18004\cite{iso18004qr}. Dữ liệu token HMAC xoay vòng cùng mã định danh hoạt động được mã hóa thành ma trận điểm ảnh vuông 2D tích hợp cơ chế sửa lỗi Reed-Solomon (mức sửa lỗi Medium 15\% hoặc Quartile 25\%). Điều này bảo đảm thiết bị di động của sinh viên có thể nhận diện và quét mã nhanh chóng ngay cả trong điều kiện ánh sáng yếu hoặc góc chụp nghiêng.
 
 \subsection{Thuật toán phát hiện xung đột lịch dựa trên khoảng thời gian nửa mở}
 

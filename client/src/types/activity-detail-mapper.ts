@@ -5,6 +5,7 @@ import {
   type ActivityRegistrationState,
   computeActivityRegistrationState,
 } from './activity-states';
+import { normalizeCategoryName } from './activity-mapper';
 
 export type DynamicFieldType =
   | 'text'
@@ -137,7 +138,7 @@ export function mapActivityToDetailViewModel(params: {
     id: activity.id,
     title: activity.title,
     description: activity.description,
-    category: activity.category || 'Chung',
+    category: normalizeCategoryName(activity.category),
     privacy: activity.privacy || 'public',
     startFormatted,
     endFormatted,

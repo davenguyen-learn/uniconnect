@@ -273,4 +273,77 @@ export const adminApi = {
 
   deleteActivity: (activityId: string) =>
     api.delete(`/admin/activities/${activityId}`),
+
+  // Groups
+  listGroups: (params?: { search?: string; status?: string; limit?: number; offset?: number }) =>
+    api.get<AdminGroupList>(`/admin/groups${buildQuery(params || {})}`),
+
+  updateGroupStatus: (groupId: string, status: 'active' | 'inactive') =>
+    api.patch<AdminGroupItem>(`/admin/groups/${groupId}/status`, { status }),
+
+  // Trophy Grant Requests Queue
+  listTrophyRequests: (params?: { status?: string; limit?: number; offset?: number }) =>
+    api.get<TrophyGrantRequestListDTO>(`/admin/trophy-requests${buildQuery(params || {})}`),
+
+  reviewTrophyRequest: (
+    requestId: string,
+    action: 'approve' | 'reject',
+    admin_notes?: string
+  ) =>
+    api.post<{ id: string; status: string; message: string; granted_count: number }>(
+      `/admin/trophy-requests/${requestId}/review`,
+      { action, admin_notes }
+    ),
 };
+
+export interface AdminGroupOwnerInfo {
+  id: string;
+  username: string;
+  full_name: string | null;
+  email: string;
+}
+
+export interface AdminGroupItem {
+  id: string;
+  name: string;
+  description: string | null;
+  privacy: string;
+  status: 'active' | 'inactive' | string;
+  avatar_url: string | null;
+  created_at: string;
+  owner: AdminGroupOwnerInfo | null;
+  member_count: number;
+  activity_count: number;
+}
+
+export interface AdminGroupList {
+  items: AdminGroupItem[];
+  total: number;
+  limit: number;
+  offset: number;
+  has_more: boolean;
+}
+
+export interface TrophyGrantRequestItemDTO {
+  id: string;
+  activity_id: string;
+  trophy_id: string;
+  status: 'insufficient_quorum' | 'eligible_for_review' | 'approved' | 'rejected';
+  min_participants_required: number;
+  actual_attended_count: number;
+  admin_notes: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+  updated_at: string;
+  activity_title: string | null;
+  trophy_name: string | null;
+  reviewer_name: string | null;
+}
+
+export interface TrophyGrantRequestListDTO {
+  items: TrophyGrantRequestItemDTO[];
+  total: number;
+  limit: number;
+  offset: number;
+}

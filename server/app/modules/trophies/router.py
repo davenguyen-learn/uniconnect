@@ -6,9 +6,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 
 from app.core.database import get_db
-from app.core.dependencies import get_current_user
+from app.core.dependencies import get_current_user, get_optional_current_user
 from app.modules.trophies.models import Trophy, UserTrophy
-from app.modules.trophies.schemas import TrophyCreate, TrophyResponse, UserTrophyResponse
+from app.modules.trophies.schemas import TrophyCreate, TrophyResponse, UserTrophyResponse, ActivitySimple
 from app.modules.users.models import User
 
 router = APIRouter(prefix="/trophies", tags=["trophies"])
@@ -19,10 +19,14 @@ async def create_trophy(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    # Only verified users, edu_org, or admins can create trophies
+    # Only edu_org or admins can create trophies
     user = await db.scalar(select(User).where(User.id == uuid.UUID(current_user["sub"])))
-    if not user or (not user.is_verified and user.role not in ["admin", "edu_org"]):
-        raise HTTPException(status_code=403, detail="Chỉ các tổ chức hoặc tài khoản đã xác minh mới có thể tạo Trophy.")
+    user_role = user.role.value if (user and hasattr(user.role, "value")) else str(user.role if user else "")
+    if not user or user_role not in ["admin", "edu_org"]:
+        raise HTTPException(
+            status_code=403,
+            detail="Chỉ Ban Quản trị hoặc Tổ chức Giáo dục (edu_org) mới có quyền tạo Trophy."
+        )
     
     trophy = Trophy(
         name=data.name,
@@ -40,7 +44,11 @@ async def list_trophies(db: AsyncSession = Depends(get_db)):
     return list(result.scalars().all())
 
 @router.get("/user/{user_id}", response_model=list[UserTrophyResponse])
-async def get_user_trophies(user_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+async def get_user_trophies(
+    user_id: uuid.UUID,
+    current_user: dict | None = Depends(get_optional_current_user),
+    db: AsyncSession = Depends(get_db)
+):
     result = await db.execute(
         select(UserTrophy)
         .options(
@@ -50,7 +58,58 @@ async def get_user_trophies(user_id: uuid.UUID, db: AsyncSession = Depends(get_d
         .where(UserTrophy.user_id == user_id)
         .order_by(UserTrophy.created_at.desc())
     )
-    return list(result.unique().scalars().all())
+    user_trophies = list(result.unique().scalars().all())
+
+    viewer_id = uuid.UUID(current_user["sub"]) if (current_user and "sub" in current_user) else None
+    viewer_role = current_user.get("role") if current_user else None
+    is_admin = viewer_role == "admin"
+
+    activity_ids = [ut.activity_id for ut in user_trophies if ut.activity_id]
+    viewer_approved_acts = set()
+    if viewer_id and activity_ids:
+        from app.modules.participation.models import JoinRequest, RequestStatus
+        res_parts = await db.execute(
+            select(JoinRequest.activity_id).where(
+                JoinRequest.activity_id.in_(activity_ids),
+                JoinRequest.user_id == viewer_id,
+                JoinRequest.status == RequestStatus.approved,
+            )
+        )
+        viewer_approved_acts = set(res_parts.scalars().all())
+
+    response_items = []
+    for ut in user_trophies:
+        item = UserTrophyResponse.model_validate(ut)
+        if ut.activity:
+            privacy_val = (
+                ut.activity.privacy.value
+                if hasattr(ut.activity.privacy, "value")
+                else str(ut.activity.privacy)
+            )
+            is_private = privacy_val == "private"
+            has_access = (
+                not is_private
+                or is_admin
+                or (viewer_id and ut.activity.host_id == viewer_id)
+                or (ut.activity.id in viewer_approved_acts)
+            )
+            if has_access:
+                item.activity = ActivitySimple(
+                    id=ut.activity.id,
+                    title=ut.activity.title,
+                    privacy=privacy_val,
+                    is_accessible=True,
+                )
+            else:
+                item.activity = ActivitySimple(
+                    id=None,
+                    title="Sự kiện nội bộ",
+                    privacy="private",
+                    is_accessible=False,
+                )
+        response_items.append(item)
+
+    return response_items
 
 class TrophyAwardRequest(BaseModel):
     user_id: uuid.UUID

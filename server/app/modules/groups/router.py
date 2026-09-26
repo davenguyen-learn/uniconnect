@@ -2,7 +2,7 @@
 
 import uuid
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, status, File, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -110,12 +110,13 @@ async def leave_group(
 async def get_group_activities(
     group_id: uuid.UUID,
     category: str | None = Query(default=None),
+    include_past: bool = Query(default=True),
     limit: int = Query(default=20, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """List activities belonging to a specific group (members only)."""
+    """List activities belonging to a specific group (lead host or co-host)."""
     from app.modules.groups.repository import get_group_by_id, is_member
     from app.modules.activities.service import list_activities
 
@@ -125,12 +126,13 @@ async def get_group_activities(
     if not group:
         raise NotFoundError("Group not found.")
 
-    if not await is_member(db, group_id, user_id):
-        raise ForbiddenError("You must be a member of this group to view its activities.")
+    group_privacy_val = group.privacy.value if hasattr(group.privacy, 'value') else group.privacy
+    if group_privacy_val == "private" and not await is_member(db, group_id, user_id) and group.owner_id != user_id:
+        return {"items": [], "total": 0, "has_more": False}
 
     return await list_activities(
         db, user_id=current_user["sub"], category=category, group_id=group_id,
-        limit=limit, offset=offset,
+        limit=limit, offset=offset, include_past=include_past,
     )
 
 
@@ -212,4 +214,37 @@ async def respond_cohost_invitation_endpoint(
     return await group_service.respond_cohost_invitation(
         db, invitation_id, uuid.UUID(current_user["sub"]), data.action
     )
+
+
+@router.post("/{group_id}/avatar", response_model=GroupDetailResponse)
+async def upload_group_avatar(
+    group_id: uuid.UUID,
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Upload and set group avatar (owner or admin only)."""
+    file_bytes = await file.read()
+    return await group_service.update_group_avatar(
+        db=db,
+        group_id=group_id,
+        user_id=uuid.UUID(current_user["sub"]),
+        file_bytes=file_bytes,
+        content_type=file.content_type,
+    )
+
+
+@router.delete("/{group_id}/avatar", response_model=GroupDetailResponse)
+async def delete_group_avatar(
+    group_id: uuid.UUID,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Delete group avatar (owner or admin only)."""
+    return await group_service.delete_group_avatar(
+        db=db,
+        group_id=group_id,
+        user_id=uuid.UUID(current_user["sub"]),
+    )
+
 

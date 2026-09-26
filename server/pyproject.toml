@@ -20,6 +20,7 @@ dependencies = [
     "google-genai>=0.2.0",
     "gunicorn>=23.0.0",
     "pgvector>=0.3.0",
+    "pillow>=10.4.0",
 ]
 
 [project.optional-dependencies]

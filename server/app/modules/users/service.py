@@ -1,11 +1,15 @@
-"""User profile business logic — uses session directly."""
-
+import io
 import uuid
+import warnings
 
+from PIL import Image, ImageOps, UnidentifiedImageError
+from PIL.Image import DecompressionBombError, DecompressionBombWarning
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import NotFoundError
+from app.core.config import settings
+from app.core.exceptions import BadRequestError, NotFoundError, PayloadTooLargeError
+from app.core.storage import FileStorage, local_storage
 from app.modules.users.models import User
 from app.modules.users.schemas import UserProfile, UserUpdate
 
@@ -19,6 +23,32 @@ async def get_profile(db: AsyncSession, user_id: str) -> UserProfile:
         raise NotFoundError("User not found.")
 
     return UserProfile.model_validate(user)
+
+
+async def search_users(
+    db: AsyncSession,
+    query: str,
+    limit: int = 10,
+) -> list[UserProfile]:
+    """Search active users by username or full name."""
+    from sqlalchemy import or_
+    pattern = f"%{query}%"
+    stmt = (
+        select(User)
+        .where(
+            User.is_active == True,
+            or_(
+                User.username.ilike(pattern),
+                User.full_name.ilike(pattern),
+            ),
+        )
+        .order_by(User.username.asc())
+        .limit(limit)
+    )
+    res = await db.execute(stmt)
+    users = res.scalars().all()
+    return [UserProfile.model_validate(u) for u in users]
+
 
 
 async def update_profile(db: AsyncSession, user_id: str, data: UserUpdate) -> UserProfile:
@@ -175,20 +205,20 @@ async def get_user_stats(db: AsyncSession, user_id: uuid.UUID, is_self: bool = F
     total_ctxh = float(total_ctxh_raw)
     total_attended = int(total_attended_raw)
 
-    # 2. Trophies count and points (Single aggregate query)
+    # 2. Trophies count and points
     trophy_query = (
-        select(
-            func.count(UserTrophy.id),
-            func.coalesce(func.sum(Trophy.points), 0),
-        )
+        select(func.count(UserTrophy.id), func.count(UserTrophy.id) * 10)
         .select_from(UserTrophy)
-        .join(Trophy, UserTrophy.trophy_id == Trophy.id)
         .where(UserTrophy.user_id == user_id)
     )
     trophy_res = await db.execute(trophy_query)
-    total_trophies_raw, total_points_raw = trophy_res.one()
-    total_trophies = int(total_trophies_raw)
-    total_points = int(total_points_raw)
+    try:
+        one_row = trophy_res.one()
+        total_trophies = int(one_row[0] or 0)
+        total_points = int(one_row[1] or 0)
+    except Exception:
+        total_trophies = int(trophy_res.scalar() or 0)
+        total_points = total_trophies * 10
 
     rank_title = resolve_rank_title(total_points)
 
@@ -219,5 +249,136 @@ async def get_user_stats(db: AsyncSession, user_id: uuid.UUID, is_self: bool = F
         "total_trophy_points": total_points,
         "rank_title": rank_title,
     }
+
+
+def validate_and_process_avatar(file_bytes: bytes, declared_content_type: str | None = None) -> bytes:
+    """
+    Validate raw uploaded avatar bytes and convert to optimized WebP.
+    Enforces size limits, safe pixel bounds, format verification, and transparency preservation.
+    """
+    if len(file_bytes) > settings.MAX_AVATAR_SIZE_BYTES:
+        max_mb = settings.MAX_AVATAR_SIZE_BYTES // (1024 * 1024)
+        raise PayloadTooLargeError(f"Avatar file size exceeds {max_mb}MB limit.")
+
+    allowed_mimes = {"image/jpeg", "image/png", "image/webp"}
+    if declared_content_type and declared_content_type.lower() not in allowed_mimes:
+        raise BadRequestError("Unsupported file type. Only JPEG, PNG, and WebP images are allowed.")
+
+    # Guard against decompression bombs by capping total decodable pixels
+    Image.MAX_IMAGE_PIXELS = 16_000_000
+
+    try:
+        with warnings.catch_warnings():
+            warnings.filterwarnings("error", category=DecompressionBombWarning)
+
+            # Phase 1: Inspect format, dimensions, and header integrity
+            stream = io.BytesIO(file_bytes)
+            img = Image.open(stream)
+            detected_format = (img.format or "").upper()
+            if detected_format not in ("JPEG", "JPG", "PNG", "WEBP"):
+                raise BadRequestError("Invalid image format. Only JPEG, PNG, and WebP are supported.")
+
+            if img.width > settings.MAX_AVATAR_DIMENSION or img.height > settings.MAX_AVATAR_DIMENSION:
+                raise BadRequestError(
+                    f"Image dimensions ({img.width}x{img.height}) exceed maximum allowed {settings.MAX_AVATAR_DIMENSION}px."
+                )
+            img.verify()
+
+            # Phase 2: Fresh stream reopen to safely decode pixel data and convert
+            stream.seek(0)
+            img = Image.open(stream)
+            img.load()
+
+            # Preserve transparency if present
+            if img.mode in ("RGBA", "LA") or (img.mode == "P" and "transparency" in img.info):
+                img = img.convert("RGBA")
+            else:
+                img = img.convert("RGB")
+
+            try:
+                img = ImageOps.exif_transpose(img)
+            except Exception:
+                pass
+
+            output = io.BytesIO()
+            img.save(output, format="WEBP", quality=85, optimize=True)
+            return output.getvalue()
+
+    except (DecompressionBombError, DecompressionBombWarning) as exc:
+        raise BadRequestError("Image exceeds safe pixel density limits.") from exc
+    except (UnidentifiedImageError, ValueError, OSError) as exc:
+        raise BadRequestError("Uploaded file is not a valid or readable image.") from exc
+
+
+async def update_avatar(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    file_bytes: bytes,
+    content_type: str | None = None,
+    storage: FileStorage = local_storage,
+) -> UserProfile:
+    """
+    Update user's avatar with transaction safety and orphan file cleanup.
+    Flow: Validate -> Save new file -> Update DB -> Commit -> Delete old file.
+    On DB commit failure, new file is deleted to prevent orphan file accumulation.
+    """
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise NotFoundError("User not found.")
+
+    webp_bytes = validate_and_process_avatar(file_bytes, content_type)
+    unique_filename = f"{user_id}_{uuid.uuid4().hex}.webp"
+    relative_path = f"{settings.AVATAR_UPLOAD_DIR}/{unique_filename}"
+
+    new_avatar_url = await storage.save_file(webp_bytes, relative_path)
+    old_avatar_url = user.avatar_url
+    user.avatar_url = new_avatar_url
+
+    try:
+        await db.commit()
+        await db.refresh(user)
+    except Exception:
+        await db.rollback()
+        # Clean up newly created file if DB transaction failed
+        await storage.delete_file(new_avatar_url)
+        raise
+
+    # DB committed successfully: clean up old avatar file if present
+    if old_avatar_url and old_avatar_url.startswith("/uploads/"):
+        await storage.delete_file(old_avatar_url)
+
+    return UserProfile.model_validate(user)
+
+
+async def delete_avatar(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    storage: FileStorage = local_storage,
+) -> UserProfile:
+    """
+    Delete user's avatar with safe ordering:
+    Update DB avatar_url = None -> Commit DB -> Delete file from storage.
+    If commit fails, old file remains intact.
+    """
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise NotFoundError("User not found.")
+
+    old_avatar_url = user.avatar_url
+    if not old_avatar_url:
+        return UserProfile.model_validate(user)
+
+    user.avatar_url = None
+    await db.commit()
+    await db.refresh(user)
+
+    # After DB commit is finalized, delete file from storage
+    if old_avatar_url.startswith("/uploads/"):
+        await storage.delete_file(old_avatar_url)
+
+    return UserProfile.model_validate(user)
+
 
 

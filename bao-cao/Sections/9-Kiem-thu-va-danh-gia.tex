@@ -1,7 +1,7 @@
 \section{Kiểm thử và đánh giá hệ thống}
 
 \subsection{Chiến lược và Quy trình kiểm thử}
-Nhằm đảm bảo chất lượng, độ tin cậy và tính toàn vẹn của nền tảng UniConnect trước khi đưa vào vận hành thực tế, đồ án thiết lập quy trình kiểm thử phần mềm chuẩn hóa tuân thủ theo tiêu chuẩn IEEE 829\cite{ieee829test}. Chiến lược kiểm thử được xây dựng theo mô hình Kim tự tháp kiểm thử (Test Pyramid), bao gồm nhiều cấp độ kiểm tra chặt chẽ:
+Nhằm đảm bảo chất lượng, độ tin cậy và tính toàn vẹn của nền tảng UniConnect trước khi đưa vào vận hành thực tế, đồ án thiết lập quy trình kiểm thử phần mềm chuẩn hóa tham chiếu các nguyên tắc tài liệu kiểm thử theo tiêu chuẩn IEEE 829\cite{ieee829test}. Chiến lược kiểm thử được xây dựng theo mô hình Kim tự tháp kiểm thử (Test Pyramid), bao gồm nhiều cấp độ kiểm tra chặt chẽ:
 \begin{itemize}
     \item \textbf{Kiểm thử đơn vị và tích hợp Backend (Unit \& Integration Tests):} Xác minh tính đúng đắn của từng hàm nghiệp vụ, cấu hình bảo mật, giao dịch cơ sở dữ liệu và các ràng buộc bất biến (invariants) giữa các phân hệ.
     \item \textbf{Kiểm thử vòng đời kết nối và phục hồi (Lifecycle \& Resilience Tests):} Kiểm tra chu kỳ sống của phiên làm việc cơ sở dữ liệu, tính toàn vẹn khi rollback và khả năng tự phục hồi kết nối.
@@ -13,14 +13,14 @@ Nhằm đảm bảo chất lượng, độ tin cậy và tính toàn vẹn của
 \subsection{Kiểm thử tự động Backend (Automated Backend Testing)}
 Hệ thống backend của UniConnect được kiểm thử tự động toàn diện bằng framework \texttt{pytest} kết hợp thư viện \texttt{pytest-asyncio} và client HTTP bất đồng bộ \texttt{httpx.AsyncClient}. Bộ kiểm thử sử dụng cơ chế session-scoped database fixture với SQLite in-memory và transaction rollback độc lập cho từng ca kiểm thử, loại bỏ hoàn toàn sự phụ thuộc chéo giữa các bài test.
 
-Toàn bộ \textbf{64 ca kiểm thử tự động} được phân bổ trong 11 bộ kiểm thử (Test Suites) chuyên biệt tại thư mục \texttt{server/tests/}, đạt tỷ lệ vượt qua 100\% (64/64 passed). Bảng~\ref{tab:backend_test_suites} tổng hợp chi tiết kết quả kiểm thử của từng phân hệ:
+Toàn bộ \textbf{94 ca kiểm thử tự động} được phân bổ trong 14 bộ kiểm thử (Test Suites) chuyên biệt tại thư mục \texttt{server/tests/}, đạt tỷ lệ vượt qua 100\% (94/94 passed). Bảng~\ref{tab:backend_test_suites} tổng hợp chi tiết kết quả kiểm thử của từng phân hệ:
 
 \begingroup
 \singlespacing
 \small
 \renewcommand{\arraystretch}{1.25}
 \begin{xltabular}{\textwidth}{|>{\raggedright\arraybackslash}p{2.8cm}|>{\raggedright\arraybackslash\ttfamily\small}p{3.8cm}|>{\centering\arraybackslash}p{1.1cm}|>{\raggedright\arraybackslash}X|}
-\caption{Bảng tổng hợp kết quả 64 ca kiểm thử tự động backend UniConnect} \label{tab:backend_test_suites} \\
+\caption{Bảng tổng hợp kết quả 94 ca kiểm thử tự động backend UniConnect} \label{tab:backend_test_suites} \\
 \hline
 \textbf{Bộ kiểm thử} & \textbf{Tập tin mã nguồn} & \textbf{Số test} & \textbf{Nghiệp vụ \& Invariant được kiểm tra} \\ \hline
 \endfirsthead
@@ -39,16 +39,19 @@ Toàn bộ \textbf{64 ca kiểm thử tự động} được phân bổ trong 11
 
 Quản trị \& Kiểm duyệt & \texttt{test\_\allowbreak admin\_\allowbreak command\_\allowbreak center.py} & 10 & Dashboard KPI tổng hợp, kiểm duyệt \& ẩn hoạt động vi phạm, quy trình xét duyệt hồ sơ tổ chức giáo dục, phân quyền RBAC đa cấp, bảo vệ trạng thái dừng (terminal states), xuất dữ liệu sinh viên CSV UTF-8 BOM. \\ \hline
 Sức khỏe API \& Giám sát & \texttt{test\_\allowbreak api.py} & 3 & Endpoint \texttt{/health} giám sát độ trễ CSDL, gắn HTTP timing header, cô lập an toàn lỗi 503 khi CSDL quá tải mà không rò rỉ thông tin nhạy cảm. \\ \hline
-Điểm danh \& Chứng nhận tham gia & \texttt{test\_\allowbreak attendance\_\allowbreak trophy.py} & 6 & Khoảng cách Haversine, sinh \& thẩm định token QR xoay động 30s (HMAC-SHA256), chuẩn hóa mã chứng nhận tham gia hoạt động, chống điểm danh lặp (idempotency), từ chối GPS có sai số $acc > 50$m. \\ \hline
+Điểm danh \& Chứng nhận tham gia & \texttt{test\_\allowbreak attendance\_\allowbreak trophy.py} & 6 & Khoảng cách Haversine, sinh \& thẩm định token QR xoay động 30s (HMAC-SHA256), chuẩn hóa mã chứng nhận tham gia hoạt động, chống điểm danh lặp (idempotency), từ chối GPS có sai số phần cứng $acc > 100$m. \\ \hline
 Lịch thông minh \& Xung đột & \texttt{test\_\allowbreak calendar.py} & 9 & Đối soát xung đột lịch nửa mở $[start, end)$, bận định kỳ hàng tuần, ngoại lệ ngày nghỉ (vacation), xung đột mềm khi đăng ký tham gia, tính năng xem trước dời lịch (reschedule preview). \\ \hline
 Trợ lý AI \& Tìm kiếm & \texttt{test\_\allowbreak chat\_\allowbreak assistant.py} & 5 & Function calling tìm kiếm hoạt động và nhóm, bảo đảm quyền riêng tư lịch bận cá nhân, cơ chế fallback khi Gemini API ngoại tuyến, kiểm soát tần suất hội thoại (Rate Limiting). \\ \hline
+Phân nhánh dự phòng AI & \texttt{test\_\allowbreak chat\_\allowbreak fallback\_\allowbreak branches.py} & 4 & Cơ chế phân nhánh fallback định tuyến AI nội bộ, xử lý ngoại lệ gián đoạn kết nối Gemini API và phản hồi thông báo an toàn. \\ \hline
 Chu kỳ sống CSDL \& Rate Limiter & \texttt{test\_\allowbreak database\_\allowbreak observability.py} & 7 & Tham số Connection Pool (\texttt{pool\_size=20}, \texttt{max\_overflow=10}, \texttt{pool\_recycle=1800}), commit/rollback tự động của \texttt{get\_db()}, Rate Limiter dọn dẹp sliding-window và giới hạn bộ nhớ. \\ \hline
-Luồng tích hợp đầu cuối (E2E) & \texttt{test\_\allowbreak e2e\_\allowbreak critical\_\allowbreak flows.py} & 4 & Vòng đời trọn vẹn: Tạo sự kiện $\rightarrow$ Điểm danh $\rightarrow$ Ghi nhận CTXH $\rightarrow$ Danh hiệu; Độc lập giữa xung đột lịch và đăng ký; Ủy nhiệm quyền Co-host nhóm; Xét duyệt vai trò tổ chức kèm audit log. \\ \hline
+Luồng tích hợp đầu cuối (E2E) & \texttt{test\_\allowbreak e2e\_\allowbreak critical\_\allowbreak flows.py} & 4 & Vòng đời trọn vẹn: Tạo sự kiện $\rightarrow$ Điểm danh $\rightarrow$ Ghi nhận CTXH; Độc lập giữa xung đột lịch và đăng ký; Ủy nhiệm quyền Co-host nhóm; Xét duyệt vai trò tổ chức kèm audit log. \\ \hline
 Quản lý Nhóm \& Đồng tổ chức & \texttt{test\_\allowbreak groups\_\allowbreak cohosting.py} & 9 & Phân quyền RBAC nhóm sinh viên, phê duyệt yêu cầu gia nhập, phân tách quyền ủy nhiệm \texttt{can\_open\_checkin} và \texttt{can\_manage\_activity}, giới hạn số nhóm co-host tối đa, rollback giao dịch khi lỗi. \\ \hline
 Tương tác \& Thông báo & \texttt{test\_\allowbreak interactions\_\allowbreak notifications.py} & 7 & Bình luận phân cấp đa tầng (\texttt{parent\_id}), tính toàn vẹn Like duy nhất, tương thích ngược Pydantic Schemas, phát sinh thông báo tương tác kèm liên kết điều hướng. \\ \hline
 Khởi tạo Ứng dụng & \texttt{test\_\allowbreak main.py} & 1 & Khởi động thành công ứng dụng FastAPI, nạp middleware CORS, định tuyến router và cấu hình lifecycle handlers. \\ \hline
 Hồ sơ \& Thống kê Sinh viên & \texttt{test\_\allowbreak profile\_\allowbreak stats.py} & 3 & Đối soát ngưỡng điểm CTXH, tính toán danh hiệu/thứ hạng (rank/title), cơ chế bảo vệ quyền riêng tư thông tin hồ sơ người dùng công khai. \\ \hline
-\multicolumn{2}{|l|}{\textbf{Tổng số ca kiểm thử}} & \textbf{64} & \textbf{Tỷ lệ vượt qua: 64/64 (100\% Passed)} \\ \hline
+Tải ảnh đại diện Avatar & \texttt{test\_\allowbreak avatar\_\allowbreak upload.py} & 11 & Xác thực định dạng tệp ảnh (JPEG/PNG/WebP), kiểm tra giới hạn dung lượng upload, khử mã độc tệp nhị phân và chuẩn hóa kích thước ảnh đại diện. \\ \hline
+Vòng đời Trophy \& Quyền riêng tư & \texttt{test\_\allowbreak trophy\_\allowbreak lifecycle\_\allowbreak and\_privacy.py} & 15 & Quy trình chốt điểm danh (finalize), kiểm tra điều kiện túc số (quorum $\ge 10$), quy trình Admin phê duyệt cấp Trophy, đóng băng sửa điểm danh và bảo mật danh hiệu sự kiện kín. \\ \hline
+\multicolumn{2}{|l|}{\textbf{Tổng số ca kiểm thử}} & \textbf{94} & \textbf{Tỷ lệ vượt qua: 94/94 (100\% Passed)} \\ \hline
 \end{xltabular}
 \endgroup
 
@@ -63,7 +66,7 @@ Trong phân hệ quản trị kết nối dữ liệu (\texttt{test\_database\_o
 \subsection{Kiểm thử tự động Giao diện Frontend (Frontend Component Testing)}
 Giao diện người dùng Web Client được kiểm thử tự động thông qua công cụ Vitest kết hợp cùng thư viện React Testing Library và môi trường mô phỏng JSDOM. Các ca kiểm thử tập trung vào tính tương tác và tính nhất quán dữ liệu của client:
 \begin{itemize}
-    \item \textbf{Kiểm thử xác thực và quản lý token:} Kiểm tra tính năng lưu trữ Access Token trong bộ nhớ mã nguồn và làm mới phiên làm việc qua HTTP-only Refresh Token.
+    \item \textbf{Kiểm thử xác thực và quản lý token:} Kiểm tra cơ chế lưu trữ và sử dụng Access Token JWT, tự động gắn Bearer Token vào các yêu cầu API và xử lý các trạng thái xác thực không hợp lệ.
     \item \textbf{Kiểm thử hiển thị bản đồ tương tác:} Kiểm tra việc dựng bản đồ khuôn viên Leaflet, gắn nhãn các điểm ghim hoạt động dựa trên tọa độ địa lý và xử lý sự kiện click mở thông tin chi tiết.
     \item \textbf{Kiểm thử bộ điều hướng và bảo vệ tuyến đường (Route Guards):} Đảm bảo các trang chức năng yêu cầu quyền (như trang Quản trị viên, trang Tổ chức sự kiện) chặn điều hướng và chuyển hướng chính xác về màn hình đăng nhập khi người dùng chưa xác thực.
 \end{itemize}
@@ -119,9 +122,9 @@ UAT-01 & Người dùng & Nhập email, mật khẩu hợp lệ; nhấn Đăng n
 UAT-02 & Người dùng & Mở màn hình chính; bật định vị GPS; chọn bộ lọc thể thao. & Bản đồ hiển thị các điểm ghim hoạt động thể thao trong bán kính khuôn viên trường. & Đạt chuẩn \\ \hline
 UAT-03 & Người dùng & Nhấn "Tham gia" sự kiện có thời gian trùng với lịch cá nhân. & Hệ thống phát hiện giao nhau thời gian và hiển thị cảnh báo trùng lịch (\texttt{hard\_conflict}). & Đạt chuẩn \\ \hline
 UAT-04 & Người dùng & Quét mã QR xoay động tại bàn check-in sự kiện trong chu kỳ 30s. & Backend xác thực chữ ký HMAC-SHA256 hợp lệ, ghi nhận tham gia thành công. & Đạt chuẩn \\ \hline
-UAT-05 & Người dùng & Đứng tại hội trường ($d \le 100$m, $acc \le 50$m); nhấn "Điểm danh GPS". & Hệ thống tính khoảng cách không gian thỏa mãn; cập nhật \texttt{attendance\_confirmed=True}. & Đạt chuẩn \\ \hline
+UAT-05 & Người dùng & Đứng tại hội trường ($d \le 100$m, $acc \le 100$m); nhấn "Điểm danh GPS". & Hệ thống tính khoảng cách không gian thỏa mãn; cập nhật \texttt{attendance\_confirmed=True}. & Đạt chuẩn \\ \hline
 UAT-06 & Người dùng & Thử điểm danh GPS khi ở ngoài khuôn viên ($d > 100$m). & Hệ thống từ chối ghi nhận và phản hồi thông báo vị trí nằm ngoài phạm vi cho phép. & Đạt chuẩn \\ \hline
-UAT-07 & Người dùng & Hoàn tất điểm danh sự kiện tình nguyện có định mức 0.5 ngày CTXH. & Tự động tích lũy thêm 0.5 ngày CTXH; mở khóa huy hiệu Trophy tương ứng. & Đạt chuẩn \\ \hline
+UAT-07 & Người dùng & Hoàn tất điểm danh sự kiện tình nguyện có định mức 0.5 ngày CTXH. & Tự động tích lũy thêm 0.5 ngày CTXH; sau khi chốt điểm danh (túc số $\ge 10$), yêu cầu cấp Trophy chuyển sang \texttt{eligible\_for\_review} chờ Admin duyệt. & Đạt chuẩn \\ \hline
 UAT-08 & Ban tổ chức & Nhóm chủ trì gửi lời mời Nhóm khác cùng Đồng tổ chức (Co-hosting). & Nhóm đối tác nhận lời mời ở trạng thái \texttt{PENDING} và có thể chấp thuận/từ chối. & Đạt chuẩn \\ \hline
 UAT-09 & Co-host & Thành viên Nhóm đối tác (đã chấp thuận Co-host) mở phiên điểm danh sự kiện. & Động cơ phân quyền RBAC xác nhận quyền ủy nhiệm \texttt{can\_open\_checkin} thành công. & Đạt chuẩn \\ \hline
 UAT-10 & Quản trị viên & Admin xử lý báo cáo vi phạm nội dung và nhấn "Xuất danh sách người dùng". & Gỡ bỏ nội dung vi phạm tức thì; tải về tập tin CSV định dạng chuẩn UTF-8 BOM. & Đạt chuẩn \\ \hline

@@ -128,7 +128,7 @@ function ActivitiesTab() {
                   </td>
                   <td>
                     <span className={`admin-badge ${act.privacy === 'public' ? 'admin-badge-active' : 'admin-badge-inactive'}`}>
-                      {act.privacy}
+                      {act.privacy === 'private' ? 'Riêng tư' : 'Công khai'}
                     </span>
                   </td>
                   <td className="admin-cell-muted admin-text-xs">

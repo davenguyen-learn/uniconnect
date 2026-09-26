@@ -19,7 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 from geoalchemy2.functions import ST_DWithin, ST_MakePoint, ST_SetSRID, ST_Distance
 
-from app.modules.activities.models import Activity
+from app.modules.activities.models import Activity, ActivityPrivacy
 from app.modules.groups.models import Group, GroupMember, GroupPrivacy
 from app.modules.participation.models import JoinRequest, RequestStatus
 from app.modules.chat.schemas import (
@@ -48,16 +48,20 @@ async def search_activities_tool(
     """Search for activities using domain query filters and enrich with eligibility, conflict, and distance."""
     now = datetime.now(timezone.utc)
 
-    # Base access filter: Public activity OR user is in the group
+    # Base access filter: Public activity OR activity not in a group OR user is in the group
     if user_id:
         access_filter = or_(
+            Activity.privacy == ActivityPrivacy.public,
             Activity.group_id.is_(None),
             Activity.group_id.in_(
                 select(GroupMember.group_id).where(GroupMember.user_id == user_id)
             ),
         )
     else:
-        access_filter = Activity.group_id.is_(None)
+        access_filter = or_(
+            Activity.privacy == ActivityPrivacy.public,
+            Activity.group_id.is_(None),
+        )
 
     base_filter = and_(
         Activity.is_deleted.is_(False),
@@ -163,7 +167,7 @@ async def search_activities_tool(
 
         # 3. Compute eligibility_status (LOCK 4)
         eligibility_status = "eligible"
-        if activity.group_id and user_id:
+        if activity.group_id and user_id and activity.privacy == ActivityPrivacy.private:
             mem_stmt = select(GroupMember).where(
                 GroupMember.group_id == activity.group_id,
                 GroupMember.user_id == user_id,
@@ -186,6 +190,9 @@ async def search_activities_tool(
                 else:
                     dist_status = "far"
 
+        grp_id = str(activity.group_id) if activity.group_id else None
+        grp_name = activity.group.name if (activity.group and hasattr(activity.group, "name")) else None
+
         items.append(
             ActivitySearchToolItem(
                 activity_id=str(activity.id),
@@ -195,6 +202,8 @@ async def search_activities_tool(
                 meeting_location=getattr(activity, "meeting_location", None) or getattr(activity, "location_name", None) or "Khuôn viên trường",
                 location_name=getattr(activity, "meeting_location", None) or getattr(activity, "location_name", None) or "Khuôn viên trường",
                 social_work_days=activity.social_work_days,
+                group_id=grp_id,
+                group_name=grp_name,
                 distance_meters=dist_m,
                 distance_status=dist_status,
                 conflict_status=conflict_status,

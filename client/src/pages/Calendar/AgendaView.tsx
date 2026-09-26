@@ -68,7 +68,7 @@ export const AgendaView: React.FC<AgendaViewProps> = ({ events, onSelectEvent })
                     )}
                   </div>
 
-                  <h4 className="agenda-card-title">{ev.title}</h4>
+                  <h4 className="agenda-card-title" title={ev.title}>{ev.title}</h4>
 
                   <div className="agenda-card-meta">
                     <div className="agenda-meta-item">

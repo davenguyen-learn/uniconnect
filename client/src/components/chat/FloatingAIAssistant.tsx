@@ -20,7 +20,7 @@ import './FloatingAIAssistant.css';
 const DEFAULT_CHIPS = [
   'Cuối tuần này có hoạt động CTXH nào không?',
   'Kiểm tra xem lịch thứ 7 của mình có trống không?',
-  'CLB nào đang tuyển thành viên mới?',
+  'Nhóm nào đang tuyển thành viên mới?',
 ];
 
 export const FloatingAIAssistant: React.FC = () => {
@@ -31,7 +31,7 @@ export const FloatingAIAssistant: React.FC = () => {
     {
       id: 'init-welcome',
       role: 'assistant',
-      content: 'Xin chào! Mình là Trợ lý AI UniConnect. Bạn cần tìm hoạt động CTXH, kiểm tra lịch học rảnh hay tìm CLB phù hợp cứ hỏi mình nhé!',
+      content: 'Xin chào! Mình là Trợ lý AI UniConnect. Bạn cần tìm hoạt động CTXH, kiểm tra lịch học rảnh hay tìm nhóm phù hợp cứ hỏi mình nhé!',
       cards: [],
       timeFormatted: '',
     },
@@ -159,7 +159,7 @@ export const FloatingAIAssistant: React.FC = () => {
                 <Sparkles className="w-4 h-4 text-white" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5 leading-none">
+                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5 leading-none">
                   Trợ Lý AI Campus
                   <span className="inline-block w-2 h-2 rounded-full bg-emerald-500" title="Đang trực tuyến" />
                 </h3>
@@ -173,7 +173,7 @@ export const FloatingAIAssistant: React.FC = () => {
                   setIsOpen(false);
                   navigate('/chat');
                 }}
-                className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition"
                 title="Mở toàn màn hình"
                 aria-label="Mở toàn màn hình"
               >
@@ -181,7 +181,7 @@ export const FloatingAIAssistant: React.FC = () => {
               </button>
               <button
                 onClick={() => setIsOpen(false)}
-                className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition"
                 title="Đóng cửa sổ"
                 aria-label="Đóng cửa sổ"
               >
@@ -198,7 +198,7 @@ export const FloatingAIAssistant: React.FC = () => {
                 className={`flex gap-2.5 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 {msg.role === 'assistant' && (
-                  <div className="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 mt-0.5 border border-indigo-200 dark:border-indigo-900/50">
+                  <div className="w-7 h-7 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0 mt-0.5 border border-indigo-200">
                     <Bot className="w-4 h-4" />
                   </div>
                 )}
@@ -208,10 +208,10 @@ export const FloatingAIAssistant: React.FC = () => {
                     className={`p-3 rounded-2xl text-xs leading-relaxed inline-block ${
                       msg.role === 'user'
                         ? 'bg-indigo-600 text-white rounded-br-none shadow-sm'
-                        : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-bl-none border border-slate-200/60 dark:border-slate-700/60'
+                        : 'bg-slate-100 text-slate-800 rounded-bl-none border border-slate-200/60'
                     }`}
                   >
-                    <div className="prose prose-xs dark:prose-invert max-w-none text-left">
+                    <div className="prose prose-xs max-w-none text-left">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
                         {msg.content}
                       </ReactMarkdown>
@@ -229,7 +229,7 @@ export const FloatingAIAssistant: React.FC = () => {
                 </div>
 
                 {msg.role === 'user' && (
-                  <div className="w-7 h-7 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center shrink-0 mt-0.5">
+                  <div className="w-7 h-7 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center shrink-0 mt-0.5">
                     <User className="w-4 h-4" />
                   </div>
                 )}
@@ -244,7 +244,7 @@ export const FloatingAIAssistant: React.FC = () => {
             )}
 
             {error && (
-              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 text-xs border border-rose-200 dark:border-rose-900/50">
+              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-rose-50 text-rose-600 text-xs border border-rose-200">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{error}</span>
               </div>

@@ -78,7 +78,7 @@ async def get_user_approved_activities(
     if end_time:
         stmt = stmt.where(Activity.start_time <= end_time)
     result = await db.execute(stmt)
-    return list(result.scalars().all())
+    return list(result.unique().scalars().all())
 
 
 async def get_user_hosted_activities(
@@ -97,7 +97,7 @@ async def get_user_hosted_activities(
     if end_time:
         stmt = stmt.where(Activity.start_time <= end_time)
     result = await db.execute(stmt)
-    return list(result.scalars().all())
+    return list(result.unique().scalars().all())
 
 
 async def get_user_pending_join_requests(db: AsyncSession, user_id: uuid.UUID) -> list[JoinRequest]:
@@ -113,4 +113,4 @@ async def get_user_pending_join_requests(db: AsyncSession, user_id: uuid.UUID) -
         .options(selectinload(JoinRequest.activity))
     )
     result = await db.execute(stmt)
-    return list(result.scalars().all())
+    return list(result.unique().scalars().all())

@@ -1,6 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
+/* Disable dark: variant completely across the app */
+@custom-variant dark (&:where(.dark-mode-disabled-never));
+
 /* ── Design Tokens ── */
 :root {
   /* Brand Colors — Instagram-inspired blue */
@@ -22,7 +25,7 @@
   --color-accent-subtle: color-mix(in srgb, var(--color-accent) 12%, var(--color-mix-base));
   --color-accent-light: color-mix(in srgb, var(--color-accent) 6%, var(--color-mix-base));
 
-  --color-white: color-mix(in srgb, white 50%, black 50%);
+  --color-white: #ffffff;
 
   /* Colors — Base Backgrounds */
   --color-bg-primary: #ffffff;
@@ -161,30 +164,7 @@
   outline-offset: 2px;
 }
 
-/* ── Dark Mode ── */
-[data-theme='dark'] {
-  --color-mix-base: #121212;
 
-  --color-bg-primary: #000000;
-  --color-bg-secondary: #121212;
-  --color-bg-tertiary: #1e1e1e;
-  --color-bg-elevated: #1e1e1e;
-
-  --color-glass: #121212;
-  --color-glass-hover: #1e1e1e;
-  --color-glass-border: #363636;
-  --color-glass-border-hover: #555555;
-
-  --color-text-primary: #f5f5f5;
-  --color-text-secondary: #a8a8a8;
-  --color-text-tertiary: #737373;
-  --color-text-inverse: #262626;
-
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
-  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.4);
-  --shadow-xl: 0 8px 32px rgba(0, 0, 0, 0.5);
-}
 
 /* ── Reset & Base ── */
 *,
@@ -648,8 +628,11 @@ select.input-field option {
 }
 
 /* ── Required Mark ── */
-.required-mark {
-  color: var(--color-error);
+.required-mark,
+.required {
+  color: #ef4444 !important;
+  font-weight: 700;
+  margin-left: 2px;
 }
 
 /* ── Callout Boxes ── */
@@ -774,8 +757,10 @@ select.input-field option {
   background: var(--color-bg-secondary);
   border-radius: var(--radius-lg);
   margin-top: var(--space-3);
-  border: 1px solid var(--color-glass-border);
+  border: none !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
 }
+
 
 .form-builder-hint {
   font-size: var(--font-size-sm);
@@ -819,6 +804,51 @@ select.input-field option {
   gap: var(--space-1);
   font-size: var(--font-size-xs);
   cursor: pointer;
+}
+
+.form-builder-switch-label-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.form-builder-switch {
+  width: 36px;
+  height: 20px;
+  background: #cbd5e1;
+  border-radius: 9999px;
+  padding: 2px;
+  position: relative;
+  transition: background-color var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.form-builder-switch.on {
+  background: var(--color-primary, #2563eb);
+}
+
+
+.form-builder-switch-handle {
+  display: block;
+  width: 16px;
+  height: 16px;
+  background: #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform var(--transition-fast);
+}
+
+.form-builder-switch.on .form-builder-switch-handle {
+  transform: translateX(16px);
+}
+
+.form-builder-switch-text {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
 }
 
 /* ── Modal Overlay (generic) ── */

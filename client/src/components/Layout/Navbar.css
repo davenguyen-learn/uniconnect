@@ -81,6 +81,14 @@
   border: none;
   cursor: pointer;
   transition: all var(--transition-fast);
+  overflow: hidden;
+}
+
+.navbar-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
 }
 
 .navbar-avatar:hover {

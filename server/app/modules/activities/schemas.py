@@ -12,6 +12,7 @@ from app.modules.calendar.schemas import ConflictInfo
 class HostInfo(BaseModel):
     username: str
     full_name: str | None
+    avatar_url: str | None = None
 
     model_config = {"from_attributes": True}
 
@@ -19,6 +20,7 @@ class HostInfo(BaseModel):
 class GroupInfo(BaseModel):
     id: uuid.UUID
     name: str
+    avatar_url: str | None = None
 
     model_config = {"from_attributes": True}
 
@@ -51,6 +53,8 @@ class ActivityCreate(BaseModel):
             raise ValueError("end_time must be after start_time")
         if not self.meeting_location and self.location_name:
             self.meeting_location = self.location_name
+        if not self.meeting_location or not self.meeting_location.strip():
+            raise ValueError("meeting_location is required")
         return self
 
 
@@ -73,6 +77,7 @@ class ActivityUpdate(BaseModel):
     trophy_id: uuid.UUID | None = None
     attendance_mode: str | None = None
     check_in_radius: int | None = Field(default=None, ge=50, le=5000)
+    custom_form: "CustomFormCreate | None" = None
 
 
 class ActivityResponse(BaseModel):
@@ -99,10 +104,13 @@ class ActivityResponse(BaseModel):
     created_at: datetime
     host: HostInfo | None = None
     group: GroupInfo | None = None
+    co_hosts: list[GroupInfo] = []
     distance_meters: float | None = None
     custom_form: "CustomFormResponse | None" = None
     trophy: TrophyResponse | None = None
     conflict_info: ConflictInfo | None = None
+    attendance_confirmed: bool | None = None
+    joined_at: datetime | None = None
 
     model_config = {"from_attributes": True}
 
@@ -115,6 +123,10 @@ class NearbyQuery(BaseModel):
     search: str | None = None
     free_to_join: bool | None = None
     days_ahead: int | None = Field(default=None, ge=1, le=365)
+    is_ctxh: bool | None = None
+    has_trophy: bool | None = None
+    sort_by: str = Field(default="distance")
+    exclude_my_activities: bool = Field(default=True)
     limit: int = Field(default=20, ge=1, le=100)
     offset: int = Field(default=0, ge=0)
 

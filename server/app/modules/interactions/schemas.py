@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field, model_validator
 class UserInfo(BaseModel):
     username: str
     full_name: str | None
+    avatar_url: str | None = None
 
     model_config = {"from_attributes": True}
 

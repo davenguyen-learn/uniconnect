@@ -102,6 +102,7 @@ async def handle_chat(
     model_candidates = get_model_candidates()
     collected_cards: list[ChatEventCardItem] = []
     total_tool_calls = 0
+    had_tool_error = False
     final_reply_text = ""
 
     # Attempt Level 1: Gemini Provider Loop
@@ -173,6 +174,8 @@ async def handle_chat(
                                     meeting_location=getattr(item, "meeting_location", None) or item.location_name,
                                     location_name=getattr(item, "meeting_location", None) or item.location_name,
                                     social_work_days=item.social_work_days,
+                                    group_id=item.group_id,
+                                    group_name=item.group_name,
                                     distance_meters=item.distance_meters,
                                     distance_status=item.distance_status,
                                     conflict_status=item.conflict_status,
@@ -214,9 +217,11 @@ async def handle_chat(
                 except asyncio.TimeoutError:
                     logger.warning(f"Tool {func_name} timed out after {TOOL_TIMEOUT_SECONDS}s")
                     tool_payload = {"error": "Tool execution timed out."}
+                    had_tool_error = True
                 except Exception as tool_err:
                     logger.warning(f"Tool {func_name} execution error: {tool_err}")
                     tool_payload = {"error": f"Tool execution failed: {str(tool_err)}"}
+                    had_tool_error = True
 
                 tool_parts.append(
                     types.Part.from_function_response(
@@ -247,9 +252,13 @@ async def handle_chat(
         final_reply_text = (response.text if response and response.text else "").strip()
         if not final_reply_text:
             if collected_cards:
-                final_reply_text = f"UniConnect đã tìm thấy {len(collected_cards)} hoạt động phù hợp với bạn bên dưới:"
+                final_reply_text = f"UniConnect đã tìm thấy {len(collected_cards)} hoạt động phù hợp với yêu cầu của bạn dưới đây. Bạn có thể bấm vào từng thẻ sự kiện để xem chi tiết hoặc đăng ký nhé!"
+            elif had_tool_error:
+                final_reply_text = "Hiện tại hệ thống tra cứu hoạt động đang gặp sự cố gián đoạn tạm thời. Bạn vui lòng thử lại sau giây lát nhé!"
+            elif total_tool_calls > 0:
+                final_reply_text = "UniConnect hiện chưa tìm thấy hoạt động nào phù hợp với các tiêu chí tìm kiếm của bạn. Bạn có thể thử nới lỏng điều kiện tìm kiếm (như đổi thời gian, địa điểm) hoặc tham gia các hoạt động nổi bật khác trên bảng tin nhé!"
             else:
-                final_reply_text = "Mình đã kiểm tra thông tin cho bạn rồi nhé!"
+                final_reply_text = "Chào bạn! Mình là Trợ lý Sinh viên UniConnect. Mình có thể hỗ trợ bạn tìm kiếm hoạt động ngoại khóa, kiểm tra lịch bận hoặc giải đáp các thắc mắc về điểm rèn luyện, ngày CTXH. Bạn cần mình giúp gì nào?"
 
         chat_msg = ChatMessage(
             role="assistant",

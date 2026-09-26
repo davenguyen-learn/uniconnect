@@ -129,3 +129,90 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+/* Chat message bubble - strict pure white background & pure black text */
+.chat-message-bubble {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+.chat-message-bubble,
+.chat-message-bubble *,
+.chat-message-bubble p,
+.chat-message-bubble span,
+.chat-message-bubble div,
+.chat-message-bubble strong,
+.chat-message-bubble em,
+.chat-message-bubble b,
+.chat-message-bubble i,
+.chat-message-bubble ul,
+.chat-message-bubble ol,
+.chat-message-bubble li,
+.chat-message-bubble h1,
+.chat-message-bubble h2,
+.chat-message-bubble h3,
+.chat-message-bubble h4,
+.chat-message-bubble h5,
+.chat-message-bubble h6,
+.chat-message-bubble code,
+.chat-message-bubble pre,
+.chat-message-bubble blockquote {
+  color: #000000 !important;
+  --tw-prose-body: #000000 !important;
+  --tw-prose-headings: #000000 !important;
+  --tw-prose-lead: #000000 !important;
+  --tw-prose-links: #2563eb !important;
+  --tw-prose-bold: #000000 !important;
+  --tw-prose-counters: #000000 !important;
+  --tw-prose-bullets: #000000 !important;
+  --tw-prose-hr: #000000 !important;
+  --tw-prose-quotes: #000000 !important;
+  --tw-prose-quote-borders: #000000 !important;
+  --tw-prose-captions: #000000 !important;
+  --tw-prose-code: #000000 !important;
+  --tw-prose-pre-code: #000000 !important;
+  --tw-prose-th-borders: #000000 !important;
+  --tw-prose-td-borders: #000000 !important;
+}
+
+.chat-message-bubble a,
+.chat-link {
+  color: #2563eb !important;
+  text-decoration: underline !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+}
+
+.chat-message-bubble a:hover,
+.chat-link:hover {
+  color: #1d4ed8 !important;
+}
+
+.chat-message-time {
+  color: #000000 !important;
+}
+
+/* Chat reset button - pure white background, black text, no hover effect */
+.chat-reset-btn {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  border: 1px solid #cbd5e1 !important;
+  cursor: pointer;
+  transition: none !important;
+}
+
+.chat-reset-btn:hover,
+.chat-reset-btn:focus,
+.chat-reset-btn:active {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  border-color: #cbd5e1 !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.chat-reset-btn svg {
+  color: #000000 !important;
+  stroke: #000000 !important;
+}

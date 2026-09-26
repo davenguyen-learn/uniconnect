@@ -66,7 +66,7 @@ async def list_notifications(
         .options(selectinload(Notification.actor))
     )
     result = await db.execute(stmt)
-    items = result.scalars().all()
+    items = result.unique().scalars().all()
     
     return items, total, unread_count
 

@@ -5,10 +5,10 @@ CTXH_TARGET_DAYS: float = 15.0
 
 # Immutable rank thresholds ordered from highest to lowest
 _RANK_THRESHOLDS = (
-    (500, "Đại sứ Hoạt động (Ambassador)"),
-    (200, "Thủ lĩnh Năng động (Leader)"),
-    (50, "Tình nguyện viên Tiên phong (Pioneer)"),
-    (0, "Tân sinh viên Tích cực (Active Member)"),
+    (500, "Thành viên Tiêu biểu"),
+    (200, "Thành viên Năng nổ"),
+    (50, "Thành viên Tích cực"),
+    (0, "Thành viên Mới"),
 )
 
 
@@ -17,4 +17,4 @@ def resolve_rank_title(trophy_points: int) -> str:
     for threshold, title in _RANK_THRESHOLDS:
         if trophy_points >= threshold:
             return title
-    return "Tân sinh viên Tích cực (Active Member)"
+    return "Thành viên Mới"

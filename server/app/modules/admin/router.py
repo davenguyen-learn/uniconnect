@@ -25,9 +25,12 @@ from app.modules.admin.permissions import (
 )
 from app.modules.admin.schemas import (
     AdminActivityList,
+    AdminGroupItem,
+    AdminGroupList,
     AdminStats,
     AdminUserItem,
     AdminUserList,
+    GroupStatusUpdate,
     ReportUpdate,
     RoleUpdate,
     StatusUpdate,
@@ -295,3 +298,65 @@ async def delete_activity(
     """Soft-delete an activity with audit log."""
     admin_id = uuid.UUID(current_user["sub"])
     return await service.delete_activity(db, activity_id, admin_id=admin_id)
+
+
+@router.get("/trophy-requests")
+async def list_trophy_requests(
+    status: str | None = Query(None, description="Filter by TrophyGrantStatus"),
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    current_user: dict = Depends(require_staff_or_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """List trophy grant requests for admin review queue."""
+    from app.modules.admin.trophy_service import list_trophy_requests as list_svc
+    return await list_svc(db, status=status, limit=limit, offset=offset)
+
+
+@router.post("/trophy-requests/{request_id}/review")
+async def review_trophy_request(
+    request_id: uuid.UUID,
+    data: dict,
+    current_user: dict = Depends(require_verification_permission),
+    db: AsyncSession = Depends(get_db),
+):
+    """Review a trophy grant request: approve or reject with atomic batch UserTrophy grant."""
+    from app.modules.admin.trophy_service import review_trophy_grant_request
+    admin_id = uuid.UUID(current_user["sub"])
+    action = data.get("action")
+    admin_notes = data.get("admin_notes")
+    return await review_trophy_grant_request(
+        db, request_id, action, admin_notes, admin_id=admin_id
+    )
+
+
+# ── 7. Group Management ──
+
+@router.get("/groups", response_model=AdminGroupList)
+async def list_groups(
+    search: str | None = Query(None, description="Search by name or description"),
+    status: str | None = Query(None, description="Filter by status: active, inactive"),
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    current_user: dict = Depends(require_staff_or_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """List all groups with member and activity counts for admin management."""
+    return await service.list_groups(
+        db, search=search, status=status, limit=limit, offset=offset
+    )
+
+
+@router.patch("/groups/{group_id}/status", response_model=AdminGroupItem)
+async def update_group_status(
+    group_id: uuid.UUID,
+    data: GroupStatusUpdate,
+    current_user: dict = Depends(require_user_management_permission),
+    db: AsyncSession = Depends(get_db),
+):
+    """Activate or suspend a group with audit log."""
+    admin_id = uuid.UUID(current_user["sub"])
+    return await service.update_group_status(
+        db, group_id=group_id, new_status=data.status, admin_id=admin_id
+    )
+

@@ -8,7 +8,7 @@ from sqlalchemy import func, select, and_, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
-from app.modules.activities.models import Activity
+from app.modules.activities.models import Activity, ActivityPrivacy
 
 
 async def create(db: AsyncSession, activity: Activity) -> Activity:
@@ -33,6 +33,10 @@ async def get_by_id(db: AsyncSession, activity_id: uuid.UUID) -> Activity | None
         .where(and_(Activity.id == activity_id, Activity.is_deleted == False))  # noqa: E712
     )
     return result.unique().scalar_one_or_none()
+
+
+# Alias for backward-compatibility
+get_activity_by_id = get_by_id
 
 
 async def update(db: AsyncSession, activity: Activity, data: dict) -> Activity:
@@ -65,37 +69,76 @@ async def list_active(
     db: AsyncSession,
     user_id: uuid.UUID,
     category: str | None = None,
+    search: str | None = None,
     host_id: uuid.UUID | None = None,
     group_id: uuid.UUID | None = None,
     limit: int = 20,
     offset: int = 0,
     followed_user_ids: list[uuid.UUID] | None = None,
+    include_past: bool = False,
 ) -> tuple[list[Activity], int]:
-    """List active (non-deleted, future) activities with pagination and access control."""
-    from app.modules.groups.models import GroupMember
+    """List active (non-deleted) activities with pagination, access control, and optional past events."""
+    from app.modules.groups.models import ActivityCoHost, GroupMember
 
     now = datetime.now(timezone.utc)
 
-    # Base access filter: Public activity OR user is in the group
-    access_filter = or_(
-        Activity.group_id.is_(None),
-        Activity.group_id.in_(
-            select(GroupMember.group_id).where(GroupMember.user_id == user_id)
+    # Base access filter: Public activity OR activity not in a group OR user is in host group OR user is in co-host group
+    if user_id:
+        access_filter = or_(
+            Activity.privacy == ActivityPrivacy.public,
+            Activity.group_id.is_(None),
+            Activity.group_id.in_(
+                select(GroupMember.group_id).where(GroupMember.user_id == user_id)
+            ),
+            Activity.id.in_(
+                select(ActivityCoHost.activity_id).where(
+                    ActivityCoHost.group_id.in_(
+                        select(GroupMember.group_id).where(GroupMember.user_id == user_id)
+                    )
+                )
+            ),
         )
-    )
+    else:
+        access_filter = or_(
+            Activity.privacy == ActivityPrivacy.public,
+            Activity.group_id.is_(None),
+        )
 
+    time_filter = Activity.end_time > now if not include_past else True
     base_filter = and_(
         Activity.is_deleted == False,  # noqa: E712
-        Activity.end_time > now,
+        time_filter,
         access_filter,
     )
+
+    if search:
+        search_pattern = f"%{search}%"
+        base_filter = and_(
+            base_filter,
+            or_(
+                Activity.title.ilike(search_pattern),
+                Activity.description.ilike(search_pattern),
+                Activity.location_name.ilike(search_pattern),
+                Activity.meeting_location.ilike(search_pattern),
+            ),
+        )
 
     if category:
         base_filter = and_(base_filter, Activity.category == category)
     if host_id:
         base_filter = and_(base_filter, Activity.host_id == host_id)
     if group_id:
-        base_filter = and_(base_filter, Activity.group_id == group_id)
+        base_filter = and_(
+            base_filter,
+            or_(
+                Activity.group_id == group_id,
+                Activity.id.in_(
+                    select(ActivityCoHost.activity_id).where(
+                        ActivityCoHost.group_id == group_id
+                    )
+                ),
+            ),
+        )
 
     # Count
     count_q = select(func.count()).select_from(Activity).where(base_filter)
@@ -107,7 +150,10 @@ async def list_active(
         # PostgreSQL specific: True sorts after False by default if using ASC, 
         # so using DESC puts followed users first.
         order_clauses.append(Activity.host_id.in_(followed_user_ids).desc())
-    order_clauses.append(Activity.start_time.asc())
+    if include_past:
+        order_clauses.append(Activity.start_time.desc())
+    else:
+        order_clauses.append(Activity.start_time.asc())
 
     query = (
         select(Activity)
@@ -133,6 +179,10 @@ async def find_within_radius(
     search: str | None = None,
     free_to_join: bool | None = None,
     days_ahead: int | None = None,
+    is_ctxh: bool | None = None,
+    has_trophy: bool | None = None,
+    sort_by: str | None = "distance",
+    exclude_my_activities: bool = True,
     limit: int = 20,
     offset: int = 0,
     followed_user_ids: list[uuid.UUID] | None = None,
@@ -141,19 +191,33 @@ async def find_within_radius(
 
     Returns a list of (Activity, distance_meters) tuples and total count.
     """
-    from app.modules.groups.models import GroupMember
+    from app.modules.groups.models import ActivityCoHost, GroupMember
     from datetime import timedelta
 
     now = datetime.now(timezone.utc)
     point = ST_SetSRID(ST_MakePoint(lng, lat), 4326)
 
-    # Base access filter: Public activity OR user is in the group
-    access_filter = or_(
-        Activity.group_id.is_(None),
-        Activity.group_id.in_(
-            select(GroupMember.group_id).where(GroupMember.user_id == user_id)
+    # Base access filter: Public activity OR activity not in a group OR user is in host group OR user is in co-host group
+    if user_id:
+        access_filter = or_(
+            Activity.privacy == ActivityPrivacy.public,
+            Activity.group_id.is_(None),
+            Activity.group_id.in_(
+                select(GroupMember.group_id).where(GroupMember.user_id == user_id)
+            ),
+            Activity.id.in_(
+                select(ActivityCoHost.activity_id).where(
+                    ActivityCoHost.group_id.in_(
+                        select(GroupMember.group_id).where(GroupMember.user_id == user_id)
+                    )
+                )
+            ),
         )
-    )
+    else:
+        access_filter = or_(
+            Activity.privacy == ActivityPrivacy.public,
+            Activity.group_id.is_(None),
+        )
 
     base_filter = and_(
         Activity.is_deleted == False,  # noqa: E712
@@ -163,8 +227,64 @@ async def find_within_radius(
         access_filter,
     )
 
+    if exclude_my_activities and user_id:
+        base_filter = and_(base_filter, Activity.host_id != user_id)
+
     if category:
-        base_filter = and_(base_filter, Activity.category == category)
+        category_synonyms: dict[str, list[str]] = {
+            # Học tập & Workshop (tách thành 2 tag)
+            "Study": ["Study", "Học tập", "Học thuật", "Học thuật & Kỹ năng", "Kỹ năng"],
+            "Học tập": ["Study", "Học tập", "Học thuật", "Học thuật & Kỹ năng", "Kỹ năng"],
+            "Workshop": ["Workshop", "Học thuật & Workshop", "Chuyên đề", "Tọa đàm", "Seminar"],
+            # Ăn uống & Cà phê
+            "Food": ["Food", "Ăn uống", "Ẩm thực", "Ăn uống & Cà phê"],
+            "Ăn uống": ["Food", "Ăn uống", "Ẩm thực", "Ăn uống & Cà phê"],
+            "Cafe": ["Cafe", "Cà phê", "Coffee", "Ăn uống & Cà phê"],
+            "Cà phê": ["Cafe", "Cà phê", "Coffee", "Ăn uống & Cà phê"],
+            # Thể thao & Vận động
+            "Sports": ["Sports", "Thể thao", "Thể thao & Giải trí", "Thể thao & Vận động"],
+            "Thể thao": ["Sports", "Thể thao", "Thể thao & Giải trí", "Thể thao & Vận động"],
+            "Fitness": ["Fitness", "Vận động", "Thể thao & Vận động"],
+            "Vận động": ["Fitness", "Vận động", "Thể thao & Vận động"],
+            # Tình nguyện & CTXH
+            "Volunteer": ["Volunteer", "Tình nguyện", "Tình nguyện & CTXH"],
+            "Tình nguyện": ["Volunteer", "Tình nguyện", "Tình nguyện & CTXH"],
+            "CTXH": ["CTXH", "Công tác xã hội", "Tình nguyện & CTXH"],
+            # CLB & Đội nhóm
+            "CLB": ["CLB", "Câu lạc bộ", "CLB & Đội nhóm"],
+            "Team": ["Team", "Đội nhóm", "CLB & Đội nhóm"],
+            "Đội nhóm": ["Team", "Đội nhóm", "CLB & Đội nhóm"],
+            # Hướng nghiệp & Việc làm
+            "Career": ["Career", "Hướng nghiệp", "Hướng nghiệp & Việc làm"],
+            "Hướng nghiệp": ["Career", "Hướng nghiệp", "Hướng nghiệp & Việc làm"],
+            "Job": ["Job", "Việc làm", "Tuyển dụng", "Hướng nghiệp & Việc làm"],
+            "Việc làm": ["Job", "Việc làm", "Tuyển dụng", "Hướng nghiệp & Việc làm"],
+            # Xem phim & Giải trí
+            "Movie": ["Movie", "Xem phim", "Phim ảnh", "Xem phim & Giải trí"],
+            "Xem phim": ["Movie", "Xem phim", "Phim ảnh", "Xem phim & Giải trí"],
+            "Entertainment": ["Entertainment", "Giải trí", "Xem phim & Giải trí", "Thể thao & Giải trí"],
+            "Giải trí": ["Entertainment", "Giải trí", "Xem phim & Giải trí", "Thể thao & Giải trí"],
+            # Âm nhạc & Nghệ thuật
+            "Music": ["Music", "Âm nhạc", "Nhạc", "Âm nhạc & Nghệ thuật"],
+            "Âm nhạc": ["Music", "Âm nhạc", "Nhạc", "Âm nhạc & Nghệ thuật"],
+            "Art": ["Art", "Nghệ thuật", "Hội họa", "Âm nhạc & Nghệ thuật"],
+            "Nghệ thuật": ["Art", "Nghệ thuật", "Hội họa", "Âm nhạc & Nghệ thuật"],
+            # Game & Esports
+            "Gaming": ["Gaming", "Game", "Trò chơi điện tử", "Game & Esports"],
+            "Game": ["Gaming", "Game", "Trò chơi điện tử", "Game & Esports"],
+            "Esports": ["Esports", "Thể thao điện tử", "Game & Esports"],
+            # Dã ngoại & Phượt
+            "Travel": ["Travel", "Dã ngoại", "Du lịch", "Dã ngoại & Phượt"],
+            "Dã ngoại": ["Travel", "Dã ngoại", "Du lịch", "Dã ngoại & Phượt"],
+            "Backpacking": ["Backpacking", "Phượt", "Dã ngoại & Phượt"],
+            "Phượt": ["Backpacking", "Phượt", "Dã ngoại & Phượt"],
+            # Boardgame & Social
+            "Boardgame": ["Boardgame", "Board Games", "Trò chơi"],
+            "Social": ["Social", "Giao lưu kết bạn", "Giao lưu", "Kết bạn"],
+            "Giao lưu kết bạn": ["Social", "Giao lưu kết bạn", "Giao lưu", "Kết bạn"],
+        }
+        cats = category_synonyms.get(category, [category])
+        base_filter = and_(base_filter, Activity.category.in_(cats))
     if search:
         base_filter = and_(base_filter, or_(Activity.title.ilike(f"%{search}%"), Activity.description.ilike(f"%{search}%")))
     if free_to_join is True:
@@ -172,6 +292,10 @@ async def find_within_radius(
     if days_ahead is not None:
         deadline = now + timedelta(days=days_ahead)
         base_filter = and_(base_filter, Activity.start_time >= now, Activity.start_time <= deadline)
+    if is_ctxh:
+        base_filter = and_(base_filter, Activity.social_work_days.is_not(None), Activity.social_work_days > 0)
+    if has_trophy:
+        base_filter = and_(base_filter, Activity.trophy_id.is_not(None))
 
     # Count
     count_q = select(func.count()).select_from(Activity).where(base_filter)
@@ -183,7 +307,16 @@ async def find_within_radius(
     order_clauses = []
     if followed_user_ids:
         order_clauses.append(Activity.host_id.in_(followed_user_ids).desc())
-    order_clauses.append(distance_col.asc())
+
+    if sort_by == "time":
+        order_clauses.append(Activity.start_time.asc())
+        order_clauses.append(distance_col.asc())
+    elif sort_by == "created_at":
+        order_clauses.append(Activity.created_at.desc())
+        order_clauses.append(distance_col.asc())
+    else:  # default "distance"
+        order_clauses.append(distance_col.asc())
+        order_clauses.append(Activity.start_time.asc())
 
     query = (
         select(Activity, distance_col)
@@ -233,6 +366,7 @@ async def get_coordinates_from_db(db: AsyncSession, activity_id: uuid.UUID) -> t
 async def list_hosted_activities(
     db: AsyncSession,
     user_id: uuid.UUID,
+    status_filter: str | None = None,
     limit: int = 50,
     offset: int = 0,
 ) -> tuple[list[Activity], int]:
@@ -241,6 +375,14 @@ async def list_hosted_activities(
         Activity.is_deleted == False,
         Activity.host_id == user_id,
     )
+    if status_filter == "upcoming":
+        base_filter = and_(base_filter, Activity.end_time >= func.now())
+        order_clause = Activity.start_time.asc()
+    elif status_filter == "past":
+        base_filter = and_(base_filter, Activity.end_time < func.now())
+        order_clause = Activity.start_time.desc()
+    else:
+        order_clause = Activity.start_time.desc()
 
     count_q = select(func.count()).select_from(Activity).where(base_filter)
     total = (await db.execute(count_q)).scalar() or 0
@@ -249,7 +391,7 @@ async def list_hosted_activities(
         select(Activity)
         .options(joinedload(Activity.host))
         .where(base_filter)
-        .order_by(Activity.start_time.desc())
+        .order_by(order_clause)
         .limit(limit)
         .offset(offset)
     )
@@ -262,31 +404,62 @@ async def list_hosted_activities(
 async def list_joined_activities(
     db: AsyncSession,
     user_id: uuid.UUID,
+    status_filter: str | None = None,
     limit: int = 50,
     offset: int = 0,
 ) -> tuple[list[Activity], int]:
     """List all activities the user has joined (both past and upcoming), sorted newest first."""
     from app.modules.participation.models import JoinRequest, RequestStatus
 
-    base_filter = and_(
-        Activity.is_deleted == False,
-        JoinRequest.user_id == user_id,
-        JoinRequest.status.in_([RequestStatus.pending, RequestStatus.approved]),
-    )
+    if status_filter == "upcoming":
+        base_filter = and_(
+            Activity.is_deleted == False,
+            JoinRequest.user_id == user_id,
+            JoinRequest.status.in_([RequestStatus.pending, RequestStatus.approved]),
+            Activity.end_time >= func.now(),
+        )
+        order_clause = Activity.start_time.asc()
+    elif status_filter == "past":
+        base_filter = and_(
+            Activity.is_deleted == False,
+            JoinRequest.user_id == user_id,
+            JoinRequest.status == RequestStatus.approved,
+            Activity.end_time < func.now(),
+        )
+        order_clause = Activity.start_time.desc()
+    elif status_filter == "cancelled":
+        base_filter = and_(
+            JoinRequest.user_id == user_id,
+            or_(
+                JoinRequest.status.in_([RequestStatus.cancelled, RequestStatus.declined]),
+                Activity.is_deleted == True,
+            ),
+        )
+        order_clause = JoinRequest.created_at.desc()
+    else:
+        base_filter = and_(
+            Activity.is_deleted == False,
+            JoinRequest.user_id == user_id,
+            JoinRequest.status.in_([RequestStatus.pending, RequestStatus.approved]),
+        )
+        order_clause = JoinRequest.created_at.desc()
 
-    count_q = select(func.count()).select_from(Activity).join(JoinRequest).where(base_filter)
+    count_q = select(func.count()).select_from(Activity).join(JoinRequest, Activity.id == JoinRequest.activity_id).where(base_filter)
     total = (await db.execute(count_q)).scalar() or 0
 
     query = (
-        select(Activity)
-        .join(JoinRequest)
+        select(Activity, JoinRequest.attendance_confirmed, JoinRequest.created_at)
+        .join(JoinRequest, Activity.id == JoinRequest.activity_id)
         .options(joinedload(Activity.host))
         .where(base_filter)
-        .order_by(Activity.start_time.desc())
+        .order_by(order_clause)
         .limit(limit)
         .offset(offset)
     )
     result = await db.execute(query)
-    activities = list(result.unique().scalars().all())
+    rows = result.unique().all()
+    activities = [r[0] for r in rows]
+    attendance_map = {r[0].id: bool(r[1]) for r in rows}
+    joined_at_map = {r[0].id: r[2] for r in rows}
 
-    return activities, total
+    return activities, total, attendance_map, joined_at_map

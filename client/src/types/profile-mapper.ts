@@ -17,21 +17,21 @@ export interface FormattedRankBadge {
  * Invariant: Rank title is strictly derived from backend policy.
  */
 export function mapRankToBadge(rankTitle: string): FormattedRankBadge {
-  if (rankTitle.includes('Ambassador') || rankTitle.includes('Đại sứ')) {
+  if (rankTitle.includes('Tiêu biểu') || rankTitle.includes('Ambassador') || rankTitle.includes('Đại sứ')) {
     return {
       title: rankTitle,
       badgeClass: 'rank-badge--ambassador',
       glowColor: '#f59e0b',
     };
   }
-  if (rankTitle.includes('Leader') || rankTitle.includes('Thủ lĩnh')) {
+  if (rankTitle.includes('Năng nổ') || rankTitle.includes('Leader') || rankTitle.includes('Thủ lĩnh')) {
     return {
       title: rankTitle,
       badgeClass: 'rank-badge--leader',
       glowColor: '#8b5cf6',
     };
   }
-  if (rankTitle.includes('Pioneer') || rankTitle.includes('Tiên phong')) {
+  if (rankTitle.includes('Tích cực') || rankTitle.includes('Pioneer') || rankTitle.includes('Tiên phong')) {
     return {
       title: rankTitle,
       badgeClass: 'rank-badge--pioneer',
@@ -76,4 +76,38 @@ export function formatActivityDate(dateStr: string): string {
     month: '2-digit',
     year: 'numeric',
   });
+}
+
+export function formatActivityTimeRange(startTimeStr: string, endTimeStr?: string | null): string {
+  if (!startTimeStr) return '';
+  const start = new Date(startTimeStr);
+  const startDateStr = start.toLocaleDateString('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+  const startTimeVal = start.toLocaleTimeString('vi-VN', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  if (!endTimeStr) {
+    return `${startTimeVal} • ${startDateStr}`;
+  }
+
+  const end = new Date(endTimeStr);
+  const endDateStr = end.toLocaleDateString('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+  const endTimeVal = end.toLocaleTimeString('vi-VN', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  if (startDateStr === endDateStr) {
+    return `${startTimeVal} - ${endTimeVal} • ${startDateStr}`;
+  }
+  return `${startTimeVal} ${startDateStr} - ${endTimeVal} ${endDateStr}`;
 }

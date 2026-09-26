@@ -21,25 +21,37 @@ export interface JoinRequestCreate {
   form_responses?: Record<string, any>;
 }
 
+export interface CertificateCustomField {
+  label: string;
+  value: string;
+}
+
 export interface CertificateResponse {
   certificate_code: string;
   activity_id: string;
   user_id: string;
   participant_name: string;
   participant_username: string;
+  participant_email?: string | null;
   participant_university?: string | null;
   activity_title: string;
   activity_date: string;
   meeting_location?: string | null;
   location_name?: string | null;
+  host_id?: string | null;
   host_name: string;
   host_university?: string | null;
+  group_id?: string | null;
+  group_name?: string | null;
+  group_is_private?: boolean;
   social_work_days?: number | null;
   trophy_name?: string | null;
   trophy_icon?: string | null;
   trophy_points?: number | null;
+  custom_fields?: CertificateCustomField[];
   issued_at: string;
   verification_url: string;
+  is_host?: boolean;
 }
 
 export const participationApi = {
@@ -66,6 +78,9 @@ export const participationApi = {
 
   leaveActivity: (activityId: string) =>
     api.post<void>(`/activities/${activityId}/leave`),
+
+  removeParticipant: (activityId: string, userId: string) =>
+    api.delete<{ message: string }>(`/activities/${activityId}/participants/${userId}`),
 
   getCertificate: (activityId: string, userId?: string) =>
     api.get<CertificateResponse>(

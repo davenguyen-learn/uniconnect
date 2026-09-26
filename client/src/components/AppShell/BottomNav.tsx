@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Compass, Calendar, Users, User, Plus, ListTodo } from 'lucide-react';
+import { Compass, Calendar, Users, User, Plus, Ticket } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import './BottomNav.css';
 
@@ -58,21 +58,21 @@ export const BottomNav: React.FC = () => {
           }
           aria-label="Hoạt động của tôi"
         >
-          <ListTodo size={22} className="bottom-nav__icon" />
+          <Ticket size={22} className="bottom-nav__icon" />
           <span className="bottom-nav__label">Của tôi</span>
         </NavLink>
       )}
 
-      {/* 4. Câu lạc bộ */}
+      {/* 4. Nhóm */}
       <NavLink
         to="/groups"
         className={({ isActive }) =>
           `bottom-nav__item ${isActive ? 'bottom-nav__item--active' : ''}`
         }
-        aria-label="Câu lạc bộ"
+        aria-label="Nhóm"
       >
         <Users size={22} className="bottom-nav__icon" />
-        <span className="bottom-nav__label">CLB</span>
+        <span className="bottom-nav__label">Nhóm</span>
       </NavLink>
 
       {/* 5. Cá nhân */}

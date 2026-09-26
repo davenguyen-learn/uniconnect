@@ -157,17 +157,18 @@ SQLAlchemy 2.0 đóng vai trò là bộ ánh xạ đối tượng - quan hệ (O
 
 Đảm bảo sự đồng bộ giữa mã nguồn Backend và cấu trúc Cơ sở dữ liệu. Đặc biệt quan trọng khi cần định nghĩa các kiểu dữ liệu đặc thù của pgvector ngay trong các Model của Python.
 
-\subsubsection{Cơ chế xác thực và bảo mật (OAuth 2.0 và JWT)}
+\subsubsection{Cơ chế xác thực và bảo mật (JWT và RBAC)}
 
 \textbf{Giới thiệu:}
 
-Để bảo vệ các Endpoint nhạy cảm và xác thực sinh viên, hệ thống áp dụng giao thức ủy quyền OAuth 2.0\cite{hardt2012oauth} kết hợp cùng chuẩn thẻ xác thực JSON Web Token (JWT) theo chuẩn RFC 7519\cite{jones2015jwt}.
+Hệ thống sử dụng cơ chế định danh dựa trên tài khoản email và mật khẩu được bảo vệ mật mã học, kết hợp cùng chuẩn thẻ xác thực JSON Web Token (JWT) theo chuẩn RFC 7519\cite{jones2015jwt} và mô hình kiểm soát truy cập dựa trên vai trò (RBAC)\cite{sandhu1996role}.
 
 \textbf{Đặc điểm thực tế:}
 
 \begin{itemize}
-    \item Xác thực phi trạng thái (Stateless Authentication): Máy chủ không cần lưu session trong RAM; mỗi request từ Client mang theo access token có chữ ký số bí mật, giúp hệ thống dễ dàng mở rộng ngang (Horizontal Scaling).
-    \item Kiểm soát truy cập dựa trên vai trò (RBAC): Token chứa payload xác định vai trò (Sinh viên, Ban điều hành Nhóm, Quản trị viên), phân quyền chặt chẽ các tác vụ quản trị phong trào theo mô hình RBAC chuẩn mực\cite{sandhu1996role}.
+    \item Mật khẩu băm an toàn (Password Hashing): Mật khẩu người dùng được băm bằng thuật toán bcrypt với salt ngẫu nhiên trước khi lưu trữ vào cơ sở dữ liệu, ngăn ngừa hoàn toàn nguy cơ lộ mật khẩu gốc.
+    \item Xác thực phi trạng thái (Stateless Authentication): Sau khi xác thực thông tin đăng nhập thành công, máy chủ phát hành Access Token JWT có chữ ký số bí mật và thời hạn hợp lệ. Mỗi yêu cầu từ máy khách mang theo token này tại tiêu đề Authorization giúp hệ thống xác thực tức thì mà không cần lưu phiên làm việc (session) trong bộ nhớ RAM, thuận lợi cho việc mở rộng ngang.
+    \item Kiểm soát truy cập dựa trên vai trò (RBAC): Token chứa payload xác định vai trò của người dùng (Sinh viên, Ban điều hành Nhóm, Quản trị viên, Tổ chức giáo dục). Quyền hạn thực thi được kiểm soát chặt chẽ tại tầng Backend thông qua hệ thống phân quyền hướng phụ thuộc (Dependency Injection) của FastAPI.
 \end{itemize}
 
 \subsubsection{Kết luận} 
@@ -283,43 +284,35 @@ Chỉ với một câu lệnh docker-compose up, toàn bộ hệ sinh thái củ
 Trong giai đoạn phát triển cục bộ và kiểm thử nghiệm thu độc lập, hệ thống UniConnect được điều phối thông qua Docker Compose gồm 3 khối container chính:
 
 \begin{itemize}
-    \item \textbf{db-container}: Vận hành hệ quản trị cơ sở dữ liệu PostgreSQL 15+, tích hợp sẵn các tiện ích mở rộng pgvector phục vụ lưu trữ vector embedding và PostGIS/Cube hỗ trợ tính toán không gian.
+    \item \textbf{db-container}: Vận hành hệ quản trị cơ sở dữ liệu PostgreSQL 16, tích hợp sẵn các tiện ích mở rộng pgvector phục vụ lưu trữ vector embedding và PostGIS/Cube hỗ trợ tính toán không gian.
 
     \item \textbf{server-container (Backend)}: Chứa mã nguồn ứng dụng FastAPI, môi trường thực thi Python 3.11+ được chuẩn hóa, cấu hình cơ chế bảo mật xác thực HMAC, giới hạn tần suất truy cập (Rate Limiting) và kết nối ORM SQLAlchemy.
     
     \item \textbf{client-container (Frontend)}: Chứa ứng dụng React (TypeScript + Vite) được biên dịch thành gói phân phối tối ưu (Production Build), phục vụ giao diện người dùng qua máy chủ Web Nginx tĩnh với cấu hình nén gzip và bộ nhớ đệm HTTP.
 \end{itemize}
 
-\subsubsection{Kiến trúc triển khai thực tế trên nền tảng Đám mây (Cloud Production Architecture)}
+\subsubsection{Kiến trúc triển khai sản xuất với Docker Compose (Production Architecture)}
 
-Để đưa UniConnect vào vận hành trực tuyến thực tế, phục vụ cộng đồng sinh viên với độ sẵn sàng cao, độ trễ thấp và chi phí hạ tầng tối ưu, đề tài đã hiện thực mô hình triển khai hướng dịch vụ đám mây (Cloud-Native Architecture) kết hợp 4 nền tảng chuyên biệt:
+Kiến trúc triển khai production của UniConnect sử dụng Docker Compose với ba thành phần chính gồm Nginx/Frontend, FastAPI Backend và PostgreSQL tích hợp PostGIS/pgvector. Nginx là điểm truy cập công khai duy nhất, chịu trách nhiệm phục vụ SPA và reverse proxy các yêu cầu API đến Backend. FastAPI và PostgreSQL hoạt động trong mạng nội bộ Docker, không trực tiếp công khai ra Internet. Cách triển khai này giúp thống nhất môi trường giữa kiểm thử và vận hành, đồng thời đơn giản hóa việc quản lý phụ thuộc và cấu hình hệ thống:
 
 \begin{enumerate}
-    \item \textbf{Vercel (Frontend Web Hosting \& CI/CD)}: 
-    Ứng dụng giao diện người dùng (React Single Page Application) được đóng gói tối ưu và triển khai trực tuyến trên nền tảng Vercel. Nền tảng này tích hợp quy trình triển khai liên tục (CI/CD) tự động mỗi khi có cập nhật mã nguồn trên nhánh Git, tự động thiết lập chứng chỉ bảo mật HTTPS/TLS và phục vụ ứng dụng web tĩnh với tốc độ phản hồi nhanh.
-
-    \item \textbf{Render (Backend API Container Runtime)}: 
-    Khối dịch vụ máy chủ FastAPI được đóng gói thành container và triển khai trực tuyến dưới dạng Web Service trên nền tảng đám mây Render. Nền tảng này quản lý tự động vòng đời ứng dụng, hỗ trợ cơ chế tự phục hồi (Health Check Monitoring), phân phối lưu lượng qua giao thức HTTPS bảo mật và tự động triển khai mã nguồn mới ngay khi có bản cập nhật trên kho lưu trữ Git.
-
-    \item \textbf{Neon Database (Serverless PostgreSQL \& pgvector)}: 
-    Toàn bộ dữ liệu quan hệ và chỉ mục vector đa chiều của UniConnect được lưu trữ trên Neon --- nền tảng cơ sở dữ liệu PostgreSQL Serverless hàng đầu hiện nay. Neon cho phép phân tách độc lập giữa tầng lưu trữ (Storage) và tầng tính toán (Compute), hỗ trợ tự động co giãn tài nguyên (Auto-scaling) theo lưu lượng truy cập thực tế, cung cấp tiện ích mở rộng pgvector nguyên bản và tính năng phân nhánh cơ sở dữ liệu (Database Branching) giúp kiểm thử an toàn các kịch bản nâng cấp schema.
-
-    \item \textbf{Supabase Storage (S3-Compatible Object Storage)}: 
-    Các dữ liệu tệp tin phi cấu trúc như ảnh đại diện tài khoản (Avatars), hình ảnh minh chứng hoạt động phong trào và các tệp Giấy chứng nhận/Bằng khen điện tử định dạng PDF được lưu trữ tập trung trên Supabase Storage. Backend tương tác với Supabase Storage qua giao thức chuẩn tương thích AWS S3 thông qua thư viện bất đồng bộ \texttt{aioboto3} tại module \texttt{storage.py}, đảm bảo khả năng mở rộng không giới hạn dung lượng, phân quyền truy cập an toàn và truy xuất dữ liệu thông qua đường dẫn công khai (Public URL).
+    \item \textbf{Nginx Ingress \& Static Reverse Proxy}: Đóng vai trò là cửa ngõ công khai duy nhất (Port 80), tiếp nhận toàn bộ lưu lượng truy cập từ người dùng. Nginx trực tiếp phân phối ứng dụng React Single Page Application (đã được build tối ưu hóa) với cấu hình nén gzip và bộ nhớ đệm HTTP, đồng thời chuyển tiếp (reverse proxy) các yêu cầu API (\texttt{/api/*}) vào máy chủ FastAPI bên trong mạng nội bộ.
+    
+    \item \textbf{FastAPI Application Server}: Chạy trong mạng nội bộ Docker độc lập, vận hành dưới người dùng không đặc quyền (non-root \texttt{appuser:1001}) để tăng cường bảo mật. Khối dịch vụ chịu trách nhiệm xử lý logic nghiệp vụ, đối soát lịch bận, xác thực mã điểm danh HMAC-SHA256 và điều phối suy luận AI.
+    
+    \item \textbf{PostgreSQL Unified Datastore}: Hệ quản trị cơ sở dữ liệu hoạt động trong mạng nội bộ khép kín, tích hợp sẵn các tiện ích mở rộng PostGIS (xử lý không gian) và pgvector (tìm kiếm vector ngữ nghĩa). Dữ liệu được bảo toàn bền vững thông qua Docker Named Volumes (\texttt{postgres\_prod\_data}).
 \end{enumerate}
 
 \begin{table}[H]
 \centering
-\caption{Đối chiếu mô hình triển khai kép (Dual-environment Deployment Matrix) của UniConnect}
+\caption{Bảng phân bổ dịch vụ trong kiến trúc Docker Compose Production của UniConnect}
 \label{tab:dual_deployment_matrix}
-\begin{tabular}{|l|p{5.5cm}|p{6.5cm}|}
+\begin{tabular}{|l|l|p{4.2cm}|p{4.5cm}|}
 \hline
-\textbf{Tầng hệ thống} & \textbf{Môi trường Cục bộ / Nghiệm thu} & \textbf{Môi trường Vận hành Cloud (Production)} \\ \hline
-Frontend & Docker Container (Nginx Alpine SPA) & Vercel (Static Web Hosting, tự động CI/CD) \\ \hline
-Backend API & Docker Container (FastAPI + Uvicorn) & Render Cloud Web Service (Managed Container, HTTPS) \\ \hline
-Cơ sở dữ liệu & Docker Container (PostgreSQL + pgvector) & Neon Serverless PostgreSQL (Auto-scaling, pgvector) \\ \hline
-Lưu trữ đối tượng & Local File System / Volume Mapping & Supabase Storage (S3-compatible, aioboto3) \\ \hline
-Trợ lý AI RAG & Gemini 2.5 Flash API & Gemini 2.5 Flash API (Cloud Secret Manager) \\ \hline
+\textbf{Dịch vụ} & \textbf{Cổng lắng nghe} & \textbf{Môi trường mạng} & \textbf{Vai trò chức năng} \\ \hline
+client (Nginx) & 80 (Public) & Mạng ngoài \& Nội bộ & Phục vụ React SPA tĩnh, Reverse Proxy API \\ \hline
+server (FastAPI) & 8000 (Internal) & Mạng nội bộ Docker & Xử lý nghiệp vụ lõi, ReAct Agent, Geofencing \\ \hline
+db (PostgreSQL) & 5432 (Internal) & Mạng nội bộ Docker & Lưu trữ quan hệ, PostGIS và vector 768 chiều \\ \hline
 \end{tabular}
 \end{table}
 
@@ -329,4 +322,4 @@ Chương 4 đã phân tích và luận chứng sâu sắc các quyết định l
 
 Ở phía máy chủ (Backend) và dữ liệu, kiến trúc Modular Monolith trên nền tảng web framework FastAPI khai thác tối đa năng lực xử lý bất đồng bộ của Python, đáp ứng yêu cầu độ trễ thấp khi phục vụ hàng loạt kết nối đồng thời. Đề tài đã xây dựng một kho lưu trữ thống nhất (Unified Datastore) trên nền PostgreSQL 16, tích hợp tiện ích mở rộng PostGIS cho các phép toán hình học không gian và pgvector cho việc lập chỉ mục, truy vấn vector ngữ nghĩa đa chiều. Sự tích hợp này triệt tiêu độ trễ trung chuyển dữ liệu giữa các dịch vụ ngoài, tạo tiền đề vững chắc cho việc triển khai Trợ lý AI theo kiến trúc RAG.
 
-Cuối cùng, chiến lược đóng gói và triển khai kép (Dual-environment Strategy) thông qua Docker Compose ở môi trường thử nghiệm cục bộ và kiến trúc đám mây đa nhà cung cấp (Vercel, Render, Neon, Supabase) trong môi trường sản xuất khẳng định tính sẵn sàng cao của đồ án. Hệ thống vừa đảm bảo tính độc lập, khả năng tái lập 100\% khi bảo vệ trước Hội đồng chấm thi, vừa sẵn sàng vận hành thực tế phục vụ cộng đồng sinh viên với chi phí vận hành tối ưu.
+Cuối cùng, kiến trúc đóng gói toàn diện thông qua Docker Compose đa dịch vụ (Nginx, FastAPI và PostgreSQL tích hợp PostGIS/pgvector) khẳng định tính sẵn sàng cao của đồ án. Hệ thống bảo đảm tính độc lập môi trường, khả năng tái lập 100\% khi triển khai và nghiệm thu trước Hội đồng chấm thi, đồng thời thiết lập ranh giới bảo mật mạng nội bộ an toàn và tối ưu hóa chi phí vận hành.

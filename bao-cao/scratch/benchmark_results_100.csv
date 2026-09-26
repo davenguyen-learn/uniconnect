@@ -1,0 +1,101 @@
+id,category,intent,query_type,query,status_code,latency_sec,is_gemini_native,card_count,precision_at_4,recall_at_4,card_rule_passed,constraint_satisfied,no_match_detected,unsupported_handled,task_success,failure_reason
+1,Công nghệ & Kỹ thuật,ACTIVITY_SEARCH,DIRECT_RETRIEVAL,Tìm workshop học về Machine Learning cơ bản và Scikit-Learn.,200,3.461,True,1,1.0,1.0,True,,,,True,
+2,Công nghệ & Kỹ thuật,ACTIVITY_SEARCH,DIRECT_RETRIEVAL,Có chuyên đề nào dạy Deep Learning và PyTorch không?,200,3.521,True,1,1.0,1.0,True,,,,True,
+3,Công nghệ & Kỹ thuật,ACTIVITY_SEARCH,DIRECT_RETRIEVAL,Tìm seminar về thị giác máy tính Computer Vision và xử lý ảnh OpenCV.,200,2.38,True,1,1.0,1.0,True,,,,True,
+4,Công nghệ & Kỹ thuật,ACTIVITY_SEARCH,DIRECT_RETRIEVAL,Có buổi hướng dẫn nào về Generative AI và xây dựng hệ thống RAG không?,200,2.72,True,1,1.0,1.0,True,,,,True,
+5,Công nghệ & Kỹ thuật,ACTIVITY_SEARCH,DIRECT_RETRIEVAL,Tìm workshop thực hành đóng gói ứng dụng với Docker và Docker Compose.,200,2.376,True,2,0.5,1.0,True,,,,True,
+6,Công nghệ & Kỹ thuật,ACTIVITY_SEARCH,DIRECT_RETRIEVAL,Có seminar chuyên sâu về điều phối container bằng Kubernetes không?,200,2.831,True,1,1.0,1.0,True,,,,True,
+7,Công nghệ & Kỹ thuật,ACTIVITY_SEARCH,DIRECT_RETRIEVAL,Tìm khóa học về điện toán đám mây Amazon Web Services AWS.,200,2.419,True,1,1.0,1.0,True,,,,True,
+8,Công nghệ & Kỹ thuật,ACTIVITY_SEARCH,DIRECT_RETRIEVAL,Có buổi tọa đàm nào về tự động hóa CI/CD với GitHub Actions không?,200,2.543,True,1,1.0,1.0,True,,,,True,
+9,Công nghệ & Kỹ thuật,ACTIVITY_SEARCH,DIRECT_RETRIEVAL,Tìm seminar về kiểm thử xâm nhập Pentest và các lỗ hổng web OWASP Top 10.,200,2.765,True,1,1.0,1.0,True,,,,True,
+10,Công nghệ & Kỹ thuật,ACTIVITY_SEARCH,DIRECT_RETRIEVAL,Thông tin về cuộc thi Bách Khoa Hackathon 2026 AI for Smart Campus.,200,2.327,True,1,1.0,1.0,True,,,,True,
+11,Học thuật & Kỹ năng,ACTIVITY_SEARCH,DIRECT_RETRIEVAL,Tìm lớp ôn tập thi giữa kỳ môn Giải tích 1.,200,2.307,True,0,0.0,0.0,False,,,,False,CARD_RULE_VIOLATION
+12,Học thuật & Kỹ năng,ACTIVITY_SEARCH,DIRECT_RETRIEVAL,Có nhóm ôn thi cuối kỳ môn Giải tích 2 tích phân bội không?,200,4.301,True,0,0.0,0.0,False,,,,False,CARD_RULE_VIOLATION
+13,Học thuật & Kỹ năng,ACTIVITY_SEARCH,DIRECT_RETRIEVAL,Tìm buổi gia sư phụ đạo môn Đại số tuyến tính không gian vector.,200,2.429,True,0,0.0,0.0,False,,,,False,CARD_RULE_VIOLATION
+14,Học thuật & Kỹ năng,ACTIVITY_SEARCH,DIRECT_RETRIEVAL,Có nhóm tự học môn Xác suất Thống kê kiểm định giả thuyết không?,200,0.943,False,4,0.0,0.0,True,,,,False,RELEVANCE_MISMATCH
+15,Học thuật & Kỹ năng,ACTIVITY_SEARCH,DIRECT_RETRIEVAL,Tìm chuyên đề ôn tập môn Vật lý 1 cơ học vật rắn.,200,0.722,True,0,0.0,0.0,False,,,,False,CARD_RULE_VIOLATION
+16,Học thuật & Kỹ năng,ACTIVITY_SEARCH,DIRECT_RETRIEVAL,Có buổi học nhóm môn Cấu trúc Dữ liệu và Giải thuật DSA ở thư viện không?,200,0.79,False,4,0.0,0.0,True,,,,False,RELEVANCE_MISMATCH
+17,Học thuật & Kỹ năng,ACTIVITY_SEARCH,DIRECT_RETRIEVAL,Tìm workshop học về Lập trình hướng đối tượng OOP và Design Patterns.,200,0.771,False,4,0.0,0.0,True,,,,False,RELEVANCE_MISMATCH
+18,Học thuật & Kỹ năng,ACTIVITY_SEARCH,DIRECT_RETRIEVAL,Có seminar về Hệ điều hành Operating Systems và xử lý bế tắc Deadlock không?,200,2.73,True,0,0.0,0.0,False,,,,False,CARD_RULE_VIOLATION
+19,Tình nguyện & CTXH,ACTIVITY_SEARCH,DIRECT_RETRIEVAL,Tìm hoạt động Chiến dịch Tình nguyện Ngày Chủ Nhật Xanh vệ sinh Hồ Tiền Phong.,200,2.974,True,0,0.0,0.0,False,,,,False,CARD_RULE_VIOLATION
+20,Tình nguyện & CTXH,ACTIVITY_SEARCH,DIRECT_RETRIEVAL,Thông tin về Ngày hội Hiến máu Nhân đạo Giọt hồng Bách Khoa.,200,2.432,True,2,1.0,1.0,True,,,,True,
+21,Tình nguyện & CTXH,ACTIVITY_SEARCH,DIRECT_RETRIEVAL,Có hoạt động Tiếp sức Mùa thi hỗ trợ thí sinh THPT không?,200,2.256,True,1,1.0,1.0,True,,,,True,
+22,Tình nguyện & CTXH,ACTIVITY_SEARCH,DIRECT_RETRIEVAL,Tìm hoạt động Đổi Pin cũ và Rác thải Điện tử lấy Cây Sen đá.,200,2.309,True,1,1.0,1.0,True,,,,True,
+23,Tình nguyện & CTXH,ACTIVITY_SEARCH,DIRECT_RETRIEVAL,Có hoạt động Gia sư Áo xanh dạy học cho trẻ em mái ấm không?,200,2.589,True,1,1.0,1.0,True,,,,True,
+24,Tình nguyện & CTXH,ACTIVITY_SEARCH,DIRECT_RETRIEVAL,Tìm đội hình hỗ trợ Tân Sinh viên K26 làm thủ tục nhập học.,200,2.672,True,1,1.0,1.0,True,,,,True,
+25,Tình nguyện & CTXH,ACTIVITY_SEARCH,DIRECT_RETRIEVAL,Tìm hoạt động vệ sinh phòng đọc thư viện và sắp xếp giá sách A2.,200,2.113,True,0,0.0,0.0,False,,,,False,CARD_RULE_VIOLATION
+26,Thể thao & Giải trí,ACTIVITY_SEARCH,DIRECT_RETRIEVAL,Có kèo đá bóng sân 7 tối thứ Năm tại KTX Bách Khoa không?,200,0.921,True,0,0.0,0.0,False,,,,False,CARD_RULE_VIOLATION
+27,Thể thao & Giải trí,ACTIVITY_SEARCH,DIRECT_RETRIEVAL,Tìm kèo giao lưu bóng đá mini sân 5 chiều thứ Bảy ở Làng Đại học.,200,0.813,True,0,0.0,0.0,False,,,,False,CARD_RULE_VIOLATION
+28,Thể thao & Giải trí,ACTIVITY_SEARCH,DIRECT_RETRIEVAL,Có buổi giao lưu đánh cầu lông ở sân C3 Bách Khoa CS1 không?,200,2.352,True,2,0.5,1.0,True,,,,True,
+29,Thể thao & Giải trí,ACTIVITY_SEARCH,DIRECT_RETRIEVAL,Tìm kèo ném bóng rổ ngoài trời giao lưu ở Bách Khoa CS1.,200,2.398,True,0,0.0,0.0,False,,,,False,CARD_RULE_VIOLATION
+30,Thể thao & Giải trí,ACTIVITY_SEARCH,DIRECT_RETRIEVAL,Có hoạt động chạy bộ rèn luyện sức bền sáng sớm quanh hồ KTX ĐHQG không?,200,3.045,True,2,0.5,1.0,True,,,,True,
+31,Thể thao & Giải trí,ACTIVITY_SEARCH,DIRECT_RETRIEVAL,Tìm buổi sinh hoạt CLB Cờ vua và Cờ tướng ở sảnh nhà H6 CS2.,200,2.245,True,1,1.0,1.0,True,,,,True,
+32,Thể thao & Giải trí,ACTIVITY_SEARCH,DIRECT_RETRIEVAL,Có lớp bơi lội rèn luyện thể lực cuối tuần ở hồ bơi Phú Thọ không?,200,3.387,True,0,0.0,0.0,False,,,,False,CARD_RULE_VIOLATION
+33,CLB & Đội nhóm,ACTIVITY_SEARCH,DIRECT_RETRIEVAL,Đêm nhạc Acoustic của CLB Guitar BGC Bách Khoa diễn ra ở đâu?,200,2.192,True,2,0.5,1.0,True,,,,True,
+34,CLB & Đội nhóm,ACTIVITY_SEARCH,DIRECT_RETRIEVAL,Thông tin buổi Coffee Talk bằng tiếng Anh của CLB Tiếng Anh BEC.,200,2.494,True,1,1.0,1.0,True,,,,True,
+35,CLB & Đội nhóm,ACTIVITY_SEARCH,DIRECT_RETRIEVAL,Có buổi trình diễn robot và tuyển thành viên của Đội Robocon không?,200,1.115,True,0,0.0,0.0,False,,,,False,CARD_RULE_VIOLATION
+36,Hướng nghiệp & Việc làm,ACTIVITY_SEARCH,DIRECT_RETRIEVAL,Khi nào diễn ra Ngày hội Việc làm Bách Khoa Job Fair 2026?,200,0.794,True,0,0.0,0.0,False,,,,False,CARD_RULE_VIOLATION
+37,Hướng nghiệp & Việc làm,ACTIVITY_SEARCH,DIRECT_RETRIEVAL,Tìm workshop hướng dẫn viết CV công nghệ và sửa CV xin việc IT.,200,0.761,False,4,0.0,0.0,True,,,,False,RELEVANCE_MISMATCH
+38,Hướng nghiệp & Việc làm,ACTIVITY_SEARCH,DIRECT_RETRIEVAL,Có chương trình phỏng vấn thử Mock Interview 1-1 với Senior Tech Lead không?,200,0.823,False,4,0.0,0.0,True,,,,False,RELEVANCE_MISMATCH
+39,Học thuật & Kỹ năng,ACTIVITY_SEARCH,DIRECT_RETRIEVAL,Tìm lớp huấn luyện kỹ năng thuyết trình tự tin và thiết kế slide báo cáo.,200,3.386,True,2,0.5,1.0,True,,,,True,
+40,Học thuật & Kỹ năng,ACTIVITY_SEARCH,DIRECT_RETRIEVAL,Có workshop nào dạy kỹ thuật quản lý thời gian và chống trì hoãn Pomodoro không?,200,2.566,True,1,1.0,1.0,True,,,,True,
+41,Công nghệ & Kỹ thuật,ACTIVITY_SEARCH,SEMANTIC_PARAPHRASE,Có hoạt động nào dạy cách đóng gói và triển khai ứng dụng bằng container không?,200,3.577,True,2,1.0,1.0,True,,,,True,
+42,Công nghệ & Kỹ thuật,ACTIVITY_SEARCH,SEMANTIC_PARAPHRASE,Tôi muốn học cách huấn luyện mô hình mạng nơ-ron nhân tạo nhận diện đồ vật.,200,4.203,True,4,0.0,0.0,True,,,,False,RELEVANCE_MISMATCH
+43,Công nghệ & Kỹ thuật,ACTIVITY_SEARCH,SEMANTIC_PARAPHRASE,Có chỗ nào hướng dẫn xây dựng chatbot thông minh trả lời theo tài liệu riêng không?,200,3.218,True,0,0.0,0.0,False,,,,False,CARD_RULE_VIOLATION
+44,Công nghệ & Kỹ thuật,ACTIVITY_SEARCH,SEMANTIC_PARAPHRASE,Làm sao để tự động chạy test và đưa code lên server khi commit GitHub?,200,3.746,True,0,0.0,0.0,False,,,,False,CARD_RULE_VIOLATION
+45,Công nghệ & Kỹ thuật,ACTIVITY_SEARCH,SEMANTIC_PARAPHRASE,Có lớp nào hướng dẫn tấn công thử nghiệm web để biết cách bảo mật không?,200,4.386,True,5,0.25,1.0,True,,,,True,
+46,Học thuật & Kỹ năng,ACTIVITY_SEARCH,SEMANTIC_PARAPHRASE,"Em bị mất gốc phần tính tích phân suy rộng và chuỗi số, có ai kèm không ạ?",200,1.001,False,4,0.25,1.0,True,,,,True,
+47,Học thuật & Kỹ năng,ACTIVITY_SEARCH,SEMANTIC_PARAPHRASE,Có bạn nào đang cày bài tập cây nhị phân và đồ thị môn thuật toán ở thư viện không?,200,0.788,False,4,0.0,0.0,True,,,,False,RELEVANCE_MISMATCH
+48,Học thuật & Kỹ năng,ACTIVITY_SEARCH,SEMANTIC_PARAPHRASE,Tôi đang tìm hiểu cách viết báo cáo luận văn có công thức toán đẹp mắt.,200,0.85,False,4,0.0,0.0,True,,,,False,RELEVANCE_MISMATCH
+49,Học thuật & Kỹ năng,ACTIVITY_SEARCH,SEMANTIC_PARAPHRASE,Cách đăng ký thi NCKH sinh viên và xin kinh phí đề tài nghiên cứu thế nào?,200,2.864,True,0,0.0,0.0,False,,,,False,CARD_RULE_VIOLATION
+50,Học thuật & Kỹ năng,ACTIVITY_SEARCH,SEMANTIC_PARAPHRASE,Có buổi luyện nói tiếng Anh giao tiếp nào về các chủ đề công nghệ hiện đại không?,200,3.639,True,2,1.0,1.0,True,,,,True,
+51,Tình nguyện & CTXH,ACTIVITY_SEARCH,SEMANTIC_PARAPHRASE,Có chương trình nào vớt rác và bảo vệ môi trường nước quanh ký túc xá không?,200,3.132,True,3,0.333,1.0,True,,,,True,
+52,Tình nguyện & CTXH,ACTIVITY_SEARCH,SEMANTIC_PARAPHRASE,"Tôi có mấy đồ linh kiện điện tử và pin hỏng, có chỗ nào nhận gom đổi quà không?",200,2.533,True,0,0.0,0.0,False,,,,False,CARD_RULE_VIOLATION
+53,Tình nguyện & CTXH,ACTIVITY_SEARCH,SEMANTIC_PARAPHRASE,Muốn tham gia dạy chữ và kèm học tập cho các bé mồ côi thì đăng ký ở đâu?,200,4.382,True,0,0.0,0.0,False,,,,False,CARD_RULE_VIOLATION
+54,Thể thao & Giải trí,ACTIVITY_SEARCH,SEMANTIC_PARAPHRASE,Có kèo bóng đá phủi nào buổi tối sau giờ tan ca học quanh trường không?,200,2.649,True,0,0.0,0.0,False,,,,False,CARD_RULE_VIOLATION
+55,Thể thao & Giải trí,ACTIVITY_SEARCH,SEMANTIC_PARAPHRASE,Tìm người chơi bóng bàn đánh đơn hoặc đánh đôi rèn luyện phản xạ.,200,1.728,True,0,0.0,0.0,False,,,,False,CARD_RULE_VIOLATION
+56,Thể thao & Giải trí,ACTIVITY_SEARCH,SEMANTIC_PARAPHRASE,"Có chỗ nào giao lưu cờ thế, đánh cờ chớp giao hữu giữa các sinh viên không?",200,0.793,False,4,0.0,0.0,True,,,,False,RELEVANCE_MISMATCH
+57,CLB & Đội nhóm,ACTIVITY_SEARCH,SEMANTIC_PARAPHRASE,Tối thứ Sáu rảnh muốn nghe đàn hát acoustic nhẹ nhàng thì ghé đâu?,200,0.87,False,4,0.0,0.0,True,,,,False,RELEVANCE_MISMATCH
+58,Hướng nghiệp & Việc làm,ACTIVITY_SEARCH,SEMANTIC_PARAPHRASE,Làm sao để chuẩn bị hồ sơ ứng tuyển IT không bị loại từ vòng lọc tự động ATS?,200,0.847,False,4,0.0,0.0,True,,,,False,RELEVANCE_MISMATCH
+59,Hướng nghiệp & Việc làm,ACTIVITY_SEARCH,SEMANTIC_PARAPHRASE,Có cơ hội nào được phỏng vấn thử coding trực tiếp với các chuyên gia công nghệ không?,200,3.63,True,1,0.0,0.0,True,,,,False,RELEVANCE_MISMATCH
+60,Học thuật & Kỹ năng,ACTIVITY_SEARCH,SEMANTIC_PARAPHRASE,Nhóm làm bài tập lớn hay cãi nhau bất đồng ý kiến thì xử lý thế nào cho khéo?,200,3.955,True,0,0.0,0.0,False,,,,False,CARD_RULE_VIOLATION
+61,Tình nguyện & CTXH,ACTIVITY_SEARCH,MULTI_CONSTRAINT,Tìm hoạt động tình nguyện cuối tuần ở Cơ sở 2 có điểm CTXH.,200,3.175,True,0,0.0,0.0,False,False,,,False,CARD_RULE_VIOLATION
+62,Tình nguyện & CTXH,ACTIVITY_SEARCH,MULTI_CONSTRAINT,Có hoạt động tình nguyện nào ở CS1 được cộng từ 1 ngày CTXH trở lên không?,200,3.096,True,2,1.0,0.5,True,True,,,True,
+63,Thể thao & Giải trí,ACTIVITY_SEARCH,MULTI_CONSTRAINT,Tìm trận đá bóng sân 7 buổi tối ở Cơ sở 1.,200,2.059,True,0,0.0,0.0,False,False,,,False,CARD_RULE_VIOLATION
+64,Thể thao & Giải trí,ACTIVITY_SEARCH,MULTI_CONSTRAINT,Có hoạt động chạy bộ sáng sớm ở Cơ sở 2 Dĩ An không?,200,2.58,True,2,0.5,1.0,True,True,,,True,
+65,Công nghệ & Kỹ thuật,ACTIVITY_SEARCH,MULTI_CONSTRAINT,Tìm workshop về trí tuệ nhân tạo hoặc deep learning diễn ra ở Cơ sở 2 Dĩ An.,200,3.293,True,3,0.333,0.5,True,True,,,True,
+66,Công nghệ & Kỹ thuật,ACTIVITY_SEARCH,MULTI_CONSTRAINT,Có seminar công nghệ nào diễn ra vào buổi tối ở Cơ sở 1 không?,200,0.855,False,4,0.0,0.0,True,False,,,False,CONSTRAINT_UNSATISFIED
+67,Học thuật & Kỹ năng,ACTIVITY_SEARCH,MULTI_CONSTRAINT,Tìm lớp ôn thi toán Giải tích 1 vào buổi sáng ở Cơ sở 1.,200,0.845,True,0,0.0,0.0,False,False,,,False,CARD_RULE_VIOLATION
+68,Học thuật & Kỹ năng,ACTIVITY_SEARCH,MULTI_CONSTRAINT,Có lớp ôn thi toán Giải tích 2 ở Cơ sở 2 Dĩ An không?,200,0.828,True,0,0.0,0.0,False,False,,,False,CARD_RULE_VIOLATION
+69,CLB & Đội nhóm,ACTIVITY_SEARCH,MULTI_CONSTRAINT,Tìm buổi sinh hoạt văn nghệ acoustic vào buổi tối ở Cơ sở 1.,200,3.917,True,3,0.333,1.0,True,True,,,True,
+70,Hướng nghiệp & Việc làm,ACTIVITY_SEARCH,MULTI_CONSTRAINT,Có sự kiện tuyển dụng hoặc gặp gỡ doanh nghiệp công nghệ tại Cơ sở 2 Dĩ An không?,200,2.423,True,4,0.0,0.0,True,True,,,False,RELEVANCE_MISMATCH
+71,Thể thao & Giải trí,ACTIVITY_SEARCH,MULTI_CONSTRAINT,Tìm hoạt động bóng rổ diễn ra vào cuối tuần ở Cơ sở 1.,200,2.244,True,0,0.0,0.0,False,False,,,False,CARD_RULE_VIOLATION
+72,Tình nguyện & CTXH,ACTIVITY_SEARCH,MULTI_CONSTRAINT,Tìm hoạt động tình nguyện đổi pin cũ lấy quà bảo vệ môi trường ở Cơ sở 1.,200,3.323,True,3,0.333,1.0,True,True,,,True,
+73,Thể thao & Giải trí,ACTIVITY_SEARCH,MULTI_CONSTRAINT,Có kèo chơi cờ vua cờ tướng vào buổi chiều ở Cơ sở 2 không?,200,2.811,True,0,0.0,0.0,False,False,,,False,CARD_RULE_VIOLATION
+74,Học thuật & Kỹ năng,ACTIVITY_SEARCH,MULTI_CONSTRAINT,Tìm workshop học về Linux và máy chủ web Nginx tại Cơ sở 2 Dĩ An.,200,2.618,True,0,0.0,0.0,False,False,,,False,CARD_RULE_VIOLATION
+75,Hướng nghiệp & Việc làm,ACTIVITY_SEARCH,MULTI_CONSTRAINT,Tìm sự kiện ngày hội việc làm quy mô lớn vào ban ngày ở Cơ sở 1.,200,1.098,True,1,1.0,1.0,True,True,,,True,
+76,Thể thao & Giải trí,ACTIVITY_SEARCH,IN_DOMAIN_NO_MATCH,Có giải thi đấu bóng rổ 3x3 lúc 23h đêm tại Cơ sở 2 không?,200,0.785,True,0,1.0,1.0,True,,True,,True,
+77,Thể thao & Giải trí,ACTIVITY_SEARCH,IN_DOMAIN_NO_MATCH,Tìm câu lạc bộ bắn cung thể thao hoặc lớp học bắn cung tại Bách Khoa CS1.,200,0.827,True,0,1.0,1.0,True,,False,,False,NO_MATCH_UNRESOLVED
+78,Công nghệ & Kỹ thuật,ACTIVITY_SEARCH,IN_DOMAIN_NO_MATCH,Có workshop nào về thiết kế chip quang học photonics và máy tính lượng tử không?,200,0.786,False,4,0.0,0.0,False,,False,,False,CARD_RULE_VIOLATION
+79,Học thuật & Kỹ năng,ACTIVITY_SEARCH,IN_DOMAIN_NO_MATCH,Có lớp dạy kèm tiếng Nga hoặc tiếng Ả Rập tại khuôn viên trường không?,200,0.794,False,4,0.0,0.0,False,,False,,False,CARD_RULE_VIOLATION
+80,Tình nguyện & CTXH,ACTIVITY_SEARCH,IN_DOMAIN_NO_MATCH,Tìm hoạt động tình nguyện cứu trợ thú cưng mèo hoang quanh cơ sở 1 được cấp ngày CTXH.,200,2.098,True,0,1.0,1.0,True,,True,,True,
+81,Thể thao & Giải trí,ACTIVITY_SEARCH,IN_DOMAIN_NO_MATCH,Có giải thi đấu cờ ca-rô ăn tiền thưởng 10 triệu đồng tại trường không?,200,2.632,True,0,1.0,1.0,True,,True,,True,
+82,CLB & Đội nhóm,ACTIVITY_SEARCH,IN_DOMAIN_NO_MATCH,Tìm câu lạc bộ mô tô phân khối lớn hoặc phượt xe cào cào của trường.,200,2.562,True,0,1.0,1.0,True,,True,,True,
+83,Hướng nghiệp & Việc làm,ACTIVITY_SEARCH,IN_DOMAIN_NO_MATCH,Có hội thảo tuyển dụng phi công và tiếp viên hàng không tại Hội trường A5 không?,200,2.088,True,0,1.0,1.0,True,,True,,True,
+84,Học thuật & Kỹ năng,ACTIVITY_SEARCH,IN_DOMAIN_NO_MATCH,Tìm khóa học trực tiếp về lập trình ngôn ngữ COBOL và máy chủ Mainframe IBM.,200,2.819,True,0,1.0,1.0,True,,True,,True,
+85,Thể thao & Giải trí,ACTIVITY_SEARCH,IN_DOMAIN_NO_MATCH,Có giải bóng đá 11 người chuyên nghiệp thi đấu lúc 4 giờ sáng không?,200,2.135,True,0,1.0,1.0,True,,True,,True,
+86,Lịch học & Xung đột,GET_SCHEDULE,SCHEDULE_CONFLICT,Xem thời khóa biểu và các khung giờ học bận trong tuần này của tôi.,200,2.009,True,0,1.0,1.0,True,,,,True,
+87,Lịch học & Xung đột,GET_SCHEDULE,SCHEDULE_CONFLICT,Sáng thứ Hai tôi có bị kẹt lịch học hay bận môn gì không?,200,2.1,True,0,1.0,1.0,True,,,,True,
+88,Lịch học & Xung đột,GET_SCHEDULE,SCHEDULE_CONFLICT,Chiều thứ Ba tôi có tiết học nào trên lớp không?,200,0.982,True,0,1.0,1.0,True,,,,True,
+89,Lịch học & Xung đột,GET_SCHEDULE,SCHEDULE_CONFLICT,Sáng thứ Sáu tôi học ở cơ sở nào và mấy giờ bắt đầu?,200,0.785,True,0,1.0,1.0,True,,,,True,
+90,Lịch học & Xung đột,ACTIVITY_SEARCH,SCHEDULE_CONFLICT,Tìm hoạt động học tập nào diễn ra vào khung giờ tôi hoàn toàn rảnh rỗi.,200,0.768,True,0,0.0,0.0,False,,,,False,CARD_RULE_VIOLATION
+91,CLB & Chính sách,GET_GROUP_INFO,GROUP_POLICY,Tìm các câu lạc bộ học thuật và lập trình hiện có trong trường.,200,3.73,True,0,1.0,1.0,True,,,,True,
+92,CLB & Chính sách,GET_GROUP_INFO,GROUP_POLICY,Trong trường có câu lạc bộ tiếng Anh hoặc câu lạc bộ guitar nào không?,200,2.171,True,0,1.0,1.0,True,,,,True,
+93,CLB & Chính sách,GET_POLICY_INFO,GROUP_POLICY,Sinh viên cần hoàn thành bao nhiêu ngày Công tác Xã hội để đủ điều kiện xét tốt nghiệp?,200,1.751,True,0,1.0,1.0,True,,,,True,
+94,CLB & Chính sách,GET_POLICY_INFO,GROUP_POLICY,Quy định về việc cộng điểm rèn luyện khi tham gia các hoạt động phong trào ra sao?,200,1.831,True,0,1.0,1.0,True,,,,True,
+95,CLB & Chính sách,GET_POLICY_INFO,GROUP_POLICY,Làm thế nào để tạo một nhóm hoặc câu lạc bộ mới trên hệ thống UniConnect?,200,2.215,True,0,1.0,1.0,True,,,,True,
+96,Ngoài phạm vi,UNSUPPORTED,UNSUPPORTED,Theo bạn tuần này tôi có nên đầu tư mua Bitcoin hay Ethereum không?,200,1.535,True,0,1.0,1.0,True,,,True,True,
+97,Ngoài phạm vi,UNSUPPORTED,UNSUPPORTED,Dự đoán giá vàng thế giới và tỷ giá USD ngày mai tăng hay giảm?,200,2.923,True,0,1.0,1.0,True,,,True,True,
+98,Ngoài phạm vi,UNSUPPORTED,UNSUPPORTED,Chỉ tôi cách bẻ khóa mật khẩu wifi nhà hàng xóm để xài ké mạng với.,200,1.847,True,0,1.0,1.0,True,,,True,True,
+99,Ngoài phạm vi,UNSUPPORTED,UNSUPPORTED,Giải giúp tôi bài toán giải tích này: tính tích phân từ 0 đến vô cùng của x*exp(-x^2).,200,2.394,True,0,1.0,1.0,True,,,False,False,UNSUPPORTED_UNRESOLVED
+100,Ngoài phạm vi,UNSUPPORTED,UNSUPPORTED,Gợi ý cho tôi danh sách các quán bar và club đêm đắt đỏ nhất Sài Gòn.,200,1.628,True,0,1.0,1.0,True,,,True,True,

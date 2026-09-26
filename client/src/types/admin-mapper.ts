@@ -5,6 +5,7 @@ import type {
   VerificationItemDTO,
   AdminReportItem,
 } from '../api/admin';
+import { formatCtxh } from '../utils/format';
 
 // ── View Models ──
 
@@ -176,7 +177,7 @@ export const mapStudentAuditToViewModel = (
       ? { label: 'Đã xác minh', className: 'badge-verified' }
       : { label: 'Chưa', className: 'badge-unverified' },
     roleBadge: roleMap[dto.role] || { label: dto.role, className: 'badge-role-default' },
-    confirmedCtxhDays: dto.confirmed_ctxh_days.toFixed(1),
+    confirmedCtxhDays: formatCtxh(dto.confirmed_ctxh_days),
     attendanceCount: dto.attendance_count,
     joinedDate,
   };
@@ -207,7 +208,7 @@ export const mapVerificationToViewModel = (
     statusBadge: statusMap[dto.status] || { label: dto.status, className: 'badge-verif-default' },
     adminNote: dto.admin_note,
     createdAtFormatted,
-    applicantName: dto.applicant_name || 'Đại diện CLB',
+    applicantName: dto.applicant_name || 'Đại diện nhóm',
     applicantEmail: dto.applicant_email || '—',
   };
 };

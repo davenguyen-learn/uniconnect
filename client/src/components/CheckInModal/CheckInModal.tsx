@@ -164,7 +164,7 @@ export const CheckInModal: React.FC<CheckInModalProps> = ({
         {/* Header */}
         <div className="checkin-modal-header">
           <h3 id="checkin-modal-title" className="checkin-modal-title">
-            <Radio size={20} className="text-indigo-600 dark:text-indigo-400" />
+            <Radio size={20} className="text-indigo-600" />
             Điểm danh sự kiện
           </h3>
           <button

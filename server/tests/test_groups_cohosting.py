@@ -414,3 +414,57 @@ def test_group_stats_sql_aggregation_deduplication_structure():
     assert "DISTINCT" in compiled_ctxh_sql
     assert "coalesce(sum(" in compiled_ctxh_sql.lower()
     assert "join_requests.attendance_confirmed is true" in compiled_ctxh_sql.lower()
+
+
+@pytest.mark.asyncio
+async def test_cohost_invitation_privacy_rules():
+    """Verify that public groups can be invited by anyone, and private groups can only be invited by their members."""
+    from app.modules.groups.service import invite_cohost
+    from app.modules.groups.models import GroupPrivacy
+
+    user_id = uuid.uuid4()
+    activity_id = uuid.uuid4()
+    lead_group_id = uuid.uuid4()
+    private_group_id = uuid.uuid4()
+
+    mock_db = AsyncMock()
+    mock_db.add = MagicMock()
+    act = Activity(id=activity_id, group_id=lead_group_id, is_deleted=False)
+
+    # 1. Non-member invites a private group -> 403 Forbidden
+    with patch("app.modules.groups.service.can_invite_cohost", return_value=True):
+        with patch("app.modules.groups.repository.get_group_by_id", return_value=Group(id=private_group_id, name="Nhóm Kín", privacy=GroupPrivacy.private)):
+            with patch("app.modules.groups.repository.is_member", return_value=False):
+                mock_act_res = MagicMock()
+                mock_act_res.scalar_one_or_none.return_value = act
+                mock_db.execute.return_value = mock_act_res
+
+                with pytest.raises(HTTPException) as exc_priv:
+                    await invite_cohost(
+                        mock_db, activity_id, user_id,
+                        CoHostInvitationCreate(invited_group_id=private_group_id)
+                    )
+                assert exc_priv.value.status_code == 403
+                assert "nhóm riêng tư" in exc_priv.value.detail.lower()
+
+    # 2. Member invites a private group -> Success
+    with patch("app.modules.groups.service.can_invite_cohost", return_value=True):
+        with patch("app.modules.groups.repository.get_group_by_id", return_value=Group(id=private_group_id, name="Nhóm Kín", privacy=GroupPrivacy.private)):
+            with patch("app.modules.groups.repository.is_member", return_value=True):
+                mock_act_res = MagicMock()
+                mock_act_res.scalar_one_or_none.return_value = act
+
+                mock_no_cohost = MagicMock()
+                mock_no_cohost.scalar_one_or_none.return_value = None
+
+                mock_no_pending = MagicMock()
+                mock_no_pending.scalar_one_or_none.return_value = None
+
+                mock_db.execute.side_effect = [mock_act_res, mock_no_cohost, mock_no_pending]
+
+                res = await invite_cohost(
+                    mock_db, activity_id, user_id,
+                    CoHostInvitationCreate(invited_group_id=private_group_id, message="Mời nhóm riêng tư")
+                )
+                assert res.status == "pending"
+                assert res.invited_group_id == private_group_id

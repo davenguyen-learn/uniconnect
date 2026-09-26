@@ -5,7 +5,9 @@ import { groupsApi, type GroupResponse } from '../../api/groups';
 import { useToast } from '../../components/Toast/ToastContext';
 import Button from '../../components/Button/Button';
 import CollectionLayout from '../../components/Layout/CollectionLayout';
+import { resolveAvatarUrl } from '../../utils/avatar';
 import './Groups.css';
+
 
 export default function Groups() {
   const toast = useToast();
@@ -44,8 +46,8 @@ export default function Groups() {
   const currentGroups = activeTab === 'my' ? myGroups : discoverGroups;
 
   const tabs = [
-    { id: 'my', label: 'CLB của tôi', count: myGroups.length },
-    { id: 'discover', label: 'Khám phá CLB' },
+    { id: 'my', label: 'Nhóm của tôi', count: myGroups.length },
+    { id: 'discover', label: 'Khám phá nhóm mới' },
   ];
 
   const sortOptions = [
@@ -56,44 +58,44 @@ export default function Groups() {
 
   return (
     <CollectionLayout
-      title="Câu lạc bộ & Cộng đồng"
+      title="Nhóm"
       action={
         <Link to="/groups/new">
           <Button>
             <Plus className="w-4 h-4 mr-1.5" />
-            Tạo CLB mới
+            Tạo nhóm mới
           </Button>
         </Link>
       }
       tabs={tabs}
       activeTab={activeTab}
       onTabChange={(tabId) => setActiveTab(tabId as 'my' | 'discover')}
-      searchPlaceholder={activeTab === 'discover' ? 'Tìm kiếm câu lạc bộ theo tên...' : undefined}
+      searchPlaceholder={activeTab === 'discover' ? 'Tìm kiếm nhóm theo tên...' : undefined}
       searchValue={activeTab === 'discover' ? search : undefined}
       onSearchChange={activeTab === 'discover' ? setSearch : undefined}
       sortOptions={activeTab === 'discover' ? sortOptions : undefined}
       sortValue={activeTab === 'discover' ? sortBy : undefined}
       onSortChange={activeTab === 'discover' ? setSortBy : undefined}
       loading={loading}
-      loadingMessage="Đang tải danh sách câu lạc bộ..."
+      loadingMessage="Đang tải danh sách nhóm..."
       isEmpty={currentGroups.length === 0}
-      emptyTitle={activeTab === 'my' ? "Bạn chưa tham gia câu lạc bộ nào." : "Không tìm thấy câu lạc bộ nào."}
+      emptyTitle={activeTab === 'my' ? "Bạn chưa tham gia nhóm nào." : "Không tìm thấy nhóm nào."}
       emptyMessage={
         activeTab === 'my'
-          ? 'Hãy sang mục Khám phá để tìm các câu lạc bộ ngoại khóa thú vị và tham gia nhé!'
-          : 'Thử tìm kiếm bằng từ khóa khác hoặc đăng ký thành lập câu lạc bộ của riêng bạn.'
+          ? 'Hãy sang mục Khám phá để tìm các nhóm hoạt động thú vị và tham gia nhé!'
+          : 'Thử tìm kiếm bằng từ khóa khác hoặc đăng ký thành lập nhóm của riêng bạn.'
       }
       emptyAction={
         activeTab === 'my' ? (
           <Button variant="secondary" onClick={() => setActiveTab('discover')}>
             <Compass className="w-4 h-4 mr-1.5" />
-            Khám phá câu lạc bộ
+            Khám phá nhóm mới
           </Button>
         ) : (
           <Link to="/groups/new">
             <Button>
               <Plus className="w-4 h-4 mr-1.5" />
-              Tạo CLB mới
+              Tạo nhóm mới
             </Button>
           </Link>
         )
@@ -107,8 +109,16 @@ export default function Groups() {
         >
           <div className="group-card-header">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold flex items-center justify-center text-sm shadow-sm shrink-0">
-                {group.name.charAt(0).toUpperCase()}
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold flex items-center justify-center text-sm shadow-sm shrink-0 overflow-hidden">
+                {group.avatar_url ? (
+                  <img
+                    src={resolveAvatarUrl(group.avatar_url)!}
+                    alt={group.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  group.name.charAt(0).toUpperCase()
+                )}
               </div>
               <h3 className="group-card-title">{group.name}</h3>
             </div>
@@ -118,12 +128,12 @@ export default function Groups() {
             </span>
           </div>
           <p className="group-card-desc">{group.description || 'Không có mô tả.'}</p>
-          <div className="group-card-footer flex items-center justify-between text-xs text-slate-400 mt-auto pt-3 border-t border-slate-100 dark:border-slate-800">
+          <div className="group-card-footer flex items-center justify-between text-xs text-slate-400 mt-auto pt-3 border-t border-slate-100">
             <span className="flex items-center gap-1">
               <Calendar className="w-3.5 h-3.5" />
               {new Date(group.created_at).toLocaleDateString('vi-VN')}
             </span>
-            <span className="flex items-center gap-0.5 text-indigo-600 dark:text-indigo-400 font-semibold group-hover:translate-x-0.5 transition">
+            <span className="flex items-center gap-0.5 text-indigo-600 font-semibold group-hover:translate-x-0.5 transition">
               Chi tiết <ArrowRight className="w-3.5 h-3.5" />
             </span>
           </div>

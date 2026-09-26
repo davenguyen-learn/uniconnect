@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     def trusted_proxy_list(self) -> list[str]:
         return [ip.strip() for ip in self.TRUSTED_PROXY_IPS.split(",") if ip.strip()]
 
-    # ── Storage (Cloudflare R2) ──
+    # ── Storage (Cloudflare R2 & Local Storage) ──
     R2_ENDPOINT_URL: str = ""
     R2_ACCESS_KEY_ID: str = ""
     R2_SECRET_ACCESS_KEY: str = ""
@@ -43,11 +43,15 @@ class Settings(BaseSettings):
     R2_PUBLIC_URL: str = ""
     MAX_FILE_SIZE: int = 10_485_760  # 10MB
     ALLOWED_FILE_TYPES: str = "application/pdf,image/jpeg,image/png,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    UPLOAD_ROOT_DIR: str = "uploads"
+    AVATAR_UPLOAD_DIR: str = "uploads/avatars"
+    MAX_AVATAR_SIZE_BYTES: int = 5 * 1024 * 1024  # 5MB
+    MAX_AVATAR_DIMENSION: int = 4096  # Max width/height in px
 
     # ── AI Services ──
     GEMINI_API_KEY: str = ""
-    GEMINI_PRIMARY_MODEL: str = "gemini-2.5-flash"
-    GEMINI_FALLBACK_MODELS: str = "gemini-2.0-flash,gemini-1.5-flash"
+    GEMINI_PRIMARY_MODEL: str = "gemini-3.5-flash-lite"
+    GEMINI_FALLBACK_MODELS: str = "gemini-2.5-flash"
 
     @property
     def cors_origin_list(self) -> list[str]:

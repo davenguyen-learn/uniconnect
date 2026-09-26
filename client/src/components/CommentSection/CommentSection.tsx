@@ -2,7 +2,19 @@ import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../Toast/ToastContext';
 import { interactionsApi, type CommentResponse } from '../../api/interactions';
+import { resolveAvatarUrl } from '../../utils/avatar';
 import './CommentSection.css';
+
+function getUserInitial(fullName?: string | null, username?: string | null): string {
+  if (fullName && fullName.trim()) {
+    const parts = fullName.trim().split(' ').filter(Boolean);
+    return parts[parts.length - 1][0].toUpperCase();
+  }
+  if (username && username.trim()) {
+    return username.trim()[0].toUpperCase();
+  }
+  return '?';
+}
 
 interface CommentItemProps {
   comment: CommentResponse;
@@ -36,7 +48,20 @@ function CommentItem({ comment, currentUserId, onReply, onDelete, onUpdate, isRe
   return (
     <div className={`comment-item ${isReply ? 'comment-reply' : ''} ${comment.is_deleted ? 'comment-deleted' : ''}`}>
       <div className="comment-avatar">
-        {comment.is_deleted ? '🗑' : (comment.user?.username?.[0]?.toUpperCase() || '?')}
+        {comment.is_deleted ? (
+          '🗑'
+        ) : comment.user?.avatar_url ? (
+          <img
+            src={resolveAvatarUrl(comment.user.avatar_url)!}
+            alt={comment.user.full_name || comment.user.username}
+            className="comment-avatar-img"
+            onError={(e) => {
+              (e.target as HTMLElement).style.display = 'none';
+            }}
+          />
+        ) : (
+          <span>{getUserInitial(comment.user?.full_name, comment.user?.username)}</span>
+        )}
       </div>
       <div className="comment-body">
         <div className="comment-header">
@@ -210,7 +235,18 @@ export default function CommentSection({
       {/* New comment form */}
       <form onSubmit={handleSubmitComment} className="comment-form" id="comment-form">
         <div className="comment-form-avatar">
-          {user?.username?.[0]?.toUpperCase() || '?'}
+          {user?.avatar_url ? (
+            <img
+              src={resolveAvatarUrl(user.avatar_url)!}
+              alt={user.full_name || user.username}
+              className="comment-avatar-img"
+              onError={(e) => {
+                (e.target as HTMLElement).style.display = 'none';
+              }}
+            />
+          ) : (
+            <span>{getUserInitial(user?.full_name, user?.username)}</span>
+          )}
         </div>
         <div className="comment-form-input-wrapper">
           <textarea

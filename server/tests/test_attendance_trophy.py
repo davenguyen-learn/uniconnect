@@ -197,3 +197,58 @@ async def test_check_in_haversine_outside_radius_rejected():
         part_repo.get_active_request = orig_get_active
         act_repo.get_coordinates_from_db = orig_coords
 
+
+@pytest.mark.asyncio
+async def test_get_certificate_data_includes_email_and_custom_fields():
+    from unittest.mock import AsyncMock, MagicMock
+    from datetime import datetime
+    from app.modules.participation.service import get_certificate_data
+    import app.modules.activities.repository as act_repo
+    import app.modules.participation.repository as part_repo
+
+    db = AsyncMock()
+    act_id = uuid.uuid4()
+    usr_id = uuid.uuid4()
+
+    mock_act = MagicMock()
+    mock_act.id = act_id
+    mock_act.title = "Workshop AI & Data Science"
+    mock_act.start_time = datetime(2026, 9, 25, 9, 0)
+    mock_act.host_id = uuid.uuid4()
+    mock_act.social_work_days = 1.0
+    mock_act.custom_form_id = None
+
+    mock_jr = MagicMock()
+    mock_jr.attendance_confirmed = True
+    mock_jr.form_responses = {
+        "MSSV": "20110123",
+        "Khoa": "Khoa học & Kỹ thuật Máy tính"
+    }
+
+    mock_user = MagicMock()
+    mock_user.id = usr_id
+    mock_user.full_name = "Nguyễn Văn A"
+    mock_user.username = "nguyenvana"
+    mock_user.email = "vana.nguyen@hcmut.edu.vn"
+    mock_user.university = "ĐH Bách Khoa ĐHQG-HCM"
+
+    orig_get_act = act_repo.get_by_id
+    orig_get_jr = part_repo.get_active_request
+
+    try:
+        act_repo.get_by_id = AsyncMock(return_value=mock_act)
+        part_repo.get_active_request = AsyncMock(return_value=mock_jr)
+        db.scalar = AsyncMock(side_effect=[mock_user, None, None, None])
+
+        result = await get_certificate_data(db, act_id, str(usr_id))
+        assert result["participant_email"] == "vana.nguyen@hcmut.edu.vn"
+        assert result["participant_name"] == "Nguyễn Văn A"
+        assert len(result["custom_fields"]) == 2
+        labels = [f["label"] for f in result["custom_fields"]]
+        assert "MSSV" in labels
+        assert "Khoa" in labels
+    finally:
+        act_repo.get_by_id = orig_get_act
+        part_repo.get_active_request = orig_get_jr
+
+

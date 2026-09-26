@@ -83,21 +83,28 @@ class Activity(PrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
     check_in_radius: Mapped[int] = mapped_column(
         Integer, default=300, server_default="300", nullable=False
     )
+    attendance_finalized_at = mapped_column(
+        DateTime(timezone=True), nullable=True, default=None
+    )
 
     # Relationships
     host = relationship("User", backref="hosted_activities", lazy="joined")
     group = relationship("Group", back_populates="activities", lazy="joined")
-    trophies = relationship("Trophy", back_populates="activity", cascade="all, delete-orphan")
+    trophies = relationship("Trophy", back_populates="activity", cascade="all, delete-orphan", lazy="selectin")
     custom_form = relationship("CustomForm", back_populates="activity", uselist=False, lazy="joined")
 
     # Backward compatibility properties
     @property
     def trophy(self):
-        return self.trophies[0] if self.trophies else None
+        if "trophies" in self.__dict__ and self.trophies:
+            return self.trophies[0]
+        return None
 
     @property
     def trophy_id(self) -> uuid.UUID | None:
-        return self.trophies[0].id if self.trophies else None
+        if "trophies" in self.__dict__ and self.trophies:
+            return self.trophies[0].id
+        return None
 
     @trophy_id.setter
     def trophy_id(self, value: uuid.UUID | None) -> None:

@@ -1,8 +1,34 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Bell } from 'lucide-react';
 import { notificationsApi, type NotificationResponse } from '../../api/notifications';
 import { useAuth } from '../../contexts/AuthContext';
+import { resolveAvatarUrl } from '../../utils/avatar';
 import './NotificationBell.css';
+
+function NotificationItemAvatar({
+  avatarUrl,
+  name,
+}: {
+  avatarUrl?: string | null;
+  name?: string | null;
+}) {
+  const [hasError, setHasError] = useState(false);
+  const resolvedSrc = resolveAvatarUrl(avatarUrl);
+  const initial = (name?.trim()?.charAt(0) || '?').toUpperCase();
+
+  if (resolvedSrc && !hasError) {
+    return (
+      <img
+        src={resolvedSrc}
+        alt={name || 'User'}
+        onError={() => setHasError(true)}
+      />
+    );
+  }
+
+  return <div className="avatar-placeholder">{initial}</div>;
+}
 
 export default function NotificationBell() {
   const [notifications, setNotifications] = useState<NotificationResponse[]>([]);
@@ -57,11 +83,15 @@ export default function NotificationBell() {
     setIsOpen(false);
 
     // Navigate to target
-    const targetActivityId = notification.activity_id || notification.target_id;
-    if (targetActivityId) {
-      navigate(`/activities/${targetActivityId}`);
+    if (notification.action_url) {
+      navigate(notification.action_url);
     } else {
-      navigate(`/map`);
+      const targetActivityId = notification.activity_id || notification.target_id;
+      if (targetActivityId) {
+        navigate(`/activities/${targetActivityId}`);
+      } else {
+        navigate(`/map`);
+      }
     }
   };
 
@@ -85,7 +115,7 @@ export default function NotificationBell() {
         onClick={() => setIsOpen(!isOpen)}
         aria-label="Thông báo"
       >
-        <img src="https://cdn-icons-png.flaticon.com/512/3602/3602123.png" alt="Thông báo" className="bell-icon" style={{ width: '24px', height: '24px', display: 'block' }} />
+        <Bell size={20} className="bell-icon" strokeWidth={1.8} />
         {unreadCount > 0 && (
           <span className="notification-badge">
             {unreadCount > 99 ? '99+' : unreadCount}
@@ -115,13 +145,10 @@ export default function NotificationBell() {
                   onClick={() => handleNotificationClick(notification)}
                 >
                   <div className="notification-avatar">
-                    {notification.actor?.avatar_url ? (
-                      <img src={notification.actor.avatar_url} alt="User" />
-                    ) : (
-                      <div className="avatar-placeholder">
-                        {notification.actor?.full_name?.charAt(0) || notification.actor?.username?.charAt(0) || '?'}
-                      </div>
-                    )}
+                    <NotificationItemAvatar
+                      avatarUrl={notification.actor?.avatar_url}
+                      name={notification.actor?.full_name || notification.actor?.username}
+                    />
                   </div>
                   <div className="notification-content">
                     <p>{notification.message}</p>

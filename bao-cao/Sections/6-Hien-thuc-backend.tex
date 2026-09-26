@@ -1,4 +1,4 @@
-\section{Hiện thực hệ thống (Backend và Giao diện người dùng)}
+\section{Hiện thực hệ thống Backend}
 
 \subsection{Môi trường phát triển và công nghệ sử dụng}
 \begin{itemize}
@@ -6,13 +6,13 @@
 
     \item Framework: FastAPI (đảm bảo hiệu năng cao, xử lý bất đồng bộ Asynchronous ASGI).
     
-    \item Database: PostgreSQL 15+ kết hợp tiện ích mở rộng pgvector (xử lý Vector Embeddings cho RAG) và PostGIS/Cube (tính toán không gian địa lý).
+    \item Database: PostgreSQL 16 kết hợp tiện ích mở rộng pgvector (xử lý Vector Embeddings cho RAG) và PostGIS/Cube (tính toán không gian địa lý).
     
     \item ORM \& Migration: SQLAlchemy 2.0 (quản lý mô hình thực thể quan hệ) và Alembic (quản lý phiên bản di chuyển cấu trúc cơ sở dữ liệu).
     
-    \item Lưu trữ tệp đối tượng (Object Storage): Supabase Storage giao tiếp qua chuẩn S3 API bất đồng bộ (\texttt{aioboto3}) phục vụ lưu trữ ảnh đại diện, minh chứng hoạt động và chứng chỉ PDF.
+    \item Lưu trữ tệp đối tượng: Lưu trữ tệp tin cục bộ kết hợp ánh xạ Docker Volume (Local Storage / Volume Mapping) phục vụ lưu trữ ảnh đại diện và chứng chỉ PDF an toàn.
     
-    \item Hạ tầng triển khai: Kiến trúc kép hỗ trợ Docker Compose (cho môi trường cục bộ/kiểm thử) và hạ tầng Cloud-Native (Vercel cho Frontend, Render cho Backend API, Neon cho PostgreSQL/pgvector, Supabase cho Object Storage).
+    \item Hạ tầng triển khai: Đóng gói và điều phối toàn diện bằng Docker Compose (kiến trúc phân tầng gồm Nginx Ingress, FastAPI Backend và PostgreSQL tích hợp PostGIS/pgvector).
 \end{itemize}
 
 \clearpage
@@ -43,7 +43,7 @@ server/
             users/          # User profiles, RBAC & follow relationships
         main.py             # FastAPI entrypoint & router aggregation
     alembic/                # Database schema migration scripts
-    tests/                  # Automated test suite (64 test cases)
+    tests/                  # Automated test suite (94 test cases)
     Dockerfile.prod         # Production server container specification
     docker-compose.prod.yml # Multi-container orchestration (Nginx, App, DB)
     requirements.txt        # Python backend dependencies
@@ -95,7 +95,7 @@ Việc hiện thực này cho phép hệ thống thực hiện các truy vấn k
 Đây là tính năng thông minh của dự án, cho phép người dùng hỏi đáp về các hoạt động ngoại khóa, sự kiện và nhận gợi ý phù hợp với sở thích cá nhân. Hệ thống thực hiện quy trình RAG qua các bước:
 \begin{enumerate}[leftmargin=*]
     \item \textbf{Vector hóa:} Sử dụng mô hình Embedding để chuyển đổi nội dung tiêu đề, mô tả và đặc điểm sự kiện thành các Vector 768 chiều.
-    \item \textbf{Lưu trữ:} Sử dụng tiện ích \textit{pgvector} trong PostgreSQL để lưu trữ và lập chỉ mục HNSW/IVFFlat cho các Vector này.
+    \item \textbf{Lưu trữ:} Sử dụng tiện ích \textit{pgvector} trong PostgreSQL để lưu trữ các vector embedding. Với quy mô dữ liệu học đường hiện tại, hệ thống thực hiện tìm kiếm chính xác Exact Nearest Neighbor; đồng thời kiến trúc sẵn sàng cấu hình chỉ mục xấp xỉ HNSW khi quy mô dữ liệu mở rộng.
     \item \textbf{Truy xuất:} Sử dụng toán tử khoảng cách Cosine (\textit{Cosine Similarity}) để tìm kiếm các sự kiện có ngữ nghĩa gần nhất với câu hỏi hoặc sở thích của người dùng.
 \end{enumerate}
 
@@ -212,95 +212,8 @@ volumes:
 
 Kiến trúc triển khai phân tách rõ ràng ranh giới mạng: dịch vụ Nginx đóng vai trò là điểm đón tiếp duy nhất (Ingress) mở cổng ra bên ngoài, trong khi máy chủ Backend và Cơ sở dữ liệu hoạt động hoàn toàn bên trong mạng nội bộ cô lập của Docker, gia tăng mức độ an toàn thông tin cho toàn bộ hệ thống.
 
-\subsection{Hiện thực giao diện người dùng (User Interface - Frontend)}
-Giao diện người dùng của UniConnect được xây dựng bằng thư viện React 18 kết hợp ngôn ngữ TypeScript và công cụ đóng gói Vite. Thiết kế giao diện tuân thủ triết lý tối giản, hiện đại với bộ biểu tượng chuẩn Lucide Icons, cấu trúc lưới linh hoạt (Responsive Grid) đảm bảo trải nghiệm tương thích hoàn hảo trên cả trình duyệt máy tính để bàn lẫn thiết bị di động (Mobile-first). Dưới đây là các màn hình chức năng then chốt của hệ thống:
-
-\subsubsection{Màn hình Bản đồ Khám phá Hoạt động (Campus Interactive Map)}
-Giao diện trung tâm cho phép người dùng tương tác trực tiếp với bản đồ khuôn viên trường. Các hoạt động được phân loại theo màu sắc biểu tượng trực quan, hỗ trợ định vị GPS thời gian thực và lọc sự kiện theo bán kính di chuyển.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.76\textwidth]{Images/ui-campus-map.png}
-    \caption{Giao diện Bản đồ khám phá hoạt động học đường tương tác}
-    \label{fig:ui_campus_map}
-\end{figure}
-
-\subsubsection{Màn hình Chi tiết Hoạt động và Đăng ký tham gia (Event Details)}
-Cung cấp thông tin đầy đủ về sự kiện: thời gian, địa điểm, đơn vị chủ trì, các nhóm Đồng tổ chức (Co-hosts), số suất tham dự còn lại và tự động đối soát lịch trình cá nhân để đưa ra cảnh báo trùng lịch nếu có.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.76\textwidth]{Images/ui-activity-detail.png}
-    \caption{Giao diện Chi tiết hoạt động và đối soát lịch trình đăng ký}
-    \label{fig:ui_activity_detail}
-\end{figure}
-
-\clearpage
-\subsubsection{Màn hình Điểm danh Đa chế độ (Multi-mode Attendance)}
-Hỗ trợ cơ chế xác thực chống gian lận đa tầng: Quét mã QR xoay động 30 giây HMAC-SHA256 trên màn hình ban tổ chức kết hợp kiểm tra tọa độ GPS Geofencing tự động trên thiết bị người dùng để đối soát bán kính hợp lệ tại địa điểm tổ chức.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.76\textwidth]{Images/ui-attendance-checkin.png}
-    \caption{Giao diện Điểm danh chống gian lận đa chế độ (HMAC QR và GPS)}
-    \label{fig:ui_attendance_checkin}
-\end{figure}
-
-\subsubsection{Màn hình Lịch Thông minh (Smart Calendar Schedule)}
-Hiển thị tổng thể lịch trình cá nhân của người dùng theo dạng tuần/tháng, tích hợp các khung giờ bận cố định (thời khóa biểu) và các sự kiện ngoại khóa đã xác nhận tham gia. Hỗ trợ nút xuất nhanh file chuẩn \texttt{.ics} để đồng bộ với Google Calendar hoặc Apple Calendar.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.76\textwidth]{Images/ui-smart-calendar.png}
-    \caption{Giao diện Lịch thông minh và quản lý khung giờ bận cá nhân}
-    \label{fig:ui_smart_calendar}
-\end{figure}
-
-\subsubsection{Màn hình Hồ sơ Cá nhân và Bộ sưu tập Danh hiệu (Gamification Profile)}
-Không gian tôn vinh nỗ lực tham gia hoạt động của người dùng: hiển thị số ngày Công tác Xã hội (CTXH) tích lũy, cấp bậc thứ hạng thành viên và tủ trưng bày các danh hiệu Trophy đã mở khóa.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.76\textwidth]{Images/ui-gamification-profile.png}
-    \caption{Giao diện Hồ sơ cá nhân, tiến trình tích lũy CTXH và danh hiệu Trophy}
-    \label{fig:ui_gamification_profile}
-\end{figure}
-
-\subsubsection{Màn hình Trợ lý Học đường AI (AI Assistant Chat)}
-Giao diện trao đổi tương tác với trợ lý thông minh theo kiến trúc RAG: người dùng có thể đặt câu hỏi về quy định ngày CTXH, nhờ tìm kiếm các hoạt động phù hợp với sở thích hoặc kiểm tra khung thời gian rảnh trong tuần.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.76\textwidth]{Images/ui-ai-assistant.png}
-    \caption{Giao diện Trợ lý học đường AI giải đáp quy chế và gợi ý hoạt động}
-    \label{fig:ui_ai_assistant}
-\end{figure}
-
-\subsubsection{Màn hình Bảng điều khiển Quản trị viên (Admin KPI Dashboard)}
-Dành riêng cho ban điều hành trường học: theo dõi các biểu đồ trực quan về mức độ tăng trưởng người dùng, tỷ lệ tham gia phong trào, kiểm duyệt các báo cáo vi phạm nội dung và xuất danh sách người dùng chuẩn UTF-8 BOM CSV.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.76\textwidth]{Images/ui-admin-dashboard.png}
-    \caption{Giao diện Bảng điều khiển Quản trị viên và Kiểm duyệt nội dung}
-    \label{fig:ui_admin_dashboard}
-\end{figure}
-
-\subsubsection{Màn hình Tra cứu Xác thực Chứng nhận (Certificate Verification)}
-Cổng thông tin mở tại đường dẫn \texttt{/verify-certificate} cho phép bất kỳ ai (nhà tuyển dụng, ban thi đua) quét mã QR trên Giấy chứng nhận điện tử để tra cứu tính nguyên bản và thông tin xác thực từ máy chủ UniConnect.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.76\textwidth]{Images/ui-certificate-verify.png}
-    \caption{Giao diện Cổng tra cứu xác thực Giấy chứng nhận tham gia hoạt động trực tuyến}
-    \label{fig:ui_certificate_verify}
-\end{figure}
-
 \subsection{Kết luận chương}
 
-Chương này đã trình bày toàn diện quá trình hiện thực hóa hệ thống UniConnect ở cả hai phương diện: kiến trúc dịch vụ Backend vững chắc và giao diện người dùng Frontend hiện đại. Về phía Backend, việc áp dụng mô hình Modular Architecture trên nền tảng FastAPI và SQLAlchemy 2.0 giúp phân tách độc lập các miền nghiệp vụ, tạo điều kiện thuận lợi cho việc kiểm thử tự động với 64 trường hợp kiểm thử đạt tỷ lệ thành công 100\%. Các tính năng then chốt như đối soát lịch trình cá nhân, xử lý dữ liệu không gian PostGIS, tìm kiếm ngữ nghĩa tương đồng pgvector và cơ chế điểm danh kép chống gian lận (HMAC-SHA256 kết hợp GPS Geofencing) đã được hiện thực hóa trọn vẹn với hiệu năng cao và độ trễ phản hồi thấp.
+Chương này đã trình bày toàn diện quá trình hiện thực hóa kiến trúc Backend của UniConnect trên nền tảng FastAPI, SQLAlchemy 2.0 và PostgreSQL. Mô hình phân tầng hướng Module giúp tách biệt các miền nghiệp vụ, hỗ trợ phát triển và kiểm thử tự động thành công 100\% (94/94 test cases). Các tính năng then chốt gồm thuật toán đối soát lịch trình không xung đột, dữ liệu không gian PostGIS, tìm kiếm ngữ nghĩa pgvector và điểm danh kép chống gian lận (HMAC-SHA256 kết hợp GPS Geofencing) đều đạt độ trễ thấp và hiệu năng cao. Hệ thống được đóng gói hoàn chỉnh bằng Docker Compose với phân vùng mạng an toàn (Nginx Ingress, FastAPI và PostgreSQL), sẵn sàng triển khai thực tế phục vụ cộng đồng sinh viên.
 
-Về phía Frontend, ứng dụng Single Page Application (SPA) phát triển trên nền React 18, TypeScript và Vite mang đến trải nghiệm người dùng trực quan, mượt mà trên cả máy tính lẫn thiết bị di động. Hệ thống cung cấp đầy đủ các phân hệ chức năng tương tác từ bản đồ số khuôn viên trường, quản lý lịch thông minh, điểm danh thời gian thực, bảng thành tích vinh danh Gamification đến cổng xác thực Giấy chứng nhận điện tử công khai.
-
-Toàn bộ giải pháp đã được đóng gói hoàn chỉnh bằng Docker và Docker Compose theo mô hình mạng phân tầng an toàn (Reverse Proxy Nginx, Máy chủ ứng dụng FastAPI nội bộ và Cơ sở dữ liệu PostgreSQL mở rộng), sẵn sàng cho việc triển khai thực tế trên hạ tầng đám mây và mở rộng quy mô phục vụ cộng đồng sinh viên.
 

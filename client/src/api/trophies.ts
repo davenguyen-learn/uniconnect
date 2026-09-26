@@ -23,8 +23,10 @@ export interface UserTrophyResponse {
   trophy: TrophyResponse;
   activity_id?: string | null;
   activity?: {
-    id: string;
+    id: string | null;
     title: string;
+    privacy?: string;
+    is_accessible?: boolean;
   } | null;
   created_at: string;
 }

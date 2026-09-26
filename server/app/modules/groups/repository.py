@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 import uuid
 
-from sqlalchemy import func, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
@@ -9,6 +9,7 @@ from app.modules.groups.models import (
     Group,
     GroupMember,
     GroupJoinRequest,
+    GroupPrivacy,
     ActivityCoHost,
     ActivityCoHostInvitation,
 )
@@ -44,7 +45,7 @@ async def get_group_by_id(db: AsyncSession, group_id: uuid.UUID) -> Group | None
         select(Group)
         .where(Group.id == group_id, Group.is_deleted == False)  # noqa: E712
     )
-    return result.scalar_one_or_none()
+    return result.unique().scalar_one_or_none()
 
 
 async def get_group_with_members(db: AsyncSession, group_id: uuid.UUID) -> Group | None:
@@ -108,6 +109,91 @@ async def discover_groups(
         
     stmt = stmt.limit(limit)
     
+    result = await db.execute(stmt)
+    return list(result.unique().scalars().all())
+
+
+async def search_cohost_candidates(
+    db: AsyncSession,
+    activity_id: uuid.UUID,
+    user_id: uuid.UUID,
+    search: str | None = None,
+    limit: int = 20,
+) -> list[Group]:
+    """
+    Search candidate groups to invite as co-hosts for an activity:
+    - Activity lead group is excluded
+    - Already accepted co-hosts are excluded
+    - Public groups: can be invited by anyone
+    - Private groups: can only be invited if current user is a member/admin/owner of that group
+    """
+    # 1. Fetch activity to determine lead group
+    act_res = await db.execute(
+        select(Activity.group_id).where(Activity.id == activity_id, Activity.is_deleted.is_(False))
+    )
+    act_row = act_res.first()
+    if act_row is None:
+        return []
+
+    excluded_group_ids: set[uuid.UUID] = set()
+    lead_group_id = act_row[0]
+    if lead_group_id:
+        excluded_group_ids.add(lead_group_id)
+
+    # 2. Exclude groups that are already accepted co-hosts
+    cohost_res = await db.execute(
+        select(ActivityCoHost.group_id).where(ActivityCoHost.activity_id == activity_id)
+    )
+    for gid in cohost_res.scalars().all():
+        excluded_group_ids.add(gid)
+
+    # 3. Exclude groups with pending invitations
+    pending_res = await db.execute(
+        select(ActivityCoHostInvitation.invited_group_id).where(
+            ActivityCoHostInvitation.activity_id == activity_id,
+            ActivityCoHostInvitation.status == "pending",
+        )
+    )
+    for gid in pending_res.scalars().all():
+        excluded_group_ids.add(gid)
+
+    # 4. User's memberships
+    user_memberships_subq = select(GroupMember.group_id).where(GroupMember.user_id == user_id)
+
+    # 5. Privacy eligibility rule:
+    # Any public group can be invited; private groups require current user membership
+    privacy_cond = or_(
+        Group.privacy == GroupPrivacy.public,
+        and_(
+            Group.privacy == GroupPrivacy.private,
+            Group.id.in_(user_memberships_subq),
+        ),
+    )
+
+    stmt = (
+        select(Group)
+        .options(selectinload(Group.members))
+        .where(
+            Group.is_deleted.is_(False),
+            Group.status == "active",
+            privacy_cond,
+        )
+    )
+
+    if excluded_group_ids:
+        stmt = stmt.where(Group.id.notin_(list(excluded_group_ids)))
+
+    if search and search.strip():
+        search_pattern = f"%{search.strip()}%"
+        stmt = stmt.where(
+            or_(
+                Group.name.ilike(search_pattern),
+                Group.description.ilike(search_pattern),
+                Group.public_description.ilike(search_pattern),
+            )
+        )
+
+    stmt = stmt.order_by(Group.name.asc()).limit(limit)
     result = await db.execute(stmt)
     return list(result.unique().scalars().all())
 
@@ -183,7 +269,7 @@ async def get_group_members_paginated(
         .offset(offset)
     )
     res = await db.execute(stmt)
-    return list(res.scalars().all()), total
+    return list(res.unique().scalars().all()), total
 
 
 async def get_group_join_requests(
@@ -204,7 +290,7 @@ async def get_group_join_requests(
         .offset(offset)
     )
     res = await db.execute(stmt)
-    return list(res.scalars().all()), total
+    return list(res.unique().scalars().all()), total
 
 
 async def get_cohost_invitations_for_group(
@@ -233,7 +319,7 @@ async def get_cohost_invitations_for_group(
 
     stmt = stmt.order_by(ActivityCoHostInvitation.created_at.desc()).limit(limit).offset(offset)
     res = await db.execute(stmt)
-    return list(res.scalars().all()), total
+    return list(res.unique().scalars().all()), total
 
 
 async def count_accepted_cohosts(db: AsyncSession, activity_id: uuid.UUID) -> int:

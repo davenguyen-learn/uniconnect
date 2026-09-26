@@ -16,6 +16,8 @@ class ActivitySearchToolItem(BaseModel):
     meeting_location: str = "Khuôn viên trường"
     location_name: str = "Khuôn viên trường"
     social_work_days: float | None = None
+    group_id: str | None = None
+    group_name: str | None = None
     distance_meters: float | None = None
     distance_status: str = "unknown"  # "nearby", "moderate", "far", "unknown"
     conflict_status: str = "none"     # "none", "soft_conflict", "hard_conflict"
@@ -62,6 +64,8 @@ class ChatEventCardItem(BaseModel):
     meeting_location: str = "Khuôn viên trường"
     location_name: str = "Khuôn viên trường"
     social_work_days: float | None = None
+    group_id: str | None = None
+    group_name: str | None = None
     distance_meters: float | None = None
     distance_status: str = "unknown"
     conflict_status: str = "none"

@@ -30,7 +30,7 @@ Khi người dùng mở giao diện Bản đồ hoặc yêu cầu Trợ lý AI g
 
 Khi người dùng đặt câu hỏi tự nhiên qua khung chat (ví dụ: \textit{"Thứ Bảy này tôi có thời gian trống vào buổi sáng, có hoạt động tình nguyện nào quanh khu vực trường cấp ngày CTXH không?"}), quy trình xử lý diễn ra như sau:
 \begin{enumerate}
-    \item \textbf{Text Embedding:} Câu hỏi của người dùng được chuyển đổi thành vector truy vấn 768 chiều thông qua mô hình Embedding của Gemini (\texttt{text-embedding-004}).
+    \item \textbf{Text Embedding:} Câu hỏi của người dùng được chuyển đổi thành vector truy vấn 768 chiều thông qua mô hình Gemini Embedding 001 (\texttt{gemini-embedding-001}).
     \item \textbf{Vector Distance Query (pgvector):} Hệ thống thực thi truy vấn tính toán khoảng cách Cosine trực tiếp trên cột \texttt{embedding} (\texttt{Vector(768)}) của bảng \texttt{activities} thông qua toán tử khoảng cách \texttt{cosine\_distance} của thư viện \texttt{pgvector-python}, kết hợp mệnh đề lọc theo trạng thái sự kiện hợp lệ để trích xuất các hoạt động tương đồng nhất.
     \item \textbf{Dynamic Context Injection:} Đóng gói câu hỏi gốc cùng danh sách sự kiện tương đồng trích xuất được và thông tin thời khóa biểu cá nhân của người dùng thành Prompt ngữ cảnh chuẩn hóa.
     \item \textbf{LLM Generation:} Mô hình ngôn ngữ lớn phân tích ngữ cảnh tổng hợp và sinh câu trả lời tư vấn lịch trình tự nhiên, trực quan kèm đường dẫn điều hướng tới trang chi tiết sự kiện trên bản đồ.

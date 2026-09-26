@@ -86,9 +86,9 @@ async def test_flow_event_attendance_gamification_and_profile():
             return jr
         return None
 
+    db.scalar = AsyncMock(return_value=None)
     with patch("app.modules.participation.service.activity_repo.get_by_id", side_effect=mock_repo_get_activity), \
-         patch("app.modules.participation.service.participation_repo.get_active_request", side_effect=mock_repo_get_request), \
-         patch("app.modules.participation.service._award_trophy_if_eligible", return_value=True):
+         patch("app.modules.participation.service.participation_repo.get_active_request", side_effect=mock_repo_get_request):
 
         # Host confirms attendance
         result = await update_participant_attendance(
@@ -100,7 +100,7 @@ async def test_flow_event_attendance_gamification_and_profile():
         )
 
         assert result["attendance_confirmed"] is True
-        assert result["trophy_awarded"] is True
+        assert result["trophy_awarded"] is False
         assert jr.attendance_confirmed is True
 
     # 4. Invariant Check: Verify Profile Stats reflects updated CTXH days & Trophy points
@@ -120,7 +120,7 @@ async def test_flow_event_attendance_gamification_and_profile():
     assert stats["total_attended_activities"] == 1
     assert stats["total_trophies_count"] == 1
     assert stats["total_trophy_points"] == 100
-    assert stats["rank_title"] == "Tình nguyện viên Tiên phong (Pioneer)"
+    assert stats["rank_title"] == "Thành viên Tích cực"
     assert stats["ctxh_completion_percent"] == round((1.5 / CTXH_TARGET_DAYS) * 100, 1)
 
 

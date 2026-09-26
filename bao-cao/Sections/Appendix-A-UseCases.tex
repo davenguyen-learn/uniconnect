@@ -21,8 +21,7 @@ Phụ lục này tổng hợp toàn bộ các ca sử dụng (Use Cases) của h
 \hline
 \endlastfoot
 UC-AUTH-01 & Đăng ký tài khoản sinh viên & Sinh viên & Tạo tài khoản mới bằng email trường học. & Cao \\ \hline
-UC-AUTH-02 & Đăng nhập và Cấp phát JWT & Người dùng & Xác thực mật khẩu Bcrypt, cấp Access/Refresh token. & Cao \\ \hline
-UC-AUTH-03 & Đăng nhập Google OAuth2 & Người dùng & Xác thực liên kết tài khoản Google học đường. & Trung bình \\ \hline
+UC-AUTH-02 & Đăng nhập và Cấp phát JWT & Người dùng & Xác thực mật khẩu bằng Bcrypt, cấp Access Token JWT. & Cao \\ \hline
 UC-MAP-01 & Khám phá hoạt động trên Bản đồ & Sinh viên & Xem các điểm ghim sự kiện lân cận qua PostGIS. & Cao \\ \hline
 UC-MAP-02 & Lọc sự kiện theo danh mục & Sinh viên & Lọc hoạt động theo Thể thao, Học thuật, CTXH. & Cao \\ \hline
 UC-ACT-01 & Khởi tạo sự kiện / hoạt động & Sinh viên / BTC & Tạo hoạt động ghim tọa độ, thời gian, giới hạn chỗ. & Cao \\ \hline
@@ -38,7 +37,7 @@ UC-COH-01 & Mời Nhóm Đồng tổ chức & Nhóm chủ trì & Gửi lời m�
 UC-COH-02 & Phê chuẩn lời mời Đồng tổ chức & Nhóm đối tác & Chấp thuận hoặc từ chối tư cách Đồng tổ chức. & Cao \\ \hline
 UC-COH-03 & Điểm danh ủy nhiệm Co-host & Nhóm đối tác & Ban điều hành Nhóm đối tác mở phiên điểm danh sự kiện. & Cao \\ \hline
 UC-GAM-01 & Tự động tích lũy ngày CTXH & Hệ thống & Cộng dồn số ngày CTXH sau khi xác nhận điểm danh. & Cao \\ \hline
-UC-GAM-02 & Mở khóa huy hiệu danh dự & Hệ thống & Trao Trophy khi sinh viên đạt mốc thành tích. & Trung bình \\ \hline
+UC-GAM-02 & Thẩm định và Trao Trophy & Quản trị viên / Hệ thống & Xét duyệt và trao Trophy khi sự kiện chốt điểm danh đạt túc số $\ge 10$. & Trung bình \\ \hline
 UC-RAG-01 & Tư vấn quy chế và hoạt động & Sinh viên & Đặt câu hỏi cho Trợ lý AI qua kiến trúc RAG. & Cao \\ \hline
 UC-ADM-01 & Quản trị người dùng và vai trò & Quản trị viên & Khóa tài khoản, nâng cấp vai trò Cán bộ/Admin. & Cao \\ \hline
 UC-ADM-02 & Kiểm duyệt nội dung vi phạm & Quản trị viên & Xử lý báo cáo, gỡ bỏ bình luận/sự kiện vi phạm. & Cao \\ \hline

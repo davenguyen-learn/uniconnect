@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run --environment jsdom"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.9.1",
@@ -22,6 +23,8 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.2.1",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.46.0",
     "react-leaflet": "^5.0.0",

@@ -5,6 +5,7 @@ import { calendarApi, type ReschedulePreviewResponse } from '../../api/calendar'
 import { trophiesApi, type TrophyResponse } from '../../api/trophies';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../components/Toast/ToastContext';
+import { Trophy, UserCheck, Clock, QrCode, ShieldCheck, AlertTriangle, CheckCircle2, BarChart2 } from 'lucide-react';
 import Button from '../../components/Button/Button';
 import LocationPicker from '../../components/Map/LocationPicker';
 import './CreateActivity.css';
@@ -21,7 +22,7 @@ export default function EditActivity() {
   const navigate = useNavigate();
   const toast = useToast();
   const { user } = useAuth();
-  const isOrg = user?.role === 'edu_org' || user?.role === 'admin' || !!user?.is_verified;
+  const isOrg = user?.role === 'edu_org' || user?.role === 'admin';
   
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -55,6 +56,19 @@ export default function EditActivity() {
   });
   
   const [location, setLocation] = useState<[number, number] | null>(null);
+  
+  // Custom Form Builder state
+  const [customFormFields, setCustomFormFields] = useState<Array<{ id: string; label: string; field_type: string; is_required: boolean }>>([]);
+
+  const [attemptedSubmit, setAttemptedSubmit] = useState(false);
+
+  const isTitleMissing = attemptedSubmit && !formData.title.trim();
+  const isDescriptionMissing = attemptedSubmit && !formData.description.trim();
+  const isMeetingLocationMissing = attemptedSubmit && !(formData.meeting_location || formData.location_name || '').trim();
+  const isMaxParticipantsMissing = attemptedSubmit && (!formData.max_participants || Number(formData.max_participants) < 2);
+  const isStartTimeMissing = attemptedSubmit && !formData.start_time;
+  const isEndTimeMissing = attemptedSubmit && !formData.end_time;
+  const isLocationMissing = attemptedSubmit && !location;
 
   useEffect(() => {
     if (isOrg) {
@@ -78,6 +92,17 @@ export default function EditActivity() {
             privacy: act.privacy as 'public' | 'private',
             require_approval: act.require_approval ?? true,
           });
+          if (act.custom_form?.fields) {
+            const sorted = [...act.custom_form.fields].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+            setCustomFormFields(
+              sorted.map((f) => ({
+                id: f.id || Math.random().toString(),
+                label: f.label,
+                field_type: f.field_type === 'boolean' ? 'checkbox' : f.field_type,
+                is_required: f.is_required,
+              }))
+            );
+          }
           if (act.trophy) {
             setHasTrophy(true);
             setSelectedTrophyId(act.trophy.id);
@@ -163,9 +188,23 @@ export default function EditActivity() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!id) return;
-    
+    setAttemptedSubmit(true);
+
+    if (
+      !formData.title.trim() ||
+      !formData.description.trim() ||
+      !(formData.meeting_location || formData.location_name || '').trim() ||
+      !formData.max_participants ||
+      Number(formData.max_participants) < 2 ||
+      !formData.start_time ||
+      !formData.end_time
+    ) {
+      toast.error('Vui lòng điền đầy đủ các thông tin bắt buộc (*)');
+      return;
+    }
+
     if (!location) {
-      toast.error('Vui lòng chọn vị trí trên bản đồ');
+      toast.error('Vui lòng nhấp vào bản đồ để chọn vị trí diễn ra hoạt động');
       return;
     }
 
@@ -200,6 +239,27 @@ export default function EditActivity() {
         data.check_in_radius = attendanceMode === 'qr_code' ? checkInRadius : 300;
       }
 
+      const filledCustomFields = customFormFields.filter(f => f.label.trim().length > 0);
+      if (customFormFields.length > 0 && filledCustomFields.length < customFormFields.length) {
+        toast.error('Vui lòng nhập nội dung câu hỏi hoặc nhấn nút "Xóa" câu hỏi còn trống');
+        return;
+      }
+
+      if (filledCustomFields.length > 0) {
+        data.custom_form = {
+          title: "Join Application Form",
+          description: "Please fill out this form to join.",
+          fields: filledCustomFields.map((f, idx) => ({
+            label: f.label.trim(),
+            field_type: (f.field_type === 'boolean' ? 'checkbox' : f.field_type) as any,
+            is_required: f.is_required,
+            order: idx,
+          })),
+        };
+      } else {
+        data.custom_form = null;
+      }
+
       await activitiesApi.update(id, data);
       toast.success('Đã cập nhật hoạt động thành công!');
       navigate(`/activities/${id}`);
@@ -220,24 +280,25 @@ export default function EditActivity() {
 
   return (
     <div className="create-activity-page">
-      <div className="create-activity-container glass">
+      <div className="create-activity-container">
         <h1 className="create-activity-title">Chỉnh sửa hoạt động</h1>
         <p className="create-activity-subtitle">Cập nhật thông tin chi tiết về sự kiện của bạn.</p>
 
-        <form onSubmit={handleSubmit} className="create-activity-form">
+        <form noValidate onSubmit={handleSubmit} className="create-activity-form">
           <div className="form-group">
             <label htmlFor="title">Tiêu đề <span className="required">*</span></label>
             <input
               type="text"
               id="title"
               name="title"
-              className="form-input"
+              className={`form-input ${isTitleMissing ? 'input-error' : ''}`}
               value={formData.title}
               onChange={handleChange}
               required
               placeholder="Ví dụ: Cùng nhau học tập tại KTX"
               maxLength={100}
             />
+            {isTitleMissing && <span className="field-error-msg">Vui lòng nhập tiêu đề hoạt động</span>}
           </div>
 
           <div className="form-group">
@@ -245,13 +306,14 @@ export default function EditActivity() {
             <textarea
               id="description"
               name="description"
-              className="form-input"
+              className={`form-input ${isDescriptionMissing ? 'input-error' : ''}`}
               value={formData.description}
               onChange={handleChange}
               required
               placeholder="Cho mọi người biết sự kiện này về điều gì..."
               rows={4}
             />
+            {isDescriptionMissing && <span className="field-error-msg">Vui lòng nhập mô tả hoạt động</span>}
           </div>
 
           <div className="form-row">
@@ -268,11 +330,28 @@ export default function EditActivity() {
                 maxLength={50}
               />
               <datalist id="categories">
-                <option value="Study" />
-                <option value="Sports" />
-                <option value="Social" />
-                <option value="Gaming" />
-                <option value="Music" />
+                <option value="Ăn uống" />
+                <option value="Cà phê" />
+                <option value="Học tập" />
+                <option value="Workshop" />
+                <option value="Thể thao" />
+                <option value="Vận động" />
+                <option value="Tình nguyện" />
+                <option value="CTXH" />
+                <option value="Nhóm" />
+                <option value="Đội nhóm" />
+                <option value="Hướng nghiệp" />
+                <option value="Việc làm" />
+                <option value="Xem phim" />
+                <option value="Giải trí" />
+                <option value="Âm nhạc" />
+                <option value="Nghệ thuật" />
+                <option value="Boardgame" />
+                <option value="Game" />
+                <option value="Esports" />
+                <option value="Dã ngoại" />
+                <option value="Phượt" />
+                <option value="Giao lưu kết bạn" />
               </datalist>
             </div>
 
@@ -282,13 +361,14 @@ export default function EditActivity() {
                 type="number"
                 id="max_participants"
                 name="max_participants"
-                className="form-input"
+                className={`form-input ${isMaxParticipantsMissing ? 'input-error' : ''}`}
                 value={formData.max_participants}
                 onChange={handleChange}
                 required
                 min={2}
                 max={1000}
               />
+              {isMaxParticipantsMissing && <span className="field-error-msg">Số người tham gia tối thiểu là 2</span>}
             </div>
           </div>
 
@@ -299,11 +379,12 @@ export default function EditActivity() {
                 type="datetime-local"
                 id="start_time"
                 name="start_time"
-                className="form-input"
+                className={`form-input ${isStartTimeMissing ? 'input-error' : ''}`}
                 value={formData.start_time}
                 onChange={handleChange}
                 required
               />
+              {isStartTimeMissing && <span className="field-error-msg">Vui lòng chọn thời gian bắt đầu</span>}
             </div>
 
             <div className="form-group">
@@ -312,11 +393,12 @@ export default function EditActivity() {
                 type="datetime-local"
                 id="end_time"
                 name="end_time"
-                className="form-input"
+                className={`form-input ${isEndTimeMissing ? 'input-error' : ''}`}
                 value={formData.end_time}
                 onChange={handleChange}
                 required
               />
+              {isEndTimeMissing && <span className="field-error-msg">Vui lòng chọn thời gian kết thúc</span>}
             </div>
           </div>
 
@@ -332,13 +414,22 @@ export default function EditActivity() {
                 border: `1px solid ${reschedulePreview.safe_to_reschedule ? 'rgba(34, 197, 94, 0.3)' : 'rgba(245, 158, 11, 0.3)'}`,
               }}
             >
-              <div style={{ fontWeight: 600, marginBottom: '4px', color: reschedulePreview.safe_to_reschedule ? '#16a34a' : '#d97706' }}>
-                📊 Tình trạng lịch của thành viên ({reschedulePreview.total_participants} người đã duyệt):
+              <div style={{ fontWeight: 600, marginBottom: '4px', color: reschedulePreview.safe_to_reschedule ? '#16a34a' : '#d97706', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <BarChart2 size={16} />
+                <span>Tình trạng lịch của thành viên ({reschedulePreview.total_participants} người đã duyệt):</span>
               </div>
-              <div style={{ color: 'var(--color-text-secondary)', marginBottom: '6px' }}>
-                {reschedulePreview.safe_to_reschedule
-                  ? '✅ Tuyệt vời! Tất cả thành viên đều rảnh trong khung giờ mới này.'
-                  : `⚠️ Có ${reschedulePreview.conflicted_count}/${reschedulePreview.total_participants} thành viên sẽ bị trùng lịch (${reschedulePreview.free_percentage}% rảnh).`}
+              <div style={{ color: 'var(--color-text-secondary)', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                {reschedulePreview.safe_to_reschedule ? (
+                  <>
+                    <CheckCircle2 size={15} className="text-green-600 shrink-0" />
+                    <span>Tuyệt vời! Tất cả thành viên đều rảnh trong khung giờ mới này.</span>
+                  </>
+                ) : (
+                  <>
+                    <AlertTriangle size={15} className="text-amber-600 shrink-0" />
+                    <span>Có {reschedulePreview.conflicted_count}/{reschedulePreview.total_participants} thành viên sẽ bị trùng lịch ({reschedulePreview.free_percentage}% rảnh).</span>
+                  </>
+                )}
               </div>
               {reschedulePreview.conflicted_members.length > 0 && (
                 <ul style={{ paddingLeft: '20px', margin: '4px 0 0', fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>
@@ -356,6 +447,41 @@ export default function EditActivity() {
           )}
 
           <div className="form-group">
+            <label htmlFor="meeting_location">
+              Địa điểm <span className="required">*</span>
+            </label>
+            <input
+              type="text"
+              id="meeting_location"
+              name="meeting_location"
+              className={`form-input ${isMeetingLocationMissing ? 'input-error' : ''}`}
+              value={formData.meeting_location || formData.location_name}
+              onChange={handleChange}
+              placeholder="Ví dụ: Cổng 1 Lý Thường Kiệt, Hội trường A5, Quán cafe..."
+              maxLength={100}
+              required
+            />
+            {isMeetingLocationMissing && (
+              <span className="field-error-msg">Vui lòng nhập địa điểm hoạt động</span>
+            )}
+          </div>
+
+          <div className="form-group map-group">
+            <label>Vị trí trên bản đồ <span className="required">*</span></label>
+            <div className={isLocationMissing ? 'map-error-wrapper' : ''}>
+              <LocationPicker 
+                position={location} 
+                onChange={(lat, lng) => setLocation([lat, lng])} 
+              />
+            </div>
+            {isLocationMissing ? (
+              <span className="field-error-msg italic mt-1 block" style={{ fontStyle: 'italic' }}>Vui lòng nhấp vào bản đồ để chọn vị trí.</span>
+            ) : !location ? (
+              <span className="error-text italic mt-1 text-sm block" style={{ fontStyle: 'italic' }}>Vui lòng nhấp vào bản đồ để chọn vị trí.</span>
+            ) : null}
+          </div>
+
+          <div className="form-group">
             <label htmlFor="privacy">Quyền riêng tư</label>
             <select
               id="privacy"
@@ -364,32 +490,42 @@ export default function EditActivity() {
               value={formData.privacy}
               onChange={handleChange}
             >
-              <option value="public">Công khai (Mọi người đều có thể thấy)</option>
-              <option value="private">Riêng tư (Chỉ dành cho người được mời hoặc ẩn)</option>
+              <option value="public">Công khai</option>
+              <option value="private">Riêng tư</option>
             </select>
           </div>
 
-          <div className="form-group checkbox-group">
-            <input
-              type="checkbox"
-              id="require_approval"
-              name="require_approval"
-              checked={formData.require_approval}
-              onChange={handleChange}
-            />
-            <label htmlFor="require_approval">Yêu cầu phê duyệt để tham gia (Yêu cầu tham gia)</label>
+          <div
+            className={`approval-toggle-card ${formData.require_approval ? 'active' : ''}`}
+            onClick={() => setFormData(prev => ({ ...prev, require_approval: !prev.require_approval }))}
+          >
+            <div className="approval-toggle-content">
+              <div className="approval-toggle-icon">
+                <UserCheck size={18} />
+              </div>
+              <div className="approval-toggle-info">
+                <span className="approval-toggle-title">Yêu cầu phê duyệt để tham gia</span>
+                <span className="approval-toggle-desc">Chỉ những thành viên được bạn xét duyệt mới có thể tham gia hoạt động</span>
+              </div>
+            </div>
+            <div className={`approval-switch ${formData.require_approval ? 'on' : ''}`}>
+              <span className="approval-switch-handle" />
+            </div>
           </div>
 
           {isOrg && (
             <div className="form-group p-4 border border-amber-500/30 bg-amber-500/5 rounded-xl flex flex-col gap-3">
-              <label className="flex items-center gap-2 cursor-pointer select-none font-semibold text-amber-700 dark:text-amber-400">
+              <label className="flex items-center gap-2 cursor-pointer select-none font-semibold text-amber-700">
                 <input
                   type="checkbox"
                   className="w-4 h-4 rounded accent-amber-600 cursor-pointer"
                   checked={hasTrophy}
                   onChange={(e) => setHasTrophy(e.target.checked)}
                 />
-                <span>🏆 Hoạt động cấp Danh hiệu / Trophy vinh danh</span>
+                <span className="flex items-center gap-1.5">
+                  <Trophy size={16} className="text-amber-600" />
+                  <span>Hoạt động cấp Danh hiệu / Trophy vinh danh</span>
+                </span>
               </label>
 
               {hasTrophy && (
@@ -406,7 +542,7 @@ export default function EditActivity() {
                       >
                         {availableTrophies.map(t => (
                           <option key={t.id} value={t.id}>
-                            {t.icon || '🏆'} {t.name} (+{t.points} điểm)
+                            {t.name} (+{t.points} điểm)
                           </option>
                         ))}
                       </select>
@@ -426,7 +562,7 @@ export default function EditActivity() {
                       Phương thức điểm danh nhận Trophy:
                     </label>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                      <label className={`p-3 rounded-lg border cursor-pointer text-sm transition-all ${attendanceMode === 'manual' ? 'border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/20 font-semibold' : 'border-gray-200 dark:border-gray-700'}`}>
+                      <label className={`p-3 rounded-lg border cursor-pointer text-sm transition-all ${attendanceMode === 'manual' ? 'border-indigo-600 bg-indigo-50/50 font-semibold' : 'border-gray-200'}`}>
                         <input
                           type="radio"
                           name="attendance_mode"
@@ -435,11 +571,14 @@ export default function EditActivity() {
                           checked={attendanceMode === 'manual'}
                           onChange={() => setAttendanceMode('manual')}
                         />
-                        <div>👤 Thủ công</div>
+                        <div className="flex items-center gap-1.5">
+                          <UserCheck size={15} />
+                          <span>Thủ công</span>
+                        </div>
                         <div className="text-xs text-[var(--color-text-secondary)] mt-1 font-normal">Host tự tick duyệt trong danh sách</div>
                       </label>
 
-                      <label className={`p-3 rounded-lg border cursor-pointer text-sm transition-all ${attendanceMode === 'auto' ? 'border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/20 font-semibold' : 'border-gray-200 dark:border-gray-700'}`}>
+                      <label className={`p-3 rounded-lg border cursor-pointer text-sm transition-all ${attendanceMode === 'auto' ? 'border-indigo-600 bg-indigo-50/50 font-semibold' : 'border-gray-200'}`}>
                         <input
                           type="radio"
                           name="attendance_mode"
@@ -448,11 +587,14 @@ export default function EditActivity() {
                           checked={attendanceMode === 'auto'}
                           onChange={() => setAttendanceMode('auto')}
                         />
-                        <div>🟢 Tự động</div>
+                        <div className="flex items-center gap-1.5">
+                          <Clock size={15} />
+                          <span>Tự động</span>
+                        </div>
                         <div className="text-xs text-[var(--color-text-secondary)] mt-1 font-normal">Tự động duyệt khi hết giờ sự kiện</div>
                       </label>
 
-                      <label className={`p-3 rounded-lg border cursor-pointer text-sm transition-all ${attendanceMode === 'qr_code' ? 'border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/20 font-semibold' : 'border-gray-200 dark:border-gray-700'}`}>
+                      <label className={`p-3 rounded-lg border cursor-pointer text-sm transition-all ${attendanceMode === 'qr_code' ? 'border-indigo-600 bg-indigo-50/50 font-semibold' : 'border-gray-200'}`}>
                         <input
                           type="radio"
                           name="attendance_mode"
@@ -461,14 +603,17 @@ export default function EditActivity() {
                           checked={attendanceMode === 'qr_code'}
                           onChange={() => setAttendanceMode('qr_code')}
                         />
-                        <div>📱 Quét QR + GPS</div>
+                        <div className="flex items-center gap-1.5">
+                          <QrCode size={15} />
+                          <span>Quét QR + GPS</span>
+                        </div>
                         <div className="text-xs text-[var(--color-text-secondary)] mt-1 font-normal">QR động đổi 30s & kiểm tra vị trí GPS</div>
                       </label>
                     </div>
                   </div>
 
                   {attendanceMode === 'qr_code' && (
-                    <div className="flex flex-col gap-1 p-3 bg-white/60 dark:bg-black/20 rounded-lg border border-indigo-200 dark:border-indigo-800">
+                    <div className="flex flex-col gap-1 p-3 bg-white/60 rounded-lg border border-indigo-200">
                       <div className="flex items-center justify-between text-sm">
                         <span className="font-medium">Bán kính GPS cho phép check-in:</span>
                         <select
@@ -483,8 +628,9 @@ export default function EditActivity() {
                           <option value={1000}>1 km</option>
                         </select>
                       </div>
-                      <span className="text-xs text-[var(--color-text-secondary)]">
-                        🛡️ Người tham gia ở ngoài bán kính này sẽ bị từ chối điểm danh để chống gian lận ở nhà.
+                      <span className="text-xs text-[var(--color-text-secondary)] flex items-center gap-1.5 mt-0.5">
+                        <ShieldCheck size={14} className="text-indigo-500 shrink-0" />
+                        <span>Người tham gia ở ngoài bán kính này sẽ bị từ chối điểm danh để chống gian lận ở nhà.</span>
                       </span>
                     </div>
                   )}
@@ -494,33 +640,105 @@ export default function EditActivity() {
           )}
 
           <div className="form-group">
-            <label htmlFor="meeting_location">Điểm hẹn / Địa điểm tập trung</label>
-            <input
-              type="text"
-              id="meeting_location"
-              name="meeting_location"
-              className="form-input"
-              value={formData.meeting_location || formData.location_name}
-              onChange={handleChange}
-              placeholder="Ví dụ: Cổng 1 Lý Thường Kiệt, Hội trường A5, v.v."
-              maxLength={100}
-            />
-          </div>
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <label className="font-semibold text-[var(--color-text-primary)] block">Biểu mẫu tham gia tùy chỉnh</label>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                onClick={() => setCustomFormFields([...customFormFields, { id: Math.random().toString(), label: '', field_type: 'text', is_required: true }])}
+              >
+                + Thêm câu hỏi
+              </Button>
+            </div>
 
-          <div className="form-group map-group">
-            <label>Vị trí trên bản đồ <span className="required">*</span></label>
-            <LocationPicker 
-              position={location} 
-              onChange={(lat, lng) => setLocation([lat, lng])} 
-            />
-            {!location && <span className="error-text mt-1 text-sm block">Vui lòng nhấp vào bản đồ để chọn vị trí.</span>}
+            {formData.require_approval && (
+              <div className="mb-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs text-amber-600 flex items-start gap-2">
+                <AlertTriangle size={16} className="shrink-0 mt-0.5" />
+                <span>
+                  <strong>Lưu ý:</strong> Đối với hoạt động cần phê duyệt, nếu lưu biểu mẫu có trường <strong>bắt buộc</strong> (*), hệ thống sẽ tự động hủy phê duyệt của các thành viên đã đăng ký trước đó và gửi thông báo yêu cầu họ điền lại biểu mẫu để nộp lại yêu cầu tham gia.
+                </span>
+              </div>
+            )}
+
+            <div className="form-builder-container">
+              {customFormFields.length === 0 ? (
+                <div className="p-4 text-center text-sm text-[var(--color-text-secondary)]">
+                  Chưa có câu hỏi nào. Nhấp <strong>"+ Thêm câu hỏi"</strong> ở trên nếu cần thu thập thêm thông tin từ người tham gia.
+                </div>
+              ) : (
+                <>
+                  {customFormFields.map((field, index) => (
+                    <div key={field.id} className="form-builder-row">
+                      <div className="form-builder-row__field">
+                        <label className="form-builder-label">Câu hỏi</label>
+                        <input
+                          type="text"
+                          className="form-input rounded-lg"
+                          value={field.label}
+                          placeholder="Ví dụ: MSSV, Khoa, Số điện thoại..."
+                          onChange={(e) => {
+                            const newFields = [...customFormFields];
+                            newFields[index].label = e.target.value;
+                            setCustomFormFields(newFields);
+                          }}
+                        />
+                      </div>
+                      <div className="form-builder-row__type--wide">
+                        <label className="form-builder-label">Loại dữ liệu</label>
+                        <select
+                          className="form-input rounded-lg"
+                          value={field.field_type === 'boolean' ? 'checkbox' : field.field_type}
+                          onChange={(e) => {
+                            const newFields = [...customFormFields];
+                            newFields[index].field_type = e.target.value;
+                            setCustomFormFields(newFields);
+                          }}
+                        >
+                          <option value="text">Văn bản</option>
+                          <option value="number">Số</option>
+                          <option value="checkbox">Có / Không</option>
+                        </select>
+                      </div>
+                      <div className="form-builder-row__req">
+                        <label className="form-builder-switch-label-wrap">
+                          <input
+                            type="checkbox"
+                            className="sr-only"
+                            checked={field.is_required}
+                            onChange={(e) => {
+                              const newFields = [...customFormFields];
+                              newFields[index].is_required = e.target.checked;
+                              setCustomFormFields(newFields);
+                            }}
+                          />
+                          <div className={`form-builder-switch ${field.is_required ? 'on' : ''}`}>
+                            <span className="form-builder-switch-handle" />
+                          </div>
+                          <span className="form-builder-switch-text">Bắt buộc</span>
+                        </label>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() => setCustomFormFields(customFormFields.filter((_, i) => i !== index))}
+                      >
+                        Xóa
+                      </Button>
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
           </div>
 
           <div className="form-actions">
             <Button type="button" variant="secondary" onClick={() => navigate(-1)}>
               Hủy
             </Button>
-            <Button type="submit" disabled={loading || !location}>
+            <Button type="submit" disabled={loading}>
               {loading ? 'Đang lưu...' : 'Lưu thay đổi'}
             </Button>
           </div>
@@ -530,7 +748,10 @@ export default function EditActivity() {
       {showCreateTrophyModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm animate-fade-in">
           <div className="glass bg-[var(--color-bg-surface)] p-6 rounded-2xl max-w-md w-full border border-white/20 shadow-2xl">
-            <h3 className="text-xl font-bold text-[var(--color-text-primary)] mb-4">🏆 Tạo Trophy mới</h3>
+            <h3 className="text-xl font-bold text-[var(--color-text-primary)] mb-4 flex items-center gap-2">
+              <Trophy size={20} className="text-amber-500" />
+              <span>Tạo Trophy mới</span>
+            </h3>
             <form onSubmit={handleQuickCreateTrophy} className="flex flex-col gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Tên Trophy <span className="text-red-500">*</span></label>

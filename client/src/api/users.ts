@@ -7,6 +7,7 @@ export interface UserProfile {
   full_name: string | null;
   bio: string | null;
   university: string | null;
+  avatar_url?: string | null;
   interests?: string[];
   role: string;
   is_verified?: boolean;
@@ -17,6 +18,7 @@ export interface UserUpdate {
   full_name?: string;
   bio?: string;
   university?: string;
+  avatar_url?: string | null;
   interests?: string[];
 }
 
@@ -55,6 +57,17 @@ export const usersApi = {
 
   updateMe: (data: UserUpdate) =>
     api.patch<UserProfile>('/users/me', data),
+
+  uploadAvatar: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post<UserProfile>('/users/me/avatar', formData);
+  },
+
+  deleteAvatar: () => api.delete<UserProfile>('/users/me/avatar'),
+
+  searchUsers: (query: string, limit: number = 10) =>
+    api.get<UserProfile[]>(`/users/search?q=${encodeURIComponent(query)}&limit=${limit}`),
 
   getUser: (userId: string) => api.get<UserProfile>(`/users/${userId}`),
 

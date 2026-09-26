@@ -14,8 +14,16 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
+  AlertCircle,
+  Clock,
 } from 'lucide-react';
-import { adminApi, type StudentAuditListDTO, type VerificationListDTO, type AdminReportList } from '../../api/admin';
+import {
+  adminApi,
+  type StudentAuditListDTO,
+  type VerificationListDTO,
+  type AdminReportList,
+  type TrophyGrantRequestItemDTO,
+} from '../../api/admin';
 import {
   mapAdminMetricsToViewModel,
   mapStudentAuditToViewModel,
@@ -42,6 +50,12 @@ export default function AdminDashboard() {
 
   const [reports, setReports] = useState<AdminReportViewModel[]>([]);
   const [reportsTotal, setReportsTotal] = useState(0);
+
+  const [trophyRequests, setTrophyRequests] = useState<TrophyGrantRequestItemDTO[]>([]);
+  const [trophyRequestsTotal, setTrophyRequestsTotal] = useState(0);
+  const [activeTrophyReview, setActiveTrophyReview] = useState<{ id: string; title: string; action: 'approve' | 'reject' } | null>(null);
+  const [trophyReviewNote, setTrophyReviewNote] = useState('');
+  const [submittingTrophy, setSubmittingTrophy] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -102,6 +116,16 @@ export default function AdminDashboard() {
     }
   };
 
+  const loadTrophyRequests = async () => {
+    try {
+      const res = await adminApi.listTrophyRequests({ limit: 10 });
+      setTrophyRequests(res.items);
+      setTrophyRequestsTotal(res.total);
+    } catch (err) {
+      console.error('Failed to load trophy requests:', err);
+    }
+  };
+
   const loadAll = async () => {
     setLoading(true);
     await Promise.allSettled([
@@ -109,6 +133,7 @@ export default function AdminDashboard() {
       loadStudents(),
       loadVerifications(),
       loadReports(),
+      loadTrophyRequests(),
     ]);
     setLoading(false);
   };
@@ -120,6 +145,7 @@ export default function AdminDashboard() {
       loadStudents(),
       loadVerifications(),
       loadReports(),
+      loadTrophyRequests(),
     ]);
     setRefreshing(false);
   };
@@ -197,6 +223,28 @@ export default function AdminDashboard() {
       alert('Lỗi xử lý báo cáo. Vui lòng thử lại.');
     } finally {
       setSubmittingReport(false);
+    }
+  };
+
+  // ── Trophy Grant Review ──
+
+  const confirmTrophyReview = async () => {
+    if (!activeTrophyReview) return;
+    try {
+      setSubmittingTrophy(true);
+      await adminApi.reviewTrophyRequest(
+        activeTrophyReview.id,
+        activeTrophyReview.action,
+        trophyReviewNote.trim() || undefined
+      );
+      setActiveTrophyReview(null);
+      setTrophyReviewNote('');
+      await loadTrophyRequests();
+    } catch (err: any) {
+      console.error('Failed to review trophy request:', err);
+      alert(err?.response?.data?.detail || 'Lỗi xử lý phê duyệt danh hiệu. Vui lòng thử lại.');
+    } finally {
+      setSubmittingTrophy(false);
     }
   };
 
@@ -612,6 +660,114 @@ export default function AdminDashboard() {
         )}
       </section>
 
+      {/* Row 4: Trophy Approval Queue */}
+      <section className="command-panel trophy-queue-panel">
+        <div className="panel-header">
+          <div>
+            <h2 className="panel-title">Hàng đợi Phê duyệt Danh hiệu</h2>
+            <p className="panel-desc">{trophyRequestsTotal} yêu cầu cấp danh hiệu từ các hoạt động đã chốt điểm danh</p>
+          </div>
+        </div>
+
+        {trophyRequests.length === 0 ? (
+          <div className="panel-empty-state">
+            <Award size={36} className="text-muted" />
+            <p>Hiện không có yêu cầu cấp danh hiệu nào trong hàng đợi!</p>
+          </div>
+        ) : (
+          <div className="table-responsive">
+            <table className="command-table">
+              <thead>
+                <tr>
+                  <th>Hoạt động</th>
+                  <th>Danh hiệu đề xuất</th>
+                  <th>Điểm danh thực tế</th>
+                  <th>Trạng thái</th>
+                  <th>Ghi chú / Duyệt bởi</th>
+                  <th className="text-right">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                {trophyRequests.map(tr => (
+                  <tr key={tr.id}>
+                    <td className="text-bold">{tr.activity_title || 'Hoạt động'}</td>
+                    <td>
+                      <span className="trophy-name-tag">
+                        <Award size={14} />
+                        <span>{tr.trophy_name || 'Danh hiệu'}</span>
+                      </span>
+                    </td>
+                    <td>
+                      <span className={`attendance-quorum-badge ${tr.actual_attended_count >= tr.min_participants_required ? 'quorum-met' : 'quorum-unmet'}`}>
+                        <Users size={13} />
+                        <span>{tr.actual_attended_count} / {tr.min_participants_required}</span>
+                      </span>
+                    </td>
+                    <td>
+                      {tr.status === 'eligible_for_review' && (
+                        <span className="trophy-status-badge badge-eligible">
+                          <Clock size={12} />
+                          <span>Chờ xét duyệt</span>
+                        </span>
+                      )}
+                      {tr.status === 'insufficient_quorum' && (
+                        <span className="trophy-status-badge badge-insufficient">
+                          <AlertCircle size={12} />
+                          <span>Không đủ người</span>
+                        </span>
+                      )}
+                      {tr.status === 'approved' && (
+                        <span className="trophy-status-badge badge-approved">
+                          <CheckCircle2 size={12} />
+                          <span>Đã duyệt cấp</span>
+                        </span>
+                      )}
+                      {tr.status === 'rejected' && (
+                        <span className="trophy-status-badge badge-rejected">
+                          <XCircle size={12} />
+                          <span>Từ chối</span>
+                        </span>
+                      )}
+                    </td>
+                    <td className="text-muted text-sm">
+                      {tr.reviewed_by ? (
+                        <span>{tr.reviewer_name ? `Duyệt: ${tr.reviewer_name}` : 'Đã duyệt'}{tr.admin_notes ? ` — ${tr.admin_notes}` : ''}</span>
+                      ) : (
+                        <span>{tr.status === 'insufficient_quorum' ? 'Tự động dừng do không đủ người' : 'Đang chờ Admin'}</span>
+                      )}
+                    </td>
+                    <td className="text-right">
+                      {tr.status === 'eligible_for_review' ? (
+                        <div className="report-action-btns">
+                          <button
+                            type="button"
+                            className="btn-resolve"
+                            onClick={() => setActiveTrophyReview({ id: tr.id, title: tr.activity_title || 'Hoạt động', action: 'approve' })}
+                          >
+                            <CheckCircle2 size={14} />
+                            <span>Duyệt cấp</span>
+                          </button>
+                          <button
+                            type="button"
+                            className="btn-dismiss"
+                            onClick={() => setActiveTrophyReview({ id: tr.id, title: tr.activity_title || 'Hoạt động', action: 'reject' })}
+                          >
+                            <XCircle size={14} />
+                            <span>Từ chối</span>
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-muted text-xs">—</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
       {/* Modal: Verification Action */}
       {activeVerification && (
         <div className="command-modal-overlay" onClick={() => setActiveVerification(null)}>
@@ -639,7 +795,7 @@ export default function AdminDashboard() {
               <textarea
                 id="verif-note"
                 rows={3}
-                placeholder="Nhập lý do hoặc phản hồi cho đại diện CLB..."
+                placeholder="Nhập lý do hoặc phản hồi cho đại diện nhóm..."
                 value={verificationNote}
                 onChange={e => setVerificationNote(e.target.value)}
               />
@@ -731,6 +887,59 @@ export default function AdminDashboard() {
                 disabled={submittingReport}
               >
                 {submittingReport ? 'Đang lưu...' : 'Xác nhận Xử lý'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Trophy Action */}
+      {activeTrophyReview && (
+        <div className="command-modal-overlay" onClick={() => setActiveTrophyReview(null)}>
+          <div className="command-modal-box" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 className="modal-title">
+                {activeTrophyReview.action === 'approve' ? 'Xác nhận Duyệt Cấp Danh hiệu' : 'Từ chối Cấp Danh hiệu'}
+              </h3>
+              <button
+                type="button"
+                className="modal-close"
+                onClick={() => setActiveTrophyReview(null)}
+              >
+                ×
+              </button>
+            </div>
+            <p className="modal-desc">
+              Hoạt động: <strong>{activeTrophyReview.title}</strong>
+              {activeTrophyReview.action === 'approve'
+                ? ' — Phê duyệt sẽ tự động cấp danh hiệu cho toàn bộ sinh viên đã xác nhận tham gia sự kiện này.'
+                : ' — Yêu cầu cấp danh hiệu sẽ bị từ chối và không cấp danh hiệu cho người tham gia.'}
+            </p>
+            <div className="form-group">
+              <label htmlFor="trophy-review-note">Ghi chú kiểm duyệt:</label>
+              <textarea
+                id="trophy-review-note"
+                rows={3}
+                placeholder="Nhập ghi chú phản hồi..."
+                value={trophyReviewNote}
+                onChange={e => setTrophyReviewNote(e.target.value)}
+              />
+            </div>
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="btn-cancel"
+                onClick={() => setActiveTrophyReview(null)}
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                className={activeTrophyReview.action === 'approve' ? 'btn-confirm-resolve' : 'btn-confirm-reject'}
+                onClick={confirmTrophyReview}
+                disabled={submittingTrophy}
+              >
+                {submittingTrophy ? 'Đang lưu...' : activeTrophyReview.action === 'approve' ? 'Xác nhận Duyệt cấp' : 'Xác nhận Từ chối'}
               </button>
             </div>
           </div>

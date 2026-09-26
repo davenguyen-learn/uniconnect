@@ -20,10 +20,7 @@
   transition: filter var(--transition-base);
 }
 
-/* Dark mode aesthetic */
-[data-theme='dark'] .modern-map-tiles .leaflet-tile {
-  filter: brightness(0.72) invert(1) contrast(2.8) hue-rotate(200deg) saturate(0.25);
-}
+
 
 /* Custom Popup Styles */
 .custom-popup .leaflet-popup-content-wrapper {
@@ -239,6 +236,22 @@
   padding: 4px 8px;
   font-size: 0.8rem;
   text-shadow: none;
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.activity-tooltip:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: var(--shadow-lg);
+}
+
+.activity-tooltip * {
+  cursor: pointer !important;
+}
+
+.map-wrapper--compact .leaflet-container {
+  cursor: pointer;
 }
 
 /* Remove default Leaflet tooltip arrow and background to avoid conflicting styles */
@@ -246,6 +259,8 @@
   background-color: rgba(255, 255, 255, 0.98);
   border: 1px solid var(--color-glass-border);
   color: #262626;
+  pointer-events: auto !important;
+  cursor: pointer !important;
 }
 .leaflet-tooltip-top.activity-tooltip::before,
 .leaflet-tooltip-bottom.activity-tooltip::before,
@@ -268,21 +283,80 @@
 }
 
 .tooltip-star {
-  font-size: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  margin-right: 3px;
+  line-height: 1;
+}
+
+.tooltip-star-icon {
+  display: inline-block;
   vertical-align: middle;
 }
 
-/* Tooltip matching user interests — golden highlight */
-.leaflet-tooltip.tooltip-match {
-  background: #fff8e1;
-  border: 1.5px solid #ffc107;
-  color: #5d4037;
-  box-shadow: 0 0 12px rgba(255, 193, 7, 0.3), var(--shadow-md);
-  font-weight: 700;
+/* Tooltip schedule conflict — dimmed out with reduced opacity instead of prominent red */
+.leaflet-tooltip.tooltip-conflict {
+  opacity: 0.55 !important;
+  border: 1px solid var(--color-glass-border, rgba(0, 0, 0, 0.1)) !important;
+  outline: none !important;
+  box-shadow: none !important;
+  color: var(--color-text-secondary, #6b7280) !important;
+  background: var(--color-bg-secondary, #f3f4f6) !important;
+  font-weight: 500;
+  filter: grayscale(0.5);
+  transition: opacity 0.2s ease, filter 0.2s ease;
 }
 
-.leaflet-tooltip-top.tooltip-match::before {
-  border-top-color: #fff8e1 !important;
+.leaflet-tooltip.tooltip-conflict:hover {
+  opacity: 0.9 !important;
+  filter: none;
+}
+
+.leaflet-tooltip-top.tooltip-conflict::before {
+  border-top-color: var(--color-glass-border, #d1d5db) !important;
+}
+
+.tooltip-time-badge--conflict {
+  background: var(--color-bg-elevated, #e5e7eb) !important;
+  color: var(--color-text-secondary, #6b7280) !important;
+  font-weight: 500 !important;
+  border: none !important;
+}
+
+.tooltip-conflict-badge {
+  font-size: 0.75rem;
+  margin-right: 2px;
+  vertical-align: middle;
+  opacity: 0.7;
+}
+
+/* Custom marker pin dimmed when conflict */
+.custom-marker-wrapper.custom-marker--conflict,
+.custom-marker.custom-marker--conflict {
+  opacity: 0.45;
+  filter: grayscale(0.4);
+  transition: opacity 0.2s ease, filter 0.2s ease;
+}
+
+.custom-marker-wrapper.custom-marker--conflict:hover,
+.custom-marker.custom-marker--conflict:hover {
+  opacity: 0.9;
+  filter: none;
+}
+
+/* Conflict notice in popup */
+.popup-conflict-warning {
+  margin: -4px 0 10px 0;
+  padding: 6px 10px;
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-radius: var(--radius-sm);
+  color: #b91c1c;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.3;
 }
 
 /* ─── Map Legend ─── */
@@ -368,13 +442,25 @@
   background: var(--color-bg-elevated) !important;
   border: 1px solid var(--color-glass-border) !important;
   box-shadow: var(--shadow-md) !important;
-  color: var(--color-text-primary) !important;
+  color: #ef4444 !important;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .recenter-btn:hover {
   box-shadow: var(--shadow-lg) !important;
+  background: var(--color-bg-hover, var(--color-bg-elevated)) !important;
+}
+
+.recenter-btn .recenter-icon {
+  color: #ef4444;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.recenter-btn:hover .recenter-icon {
+  transform: scale(1.15);
 }
 
 .recenter-btn:active {
-  transform: scale(0.95) !important;
+  transform: scale(0.92) !important;
 }

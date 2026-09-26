@@ -115,3 +115,41 @@ class AdminActivityList(BaseModel):
     limit: int
     offset: int
     has_more: bool
+
+
+# ── Group management ──
+
+class AdminGroupOwnerInfo(BaseModel):
+    id: uuid.UUID
+    username: str
+    full_name: str | None = None
+    email: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AdminGroupItem(BaseModel):
+    id: uuid.UUID
+    name: str
+    description: str | None = None
+    privacy: str
+    status: str
+    avatar_url: str | None = None
+    created_at: datetime
+    owner: AdminGroupOwnerInfo | None = None
+    member_count: int = 0
+    activity_count: int = 0
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AdminGroupList(BaseModel):
+    items: list[AdminGroupItem]
+    total: int
+    limit: int
+    offset: int
+    has_more: bool
+
+
+class GroupStatusUpdate(BaseModel):
+    status: str = Field(..., pattern="^(active|inactive)$")

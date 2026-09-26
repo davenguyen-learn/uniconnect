@@ -168,6 +168,13 @@ def create_app() -> FastAPI:
     application.include_router(trophies_router, prefix="/api/v1")
     application.include_router(calendar_router, prefix="/api/v1")
 
+    # Static file serving for uploads (Local File Storage)
+    from pathlib import Path
+    from fastapi.staticfiles import StaticFiles
+    upload_root = Path(settings.UPLOAD_ROOT_DIR)
+    upload_root.mkdir(parents=True, exist_ok=True)
+    Path(settings.AVATAR_UPLOAD_DIR).mkdir(parents=True, exist_ok=True)
+    application.mount("/uploads", StaticFiles(directory=str(upload_root)), name="uploads")
 
     return application
 

@@ -16,6 +16,7 @@ from app.modules.admin.schemas import (
     AdminUserItem, AdminUserList,
     AdminReportItem, AdminReportList, ReportReporterInfo,
     AdminActivityItem, AdminActivityList,
+    AdminGroupItem, AdminGroupList, AdminGroupOwnerInfo,
 )
 
 
@@ -294,3 +295,143 @@ async def delete_activity(
     )
     await db.flush()
     return {"status": "deleted", "id": str(activity_id)}
+
+
+# ── Group Management ──
+
+from app.modules.groups.models import Group, GroupMember
+
+
+async def list_groups(
+    db: AsyncSession,
+    search: str | None = None,
+    status: str | None = None,
+    limit: int = 20,
+    offset: int = 0,
+) -> AdminGroupList:
+    """List all groups with member and activity counts."""
+    base = select(Group).where(Group.is_deleted == False)
+    count_base = select(func.count()).select_from(Group).where(Group.is_deleted == False)
+
+    if search:
+        search_filter = or_(
+            Group.name.ilike(f"%{search}%"),
+            Group.description.ilike(f"%{search}%"),
+        )
+        base = base.where(search_filter)
+        count_base = count_base.where(search_filter)
+
+    if status:
+        base = base.where(Group.status == status)
+        count_base = count_base.where(Group.status == status)
+
+    total = (await db.execute(count_base)).scalar() or 0
+
+    stmt = base.order_by(Group.created_at.desc()).limit(limit).offset(offset)
+    res = await db.execute(stmt)
+    groups = res.scalars().unique().all()
+
+    group_ids = [g.id for g in groups]
+    member_counts: dict[uuid.UUID, int] = {}
+    activity_counts: dict[uuid.UUID, int] = {}
+
+    if group_ids:
+        m_res = await db.execute(
+            select(GroupMember.group_id, func.count(GroupMember.id))
+            .where(GroupMember.group_id.in_(group_ids))
+            .group_by(GroupMember.group_id)
+        )
+        member_counts = {gid: count for gid, count in m_res.all()}
+
+        a_res = await db.execute(
+            select(Activity.group_id, func.count(Activity.id))
+            .where(Activity.group_id.in_(group_ids), Activity.is_deleted == False)
+            .group_by(Activity.group_id)
+        )
+        activity_counts = {gid: count for gid, count in a_res.all()}
+
+    items = []
+    for grp in groups:
+        owner_info = None
+        if grp.owner:
+            owner_info = AdminGroupOwnerInfo(
+                id=grp.owner.id,
+                username=grp.owner.username,
+                full_name=grp.owner.full_name,
+                email=grp.owner.email,
+            )
+
+        items.append(
+            AdminGroupItem(
+                id=grp.id,
+                name=grp.name,
+                description=grp.description,
+                privacy=grp.privacy.value if hasattr(grp.privacy, 'value') else grp.privacy,
+                status=getattr(grp, 'status', 'active') or 'active',
+                avatar_url=grp.avatar_url,
+                created_at=grp.created_at,
+                owner=owner_info,
+                member_count=member_counts.get(grp.id, 0),
+                activity_count=activity_counts.get(grp.id, 0),
+            )
+        )
+
+    return AdminGroupList(
+        items=items,
+        total=total,
+        limit=limit,
+        offset=offset,
+        has_more=(offset + limit) < total,
+    )
+
+
+async def update_group_status(
+    db: AsyncSession, group_id: uuid.UUID, new_status: str, admin_id: uuid.UUID | None = None
+) -> AdminGroupItem:
+    """Activate or suspend a group with audit trail."""
+    group = await db.get(Group, group_id)
+    if not group or group.is_deleted:
+        raise NotFoundError("Group not found.")
+
+    prev_status = getattr(group, "status", "active") or "active"
+    group.status = new_status
+
+    action = AdminAuditAction.suspend_group if new_status == "inactive" else AdminAuditAction.activate_group
+    await record_audit_log(
+        db=db,
+        actor_id=admin_id,
+        action=action,
+        target_type=AdminAuditTargetType.group,
+        target_id=group.id,
+        metadata_json={
+            "group_name": group.name,
+            "previous_status": prev_status,
+            "new_status": new_status,
+        },
+    )
+    await db.commit()
+    await db.refresh(group)
+
+    owner_info = None
+    if group.owner_id:
+        owner = await db.get(User, group.owner_id)
+        if owner:
+            owner_info = AdminGroupOwnerInfo(
+                id=owner.id,
+                username=owner.username,
+                full_name=owner.full_name,
+                email=owner.email,
+            )
+
+    return AdminGroupItem(
+        id=group.id,
+        name=group.name,
+        description=group.description,
+        privacy=group.privacy.value if hasattr(group.privacy, 'value') else group.privacy,
+        status=group.status,
+        avatar_url=group.avatar_url,
+        created_at=group.created_at,
+        owner=owner_info,
+        member_count=0,
+        activity_count=0,
+    )

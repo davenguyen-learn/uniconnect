@@ -6,16 +6,68 @@
   min-height: calc(100vh - 64px);
 }
 
-.create-activity-container {
+.create-activity-container,
+.create-activity-container.glass {
   width: 100%;
   max-width: 800px;
   padding: var(--space-8);
   border-radius: var(--radius-xl);
+  border: none !important;
+  background: var(--color-bg-surface) !important;
+  box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.08), 0 4px 12px -2px rgba(0, 0, 0, 0.04);
+  transition: none;
+}
+
+.create-activity-container:hover,
+.create-activity-container.glass:hover {
+  background: var(--color-bg-surface) !important;
+  border: none !important;
+  box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.08), 0 4px 12px -2px rgba(0, 0, 0, 0.04);
+}
+
+
+
+.title-input-wrapper {
+  margin-bottom: var(--space-2);
+  width: 100%;
+}
+
+.activity-hero-title-input {
+  width: 100%;
+  font-size: clamp(1.6rem, 2.8vw, 2.25rem);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  background: transparent;
+  border: none !important;
+  outline: none;
+  padding: var(--space-2) 0;
+  line-height: 1.3;
+  transition: all var(--transition-fast);
+}
+
+.activity-hero-title-input::placeholder {
+  color: var(--color-text-tertiary);
+  opacity: 0.6;
+  font-weight: 700;
+}
+
+.activity-hero-title-input:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.activity-hero-title-input.input-error {
+  outline: 2px solid #ef4444 !important;
+  outline-offset: 4px !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
+  padding: var(--space-2) var(--space-3) !important;
 }
 
 .create-activity-title {
-  font-size: 2.5rem;
-  margin-bottom: var(--space-2);
+  font-size: clamp(1.5rem, 2.8vw, 2.1rem);
+  font-weight: 700;
+  margin-bottom: var(--space-6);
   color: var(--color-text-primary);
   text-align: center;
 }
@@ -71,6 +123,107 @@
   margin: 0;
 }
 
+/* Approval Toggle Card */
+.approval-toggle-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.07), 0 1px 2px rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+  user-select: none;
+  transition: all var(--transition-fast);
+  border: 1px solid transparent;
+}
+
+.approval-toggle-card:hover {
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.approval-toggle-card.active {
+  border-color: rgba(59, 130, 246, 0.3);
+  background: rgba(59, 130, 246, 0.03);
+}
+
+
+
+.approval-toggle-content {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+}
+
+.approval-toggle-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(59, 130, 246, 0.1);
+  color: #2563eb;
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+
+.approval-toggle-card.active .approval-toggle-icon {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.approval-toggle-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.approval-toggle-title {
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+}
+
+.approval-toggle-desc {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+/* Toggle Switch */
+.approval-switch {
+  width: 44px;
+  height: 24px;
+  background: #cbd5e1;
+  border-radius: 9999px;
+  padding: 2px;
+  position: relative;
+  transition: background-color var(--transition-fast);
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+
+.approval-switch.on {
+  background: #2563eb;
+}
+
+
+
+.approval-switch-handle {
+  display: block;
+  width: 20px;
+  height: 20px;
+  background: #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform var(--transition-fast);
+}
+
+.approval-switch.on .approval-switch-handle {
+  transform: translateX(20px);
+}
+
 .private-field-callout {
   padding: var(--space-3);
   background: rgba(239, 68, 68, 0.05);
@@ -87,3 +240,112 @@
 .form-builder-toggle label {
   margin: 0;
 }
+
+/* Required asterisk in red */
+.required,
+.required-mark {
+  color: #ef4444 !important;
+  font-weight: 700;
+  margin-left: 2px;
+}
+
+/* ── Borderless Input Aesthetic with Shadow ── */
+.create-activity-page .form-input,
+.create-activity-page textarea.form-input,
+.create-activity-page select.form-input {
+  border: none !important;
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-lg);
+  padding: 10px 14px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.07), 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: box-shadow var(--transition-fast);
+}
+
+.create-activity-page .form-input:hover:not(:focus),
+.create-activity-page textarea.form-input:hover:not(:focus),
+.create-activity-page select.form-input:hover:not(:focus) {
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.create-activity-page .form-input:focus,
+.create-activity-page textarea.form-input:focus,
+.create-activity-page select.form-input:focus {
+  background: var(--color-bg-primary);
+  box-shadow: 0 0 0 2px var(--color-primary), 0 4px 12px rgba(0, 0, 0, 0.08);
+  outline: none !important;
+}
+
+
+
+/* Custom rounded dropdown select */
+.create-activity-page select.form-input {
+  border-radius: 12px !important;
+  cursor: pointer;
+  padding-right: 38px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+
+.create-activity-page select.form-input option {
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  padding: 8px 12px;
+}
+
+/* Ensure title input retains its special hero look */
+.create-activity-page .activity-hero-title-input {
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: var(--space-2) 0 !important;
+  border-radius: 0 !important;
+}
+
+.create-activity-page .activity-hero-title-input:hover {
+  filter: none !important;
+}
+
+/* Red outline for required empty inputs when submitting */
+.create-activity-page .form-input.input-error,
+.create-activity-page textarea.form-input.input-error,
+.create-activity-page select.form-input.input-error {
+  border: none !important;
+  outline: 2px solid #ef4444 !important;
+  outline-offset: 1px !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
+}
+
+.map-error-wrapper {
+  border: 2px solid #ef4444 !important;
+  outline: 2px solid #ef4444 !important;
+  outline-offset: 1px !important;
+  border-radius: 12px;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
+}
+
+.field-error-msg {
+  color: #ef4444;
+  font-size: 0.8rem;
+  margin-top: 0.35rem;
+  display: block;
+  font-weight: 500;
+}
+
+.map-group .field-error-msg,
+.map-group .error-text {
+  font-style: italic !important;
+}
+
+.form-builder-container {
+  border: none !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+}
+
+
+

@@ -3,15 +3,14 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import {
   Compass,
   Calendar,
+  Ticket,
   Users,
-  Trophy,
+  Bot,
   PlusCircle,
   LogOut,
   ChevronLeft,
   ChevronRight,
   ShieldCheck,
-  Moon,
-  Sun,
   LayoutDashboard,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -28,15 +27,20 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
 }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [isDarkMode, setIsDarkMode] = React.useState(() => {
-    return document.documentElement.getAttribute('data-theme') === 'dark';
-  });
+  const [imageError, setImageError] = React.useState(false);
 
-  const toggleTheme = () => {
-    const nextTheme = isDarkMode ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', nextTheme);
-    setIsDarkMode(!isDarkMode);
+  React.useEffect(() => {
+    setImageError(false);
+  }, [user?.avatar_url]);
+
+  const resolveAvatarUrl = (url: string | null | undefined): string | null => {
+    if (!url) return null;
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    const serverOrigin = import.meta.env.VITE_API_URL?.replace('/api/v1', '') || 'http://localhost:8000';
+    return `${serverOrigin}${url}`;
   };
+
+  const avatarSrc = resolveAvatarUrl(user?.avatar_url);
 
   const handleLogout = () => {
     logout();
@@ -121,27 +125,45 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
           <li className="sidebar__nav-item">
             <NavLink
-              to="/groups"
+              to="/my-activities"
               className={({ isActive }) =>
                 `sidebar__nav-link ${isActive ? 'sidebar__nav-link--active' : ''}`
               }
-              title="Câu lạc bộ"
+              title="Hoạt động của tôi"
             >
-              <Users size={20} className="sidebar__nav-icon" />
-              {!isCollapsed && <span className="sidebar__nav-label">Câu lạc bộ</span>}
+              <Ticket size={20} className="sidebar__nav-icon" />
+              {!isCollapsed && <span className="sidebar__nav-label">Hoạt động của tôi</span>}
             </NavLink>
           </li>
 
           <li className="sidebar__nav-item">
             <NavLink
-              to="/profile"
+              to="/groups"
               className={({ isActive }) =>
                 `sidebar__nav-link ${isActive ? 'sidebar__nav-link--active' : ''}`
               }
-              title="Trophy & Thành tích"
+              title="Nhóm"
             >
-              <Trophy size={20} className="sidebar__nav-icon" />
-              {!isCollapsed && <span className="sidebar__nav-label">Trophy & Minh chứng</span>}
+              <Users size={20} className="sidebar__nav-icon" />
+              {!isCollapsed && <span className="sidebar__nav-label">Nhóm</span>}
+            </NavLink>
+          </li>
+
+          <li className="sidebar__nav-item">
+            <NavLink
+              to="/chat"
+              className={({ isActive }) =>
+                `sidebar__nav-link ${isActive ? 'sidebar__nav-link--active' : ''}`
+              }
+              title="Trợ lý AI Campus"
+            >
+              <Bot size={20} className="sidebar__nav-icon" />
+              {!isCollapsed && (
+                <span className="sidebar__nav-label sidebar__nav-label--ai">
+                  <span>Trợ lý AI</span>
+                  <span className="sidebar__ai-badge">AI</span>
+                </span>
+              )}
             </NavLink>
           </li>
 
@@ -182,7 +204,16 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
         <div className="sidebar__user-card">
           <NavLink to="/profile" className="sidebar__user-link" title="Xem hồ sơ cá nhân">
             <div className="sidebar__user-avatar" aria-hidden="true">
-              {initials}
+              {avatarSrc && !imageError ? (
+                <img
+                  src={avatarSrc}
+                  alt={user?.full_name || user?.username || 'Avatar'}
+                  className="sidebar__user-avatar-img"
+                  onError={() => setImageError(true)}
+                />
+              ) : (
+                <span>{initials}</span>
+              )}
             </div>
             {!isCollapsed && (
               <div className="sidebar__user-details">
@@ -208,15 +239,6 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
           </NavLink>
 
           <div className="sidebar__user-actions">
-            <button
-              type="button"
-              className="sidebar__action-icon-btn"
-              onClick={toggleTheme}
-              aria-label={isDarkMode ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'}
-              title={isDarkMode ? 'Giao diện sáng' : 'Giao diện tối'}
-            >
-              {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
-            </button>
             <button
               type="button"
               className="sidebar__action-icon-btn sidebar__action-icon-btn--danger"

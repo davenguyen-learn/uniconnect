@@ -20,7 +20,7 @@ async def create_report(
 ) -> ReportResponse:
     # Validate target exists
     if data.target_type == "activity":
-        target = await activities_repo.get_activity_by_id(db, data.target_id)
+        target = await activities_repo.get_by_id(db, data.target_id)
     elif data.target_type == "user":
         target = await db.scalar(select(User).where(User.id == data.target_id))
     else:

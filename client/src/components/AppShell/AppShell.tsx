@@ -3,7 +3,6 @@ import { Outlet } from 'react-router-dom';
 import { LeftSidebar } from './LeftSidebar';
 import { BottomNav } from './BottomNav';
 import { TopBar } from './TopBar';
-import { FloatingAIAssistant } from '../chat/FloatingAIAssistant';
 import './AppShell.css';
 
 export const AppShell: React.FC = () => {
@@ -60,9 +59,6 @@ export const AppShell: React.FC = () => {
 
       {/* Bottom Nav on Mobile (< 768px) */}
       {isMobile && <BottomNav />}
-
-      {/* Global Floating AI Campus Assistant (Section 4.8) */}
-      <FloatingAIAssistant />
     </div>
   );
 };

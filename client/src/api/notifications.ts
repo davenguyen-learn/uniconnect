@@ -15,6 +15,7 @@ export interface NotificationResponse {
   type: string;
   target_type?: string;
   target_id?: string;
+  action_url?: string | null;
   message: string;
   is_read: boolean;
   created_at: string;

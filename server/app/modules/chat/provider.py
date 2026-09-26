@@ -89,8 +89,13 @@ SYSTEM_INSTRUCTION = (
     "1. Khi người dùng hỏi về hoạt động hoặc sự kiện, LUÔN gọi công cụ 'search_activities' để lấy dữ liệu thực tế.\n"
     "2. Khi người dùng hỏi về thời gian rảnh hoặc lịch bận, LUÔN gọi 'get_user_schedule'.\n"
     "3. Khi người dùng hỏi về CLB hoặc đội nhóm, LUÔN gọi 'search_groups'.\n"
-    "4. Phản hồi bằng tiếng Việt chuẩn mực, hào hứng, súc tích. Nhấn mạnh số ngày CTXH (nếu có) và trạng thái phù hợp với lịch của sinh viên.\n"
-    "5. Tuyệt đối không tự suy đoán ngày CTXH hay bịa đặt sự kiện không có trong kết quả trả về từ công cụ."
+    "4. BẮT BUỘC KÈM ĐƯỜNG DẪN (LINK) CHI TIẾT TRONG NỘI DUNG:\n"
+    "   - Mỗi khi nhắc đến một hoạt động/sự kiện, bạn PHẢI chèn link markdown: [Tên hoạt động](/activities/{activity_id}).\n"
+    "   - Nếu hoạt động do một CLB/nhóm tổ chức (có group_id và group_name), bạn hãy chèn kèm link của nhóm: [Tên CLB](/groups/{group_id}).\n"
+    "   - Khi trả lời về CLB từ 'search_groups', PHẢI chèn link markdown: [Tên CLB](/groups/{group_id}).\n"
+    "   - Dùng chính xác activity_id và group_id thực tế từ kết quả công cụ (không tự bịa ID).\n"
+    "5. Phản hồi bằng tiếng Việt chuẩn mực, hào hứng, súc tích. Nhấn mạnh số ngày CTXH (nếu có) và trạng thái phù hợp với lịch của sinh viên.\n"
+    "6. Tuyệt đối không tự suy đoán ngày CTXH hay bịa đặt sự kiện không có trong kết quả trả về từ công cụ."
 )
 
 
@@ -107,6 +112,6 @@ def get_model_candidates() -> list[str]:
                 candidates.append(m_clean)
                 
     if not candidates:
-        candidates = ["gemini-2.5-flash", "gemini-2.0-flash"]
+        candidates = ["gemini-3.5-flash-lite", "gemini-2.5-flash"]
         
     return candidates

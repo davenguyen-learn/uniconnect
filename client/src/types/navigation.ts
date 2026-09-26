@@ -49,7 +49,7 @@ export const MAIN_NAVIGATION_ITEMS: NavItemConfig[] = [
   },
   {
     id: 'groups',
-    label: 'Câu lạc bộ',
+    label: 'Nhóm',
     path: '/groups',
     iconName: 'Users',
     showOnSidebar: true,

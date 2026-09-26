@@ -29,6 +29,7 @@ class User(PrimaryKeyMixin, TimestampMixin, Base):
     full_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
     bio: Mapped[str | None] = mapped_column(Text, nullable=True)
     university: Mapped[str | None] = mapped_column(String(150), nullable=True)
+    avatar_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     role: Mapped[UserRole] = mapped_column(
         Enum(UserRole, name="user_role", create_constraint=True),

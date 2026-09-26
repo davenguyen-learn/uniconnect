@@ -85,4 +85,23 @@ export const api = {
 
   delete: <T>(endpoint: string) =>
     apiRequest<T>(endpoint, { method: 'DELETE' }),
+
+  getBlob: async (endpoint: string): Promise<Blob> => {
+    const token = getAuthToken();
+    const headers: HeadersInit = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    const response = await fetch(`${API_BASE}${endpoint}`, {
+      method: 'GET',
+      headers,
+    });
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({
+        error: { code: 'UNKNOWN', message: 'An unexpected error occurred.', details: {} },
+      }));
+      throw new ApiRequestError(response.status, body.error);
+    }
+    return response.blob();
+  },
 };

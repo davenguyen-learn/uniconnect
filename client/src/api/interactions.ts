@@ -5,6 +5,7 @@ import { api } from './client';
 export interface UserInfo {
   username: string;
   full_name: string | null;
+  avatar_url?: string | null;
 }
 
 export interface CommentResponse {

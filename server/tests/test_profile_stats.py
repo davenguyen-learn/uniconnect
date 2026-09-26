@@ -7,21 +7,21 @@ from app.modules.users.service import get_user_stats
 
 def test_rank_title_boundaries():
     """Verify rank title transitions at exact boundary points (-1, exact, +1)."""
-    # Active Member: 0 to 49
-    assert resolve_rank_title(0) == "Tân sinh viên Tích cực (Active Member)"
-    assert resolve_rank_title(49) == "Tân sinh viên Tích cực (Active Member)"
+    # Member: 0 to 49
+    assert resolve_rank_title(0) == "Thành viên Mới"
+    assert resolve_rank_title(49) == "Thành viên Mới"
 
-    # Pioneer: 50 to 199
-    assert resolve_rank_title(50) == "Tình nguyện viên Tiên phong (Pioneer)"
-    assert resolve_rank_title(199) == "Tình nguyện viên Tiên phong (Pioneer)"
+    # Active: 50 to 199
+    assert resolve_rank_title(50) == "Thành viên Tích cực"
+    assert resolve_rank_title(199) == "Thành viên Tích cực"
 
-    # Leader: 200 to 499
-    assert resolve_rank_title(200) == "Thủ lĩnh Năng động (Leader)"
-    assert resolve_rank_title(499) == "Thủ lĩnh Năng động (Leader)"
+    # Dynamic: 200 to 499
+    assert resolve_rank_title(200) == "Thành viên Năng nổ"
+    assert resolve_rank_title(499) == "Thành viên Năng nổ"
 
-    # Ambassador: 500+
-    assert resolve_rank_title(500) == "Đại sứ Hoạt động (Ambassador)"
-    assert resolve_rank_title(1200) == "Đại sứ Hoạt động (Ambassador)"
+    # Outstanding: 500+
+    assert resolve_rank_title(500) == "Thành viên Tiêu biểu"
+    assert resolve_rank_title(1200) == "Thành viên Tiêu biểu"
 
 
 @pytest.mark.asyncio
@@ -62,7 +62,7 @@ async def test_user_stats_ctxh_boundaries():
         assert stats["ctxh_completion_percent"] == exp_percent
         assert stats["remaining_ctxh_days"] == exp_rem
         assert stats["is_target_reached"] == exp_reached
-        assert stats["rank_title"] == "Tình nguyện viên Tiên phong (Pioneer)"
+        assert stats["rank_title"] == "Thành viên Tích cực"
 
 
 @pytest.mark.asyncio
@@ -91,7 +91,7 @@ async def test_public_user_stats_privacy():
     assert public_stats["total_attended_activities"] == 3
     assert public_stats["total_trophies_count"] == 1
     assert public_stats["total_trophy_points"] == 60
-    assert public_stats["rank_title"] == "Tình nguyện viên Tiên phong (Pioneer)"
+    assert public_stats["rank_title"] == "Thành viên Tích cực"
 
     # Private fields must NOT be in public response
     assert "target_ctxh_days" not in public_stats

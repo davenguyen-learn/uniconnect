@@ -25,12 +25,11 @@ async def seed_admin():
         existing = result.scalar_one_or_none()
 
         if existing:
-            if existing.role != UserRole.admin:
-                existing.role = UserRole.admin
-                await db.commit()
-                print(f"✅ Updated existing user '{ADMIN_USERNAME}' to admin role.")
-            else:
-                print(f"ℹ️  Admin user '{ADMIN_USERNAME}' already exists.")
+            existing.role = UserRole.admin
+            existing.password_hash = hash_password(ADMIN_PASSWORD)
+            existing.is_active = True
+            await db.commit()
+            print(f"[OK] Admin user '{ADMIN_USERNAME}' ({ADMIN_EMAIL}) updated with password '{ADMIN_PASSWORD}'. Role: {existing.role.value}")
             return
 
         admin = User(

@@ -58,22 +58,35 @@ class AttendanceUpdateRequest(BaseModel):
     attended: bool
 
 
+class CertificateCustomField(BaseModel):
+    label: str
+    value: str
+
+
 class CertificateResponse(BaseModel):
     certificate_code: str
     activity_id: uuid.UUID
     user_id: uuid.UUID
     participant_name: str
     participant_username: str
+    participant_email: str | None = None
     participant_university: str | None = None
     activity_title: str
     activity_date: str
     meeting_location: str | None = None
     location_name: str | None = None
+    host_id: uuid.UUID | None = None
     host_name: str
     host_university: str | None = None
+    group_id: uuid.UUID | None = None
+    group_name: str | None = None
+    group_is_private: bool = False
     social_work_days: float | None = None
     trophy_name: str | None = None
     trophy_icon: str | None = None
     trophy_points: int | None = None
+    custom_fields: list[CertificateCustomField] = []
     issued_at: datetime
     verification_url: str
+    is_host: bool = False
+

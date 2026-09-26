@@ -1,17 +1,20 @@
-import { useState, useEffect, useCallback, type FormEvent } from 'react';
+import { useState, useEffect, useCallback, useRef, type FormEvent } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   Award,
   GraduationCap,
   Trophy,
   FileText,
-  Sparkles,
   Calendar,
   Users,
   ShieldCheck,
   AlertTriangle,
   RefreshCw,
   ExternalLink,
+  Camera,
+  Trash2,
+  X,
+  Lock,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import {
@@ -35,8 +38,10 @@ import {
   getInitials,
   formatMemberSince,
   formatActivityDate,
+  formatActivityTimeRange,
   type ProfileSectionState,
 } from '../../types/profile-mapper';
+import { formatCtxh } from '../../utils/format';
 import './Profile.css';
 
 export default function Profile() {
@@ -82,6 +87,86 @@ export default function Profile() {
   // Certificate Modal state
   const [selectedCertificateActivityId, setSelectedCertificateActivityId] = useState<string | null>(null);
 
+  // Avatar Modal & Upload state
+  const [imageError, setImageError] = useState(false);
+  const [avatarModalOpen, setAvatarModalOpen] = useState(false);
+  const [selectedAvatarFile, setSelectedAvatarFile] = useState<File | null>(null);
+  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const resolveAvatarUrl = useCallback((url: string | null | undefined): string | null => {
+    if (!url) return null;
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    const serverOrigin = import.meta.env.VITE_API_URL?.replace('/api/v1', '') || 'http://localhost:8000';
+    return `${serverOrigin}${url}`;
+  }, []);
+
+  const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Ảnh vượt quá dung lượng tối đa 5MB');
+      return;
+    }
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      toast.error('Chỉ hỗ trợ file ảnh định dạng JPEG, PNG hoặc WebP');
+      return;
+    }
+    setSelectedAvatarFile(file);
+    const preview = URL.createObjectURL(file);
+    setAvatarPreviewUrl(preview);
+    setAvatarModalOpen(true);
+    e.target.value = '';
+  };
+
+  const closeAvatarModal = () => {
+    if (avatarPreviewUrl) {
+      URL.revokeObjectURL(avatarPreviewUrl);
+      setAvatarPreviewUrl(null);
+    }
+    setSelectedAvatarFile(null);
+    setAvatarModalOpen(false);
+  };
+
+  const handleUploadConfirm = async () => {
+    if (!selectedAvatarFile) return;
+    setUploadingAvatar(true);
+    try {
+      const updated = await usersApi.uploadAvatar(selectedAvatarFile);
+      setProfileState(prev => ({ ...prev, data: updated }));
+      setImageError(false);
+      closeAvatarModal();
+      await refreshUser();
+      toast.success('Đã cập nhật ảnh đại diện thành công');
+    } catch (err) {
+      if (err instanceof ApiRequestError) {
+        toast.error('Tải ảnh thất bại', err.message);
+      } else {
+        toast.error('Đã xảy ra lỗi khi tải ảnh lên');
+      }
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const handleDeleteAvatar = async () => {
+    setUploadingAvatar(true);
+    try {
+      const updated = await usersApi.deleteAvatar();
+      setProfileState(prev => ({ ...prev, data: updated }));
+      setImageError(false);
+      closeAvatarModal();
+      await refreshUser();
+      toast.success('Đã gỡ ảnh đại diện, chuyển về chữ viết tắt');
+    } catch (err) {
+      toast.error('Không thể gỡ ảnh đại diện');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   const loadProfileData = useCallback(async () => {
     if (!targetUserId) return;
 
@@ -99,7 +184,7 @@ export default function Profile() {
       isOwnProfile ? usersApi.getMyStats() : usersApi.getUserStats(targetUserId),
       trophiesApi.getUserTrophies(targetUserId),
       isOwnProfile ? activitiesApi.getJoinedActivities({ limit: 10, offset: 0 }) : Promise.resolve(null),
-      !isOwnProfile ? usersApi.getFollowStatus(targetUserId) : Promise.resolve(null),
+      usersApi.getFollowStatus(targetUserId),
     ];
 
     const results = await Promise.allSettled(queries);
@@ -162,7 +247,7 @@ export default function Profile() {
     }
 
     // 5. Follow Status
-    if (!isOwnProfile && results[4].status === 'fulfilled' && results[4].value) {
+    if (results[4].status === 'fulfilled' && results[4].value) {
       setFollowStatus(results[4].value as FollowStatus);
     }
   }, [targetUserId, isOwnProfile]);
@@ -233,8 +318,6 @@ export default function Profile() {
   const activities = activitiesState.data || [];
 
   const rankBadge = stats ? mapRankToBadge(stats.rank_title) : null;
-  const isMyStats = isOwnProfile && stats && 'target_ctxh_days' in stats;
-  const myStats = isMyStats ? (stats as MyUserStats) : null;
 
   return (
     <div className="container profile-container">
@@ -257,13 +340,43 @@ export default function Profile() {
         ) : profile ? (
           <>
             <div className="profile-avatar-wrapper">
-              <div className="profile-avatar">
-                {getInitials(profile.full_name, profile.username)}
-              </div>
+              {profile.avatar_url && !imageError ? (
+                <img
+                  src={resolveAvatarUrl(profile.avatar_url)!}
+                  alt={profile.full_name || profile.username}
+                  className="profile-avatar-img"
+                  onError={() => setImageError(true)}
+                />
+              ) : (
+                <div className="profile-avatar">
+                  {getInitials(profile.full_name, profile.username)}
+                </div>
+              )}
               {profile.is_verified && (
                 <div className="profile-verified-badge" title="Tài khoản đã xác minh">
                   <ShieldCheck size={16} />
                 </div>
+              )}
+              {isOwnProfile && (
+                <>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleAvatarFileChange}
+                    accept="image/jpeg,image/png,image/webp"
+                    style={{ display: 'none' }}
+                    aria-label="Chọn ảnh đại diện mới"
+                  />
+                  <button
+                    type="button"
+                    className="profile-avatar-camera-btn"
+                    onClick={() => fileInputRef.current?.click()}
+                    title="Đổi ảnh đại diện"
+                    aria-label="Đổi ảnh đại diện"
+                  >
+                    <Camera size={15} />
+                  </button>
+                </>
               )}
             </div>
 
@@ -277,7 +390,6 @@ export default function Profile() {
                 {/* Server-derived Rank Title Badge */}
                 {rankBadge && (
                   <div className={`profile-rank-badge ${rankBadge.badgeClass}`}>
-                    <Sparkles size={14} />
                     <span>{rankBadge.title}</span>
                   </div>
                 )}
@@ -297,7 +409,7 @@ export default function Profile() {
 
                 {profile.bio && <p className="profile-bio">{profile.bio}</p>}
 
-                {!isOwnProfile && followStatus && (
+                {followStatus && (
                   <div className="profile-follow-stats">
                     <div>
                       <strong>{followStatus.followers_count}</strong> Người theo dõi
@@ -359,22 +471,17 @@ export default function Profile() {
         ) : null}
       </div>
 
-      {/* 2. CTXH PASSPORT & RECOGNITION STATS WIDGET (100% Server-Derived Data) */}
+      {/* 2. ACTIVITY STATS WIDGET (100% Server-Derived Data) */}
       <div className="profile-ctxh-card glass animate-fade-in">
         <div className="ctxh-passport-header">
           <div className="ctxh-passport-title-group">
-            <Award size={24} className="text-emerald-700 dark:text-emerald-400" />
+            <Award size={24} className="text-emerald-700" />
             <div>
-              <h2 className="ctxh-passport-title">Hộ Chiếu Ngày CTXH & Cống Hiến</h2>
-              <p className="ctxh-passport-subtitle">Số liệu xác thực chính thức từ hệ thống</p>
+              <h2 className="ctxh-passport-title">
+                {isOwnProfile ? 'Thống kê hoạt động của bạn' : 'Thống kê hoạt động'}
+              </h2>
             </div>
           </div>
-          {stats && (
-            <div className="trophies-points-badge">
-              <Trophy size={16} />
-              <span>{stats.total_trophy_points} Điểm rèn luyện</span>
-            </div>
-          )}
         </div>
 
         {statsState.status === 'loading' ? (
@@ -388,66 +495,33 @@ export default function Profile() {
             <span>{statsState.error}</span>
           </div>
         ) : stats ? (
-          <>
-            <div className="ctxh-stat-grid">
-              <div className="ctxh-stat-box">
-                <span className="ctxh-stat-box-label">Tổng ngày CTXH</span>
-                <span className="ctxh-stat-box-value text-emerald-800 dark:text-emerald-300">
-                  {stats.total_ctxh_days.toFixed(1)} ngày
-                </span>
-                <span className="ctxh-stat-box-hint">
-                  {myStats
-                    ? myStats.is_target_reached
-                      ? 'Đã hoàn thành xuất sắc chỉ tiêu tốt nghiệp'
-                      : `Còn thiếu ${myStats.remaining_ctxh_days.toFixed(1)} ngày để đủ 15 ngày`
-                    : 'Số ngày cống hiến vì cộng đồng'}
-                </span>
-              </div>
-
-              <div className="ctxh-stat-box">
-                <span className="ctxh-stat-box-label">Hoạt động đã có mặt</span>
-                <span className="ctxh-stat-box-value text-indigo-600 dark:text-indigo-400">
-                  {stats.total_attended_activities} sự kiện
-                </span>
-                <span className="ctxh-stat-box-hint">Điểm danh định vị đã xác thực</span>
-              </div>
-
-              <div className="ctxh-stat-box">
-                <span className="ctxh-stat-box-label">Huy hiệu Trophy</span>
-                <span className="ctxh-stat-box-value text-amber-600 dark:text-amber-400">
-                  {stats.total_trophies_count} danh hiệu
-                </span>
-                <span className="ctxh-stat-box-hint">Thành tích rèn luyện được cấp</span>
-              </div>
+          <div className="ctxh-stat-grid">
+            <div className="ctxh-stat-box">
+              <span className="ctxh-stat-box-label">Tổng ngày CTXH</span>
+              <span className="ctxh-stat-box-value ctxh-stat-box-value--ctxh">
+                {formatCtxh(stats.total_ctxh_days)} ngày
+              </span>
+              <span className="ctxh-stat-box-hint">
+                Số ngày tích lũy trên nền tảng UniConnect
+              </span>
             </div>
 
-            {/* Private Progress Bar towards 15 days graduation target (Self view only) */}
-            {myStats && (
-              <div className="mt-2">
-                <div
-                  className="ctxh-progress-track"
-                  role="progressbar"
-                  aria-valuenow={myStats.ctxh_completion_percent}
-                  aria-valuemin={0}
-                  aria-valuemax={100}
-                  aria-label="Tiến độ hoàn thành chỉ tiêu 15 ngày CTXH"
-                >
-                  <div
-                    className={`ctxh-progress-fill ${myStats.is_target_reached ? 'ctxh-progress-fill--complete' : ''}`}
-                    style={{ width: `${myStats.ctxh_completion_percent}%` }}
-                  />
-                </div>
-                <div className="ctxh-progress-footer">
-                  <span>
-                    Chỉ tiêu: <strong>15.0 ngày</strong>
-                  </span>
-                  <span className="font-semibold text-emerald-800 dark:text-emerald-300">
-                    {myStats.ctxh_completion_percent}% hoàn thành
-                  </span>
-                </div>
-              </div>
-            )}
-          </>
+            <div className="ctxh-stat-box">
+              <span className="ctxh-stat-box-label">Hoạt động đã có mặt</span>
+              <span className="ctxh-stat-box-value text-indigo-700">
+                {stats.total_attended_activities} sự kiện
+              </span>
+              <span className="ctxh-stat-box-hint">Điểm danh định vị đã xác thực</span>
+            </div>
+
+            <div className="ctxh-stat-box">
+              <span className="ctxh-stat-box-label">Huy hiệu Trophy</span>
+              <span className="ctxh-stat-box-value text-amber-700">
+                {stats.total_trophies_count} danh hiệu
+              </span>
+              <span className="ctxh-stat-box-hint">Huy hiệu vinh danh được cấp</span>
+            </div>
+          </div>
         ) : null}
       </div>
 
@@ -458,7 +532,6 @@ export default function Profile() {
             <Trophy size={26} className="text-amber-500" />
             <div>
               <h2 className="trophies-title">Bộ sưu tập Trophy</h2>
-              <p className="trophies-subtitle">Danh hiệu đạt được khi tham gia các hoạt động</p>
             </div>
           </div>
         </div>
@@ -497,9 +570,16 @@ export default function Profile() {
                     <p className="trophy-item-desc">{ut.trophy.description}</p>
                   )}
                   {ut.activity && (
-                    <Link to={`/activities/${ut.activity.id}`} className="trophy-activity-link">
-                      <ExternalLink size={12} /> {ut.activity.title}
-                    </Link>
+                    ut.activity.is_accessible && ut.activity.id ? (
+                      <Link to={`/activities/${ut.activity.id}`} className="trophy-activity-link">
+                        <ExternalLink size={12} /> {ut.activity.title}
+                      </Link>
+                    ) : (
+                      <span className="trophy-activity-private-tag">
+                        <Lock size={12} />
+                        <span>Sự kiện riêng tư</span>
+                      </span>
+                    )
                   )}
                   <span className="trophy-item-date">
                     Đạt được: {formatActivityDate(ut.created_at)}
@@ -518,10 +598,7 @@ export default function Profile() {
             <div className="ctxh-passport-title-group">
               <FileText size={24} className="text-indigo-500" />
               <div>
-                <h2 className="ctxh-passport-title">Minh Chứng & Giấy Chứng Nhận Điện Tử</h2>
-                <p className="ctxh-passport-subtitle">
-                  Xuất file PDF chuẩn A4 và mã QR tra cứu chống làm giả
-                </p>
+                <h2 className="ctxh-passport-title">Minh chứng tham gia hoạt động</h2>
               </div>
             </div>
           </div>
@@ -553,24 +630,33 @@ export default function Profile() {
                       <span>{act.title}</span>
                       <ExternalLink size={14} className="certificate-row-icon" />
                     </Link>
-                    <div className="certificate-row-meta">
-                      <span>{formatActivityDate(act.start_time)}</span>
-                      {act.social_work_days && act.social_work_days > 0 && (
+                    {typeof act.social_work_days === 'number' && act.social_work_days > 0 ? (
+                      <div className="certificate-row-badge-line">
                         <span className="certificate-badge-ctxh">
-                          +{act.social_work_days} ngày CTXH
+                          +{formatCtxh(act.social_work_days)} ngày CTXH
                         </span>
-                      )}
+                      </div>
+                    ) : null}
+                    <div className="certificate-row-meta">
+                      <Calendar size={13} className="certificate-meta-icon" />
+                      <span>{formatActivityTimeRange(act.start_time, act.end_time)}</span>
                     </div>
                   </div>
 
                   <div className="certificate-row-actions">
                     <Button
                       size="sm"
-                      variant="primary"
-                      onClick={() => setSelectedCertificateActivityId(act.id)}
+                      className={act.attendance_confirmed ? 'btn-cert-confirmed' : 'btn-cert-unconfirmed'}
+                      disabled={!act.attendance_confirmed}
+                      title={act.attendance_confirmed ? 'Xuất giấy xác nhận đã tham gia' : 'Hoạt động này chưa được xác nhận điểm danh'}
+                      onClick={() => {
+                        if (act.attendance_confirmed) {
+                          setSelectedCertificateActivityId(act.id);
+                        }
+                      }}
                     >
                       <FileText size={14} className="inline mr-1" />
-                      Xuất Bằng Khen / PDF
+                      Xuất giấy xác nhận đã tham gia
                     </Button>
                   </div>
                 </div>
@@ -588,6 +674,57 @@ export default function Profile() {
           activityId={selectedCertificateActivityId}
           userId={targetUserId}
         />
+      )}
+
+      {/* Avatar Preview & Confirmation Modal */}
+      {avatarModalOpen && (
+        <div className="avatar-modal-overlay" onClick={closeAvatarModal} role="dialog" aria-modal="true">
+          <div className="avatar-modal-card glass animate-fade-in" onClick={(e) => e.stopPropagation()}>
+            <div className="avatar-modal-header">
+              <h3 className="avatar-modal-title">Cập nhật ảnh đại diện</h3>
+              <button
+                type="button"
+                className="avatar-modal-close"
+                onClick={closeAvatarModal}
+                disabled={uploadingAvatar}
+                aria-label="Đóng"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="avatar-modal-body">
+              {avatarPreviewUrl ? (
+                <div className="avatar-modal-preview-wrapper">
+                  <img src={avatarPreviewUrl} alt="Xem trước avatar" className="avatar-modal-preview-img" />
+                  <span className="avatar-modal-file-info">
+                    {selectedAvatarFile?.name} ({(selectedAvatarFile ? selectedAvatarFile.size / 1024 : 0).toFixed(1)} KB)
+                  </span>
+                </div>
+              ) : null}
+            </div>
+
+            <div className="avatar-modal-actions">
+              {profile?.avatar_url && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-rose-600 hover:text-rose-700 mr-auto"
+                  onClick={handleDeleteAvatar}
+                  disabled={uploadingAvatar}
+                >
+                  <Trash2 size={14} className="inline mr-1" /> Gỡ ảnh
+                </Button>
+              )}
+              <Button variant="secondary" size="sm" onClick={closeAvatarModal} disabled={uploadingAvatar}>
+                Hủy
+              </Button>
+              <Button variant="primary" size="sm" onClick={handleUploadConfirm} loading={uploadingAvatar}>
+                Lưu ảnh đại diện
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

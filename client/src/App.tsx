@@ -40,6 +40,7 @@ const AdminDashboard = lazy(() => import('./pages/Admin/AdminDashboard'))
 const AdminUsers = lazy(() => import('./pages/Admin/AdminUsers'))
 const AdminReports = lazy(() => import('./pages/Admin/AdminReports'))
 const AdminContent = lazy(() => import('./pages/Admin/AdminContent'))
+const AdminGroups = lazy(() => import('./pages/Admin/AdminGroups'))
 
 // Fallback Page
 const NotFound = lazy(() => import('./pages/NotFound/NotFound'))
@@ -87,6 +88,7 @@ function App() {
                     <Route path="/admin/users" element={<AdminUsers />} />
                     <Route path="/admin/reports" element={<AdminReports />} />
                     <Route path="/admin/content" element={<AdminContent />} />
+                    <Route path="/admin/groups" element={<AdminGroups />} />
                   </Route>
                 </Route>
 

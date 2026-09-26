@@ -182,6 +182,29 @@ async def cancel_request(
     return _to_response(jr)
 
 
+async def remove_participant(
+    db: AsyncSession, activity_id: uuid.UUID, target_user_id: uuid.UUID, host_user_id: str
+) -> dict:
+    """Host removes an approved participant from the activity."""
+    activity = await activity_repo.get_by_id(db, activity_id)
+    if not activity:
+        raise NotFoundError("Activity not found.")
+    if str(activity.host_id) != host_user_id:
+        raise ForbiddenError("Chỉ Host mới có quyền xóa người tham gia khỏi hoạt động.")
+
+    if target_user_id == activity.host_id:
+        raise ValidationError("Không thể xóa người tổ chức (Host) khỏi hoạt động.")
+
+    jr = await participation_repo.get_active_request(db, activity_id, target_user_id)
+    if not jr or jr.status != RequestStatus.approved:
+        raise NotFoundError("Người dùng không phải là thành viên đã tham gia hoạt động.")
+
+    await participation_repo.decrement_participants(db, activity_id)
+    await participation_repo.update_status(db, jr, RequestStatus.cancelled)
+
+    return {"message": "Đã xóa người tham gia khỏi hoạt động thành công."}
+
+
 async def leave_activity(
     db: AsyncSession, activity_id: uuid.UUID, user_id: str
 ) -> None:
@@ -204,6 +227,7 @@ async def leave_activity(
     return None
 
 
+
 async def list_requests(
     db: AsyncSession, activity_id: uuid.UUID, user_id: str
 ) -> list[JoinRequestResponse]:
@@ -221,50 +245,6 @@ async def list_requests(
     return [_to_response(jr) for jr in requests]
 
 
-async def _award_trophy_if_eligible(db: AsyncSession, activity, user_id: uuid.UUID) -> bool:
-    """Award trophy to user if activity has a trophy attached and not yet awarded."""
-    from app.modules.trophies.models import UserTrophy, Trophy
-    from sqlalchemy import select
-
-    trophy = await db.scalar(select(Trophy).where(Trophy.activity_id == activity.id))
-    if not trophy:
-        return False
-
-    existing = await db.scalar(
-        select(UserTrophy).where(
-            UserTrophy.user_id == user_id,
-            UserTrophy.trophy_id == trophy.id,
-            UserTrophy.activity_id == activity.id,
-        )
-    )
-    if existing:
-        return False
-
-    user_trophy = UserTrophy(
-        user_id=user_id,
-        trophy_id=trophy.id,
-        activity_id=activity.id,
-    )
-    db.add(user_trophy)
-
-    trophy_name = trophy.name if trophy else "Danh hiệu mới"
-
-    # Send in-app notification
-    try:
-        from app.modules.notifications.repository import create_notification
-        await create_notification(
-            db=db,
-            user_id=user_id,
-            actor_id=activity.host_id,
-            type="trophy_awarded",
-            activity_id=activity.id,
-            action_url="/profile",
-            message=f"Chúc mừng! Bạn đã nhận được danh hiệu '{trophy_name}' từ hoạt động '{activity.title}'.",
-        )
-    except Exception as e:
-        logger.warning(f"Failed to send trophy notification to {user_id}: {e}")
-
-    return True
 
 
 def calculate_distance_meters(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -396,6 +376,16 @@ async def check_in_participant(
                 f"Bạn đang ở cách địa điểm sự kiện khoảng {int(dist)}m (vượt quá bán kính cho phép {activity.check_in_radius}m)."
             )
 
+    # 4.5. Freeze check: Không cho phép check-in nếu hoạt động đã finalize attendance
+    if getattr(activity, "attendance_finalized_at", None) is not None:
+        raise ConflictError("Điểm danh của hoạt động này đã được chốt, không thể thay đổi.")
+    from app.modules.trophies.models import TrophyGrantRequest
+    existing_req = await db.scalar(
+        select(TrophyGrantRequest).where(TrophyGrantRequest.activity_id == activity_id)
+    )
+    if existing_req:
+        raise ConflictError("Điểm danh của hoạt động này đã được chốt, không thể thay đổi.")
+
     # 5. Atomic Attendance Update (Race condition / concurrent request protection)
     stmt = (
         update(JoinRequest)
@@ -418,8 +408,9 @@ async def check_in_participant(
             "already_confirmed": True,
         }
 
-    # 6. Idempotent Reward within the same transaction boundary
-    trophy_awarded = await _award_trophy_if_eligible(db, activity, uid)
+    # 6. Trophy lifecycle: Invariant D (pending != earned, eligible != earned, only approved = earned)
+    # Trophies are granted in batch upon Admin review/approval
+    trophy_awarded = False
 
     # 7. Audit Logging
     logger.info(
@@ -452,33 +443,130 @@ async def update_participant_attendance(
     if str(activity.host_id) != host_user_id:
         raise ForbiddenError("Chỉ Host mới có quyền cập nhật điểm danh.")
 
+    # Freeze check: Không cho phép sửa điểm danh nếu hoạt động đã finalize
+    if getattr(activity, "attendance_finalized_at", None) is not None:
+        raise ConflictError("Điểm danh của hoạt động này đã được chốt, không thể thay đổi.")
+    from app.modules.trophies.models import TrophyGrantRequest
+    existing_req = await db.scalar(
+        select(TrophyGrantRequest).where(TrophyGrantRequest.activity_id == activity_id)
+    )
+    if existing_req:
+        raise ConflictError("Điểm danh của hoạt động này đã được chốt, không thể thay đổi.")
+
     jr = await participation_repo.get_active_request(db, activity_id, target_user_id)
     if not jr or jr.status != RequestStatus.approved:
         raise NotFoundError("Người dùng chưa được duyệt tham gia hoạt động này.")
 
     jr.attendance_confirmed = attended
-    trophy_awarded = False
-    if attended:
-        trophy_awarded = await _award_trophy_if_eligible(db, activity, target_user_id)
-    else:
-        # Revoke trophy if attended set to False
-        from app.modules.trophies.models import UserTrophy, Trophy
-        from sqlalchemy import delete
-        trophy = await db.scalar(select(Trophy).where(Trophy.activity_id == activity.id))
-        if trophy:
-            await db.execute(
-                delete(UserTrophy).where(
-                    UserTrophy.user_id == target_user_id,
-                    UserTrophy.trophy_id == trophy.id,
-                    UserTrophy.activity_id == activity.id,
-                )
-            )
-
     await db.commit()
     return {
         "message": "Cập nhật điểm danh thành công.",
         "attendance_confirmed": attended,
-        "trophy_awarded": trophy_awarded,
+        "trophy_awarded": False,
+    }
+
+
+async def finalize_activity_attendance(
+    db: AsyncSession,
+    activity_id: uuid.UUID,
+    actor_id: str,
+    actor_role: str,
+) -> dict:
+    """Finalize attendance for an activity. Host or Admin only, enforces end_time <= now."""
+    from app.modules.activities.models import Activity
+    from app.modules.trophies.models import TrophyGrantRequest, TrophyGrantStatus
+    from app.modules.users.models import UserRole
+    from sqlalchemy import func, distinct
+
+    # 1. Lock Activity row with FOR UPDATE to serialize parallel finalize requests
+    act_stmt = select(Activity).where(Activity.id == activity_id).with_for_update()
+    activity = await db.scalar(act_stmt)
+    if not activity:
+        raise NotFoundError("Activity not found.")
+
+    # 2. Check actor authorization
+    is_admin = actor_role == UserRole.admin.value or actor_role == "admin"
+    is_host = str(activity.host_id) == actor_id
+    if not is_host and not is_admin:
+        raise ForbiddenError("Chỉ Host hoặc Admin mới có quyền chốt điểm danh.")
+
+    # 3. Enforce activity end_time <= now_utc
+    now_utc = datetime.now(timezone.utc)
+    end_time_dt = activity.end_time
+    if isinstance(end_time_dt, str):
+        end_time_dt = datetime.fromisoformat(end_time_dt.replace("Z", "+00:00"))
+    if end_time_dt.tzinfo is None:
+        end_time_dt = end_time_dt.replace(tzinfo=timezone.utc)
+
+    if end_time_dt > now_utc:
+        raise ConflictError("Hoạt động chưa kết thúc, không thể chốt điểm danh.")
+
+    # 4. Freeze attendance on Activity domain model
+    if not getattr(activity, "attendance_finalized_at", None):
+        activity.attendance_finalized_at = now_utc
+
+    # 5. If activity does NOT have a trophy attached, no TrophyGrantRequest is created
+    if not activity.trophy_id:
+        await db.commit()
+        return {
+            "message": "Đã chốt điểm danh hoạt động thành công.",
+            "has_trophy": False,
+            "trophy_grant_request": None,
+        }
+
+    # 5. Check existing TrophyGrantRequest with lock
+    req_stmt = (
+        select(TrophyGrantRequest)
+        .where(TrophyGrantRequest.activity_id == activity_id)
+        .with_for_update()
+    )
+    req = await db.scalar(req_stmt)
+    if req and req.status in [TrophyGrantStatus.approved, TrophyGrantStatus.rejected]:
+        raise ConflictError(
+            f"Yêu cầu cấp Trophy đã ở trạng thái kết thúc '{req.status.value}'."
+        )
+
+    # 6. Calculate attended_count (distinct approved participants with attendance_confirmed=True, excluding host)
+    q_count = (
+        select(func.count(distinct(JoinRequest.user_id)))
+        .where(
+            JoinRequest.activity_id == activity_id,
+            JoinRequest.status == RequestStatus.approved,
+            JoinRequest.attendance_confirmed == True,
+            JoinRequest.user_id != activity.host_id,
+        )
+    )
+    attended_count = int(await db.scalar(q_count) or 0)
+
+    status = (
+        TrophyGrantStatus.eligible_for_review
+        if attended_count >= 10
+        else TrophyGrantStatus.insufficient_quorum
+    )
+
+    if req:
+        req.actual_attended_count = attended_count
+        req.status = status
+    else:
+        req = TrophyGrantRequest(
+            id=uuid.uuid4(),
+            activity_id=activity.id,
+            trophy_id=activity.trophy_id,
+            status=status,
+            min_participants_required=10,
+            actual_attended_count=attended_count,
+        )
+        db.add(req)
+
+    await db.commit()
+    await db.refresh(req)
+
+    return {
+        "message": "Đã chốt điểm danh hoạt động thành công.",
+        "has_trophy": True,
+        "attended_count": attended_count,
+        "status": req.status.value,
+        "request_id": str(req.id),
     }
 
 
@@ -509,14 +597,19 @@ async def list_participants(db: AsyncSession, activity_id: uuid.UUID) -> list[Jo
         if hasattr(end, 'tzinfo') and end.tzinfo is None:
             end = end.replace(tzinfo=timezone.utc)
         if now >= end:
-            changed = False
-            for r in requests:
-                if not r.attendance_confirmed:
-                    r.attendance_confirmed = True
-                    await _award_trophy_if_eligible(db, activity, r.user_id)
-                    changed = True
-            if changed:
-                await db.commit()
+            from app.modules.trophies.models import TrophyGrantRequest
+            existing_req = await db.scalar(
+                select(TrophyGrantRequest).where(TrophyGrantRequest.activity_id == activity_id)
+            )
+            # Attendance is frozen once finalized
+            if not existing_req:
+                changed = False
+                for r in requests:
+                    if not r.attendance_confirmed:
+                        r.attendance_confirmed = True
+                        changed = True
+                if changed:
+                    await db.commit()
 
     return [_to_response(r) for r in requests]
 
@@ -543,7 +636,8 @@ async def get_certificate_data(
         effective_user_id = target_user_id
 
     jr = await participation_repo.get_active_request(db, activity_id, effective_user_id)
-    if not jr or not jr.attendance_confirmed:
+    is_host_self = (str(activity.host_id) == str(effective_user_id))
+    if not is_host_self and (not jr or not jr.attendance_confirmed):
         raise ValidationError("Chỉ người tham gia đã được xác nhận điểm danh mới có thể nhận Giấy chứng nhận.")
 
     participant = await db.scalar(select(User).where(User.id == effective_user_id))
@@ -553,6 +647,22 @@ async def get_certificate_data(
     host = await db.scalar(select(User).where(User.id == activity.host_id))
     host_name = (host.full_name or host.username) if host else "Ban Tổ Chức"
     host_university = host.university if host else None
+
+    # Group info (if activity belongs to a group)
+    group_name = None
+    group_id = None
+    group_is_private = False
+    if getattr(activity, "group_id", None):
+        from app.modules.groups.models import Group
+        group = await db.scalar(select(Group).where(Group.id == activity.group_id))
+        if group:
+            group_name = group.name
+            group_id = group.id
+            group_is_private = (getattr(group.privacy, "value", str(group.privacy)) == "private")
+    elif getattr(activity, "group", None):
+        group_name = activity.group.name
+        group_id = activity.group.id
+        group_is_private = (getattr(activity.group.privacy, "value", str(activity.group.privacy)) == "private")
 
     # Trophy info
     trophy_name = None
@@ -570,31 +680,67 @@ async def get_certificate_data(
 
     start_str = activity.start_time.strftime("%d/%m/%Y") if hasattr(activity.start_time, 'strftime') else str(activity.start_time)[:10]
 
+    # Custom form responses info (if activity has custom form or participant provided form responses)
+    custom_fields: list[dict[str, str]] = []
+    if jr and jr.form_responses and isinstance(jr.form_responses, dict):
+        field_label_map: dict[str, str] = {}
+        if getattr(activity, "custom_form_id", None):
+            from app.modules.forms.models import CustomForm
+            from sqlalchemy.orm import selectinload
+            form = await db.scalar(
+                select(CustomForm)
+                .options(selectinload(CustomForm.fields))
+                .where(CustomForm.id == activity.custom_form_id)
+            )
+            if form and form.fields:
+                for f in form.fields:
+                    field_label_map[str(f.id)] = f.label
+                    field_label_map[f.label] = f.label
+
+        for k, v in jr.form_responses.items():
+            if v is not None and str(v).strip():
+                label = field_label_map.get(str(k), str(k))
+                if isinstance(v, bool):
+                    v_str = "Có" if v else "Không"
+                elif isinstance(v, list):
+                    v_str = ", ".join(str(item) for item in v)
+                else:
+                    v_str = str(v)
+                custom_fields.append({"label": label, "value": v_str})
+
     return {
         "certificate_code": cert_code,
         "activity_id": activity.id,
         "user_id": effective_user_id,
         "participant_name": participant.full_name or participant.username,
         "participant_username": participant.username,
+        "participant_email": participant.email,
         "participant_university": participant.university,
         "activity_title": activity.title,
         "activity_date": start_str,
         "meeting_location": getattr(activity, "meeting_location", None) or getattr(activity, "location_name", None),
         "location_name": getattr(activity, "meeting_location", None) or getattr(activity, "location_name", None),
+        "host_id": activity.host_id,
         "host_name": host_name,
         "host_university": host_university,
+        "group_id": group_id,
+        "group_name": group_name,
+        "group_is_private": group_is_private,
         "social_work_days": activity.social_work_days,
         "trophy_name": trophy_name,
         "trophy_icon": trophy_icon,
         "trophy_points": trophy_points,
+        "custom_fields": custom_fields,
         "issued_at": datetime.now(timezone.utc),
         "verification_url": f"/verify-certificate?code={cert_code}",
+        "is_host": is_host_self,
     }
 
 
 async def verify_certificate_code(db: AsyncSession, code: str) -> dict:
     """Public verification lookup for certificate code."""
-    from sqlalchemy import select, cast, String
+    from sqlalchemy import select, cast, String, func
+    from app.modules.activities.models import Activity
 
     clean_code = code.strip().upper()
     parts = clean_code.split('-')
@@ -604,16 +750,29 @@ async def verify_certificate_code(db: AsyncSession, code: str) -> dict:
     act_prefix = parts[1].lower()
     user_prefix = parts[2].lower()
 
+    # 1. Search for confirmed participants in JoinRequest
     result = await db.execute(
         select(JoinRequest)
         .where(
             JoinRequest.attendance_confirmed.is_(True),
-            cast(JoinRequest.activity_id, String).like(f"{act_prefix}%"),
-            cast(JoinRequest.user_id, String).like(f"{user_prefix}%"),
+            func.replace(cast(JoinRequest.activity_id, String), '-', '').like(f"{act_prefix}%"),
+            func.replace(cast(JoinRequest.user_id, String), '-', '').like(f"{user_prefix}%"),
         )
     )
     jr = result.scalars().first()
-    if not jr:
-        raise NotFoundError("Không tìm thấy giấy chứng nhận hợp lệ với mã này.")
+    if jr:
+        return await get_certificate_data(db, jr.activity_id, str(jr.user_id))
 
-    return await get_certificate_data(db, jr.activity_id, str(jr.user_id))
+    # 2. Search if the certificate was issued for the Host of the activity
+    act_result = await db.execute(
+        select(Activity)
+        .where(
+            func.replace(cast(Activity.id, String), '-', '').like(f"{act_prefix}%"),
+            func.replace(cast(Activity.host_id, String), '-', '').like(f"{user_prefix}%"),
+        )
+    )
+    act = act_result.scalars().first()
+    if act:
+        return await get_certificate_data(db, act.id, str(act.host_id))
+
+    raise NotFoundError("Không tìm thấy giấy chứng nhận hợp lệ với mã này.")

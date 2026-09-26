@@ -1,0 +1,50 @@
+\section{Kết luận và hướng phát triển}
+
+\subsection{Kết quả đạt được}
+Sau thời gian nghiên cứu, phân tích kiến trúc và hiện thực hóa toàn diện giải pháp, tác giả đề tài đã hoàn thành tốt các mục tiêu đề ra cho nền tảng \textbf{UniConnect: Hệ thống kết nối hoạt động sinh viên dựa trên bản đồ số và trợ lý ảo thông minh}. Các kết quả cụ thể đạt được bao gồm:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Xây dựng hoàn chỉnh nền tảng Web Fullstack hiện đại:} Phát triển giao diện người dùng dựa trên thư viện React 18, Vite và TypeScript kết hợp hệ thống thiết kế giao diện chuẩn mực (Lucide Design System). Ứng dụng thành công kỹ thuật phân tách mã nguồn động (Code-splitting) thông qua \texttt{React.lazy()} và chia nhỏ gói mã nguồn (Chunking Strategy), giúp giảm tới 72.0\% kích thước gói tài nguyên JavaScript ban đầu (từ 842.80~kB xuống 236.02~kB), rút ngắn thời gian tải trang ban đầu còn $\approx$ 1.3 giây trên hạ tầng mạng di động học đường.
+    
+    \item \textbf{Bản đồ số học đường và Quản trị hoạt động - Nhóm sinh viên:} Tích hợp thành công bản đồ khuôn viên trường bằng Leaflet và mở rộng dữ liệu không gian PostGIS (chuẩn hệ quy chiếu EPSG:4326). Hệ thống hỗ trợ tìm kiếm, lọc hoạt động theo bán kính vị trí thực tế, quản lý toàn bộ vòng đời hoạt động phong trào và thiết lập cơ chế liên kết Đồng tổ chức (Co-hosting) giữa các Nhóm sinh viên với sự phân tách quyền hạn ủy nhiệm rõ ràng (\texttt{can\_open\_checkin} và \texttt{can\_manage\_activity}).
+    
+    \item \textbf{Hệ thống Điểm danh chống gian lận đa chế độ:} Hiện thực hóa thành công kiến trúc điểm danh bảo mật: mã QR xoay động 30 giây được ký số bảo vệ bằng thuật toán HMAC-SHA256 kết hợp hàng rào địa lý GPS Geofencing (ràng buộc khoảng cách không gian $d \le 100$m và ngưỡng sai số phần cứng $acc \le 100$m), tích hợp giao diện hiệu ứng sóng Radar quét vệ tinh tự động trên thiết bị người dùng.
+    
+    \item \textbf{Lịch cá nhân thông minh \& Khử xung đột tự động:} Xây dựng phân hệ Smart Calendar hỗ trợ quản trị thời gian biểu sinh viên, tự động nhận diện xung đột thời gian cứng/mềm theo vị từ khoảng nửa mở $[start, end)$, hỗ trợ lịch bận lặp lại định kỳ hàng tuần kèm cơ chế bỏ qua ngoại lệ ngày nghỉ (vacation suppression), và cho phép đồng bộ hóa dữ liệu ra các ứng dụng lịch phổ biến chuẩn quốc tế \texttt{.ics}.
+    
+    \item \textbf{Trợ lý Trí tuệ nhân tạo học đường (RAG AI Assistant):} Tích hợp mô hình ngôn ngữ lớn kết hợp tìm kiếm ngữ nghĩa tăng cường (Retrieval-Augmented Generation) thông qua mở rộng vector hóa \texttt{pgvector} (vector 768 chiều). Trợ lý AI hỗ trợ cơ chế gọi hàm (Function Calling) linh hoạt để tự động truy vấn hoạt động và thông tin nhóm sinh viên, bảo đảm nghiêm ngặt quyền riêng tư cá nhân và duy trì cơ chế hồi quy tất định (Deterministic Fallback) ngay cả khi dịch vụ AI ngoại tuyến.
+    
+    \item \textbf{Chứng nhận số trực tuyến \& Cơ chế Trò chơi hóa (Gamification):} Tự động hóa quá trình tích lũy ngày Công tác Xã hội (CTXH) sau khi xác nhận điểm danh hợp lệ; thiết lập chu trình quản lý danh hiệu Gamification chặt chẽ với cơ chế chốt điểm danh (Finalize Attendance), kiểm tra điều kiện túc số (Quorum $\ge 10$) và thẩm định phê duyệt từ Quản trị viên trước khi chính thức trao tặng Trophy cho sinh viên; cung cấp chức năng xuất Giấy chứng nhận điện tử chuẩn in ấn PDF A4 kèm mã tra cứu và cổng kiểm chứng tính nguyên bản công khai tại \texttt{/verify-certificate}.
+    
+    \item \textbf{Bảng điều khiển Quản trị toàn diện \& Xuất dữ liệu chuẩn hóa:} Xây dựng Admin Command Center hỗ trợ giám sát các chỉ số KPI hoạt động theo công thức tăng trưởng xác định, cơ chế kiểm duyệt nội dung vi phạm bằng giao dịch nguyên tử (Atomic transaction) kèm ghi vết Admin Audit Log, và cơ chế truyền dòng (streaming) xuất danh sách sinh viên định dạng CSV UTF-8 BOM chống lỗi font tiếng Việt.
+    
+    \item \textbf{Hạ tầng đóng gói Deployment-Ready \& Bảo đảm chất lượng tham chiếu IEEE 829:} Đóng gói hệ thống theo kiến trúc Multi-stage Docker Container, thực thi dưới người dùng bảo mật không đặc quyền (\texttt{appuser:1001}), Nginx reverse proxy bảo vệ phân vùng tin cậy mạng (trust boundary), và vượt qua 100\% bộ kiểm thử tự động toàn diện tham chiếu các nguyên tắc tài liệu kiểm thử theo tiêu chuẩn phần mềm IEEE 829\cite{ieee829test} bao gồm \textbf{94 ca kiểm thử tự động Backend} (thuộc 14 test suites) cùng quy trình đóng gói Frontend tối ưu hóa không phát sinh lỗi TypeScript hay bundling.
+\end{itemize}
+
+\subsection{Hạn chế còn tồn tại}
+Bên cạnh các kết quả tích cực đã đạt được, hệ thống vẫn còn một số mặt hạn chế cần tiếp tục hoàn thiện:
+
+\begin{enumerate}[leftmargin=*, noitemsep]
+    \item \textbf{Hạn chế về nền tảng ứng dụng di động (Mobile Web vs Native App):} Hệ thống hiện vận hành trên nền tảng Web đáp ứng (Responsive Web). Mặc dù giao diện hiển thị tối ưu trên màn hình điện thoại, ứng dụng web chưa thể khai thác sâu các tính năng cấp hệ điều hành như cảm biến camera quét mã QR phần cứng siêu tốc hay dịch vụ thông báo đẩy nền (Background Push Notifications).
+    \item \textbf{Phụ thuộc độ trễ dịch vụ Trí tuệ nhân tạo đám mây:} Trợ lý AI hiện đang sử dụng dịch vụ đám mây (Google Gemini API), do đó thời gian xử lý và phản hồi đối với các câu hỏi phức tạp phụ thuộc vào đường truyền Internet quốc tế và giới hạn tần suất (rate limits) của nhà cung cấp.
+    \item \textbf{Sai số định vị GPS trong môi trường nhà kín (Indoor Multipath):} Tín hiệu định vị vệ tinh GPS có thể bị suy hao hoặc sai số tăng cao ($acc > 100$m) khi người dùng ở sâu bên trong các giảng đường lớn, tầng hầm hoặc phòng họp kín, đòi hỏi sự bổ trợ chính từ phương thức quét mã QR HMAC xoay động.
+    \item \textbf{Phạm vi dữ liệu và tích hợp liên trường:} Hệ thống hiện thử nghiệm trong khuôn viên Đại học Bách Khoa, chưa tích hợp trực tiếp vào cổng đăng nhập tập trung (Single Sign-On VNU-ID) để liên thông chứng nhận ngày CTXH giữa các trường thành viên trong khối ĐHQG-HCM.
+\end{enumerate}
+
+\subsection{Định hướng phát triển trong tương lai}
+Để nền tảng UniConnect phát triển toàn diện, bền vững và sẵn sàng phục vụ cộng đồng sinh viên trên quy mô lớn, tác giả định hướng mở rộng hệ thống theo hai nhóm phương diện chính:
+
+\subsubsection{Phát triển và mở rộng tính năng ứng dụng}
+\begin{itemize}[leftmargin=*, noitemsep]
+    \item \textbf{Phát hành ứng dụng Native Mobile (Flutter / React Native):} Xây dựng ứng dụng di động độc lập đưa lên Google Play và Apple App Store, khai thác camera quét mã QR dưới 100ms, thông báo đẩy (FCM/APNs) và cơ chế chống giả lập GPS (Mock Location Detection).
+    \item \textbf{Tích hợp xác thực sinh trắc học vào điểm danh:} Nghiên cứu bổ sung xác thực khuôn mặt (Face Verification) hoặc chuẩn WebAuthn/FIDO2 kết hợp mã QR HMAC và Geofencing, tạo chu trình xác minh 3 lớp chặt chẽ cho sự kiện quy mô lớn.
+    \item \textbf{Mở rộng phân hệ Quản lý Tài chính và Kinh phí Nhóm:} Xây dựng mô-đun hỗ trợ Ban điều hành các nhóm sinh viên quản lý dự toán ngân sách hoạt động, ghi nhận đóng góp quỹ phong trào và minh bạch hóa các khoản thu/chi sự kiện.
+    \item \textbf{Liên thông kết quả phong trào và Ngày CTXH toàn ĐHQG-HCM:} Mở rộng tích hợp hệ thống VNU-ID, cho phép sinh viên các trường thành viên đăng ký chéo hoạt động và đồng bộ kết quả ngày CTXH tự động về phòng Công tác Sinh viên.
+\end{itemize}
+
+\subsubsection{Nâng cấp hạ tầng kỹ thuật, bảo mật và trí tuệ nhân tạo}
+\begin{itemize}[leftmargin=*, noitemsep]
+    \item \textbf{Huấn luyện mô hình AI nội bộ (On-premise LLM):} Tinh chỉnh mô hình nguồn mở tiếng Việt (PhoGPT, Llama-3-Vietnamese) triển khai trên máy chủ Nhà trường, kết hợp tìm kiếm lai (Hybrid Search: BM25 + pgvector) nhằm giảm độ trễ dưới 500ms và bảo mật tuyệt đối dữ liệu học vụ.
+    \item \textbf{Hỗ trợ hệ thống định vị hỗn hợp trong nhà (Indoor Positioning System):} Tích hợp thêm Bluetooth Low Energy (BLE Beacons) hoặc nhận diện mạng Wi-Fi giảng đường để định vị chính xác tại các hội trường kín nơi tín hiệu GPS bị che khuất.
+    \item \textbf{Tự động hóa CI/CD và chuẩn hóa MLOps:} Xây dựng pipeline kiểm thử tự động với GitHub Actions, giám sát độ trôi dữ liệu vector search và sẵn sàng mở rộng cụm Kubernetes phục vụ cao điểm tuần lễ sinh hoạt công dân.
+\end{itemize}

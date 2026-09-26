@@ -1,5 +1,5 @@
 import uuid
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, File, Query, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -15,6 +15,17 @@ from app.modules.users.schemas import (
 )
 
 router = APIRouter(prefix="/users", tags=["users"])
+
+
+@router.get("/search", response_model=list[UserProfile])
+async def search_users(
+    q: str = Query(default="", min_length=1),
+    limit: int = Query(default=10, ge=1, le=50),
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Search users by username or full name."""
+    return await service.search_users(db, query=q, limit=limit)
 
 
 @router.get("/me", response_model=UserProfile)
@@ -34,6 +45,34 @@ async def update_my_profile(
 ):
     """Update the authenticated user's profile."""
     return await service.update_profile(db, current_user["sub"], data)
+
+
+@router.post("/me/avatar", response_model=UserProfile)
+async def upload_my_avatar(
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Upload and set avatar for the authenticated user."""
+    file_bytes = await file.read()
+    return await service.update_avatar(
+        db=db,
+        user_id=uuid.UUID(current_user["sub"]),
+        file_bytes=file_bytes,
+        content_type=file.content_type,
+    )
+
+
+@router.delete("/me/avatar", response_model=UserProfile)
+async def delete_my_avatar(
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Delete current avatar for the authenticated user and revert to initials."""
+    return await service.delete_avatar(
+        db=db,
+        user_id=uuid.UUID(current_user["sub"]),
+    )
 
 
 @router.post("/me/verify")

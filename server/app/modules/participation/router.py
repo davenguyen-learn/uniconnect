@@ -2,7 +2,7 @@
 
 import uuid
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -146,6 +146,22 @@ async def cancel_request(
 ):
     """Cancel own join request (requester only)."""
     return await service.cancel_request(db, request_id, current_user["sub"])
+
+
+@router.delete(
+    "/activities/{activity_id}/participants/{user_id}",
+    status_code=status.HTTP_200_OK,
+)
+async def remove_participant(
+    activity_id: uuid.UUID,
+    user_id: uuid.UUID,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Host removes/kicks an approved participant from the activity."""
+    return await service.remove_participant(
+        db, activity_id, user_id, current_user["sub"]
+    )
 
 
 @router.post(

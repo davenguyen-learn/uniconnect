@@ -30,11 +30,19 @@ class Group(PrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
     private_description: Mapped[str | None] = mapped_column(Text, nullable=True)
     allow_member_activities: Mapped[bool] = mapped_column(default=True, server_default="true")
     require_approval: Mapped[bool] = mapped_column(default=True, server_default="true", nullable=False)
+    avatar_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     
     privacy: Mapped[GroupPrivacy] = mapped_column(
         Enum(GroupPrivacy, name="group_privacy", create_constraint=True),
         default=GroupPrivacy.public,
         server_default=GroupPrivacy.public.value,
+    )
+    status: Mapped[str] = mapped_column(
+        String(20),
+        default="active",
+        server_default="active",
+        nullable=False,
+        index=True,
     )
     
     owner_id: Mapped[uuid.UUID] = mapped_column(

@@ -13,6 +13,7 @@ class UserProfile(BaseModel):
     full_name: str | None
     bio: str | None
     university: str | None
+    avatar_url: str | None = None
     interests: list[str] | None = None
     role: str
     is_verified: bool = False
@@ -25,6 +26,7 @@ class UserUpdate(BaseModel):
     full_name: str | None = Field(default=None, max_length=100)
     bio: str | None = Field(default=None, max_length=1000)
     university: str | None = Field(default=None, max_length=150)
+    avatar_url: str | None = Field(default=None, max_length=500)
     interests: list[str] | None = None
 
 

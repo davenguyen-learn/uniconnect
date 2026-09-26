@@ -1,10 +1,13 @@
 import type { ChatMessageDTO, ChatEventCardDTO } from '../api/chat';
+import { formatCtxh } from '../utils/format';
 
 export interface ChatEventCardViewModel {
   activityId: string;
   title: string;
   dateTimeFormatted: string;
   locationName: string;
+  groupId?: string;
+  groupName?: string;
   ctxhFormatted?: string;
   distanceFormatted?: string;
   conflictBadge: {
@@ -41,7 +44,7 @@ export function mapChatEventCardToViewModel(dto: ChatEventCardDTO): ChatEventCar
 
   // Format CTXH
   const ctxhFormatted = dto.social_work_days && dto.social_work_days > 0 
-    ? `+${dto.social_work_days.toFixed(1)} Ngày CTXH` 
+    ? `+${formatCtxh(dto.social_work_days)} Ngày CTXH` 
     : undefined;
 
   // Format distance
@@ -97,6 +100,8 @@ export function mapChatEventCardToViewModel(dto: ChatEventCardDTO): ChatEventCar
     title: dto.title,
     dateTimeFormatted,
     locationName: dto.meeting_location || dto.location_name,
+    groupId: dto.group_id || undefined,
+    groupName: dto.group_name || undefined,
     ctxhFormatted,
     distanceFormatted,
     conflictBadge,

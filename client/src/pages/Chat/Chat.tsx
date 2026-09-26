@@ -1,11 +1,9 @@
 import { useState, useRef, useEffect, KeyboardEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { 
-  Sparkles, 
   Send, 
-  Bot, 
-  User, 
   Loader2, 
   AlertCircle,
   RotateCcw
@@ -19,17 +17,18 @@ import './Chat.css';
 const DEFAULT_SUGGESTIONS = [
   'Cuối tuần này có hoạt động CTXH nào không?',
   'Kiểm tra xem lịch thứ 7 của mình có trống không?',
-  'CLB nào đang tuyển thành viên mới?',
+  'Nhóm nào đang tuyển thành viên mới?',
 ];
 
 export default function Chat() {
+  const navigate = useNavigate();
   const toast = useToast();
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessageViewModel[]>([
     {
       id: 'init-0',
       role: 'assistant',
-      content: 'Xin chào! Mình là Trợ lý AI UniConnect. Mình có thể giúp bạn tìm các hoạt động ngoại khóa, đối soát lịch học rảnh để không bị trùng giờ, hoặc giới thiệu các CLB đang tuyển quân!',
+      content: 'Xin chào! Mình là Trợ lý AI UniConnect. Mình có thể giúp bạn tìm các hoạt động ngoại khóa, đối soát lịch học rảnh để không bị trùng giờ, hoặc giới thiệu các nhóm đang tuyển thành viên!',
       cards: [],
       timeFormatted: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
     },
@@ -143,25 +142,19 @@ export default function Chat() {
         {/* Header */}
         <div className="full-chat-header">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center shadow-md">
-              <Sparkles className="w-5 h-5 text-white" />
-            </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <h2 className="text-lg font-bold text-slate-900">
                 Trợ Lý AI Sinh Viên Thông Minh
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
-                  Online
-                </span>
               </h2>
               <p className="text-xs text-slate-500">
-                Tìm kiếm hoạt động, kiểm tra trùng lịch học và tư vấn câu lạc bộ quanh khuôn viên
+                Tìm kiếm hoạt động, kiểm tra trùng lịch học và tư vấn nhóm hoạt động quanh khuôn viên
               </p>
             </div>
           </div>
 
           <button
             onClick={handleReset}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition"
+            className="chat-reset-btn inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl"
             title="Bắt đầu cuộc trò chuyện mới"
           >
             <RotateCcw className="w-3.5 h-3.5" />
@@ -174,29 +167,46 @@ export default function Chat() {
           {messages.map((msg) => (
             <div
               key={msg.id}
-              className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
-              {msg.role === 'assistant' && (
-                <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 mt-0.5 border border-indigo-200 dark:border-indigo-900/50">
-                  <Bot className="w-4 h-4" />
-                </div>
-              )}
-
               <div className={`max-w-[80%] space-y-3 ${msg.role === 'user' ? 'text-right' : 'text-left'}`}>
                 <div
-                  className={`p-4 rounded-2xl text-sm leading-relaxed inline-block ${
+                  className={`p-4 rounded-2xl text-sm leading-relaxed inline-block chat-message-bubble shadow-sm ${
                     msg.role === 'user'
-                      ? 'bg-indigo-600 text-white rounded-br-none shadow-sm'
-                      : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-bl-none border border-slate-200/80 dark:border-slate-700/80 shadow-sm'
+                      ? 'rounded-br-none'
+                      : 'rounded-bl-none'
                   }`}
                 >
-                  <div className="prose prose-sm dark:prose-invert max-w-none text-left">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  <div className="prose prose-sm max-w-none text-left" style={{ color: '#000000' }}>
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        a: ({ href, children, ...props }) => {
+                          const isInternal = href && (href.startsWith('/') || href.startsWith(window.location.origin));
+                          const path = href ? (href.startsWith('/') ? href : href.replace(window.location.origin, '')) : '#';
+                          return (
+                            <a
+                              href={href}
+                              onClick={(e) => {
+                                if (isInternal) {
+                                  e.preventDefault();
+                                  navigate(path);
+                                }
+                              }}
+                              className="chat-link"
+                              {...props}
+                            >
+                              {children}
+                            </a>
+                          );
+                        },
+                      }}
+                    >
                       {msg.content}
                     </ReactMarkdown>
                   </div>
                   {msg.timeFormatted && (
-                    <div className={`text-[10px] mt-1 text-right ${msg.role === 'user' ? 'text-indigo-200' : 'text-slate-400'}`}>
+                    <div className="text-[10px] mt-1 text-right chat-message-time">
                       {msg.timeFormatted}
                     </div>
                   )}
@@ -211,18 +221,12 @@ export default function Chat() {
                   </div>
                 )}
               </div>
-
-              {msg.role === 'user' && (
-                <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center shrink-0 mt-0.5">
-                  <User className="w-4 h-4" />
-                </div>
-              )}
             </div>
           ))}
 
           {loading && (
             <div className="flex items-center gap-3 py-2 text-slate-400 text-xs">
-              <div className="w-8 h-8 rounded-full bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center">
                 <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />
               </div>
               <span>Trợ lý AI đang tra cứu sự kiện và đối soát lịch bận...</span>
@@ -230,7 +234,7 @@ export default function Chat() {
           )}
 
           {error && (
-            <div className="flex items-center gap-2 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 text-xs border border-rose-200 dark:border-rose-900/50">
+            <div className="flex items-center gap-2 p-3 rounded-xl bg-rose-50 text-rose-600 text-xs border border-rose-200">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{error}</span>
             </div>
@@ -261,7 +265,7 @@ export default function Chat() {
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Hỏi về hoạt động CTXH cuối tuần, kiểm tra lịch học, tìm câu lạc bộ..."
+            placeholder="Hỏi về hoạt động CTXH cuối tuần, kiểm tra lịch học, tìm nhóm..."
             disabled={loading}
             rows={2}
           />

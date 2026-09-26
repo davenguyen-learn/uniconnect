@@ -16,6 +16,7 @@ def register_exception_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(AppException)
     async def app_exception_handler(_request: Request, exc: AppException) -> JSONResponse:
+        print(f"APP EXCEPTION on {_request.method} {_request.url.path}: {exc.__class__.__name__} ({exc.code}) - {exc.message}", flush=True)
         return JSONResponse(
             status_code=exc.status_code,
             content={
@@ -31,6 +32,8 @@ def register_exception_handlers(app: FastAPI) -> None:
     async def validation_exception_handler(
         _request: Request, exc: RequestValidationError
     ) -> JSONResponse:
+        print(f"VALIDATION ERROR on {_request.url.path}: {exc.errors()}", flush=True)
+        logger.warning("Validation error on %s %s: %s", _request.method, _request.url.path, exc.errors())
         errors = []
         for error in exc.errors():
             errors.append(

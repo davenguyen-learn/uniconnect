@@ -27,6 +27,8 @@ class GroupBase(BaseModel):
     allow_member_activities: bool = True
     require_approval: bool = True
     privacy: str = "public"
+    status: str = "active"
+    avatar_url: str | None = None
 
 
 class GroupCreate(GroupBase):
@@ -41,6 +43,8 @@ class GroupUpdate(BaseModel):
     allow_member_activities: bool | None = None
     require_approval: bool | None = None
     privacy: str | None = None
+    status: str | None = None
+    avatar_url: str | None = None
 
 
 class GroupResponse(GroupBase):

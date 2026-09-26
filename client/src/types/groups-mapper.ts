@@ -4,6 +4,7 @@ import type {
   GroupJoinRequestResponse, 
   CoHostInvitationResponse
 } from '../api/groups';
+import { formatCtxh } from '../utils/format';
 
 export interface GroupStatsViewModel {
   memberCountFormatted: string;
@@ -55,13 +56,17 @@ export interface CoHostInvitationViewModel {
 }
 
 export function mapGroupStatsToViewModel(stats: GroupStatsResponse): GroupStatsViewModel {
+  const memberCount = stats?.member_count ?? 0;
+  const totalActs = stats?.total_activities_count ?? 0;
+  const totalCtxh = typeof stats?.total_ctxh_contributed === 'number' ? stats.total_ctxh_contributed : 0;
+
   return {
-    memberCountFormatted: `${stats.member_count} thành viên`,
-    activitiesCountFormatted: `${stats.total_activities_count} hoạt động`,
-    ctxhContributedFormatted: `${stats.total_ctxh_contributed.toFixed(1)} ngày CTXH`,
-    memberCount: stats.member_count,
-    totalActivitiesCount: stats.total_activities_count,
-    totalCtxhContributed: stats.total_ctxh_contributed,
+    memberCountFormatted: `${memberCount} thành viên`,
+    activitiesCountFormatted: `${totalActs} hoạt động`,
+    ctxhContributedFormatted: `${formatCtxh(totalCtxh)} ngày CTXH`,
+    memberCount,
+    totalActivitiesCount: totalActs,
+    totalCtxhContributed: totalCtxh,
   };
 }
 
@@ -77,17 +82,18 @@ export function mapGroupMemberToViewModel(member: GroupMemberResponse): GroupMem
 
   if (isOwner) {
     roleBadge = {
-      label: 'Trưởng CLB',
+      label: 'Trưởng nhóm',
       variant: 'gold',
       isLeadership: true,
     };
   } else if (isAdmin) {
     roleBadge = {
-      label: 'Ban Chủ Nhiệm',
+      label: 'Ban Quản Trị',
       variant: 'blue',
       isLeadership: true,
     };
   }
+
 
   const joinedDate = new Date(member.joined_at);
   const formattedDate = isNaN(joinedDate.getTime()) 
@@ -149,9 +155,9 @@ export function mapCoHostInvitationToViewModel(inv: CoHostInvitationResponse): C
     activityId: inv.activity_id,
     activityTitle: inv.activity_title || 'Hoạt động ngoại khóa',
     hostGroupId: inv.host_group_id,
-    hostGroupName: inv.host_group_name || 'CLB Tổ chức',
+    hostGroupName: inv.host_group_name || 'Nhóm tổ chức',
     invitedGroupId: inv.invited_group_id,
-    invitedGroupName: inv.invited_group_name || 'CLB của bạn',
+    invitedGroupName: inv.invited_group_name || 'Nhóm của bạn',
     status: inv.status,
     statusBadge,
     message: inv.message || undefined,

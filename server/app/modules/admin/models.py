@@ -24,6 +24,8 @@ class AdminAuditAction(str, enum.Enum):
     resolve_report = "resolve_report"
     dismiss_report = "dismiss_report"
     hide_activity = "hide_activity"
+    suspend_group = "suspend_group"
+    activate_group = "activate_group"
 
 
 class AdminAuditTargetType(str, enum.Enum):
@@ -31,6 +33,7 @@ class AdminAuditTargetType(str, enum.Enum):
     activity = "activity"
     report = "report"
     verification = "verification"
+    group = "group"
 
 
 class OrganizationVerificationRequest(PrimaryKeyMixin, TimestampMixin, Base):

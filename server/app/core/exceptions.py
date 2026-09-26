@@ -53,3 +53,15 @@ class CapacityFullError(AppException):
     code = "CAPACITY_FULL"
     status_code = 409
     message = "This activity has reached its maximum capacity."
+
+
+class BadRequestError(AppException):
+    code = "BAD_REQUEST"
+    status_code = 400
+    message = "Bad request."
+
+
+class PayloadTooLargeError(AppException):
+    code = "PAYLOAD_TOO_LARGE"
+    status_code = 413
+    message = "Payload exceeds maximum allowed size."

@@ -1,5 +1,6 @@
 import uuid
-from pydantic import BaseModel, Field
+from typing import Any
+from pydantic import BaseModel, Field, field_validator
 from app.modules.forms.models import FieldType
 
 class FormFieldBase(BaseModel):
@@ -8,6 +9,13 @@ class FormFieldBase(BaseModel):
     is_required: bool = True
     order: int = 0
     meta_data: dict | None = None
+
+    @field_validator("field_type", mode="before")
+    @classmethod
+    def normalize_field_type(cls, v: Any) -> Any:
+        if v == "boolean":
+            return FieldType.checkbox
+        return v
 
 
 class FormFieldCreate(FormFieldBase):

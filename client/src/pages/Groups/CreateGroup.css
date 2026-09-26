@@ -1,38 +1,368 @@
+/* ─────────────────────────────────────────────────────────────
+   CreateGroup.css — Modern Group Creation Experience
+   100% Light Mode Only (No dark mode rules)
+   ───────────────────────────────────────────────────────────── */
+
 .create-group-page {
-  padding-top: var(--space-8);
-  max-width: 650px;
+  padding: var(--space-8) var(--space-4);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: calc(100vh - 64px);
+  background: var(--color-bg-primary, #f8fafc);
 }
 
-.create-group-card {
-  padding: var(--space-8);
+.create-group-container {
+  width: 100%;
+  max-width: 780px;
 }
 
-.create-group-title {
-  margin: 0 0 var(--space-6) 0;
+/* ── Header ── */
+.create-group-header {
+  margin-bottom: var(--space-6);
 }
 
+.create-group-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-secondary, #64748b);
+  text-decoration: none;
+  margin-bottom: var(--space-3);
+  transition: color var(--transition-fast, 0.15s ease);
+}
+
+.create-group-back-btn:hover {
+  color: #2563eb;
+}
+
+.create-group-header-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.create-group-heading {
+  font-size: clamp(1.6rem, 2.5vw, 2.1rem);
+  font-weight: 800;
+  color: var(--color-text-primary, #0f172a);
+  margin: 0;
+  line-height: 1.25;
+}
+
+/* ── Form & Hero Input ── */
 .create-group-form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-5);
 }
 
-.create-group-checkboxes {
+.create-group-hero-section {
+  background: #ffffff;
+  border-radius: var(--radius-xl, 16px);
+  padding: var(--space-5) var(--space-6);
+  box-shadow: 0 10px 30px -4px rgba(0, 0, 0, 0.06), 0 4px 12px -2px rgba(0, 0, 0, 0.03);
+}
+
+.create-group-hero-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+}
+
+.create-group-hero-input {
+  width: 100%;
+  font-size: clamp(1.4rem, 2.2vw, 1.85rem);
+  font-weight: 700;
+  color: var(--color-text-primary, #0f172a);
+  background: transparent;
+  border: none !important;
+  outline: none !important;
+  padding: 4px 0;
+  line-height: 1.3;
+}
+
+.create-group-hero-input::placeholder {
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.create-group-hero-input.input-error {
+  outline: 2px solid #ef4444 !important;
+  outline-offset: 4px !important;
+  border-radius: var(--radius-md, 8px) !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+  padding: 4px 8px !important;
+}
+
+/* ── Grouped Section Card ── */
+.create-group-card {
+  background: #ffffff;
+  border-radius: var(--radius-xl, 16px);
+  padding: var(--space-6);
+  box-shadow: 0 10px 30px -4px rgba(0, 0, 0, 0.06), 0 4px 12px -2px rgba(0, 0, 0, 0.03);
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-  margin-top: var(--space-2);
+  gap: var(--space-4);
 }
 
+.create-group-section-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: var(--space-1);
+}
+
+.section-icon-wrap {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #eff6ff;
+  color: #2563eb;
+  flex-shrink: 0;
+}
+
+.create-group-section-title h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-text-primary, #0f172a);
+  margin: 0;
+}
+
+.create-group-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.create-group-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-primary, #1e293b);
+  margin-bottom: 6px;
+}
+
+/* ── Modern Form Inputs ── */
+.create-group-page .form-input,
+.create-group-page textarea.form-input,
+.create-group-page select.form-input {
+  width: 100%;
+  border: 1.5px solid #e2e8f0 !important;
+  background: #ffffff;
+  border-radius: var(--radius-lg, 12px);
+  padding: 10px 14px;
+  font-size: 0.875rem;
+  color: var(--color-text-primary, #0f172a);
+  transition: all var(--transition-fast, 0.15s ease);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.create-group-page .form-input:hover:not(:focus),
+.create-group-page textarea.form-input:hover:not(:focus),
+.create-group-page select.form-input:hover:not(:focus) {
+  border-color: #cbd5e1 !important;
+}
+
+.create-group-page .form-input:focus,
+.create-group-page textarea.form-input:focus,
+.create-group-page select.form-input:focus {
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+  outline: none !important;
+}
+
+/* Dropdown select styling */
+.create-group-page select.form-input {
+  cursor: pointer;
+  padding-right: 36px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+/* ── Toggle Cards (Approval & Member Activities) ── */
+.approval-toggle-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: #f8fafc;
+  border-radius: 14px;
+  border: 1.5px solid #e2e8f0;
+  cursor: pointer;
+  user-select: none;
+  transition: all var(--transition-fast, 0.15s ease);
+}
+
+.approval-toggle-card:hover {
+  border-color: #cbd5e1;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.approval-toggle-card.active {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+}
+
+.approval-toggle-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.approval-toggle-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e2e8f0;
+  color: #64748b;
+  flex-shrink: 0;
+  transition: all var(--transition-fast, 0.15s ease);
+}
+
+.approval-toggle-icon.activity-icon {
+  background: #e2e8f0;
+  color: #64748b;
+}
+
+.approval-toggle-card.active .approval-toggle-icon {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.approval-toggle-card.active .approval-toggle-icon.activity-icon {
+  background: #f59e0b;
+  color: #ffffff;
+}
+
+.approval-toggle-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.approval-toggle-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-primary, #0f172a);
+}
+
+.approval-toggle-desc {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary, #64748b);
+  line-height: 1.4;
+}
+
+/* ── Toggle Switch ── */
+.approval-switch {
+  width: 44px;
+  height: 24px;
+  background: #cbd5e1;
+  border-radius: 9999px;
+  padding: 2px;
+  position: relative;
+  transition: background-color var(--transition-fast, 0.15s ease);
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+
+.approval-switch.on {
+  background: #2563eb;
+}
+
+.approval-switch-handle {
+  display: block;
+  width: 20px;
+  height: 20px;
+  background: #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform var(--transition-fast, 0.15s ease);
+}
+
+.approval-switch.on .approval-switch-handle {
+  transform: translateX(20px);
+}
+
+/* ── Custom Form Builder ── */
+.form-builder-empty {
+  padding: 24px;
+  text-align: center;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1.5px dashed #cbd5e1;
+}
+
+.form-builder-empty p {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #475569;
+  margin: 0 0 4px 0;
+}
+
+.form-builder-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.form-builder-delete-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid #fee2e2;
+  background: #fef2f2;
+  color: #ef4444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-fast, 0.15s ease);
+  flex-shrink: 0;
+  margin-bottom: 2px;
+}
+
+.form-builder-delete-btn:hover {
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: #fca5a5;
+  transform: translateY(-1px);
+}
+
+/* ── Form Actions Footer ── */
 .create-group-actions {
   display: flex;
-  gap: var(--space-4);
-  margin-top: var(--space-5);
   justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  padding: var(--space-4) 0 var(--space-8) 0;
 }
 
-.form-builder-toggle {
-  display: flex;
-  justify-content: space-between;
+.create-group-submit-btn {
+  min-width: 140px;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
+}
+
+/* ── Validation Feedback ── */
+.field-error-msg {
+  color: #ef4444;
+  font-size: 0.8rem;
+  font-weight: 500;
+  margin-top: 6px;
+  display: block;
 }

@@ -42,6 +42,9 @@ export interface CollectionLayoutProps {
   emptyMessage?: string;
   emptyAction?: React.ReactNode;
 
+  gridColumns?: 1 | 2 | 3 | 4;
+  className?: string;
+
   children: React.ReactNode;
 }
 
@@ -65,12 +68,14 @@ export default function CollectionLayout({
   emptyTitle = 'Không tìm thấy dữ liệu',
   emptyMessage = 'Thử điều chỉnh bộ lọc hoặc từ khóa tìm kiếm.',
   emptyAction,
+  gridColumns,
+  className,
   children,
 }: CollectionLayoutProps) {
   const showControls = Boolean(onSearchChange || sortOptions || extraFilters);
 
   return (
-    <div className="container collection-page">
+    <div className={`container collection-page ${className || ''}`}>
       {/* Header */}
       <div className="collection-header">
         <div className="collection-title-wrap">
@@ -97,7 +102,7 @@ export default function CollectionLayout({
 
       {/* Search & Filter Controls */}
       {showControls && (
-        <div className="collection-controls glass">
+        <div className="collection-controls">
           {onSearchChange && (
             <div className="collection-search">
               <Input
@@ -139,7 +144,7 @@ export default function CollectionLayout({
           {emptyAction && <div className="collection-empty-action">{emptyAction}</div>}
         </div>
       ) : (
-        <div className="collection-grid">{children}</div>
+        <div className={`collection-grid ${gridColumns ? `collection-grid--cols-${gridColumns}` : ''}`}>{children}</div>
       )}
     </div>
   );

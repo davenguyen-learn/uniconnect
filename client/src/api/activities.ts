@@ -4,7 +4,7 @@ import type { ConflictInfo } from './calendar';
 export interface FormField {
   id?: string;
   label: string;
-  field_type: 'text' | 'number' | 'boolean' | string;
+  field_type: 'text' | 'number' | 'checkbox' | 'boolean' | string;
   is_required: boolean;
   order: number;
 }
@@ -27,6 +27,7 @@ export interface TrophyResponse {
 export interface ActivityResponse {
   id: string;
   host_id: string;
+  group_id?: string | null;
   title: string;
   description: string | null;
   private_description?: string | null;
@@ -45,7 +46,18 @@ export interface ActivityResponse {
   host?: {
     username: string;
     full_name: string | null;
+    avatar_url?: string | null;
   };
+  group?: {
+    id: string;
+    name: string;
+    avatar_url?: string | null;
+  } | null;
+  co_hosts?: Array<{
+    id: string;
+    name: string;
+    avatar_url?: string | null;
+  }>;
   distance_meters?: number;
   custom_form?: CustomForm | null;
   trophy?: TrophyResponse | null;
@@ -53,6 +65,8 @@ export interface ActivityResponse {
   conflict_info?: ConflictInfo | null;
   attendance_mode?: 'manual' | 'auto' | 'qr_code';
   check_in_radius?: number;
+  attendance_confirmed?: boolean;
+  joined_at?: string | null;
 }
 
 export interface ActivityCreate {
@@ -94,6 +108,7 @@ export interface ActivityUpdate {
   trophy_id?: string | null;
   attendance_mode?: 'manual' | 'auto' | 'qr_code';
   check_in_radius?: number;
+  custom_form?: CustomForm | null;
 }
 
 export interface NearbyQuery {
@@ -104,6 +119,10 @@ export interface NearbyQuery {
   search?: string;
   free_to_join?: boolean;
   days_ahead?: number;
+  is_ctxh?: boolean;
+  has_trophy?: boolean;
+  sort_by?: 'distance' | 'time' | 'created_at';
+  exclude_my_activities?: boolean;
   limit?: number;
   offset?: number;
   include_conflicts?: boolean;
@@ -130,11 +149,12 @@ export const activitiesApi = {
   delete: (id: string) =>
     api.delete<void>(`/activities/${id}`),
 
-  list: (params?: { limit?: number; offset?: number; category?: string; include_conflicts?: boolean }) => {
+  list: (params?: { limit?: number; offset?: number; category?: string; search?: string; include_conflicts?: boolean }) => {
     const query = new URLSearchParams();
     if (params?.limit) query.set('limit', String(params.limit));
     if (params?.offset) query.set('offset', String(params.offset));
     if (params?.category) query.set('category', params.category);
+    if (params?.search) query.set('search', params.search);
     if (params?.include_conflicts) query.set('include_conflicts', 'true');
     return api.get<PaginatedActivities>(`/activities?${query}`);
   },
@@ -149,21 +169,29 @@ export const activitiesApi = {
     if (params.search) query.set('search', params.search);
     if (params.free_to_join) query.set('free_to_join', 'true');
     if (params.days_ahead) query.set('days_ahead', String(params.days_ahead));
+    if (params.is_ctxh) query.set('is_ctxh', 'true');
+    if (params.has_trophy) query.set('has_trophy', 'true');
+    if (params.sort_by) query.set('sort_by', params.sort_by);
+    if (params.exclude_my_activities !== undefined) {
+      query.set('exclude_my_activities', String(params.exclude_my_activities));
+    }
     if (params.limit) query.set('limit', String(params.limit));
     if (params.offset !== undefined) query.set('offset', String(params.offset));
     if (params.include_conflicts) query.set('include_conflicts', 'true');
     return api.get<PaginatedActivities>(`/activities/nearby?${query}`);
   },
 
-  getJoinedActivities: (params?: { limit?: number; offset?: number }) => {
+  getJoinedActivities: (params?: { status?: string; limit?: number; offset?: number }) => {
     const query = new URLSearchParams();
+    if (params?.status) query.set('status', params.status);
     if (params?.limit) query.set('limit', String(params.limit));
     if (params?.offset) query.set('offset', String(params.offset));
     return api.get<PaginatedActivities>(`/activities/joined?${query}`);
   },
 
-  getMyActivities: (params?: { limit?: number; offset?: number }) => {
+  getMyActivities: (params?: { status?: string; limit?: number; offset?: number }) => {
     const query = new URLSearchParams();
+    if (params?.status) query.set('status', params.status);
     if (params?.limit) query.set('limit', String(params.limit));
     if (params?.offset) query.set('offset', String(params.offset));
     return api.get<PaginatedActivities>(`/activities/mine?${query}`);
@@ -191,4 +219,7 @@ export const activitiesApi = {
       attendance_confirmed: boolean;
       trophy_awarded: boolean;
     }>(`/activities/${activityId}/participants/${userId}/attendance`, { attended }),
+
+  exportParticipantsCsv: (activityId: string) =>
+    api.getBlob(`/activities/${activityId}/participants/export`),
 };

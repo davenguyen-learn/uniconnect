@@ -1,0 +1,480 @@
+/* ── Group Modals — Shared styles for CoHostInbox & MemberManagement ── */
+
+.group-modal-container {
+  position: relative;
+  width: 90%;
+  max-width: 680px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+}
+
+/* ── Header ── */
+.group-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-5) var(--space-6);
+  border-bottom: 1px solid var(--color-glass-border);
+}
+
+.group-modal-header-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.group-modal-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin: 0;
+  line-height: var(--line-height-tight);
+}
+
+.group-modal-subtitle {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  margin: 2px 0 0 0;
+}
+
+.group-modal-subtitle strong {
+  color: var(--color-text-primary);
+}
+
+.group-modal-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: var(--radius-lg);
+  background: transparent;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.group-modal-close-btn:hover {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
+}
+
+/* ── Tabs ── */
+.group-modal-tabs {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-6) 0;
+  border-bottom: 1px solid var(--color-glass-border);
+}
+
+.group-modal-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: var(--space-2) var(--space-3);
+  padding-bottom: var(--space-3);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  margin-bottom: -1px;
+}
+
+.group-modal-tab:hover {
+  color: var(--color-text-primary);
+}
+
+.group-modal-tab.active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+}
+
+.group-modal-tab-count {
+  padding: 1px 7px;
+  font-size: 0.7rem;
+  font-weight: var(--font-weight-bold);
+  border-radius: var(--radius-full);
+  background: var(--color-primary-subtle);
+  color: var(--color-primary);
+}
+
+/* ── Body ── */
+.group-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-5) var(--space-6);
+}
+
+/* ── Alerts ── */
+.group-modal-alert {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--space-4);
+}
+
+.group-modal-alert--error {
+  background: var(--color-error-subtle);
+  color: var(--color-error);
+}
+
+.group-modal-alert--success {
+  background: var(--color-success-subtle);
+  color: var(--color-primary);
+}
+
+/* ── Empty State ── */
+.group-modal-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-12) 0;
+  text-align: center;
+}
+
+.group-modal-empty-state p {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.group-modal-empty-title {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary) !important;
+  margin-top: var(--space-2) !important;
+}
+
+.group-modal-empty-desc {
+  font-size: var(--font-size-xs) !important;
+  color: var(--color-text-tertiary) !important;
+  margin-top: var(--space-1) !important;
+  max-width: 360px;
+}
+
+/* ── List & Items ── */
+.group-modal-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.group-modal-item {
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-primary);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-fast);
+}
+
+.group-modal-item:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.group-modal-item-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.group-modal-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.group-modal-item-title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.group-modal-item-name {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+
+.group-modal-item-username {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+}
+
+.group-modal-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  margin-top: 2px;
+}
+
+.group-modal-item-meta strong {
+  color: var(--color-text-primary);
+}
+
+/* ── Badges ── */
+.group-modal-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.7rem;
+  font-weight: var(--font-weight-semibold);
+  flex-shrink: 0;
+}
+
+.group-modal-badge--warning {
+  background: var(--color-warning-subtle);
+  color: #b45309;
+}
+
+.group-modal-badge--success {
+  background: rgba(34, 197, 94, 0.1);
+  color: #15803d;
+}
+
+.group-modal-badge--error {
+  background: var(--color-error-subtle);
+  color: var(--color-error);
+}
+
+
+
+/* ── Message Box ── */
+.group-modal-message-box {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-secondary);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+.group-modal-form-response-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.group-modal-form-response-list {
+  padding-left: var(--space-5);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+/* ── Item Actions ── */
+.group-modal-item-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-glass-border);
+}
+
+/* ── Buttons ── */
+.group-modal-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  border: none;
+  transition: all var(--transition-fast);
+}
+
+.group-modal-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.group-modal-btn--primary {
+  background: var(--color-primary);
+  color: #ffffff;
+  box-shadow: var(--shadow-sm);
+}
+
+.group-modal-btn--primary:hover:not(:disabled) {
+  opacity: 0.9;
+  box-shadow: var(--shadow-md);
+}
+
+.group-modal-btn--outline {
+  background: transparent;
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-glass-border);
+}
+
+.group-modal-btn--outline:hover:not(:disabled) {
+  color: var(--color-error);
+  border-color: var(--color-error);
+  background: var(--color-error-subtle);
+}
+
+.group-modal-btn--ghost {
+  background: transparent;
+  color: var(--color-text-secondary);
+}
+
+.group-modal-btn--ghost:hover {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
+}
+
+/* ── Member Row ── */
+.group-modal-member-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-primary);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-fast);
+}
+
+.group-modal-member-row:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.group-modal-member-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.group-modal-member-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  flex-shrink: 0;
+}
+
+.group-modal-member-name {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.group-modal-member-meta {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+}
+
+/* ── Role Badges ── */
+.group-modal-role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.7rem;
+  font-weight: var(--font-weight-semibold);
+}
+
+.group-modal-role-badge--gold {
+  background: rgba(245, 166, 35, 0.1);
+  color: #b45309;
+}
+
+.group-modal-role-badge--blue {
+  background: var(--color-info-subtle);
+  color: #1d4ed8;
+}
+
+.group-modal-role-badge--default {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+}
+
+
+
+/* ── Footer ── */
+.group-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--space-3) var(--space-6);
+  border-top: 1px solid var(--color-glass-border);
+}
+
+/* ── CoHost Inbox Modal Custom Styling ── */
+.cohost-inbox-modal {
+  color: #000000 !important;
+}
+
+.cohost-inbox-modal .group-modal-title,
+.cohost-inbox-modal .group-modal-subtitle,
+.cohost-inbox-modal .group-modal-subtitle strong,
+.cohost-inbox-modal .group-modal-tab,
+.cohost-inbox-modal .group-modal-item-name,
+.cohost-inbox-modal .group-modal-item-meta,
+.cohost-inbox-modal .group-modal-item-meta span,
+.cohost-inbox-modal .group-modal-item-meta strong,
+.cohost-inbox-modal .group-modal-message-box,
+.cohost-inbox-modal .group-modal-message-box p,
+.cohost-inbox-modal .group-modal-empty-state p,
+.cohost-inbox-modal .group-modal-empty-title,
+.cohost-inbox-modal .group-modal-empty-desc,
+.cohost-inbox-modal .group-modal-close-btn,
+.cohost-inbox-modal .group-modal-btn--outline,
+.cohost-inbox-modal .group-modal-btn--ghost {
+  color: #000000 !important;
+}
+
+.cohost-inbox-modal .group-modal-tab.active {
+  color: #000000 !important;
+  border-bottom-color: #000000 !important;
+  font-weight: 600;
+}
+
+.group-modal-item--clickable {
+  cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+}
+
+.group-modal-item--clickable:hover {
+  border-color: rgba(0, 0, 0, 0.25);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.group-modal-item--clickable .group-modal-item-name:hover {
+  text-decoration: underline !important;
+}
+
+

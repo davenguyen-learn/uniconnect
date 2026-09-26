@@ -28,6 +28,21 @@ export default function Navbar() {
     navigate('/');
   };
 
+  const [imageError, setImageError] = useState(false);
+
+  useEffect(() => {
+    setImageError(false);
+  }, [user?.avatar_url]);
+
+  const resolveAvatarUrl = (url: string | null | undefined): string | null => {
+    if (!url) return null;
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    const serverOrigin = import.meta.env.VITE_API_URL?.replace('/api/v1', '') || 'http://localhost:8000';
+    return `${serverOrigin}${url}`;
+  };
+
+  const avatarSrc = resolveAvatarUrl(user?.avatar_url);
+
   const initials = user?.full_name
     ? user.full_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
     : user?.username?.slice(0, 2).toUpperCase() || '?';
@@ -105,7 +120,16 @@ export default function Navbar() {
             onClick={() => setDropdownOpen(!dropdownOpen)}
             aria-label="User menu"
           >
-            {initials}
+            {avatarSrc && !imageError ? (
+              <img
+                src={avatarSrc}
+                alt="Avatar"
+                className="navbar-avatar-img"
+                onError={() => setImageError(true)}
+              />
+            ) : (
+              initials
+            )}
           </button>
 
           {dropdownOpen && (

@@ -17,7 +17,10 @@ export interface GroupBase {
   allow_member_activities?: boolean;
   require_approval?: boolean;
   privacy?: 'public' | 'private';
+  status?: 'active' | 'inactive' | string;
+  avatar_url?: string | null;
 }
+
 
 export interface GroupCreate extends GroupBase {
   name: string;
@@ -88,6 +91,14 @@ export const groupsApi = {
     return api.get<GroupResponse[]>(`/groups/discover${qs ? `?${qs}` : ''}`);
   },
 
+  searchCoHostCandidates: (activityId: string, params?: { search?: string; limit?: number }) => {
+    const query = new URLSearchParams();
+    if (params?.search) query.set('search', params.search);
+    if (params?.limit) query.set('limit', String(params.limit));
+    const qs = query.toString();
+    return api.get<GroupResponse[]>(`/activities/${activityId}/cohost-candidates${qs ? `?${qs}` : ''}`);
+  },
+
   getGroup: (id: string) => 
     api.get<GroupDetailResponse>(`/groups/${id}`),
 
@@ -135,13 +146,24 @@ export const groupsApi = {
   leaveGroup: (id: string) => 
     api.post(`/groups/${id}/leave`),
 
-  getGroupActivities: (id: string, params?: { category?: string; limit?: number; offset?: number }) => {
+  getGroupActivities: (id: string, params?: { category?: string; include_past?: boolean; limit?: number; offset?: number }) => {
     const queryParams = new URLSearchParams();
     if (params?.category) queryParams.append('category', params.category);
+    if (params?.include_past !== undefined) queryParams.append('include_past', String(params.include_past));
     if (params?.limit) queryParams.append('limit', params.limit.toString());
     if (params?.offset) queryParams.append('offset', params.offset.toString());
     const queryStr = queryParams.toString() ? `?${queryParams.toString()}` : '';
     return api.get<{items: ActivityResponse[], total: number, has_more: boolean}>(`/groups/${id}/activities${queryStr}`);
   },
+
+  uploadAvatar: (id: string, file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post<GroupDetailResponse>(`/groups/${id}/avatar`, formData);
+  },
+
+  deleteAvatar: (id: string) =>
+    api.delete<GroupDetailResponse>(`/groups/${id}/avatar`),
 };
+
 

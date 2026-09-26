@@ -9,6 +9,8 @@ export interface ChatEventCardDTO {
   meeting_location?: string;
   location_name: string;
   social_work_days?: number | null;
+  group_id?: string | null;
+  group_name?: string | null;
   distance_meters?: number | null;
   distance_status: 'nearby' | 'moderate' | 'far' | 'unknown';
   conflict_status: 'none' | 'soft_conflict' | 'hard_conflict';

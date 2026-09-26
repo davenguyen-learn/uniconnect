@@ -76,6 +76,14 @@ export default function AdminLayout() {
               <span className="admin-nav-icon">📄</span>
               Nội dung
             </NavLink>
+            <NavLink
+              to="/admin/groups"
+              className={({ isActive }) => `admin-nav-link ${isActive ? 'active' : ''}`}
+              onClick={() => setSidebarOpen(false)}
+            >
+              <span className="admin-nav-icon">🏛️</span>
+              Nhóm
+            </NavLink>
           </div>
 
           <div className="admin-nav-section">

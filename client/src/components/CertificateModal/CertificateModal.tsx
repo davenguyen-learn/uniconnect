@@ -1,5 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 import { participationApi, type CertificateResponse } from '../../api/participation';
+import { formatCtxh } from '../../utils/format';
 import Button from '../Button/Button';
 import './CertificateModal.css';
 
@@ -18,7 +21,9 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
 }) => {
   const [data, setData] = useState<CertificateResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const certRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isOpen && activityId) {
@@ -36,8 +41,41 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handlePrint = () => {
-    window.print();
+  const handleDownload = async () => {
+    if (!data || !certRef.current || downloading) return;
+    setDownloading(true);
+
+    try {
+      const element = certRef.current;
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      });
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const margin = 15;
+      const contentWidth = pdfWidth - margin * 2;
+      const contentHeight = (canvas.height * contentWidth) / canvas.width;
+
+      pdf.addImage(imgData, 'PNG', margin, margin, contentWidth, contentHeight);
+
+      const safeTitle = data.activity_title.replace(/[/\\?%*:|"<>]/g, '-').trim();
+      const fileName = `Giấy xác nhận tham gia hoạt động ${safeTitle}.pdf`;
+      pdf.save(fileName);
+    } catch (err) {
+      console.error('Lỗi khi tải file PDF:', err);
+    } finally {
+      setDownloading(false);
+    }
   };
 
   const verifyUrl = data
@@ -46,16 +84,13 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
 
   return (
     <div className="certificate-modal-overlay animate-fade-in">
-      <div className="certificate-modal-container glass">
+      <div className="certificate-modal-container">
         <div className="certificate-modal-header no-print">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">🎓</span>
-            <h2 className="text-lg font-bold text-[var(--color-text-primary)]">Giấy chứng nhận tham gia</h2>
-          </div>
+          <h2 className="cert-modal-title">Giấy xác nhận tham gia hoạt động</h2>
           <div className="flex items-center gap-2">
             {data && (
-              <Button size="sm" variant="primary" onClick={handlePrint}>
-                🖨️ In / Tải PDF
+              <Button size="sm" variant="primary" onClick={handleDownload} disabled={downloading}>
+                {downloading ? 'Đang tạo PDF...' : 'Tải PDF'}
               </Button>
             )}
             <button className="certificate-modal-close" onClick={onClose}>
@@ -68,7 +103,7 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
           {loading && (
             <div className="certificate-loading py-16 text-center text-[var(--color-text-secondary)]">
               <span className="inline-block animate-spin text-2xl mb-2">⏳</span>
-              <p>Đang khởi tạo giấy chứng nhận chính thức...</p>
+              <p>Đang tải...</p>
             </div>
           )}
 
@@ -84,91 +119,111 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
 
           {data && !loading && !error && (
             <div className="certificate-printable-wrapper">
-              <div className="certificate-sheet">
-                {/* Ornate corners */}
-                <div className="cert-corner cert-corner--tl" />
-                <div className="cert-corner cert-corner--tr" />
-                <div className="cert-corner cert-corner--bl" />
-                <div className="cert-corner cert-corner--br" />
+              <div className="cert-doc" ref={certRef}>
+                {/* Document Header */}
+                <div className="cert-doc-header">
+                  <div className="cert-doc-org">NỀN TẢNG KẾT NỐI HOẠT ĐỘNG SINH VIÊN</div>
+                  <div className="cert-doc-platform">UNICONNECT</div>
+                  <div className="cert-doc-line" />
+                </div>
 
-                <div className="cert-inner-border">
-                  {/* Certificate Top Header */}
-                  <div className="cert-top">
-                    <div className="cert-subheading">HỆ THỐNG QUẢN LÝ HOẠT ĐỘNG SINH VIÊN UNICONNECT</div>
-                    <h1 className="cert-main-title">GIẤY CHỨNG NHẬN</h1>
-                    <div className="cert-title-en">CERTIFICATE OF PARTICIPATION</div>
-                  </div>
+                {/* Title */}
+                <h1 className="cert-doc-title">
+                  {data.is_host ? 'GIẤY XÁC NHẬN TỔ CHỨC HOẠT ĐỘNG' : 'GIẤY XÁC NHẬN THAM GIA HOẠT ĐỘNG'}
+                </h1>
 
-                  {/* Recipient */}
-                  <div className="cert-body">
-                    <p className="cert-presentation-text">Trân trọng chứng nhận sinh viên</p>
-                    <h2 className="cert-recipient-name">{data.participant_name}</h2>
-                    {data.participant_university && (
-                      <p className="cert-university">{data.participant_university}</p>
-                    )}
-
-                    <p className="cert-completion-text">
-                      Đã hoàn thành xuất sắc và được xác nhận tham gia hoạt động
-                    </p>
-                    <h3 className="cert-activity-title">"{data.activity_title}"</h3>
-
-                    <div className="cert-meta-row">
-                      <span><strong>Ngày tổ chức:</strong> {data.activity_date}</span>
-                      {(data.meeting_location || data.location_name) && <span>• <strong>Địa điểm:</strong> {data.meeting_location || data.location_name}</span>}
-                      <span>• <strong>Đơn vị tổ chức:</strong> {data.host_name}</span>
-                    </div>
-
-                    {/* Highlights: Social work days and Trophy */}
-                    <div className="cert-highlights-row">
+                {/* Body */}
+                <div className="cert-doc-body">
+                  <table className="cert-doc-table">
+                    <tbody>
+                      <tr>
+                        <td className="cert-doc-label">Họ và tên:</td>
+                        <td className="cert-doc-value cert-doc-value--name">{data.participant_name}</td>
+                      </tr>
+                      {data.is_host && (
+                        <tr>
+                          <td className="cert-doc-label">Vai trò:</td>
+                          <td className="cert-doc-value font-bold text-indigo-700">Trưởng ban tổ chức (Host)</td>
+                        </tr>
+                      )}
+                      {data.participant_email && (
+                        <tr>
+                          <td className="cert-doc-label">Email:</td>
+                          <td className="cert-doc-value">{data.participant_email}</td>
+                        </tr>
+                      )}
+                      {data.participant_university && (
+                        <tr>
+                          <td className="cert-doc-label">Đơn vị:</td>
+                          <td className="cert-doc-value">{data.participant_university}</td>
+                        </tr>
+                      )}
+                      {data.custom_fields && data.custom_fields.length > 0 && data.custom_fields.map((field, idx) => (
+                        <tr key={`cf_${idx}`}>
+                          <td className="cert-doc-label">{field.label}:</td>
+                          <td className="cert-doc-value">{field.value}</td>
+                        </tr>
+                      ))}
+                      <tr>
+                        <td className="cert-doc-label">Hoạt động:</td>
+                        <td className="cert-doc-value cert-doc-value--activity">{data.activity_title}</td>
+                      </tr>
+                      <tr>
+                        <td className="cert-doc-label">Ngày tổ chức:</td>
+                        <td className="cert-doc-value">{data.activity_date}</td>
+                      </tr>
+                      {(data.meeting_location || data.location_name) && (
+                        <tr>
+                          <td className="cert-doc-label">Địa điểm:</td>
+                          <td className="cert-doc-value">{data.meeting_location || data.location_name}</td>
+                        </tr>
+                      )}
+                      {data.group_name && (
+                        <tr>
+                          <td className="cert-doc-label">Đơn vị tổ chức:</td>
+                          <td className="cert-doc-value">{data.group_name}</td>
+                        </tr>
+                      )}
+                      {!data.is_host && (
+                        <tr>
+                          <td className="cert-doc-label">Người tổ chức:</td>
+                          <td className="cert-doc-value">{data.host_name}</td>
+                        </tr>
+                      )}
                       {data.social_work_days !== null && data.social_work_days !== undefined && data.social_work_days > 0 && (
-                        <div className="cert-badge cert-badge--social">
-                          <span className="cert-badge-icon">🌱</span>
-                          <div className="cert-badge-text">
-                            <span className="cert-badge-val">{data.social_work_days} Ngày</span>
-                            <span className="cert-badge-lbl">Công tác Xã hội (CTXH)</span>
-                          </div>
-                        </div>
+                        <tr>
+                          <td className="cert-doc-label">Số ngày CTXH:</td>
+                          <td className="cert-doc-value cert-doc-value--highlight">{formatCtxh(data.social_work_days)} ngày</td>
+                        </tr>
                       )}
-
                       {data.trophy_name && (
-                        <div className="cert-badge cert-badge--trophy">
-                          <span className="cert-badge-icon">{data.trophy_icon || '🏆'}</span>
-                          <div className="cert-badge-text">
-                            <span className="cert-badge-val">{data.trophy_name}</span>
-                            <span className="cert-badge-lbl">+{data.trophy_points} Điểm danh hiệu</span>
-                          </div>
-                        </div>
+                        <tr>
+                          <td className="cert-doc-label">Danh hiệu:</td>
+                          <td className="cert-doc-value">{data.trophy_icon || '🏆'} {data.trophy_name} (+{data.trophy_points} điểm)</td>
+                        </tr>
                       )}
-                    </div>
-                  </div>
+                    </tbody>
+                  </table>
 
-                  {/* Footer & QR Verification */}
-                  <div className="cert-footer">
-                    <div className="cert-verification">
-                      <img
-                        src={`https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=${encodeURIComponent(verifyUrl)}`}
-                        alt="Verification QR"
-                        className="cert-qr-img"
-                      />
-                      <div className="cert-verification-text">
-                        <span className="cert-code-label">MÃ SỐ XÁC MINH:</span>
-                        <strong className="cert-code-val">{data.certificate_code}</strong>
-                        <span className="cert-code-hint">Quét QR để tra cứu tính hợp lệ trực tuyến</span>
-                      </div>
-                    </div>
+                  <p className="cert-doc-confirm">
+                    {data.is_host
+                      ? 'Xác nhận sinh viên nêu trên là người tổ chức và đã hoàn thành hoạt động trên nền tảng UniConnect.'
+                      : 'Xác nhận sinh viên nêu trên đã tham gia và hoàn thành hoạt động trên nền tảng UniConnect.'}
+                  </p>
+                </div>
 
-                    <div className="cert-seal-box">
-                      <div className="cert-digital-seal">
-                        <span>UNICONNECT</span>
-                        <span className="cert-seal-star">★ VERIFIED ★</span>
-                        <span>OFFICIAL</span>
-                      </div>
-                    </div>
-
-                    <div className="cert-signature-box">
-                      <span className="cert-sig-date">Ngày cấp: {new Date(data.issued_at).toLocaleDateString('vi-VN')}</span>
-                      <span className="cert-sig-title">ĐẠI DIỆN BAN TỔ CHỨC</span>
-                      <div className="cert-sig-name">{data.host_name}</div>
+                {/* Footer */}
+                <div className="cert-doc-footer">
+                  <div className="cert-doc-qr-section">
+                    <img
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(verifyUrl)}`}
+                      alt="QR"
+                      className="cert-doc-qr"
+                      crossOrigin="anonymous"
+                    />
+                    <div className="cert-doc-code-info">
+                      <span className="cert-doc-code-label">Mã xác minh</span>
+                      <strong className="cert-doc-code-val">{data.certificate_code}</strong>
                     </div>
                   </div>
                 </div>

@@ -347,10 +347,10 @@ Sơ đồ phản ánh thiết kế tổng thể gồm 3 tác nhân chính tươn
     \endlastfoot
 
     Use case name & Điểm danh đa chế độ chống gian lận và Trao Trophy \\ \hline
-    Actor & Người dùng (Người tham gia, Host/Co-host), Hệ thống \\ \hline
-    Description & Cung cấp giải pháp điểm danh toàn diện với cơ chế chống gian lận nghiêm ngặt. Người tổ chức kích hoạt phiên điểm danh bằng Mã QR xoay động 30 giây (kết hợp HMAC-SHA256 và GPS Geofencing). Sau khi điểm danh thành công, hệ thống tự động chuyển trạng thái tham gia, trao tặng Huy hiệu (Trophy) độc quyền và cộng dồn ngày Công tác Xã hội (CTXH). \\ \hline
+    Actor & Người dùng (Người tham gia, Host/Co-host), Quản trị viên, Hệ thống \\ \hline
+    Description & Cung cấp giải pháp điểm danh toàn diện với cơ chế chống gian lận nghiêm ngặt. Người tổ chức kích hoạt phiên điểm danh bằng Mã QR xoay động 30 giây (kết hợp HMAC-SHA256 và GPS Geofencing). Sau khi điểm danh thành công, hệ thống ghi nhận trạng thái có mặt và cộng dồn ngày CTXH. Sau khi hoạt động kết thúc, Host hoặc Admin thực hiện chốt điểm danh; nếu đạt ngưỡng túc số tối thiểu ($N \ge 10$), yêu cầu cấp Trophy được chuyển sang trạng thái chờ Admin phê duyệt trước khi trao cho sinh viên. \\ \hline
     Preconditions & Người dùng đã đăng ký tham gia hoạt động và được phê duyệt (trạng thái \texttt{approved}). Người tổ chức đã đăng nhập với vai trò Host hoặc Co-host của sự kiện. \\ \hline
-    Postconditions & Trạng thái tham gia chuyển sang \texttt{attended} (\texttt{attendance\_confirmed = True}). Hệ thống trao Trophy vào bộ sưu tập của người tham gia, cập nhật cấp bậc và ghi nhận số ngày CTXH vào cơ sở dữ liệu. \\ \hline
+    Postconditions & Trạng thái tham gia chuyển sang \texttt{attended} (\texttt{attendance\_confirmed = True}). Số ngày CTXH được ghi nhận vào CSDL. Dữ liệu điểm danh được đóng băng để chuẩn bị cho quy trình thẩm định và trao Trophy. \\ \hline
     
     \textbf{Normal Flow} & 1. Người tổ chức mở giao diện điều hành sự kiện và khởi chạy phiên điểm danh:
     \vspace{0.2cm}
@@ -362,10 +362,10 @@ Sơ đồ phản ánh thiết kế tổng thể gồm 3 tác nhân chính tươn
     & 3. Nếu dữ liệu hợp lệ, hệ thống thực thi giao dịch nguyên tử (Atomic Transaction):
     \begin{itemize}[leftmargin=*, noitemsep]
         \item Cập nhật trạng thái người tham gia thành \texttt{attended} (với \texttt{attendance\_confirmed = True}) và lưu mốc thời gian \texttt{checkin\_time}.
-        \item Trao tặng Trophy độc quyền của sự kiện vào hồ sơ người tham gia (\texttt{user\_trophies}).
         \item Cộng dồn số ngày CTXH tương ứng của hoạt động vào tổng tích lũy của sinh viên.
     \end{itemize} \\ 
-    & 4. Ứng dụng hiển thị hiệu ứng chúc mừng kèm Huy hiệu Trophy vừa nhận được trên màn hình người dùng. Danh sách điểm danh của người tổ chức cập nhật trạng thái thời gian thực. \\ \hline
+    & 4. Ứng dụng hiển thị thông báo điểm danh thành công trên thiết bị sinh viên; bảng điều phối của ban tổ chức cập nhật danh sách có mặt thời gian thực. \\ 
+    & 5. Sau khi sự kiện kết thúc, Host thực hiện chốt điểm danh (Finalize Attendance). Hệ thống xác định số lượng người tham gia thực tế: nếu đạt túc số $\ge 10$ người, hệ thống lập yêu cầu cấp Trophy ở trạng thái \texttt{eligible\_for\_review}; Trophy chỉ được chính thức tạo cho người tham gia sau khi Admin phê duyệt. \\ \hline
     
     Alternative flow & Điểm danh thủ công: Đối với trường hợp người tham gia hết pin điện thoại hoặc lỗi định vị phần cứng, người tổ chức có thể tra cứu thông tin người tham gia trên danh sách quản trị và nhấn nút "Xác nhận có mặt thủ công" với quyền Host/Co-host. \\ \hline
     Exception & Ngoài phạm vi địa lý hoặc mã QR hết hạn: Tại bước 2, nếu khoảng cách GPS của người dùng vượt quá bán kính quy định (ví dụ đang ở xa) hoặc token QR gửi lên đã quá 30 giây, Backend sẽ từ chối giao dịch, ghi log cảnh báo gian lận và trả về thông báo lỗi: "Vị trí không hợp lệ hoặc mã điểm danh đã hết hạn". \\ \hline
@@ -545,12 +545,12 @@ Sơ đồ tại Hình~\ref{fig:mo_hinh_erd_chen} biểu diễn phân hệ tươn
         \item \texttt{Group}: Thực thể nhóm gồm 7 thuộc tính (\underline{\texttt{id}}, \texttt{owner\_id}, \texttt{name}, \texttt{description}, \texttt{privacy}, \texttt{require\_approval}, \texttt{allow\_member\_activities}).
         \item \texttt{Comment}: Thực thể bình luận trao đổi gồm 5 thuộc tính (\underline{\texttt{id}}, \texttt{user\_id}, \texttt{activity\_id}, \texttt{parent\_id}, \texttt{content}).
         \item \texttt{Notification}: Thực thể thông báo tức thời gồm 6 thuộc tính (\underline{\texttt{id}}, \texttt{user\_id}, \texttt{message}, \texttt{type}, \texttt{is\_read}, \texttt{action\_url}), trong đó \texttt{action\_url} đóng vai trò điều hướng tương tác động.
-        \item \texttt{Trophy}: Thực thể danh hiệu vinh danh gồm 4 thuộc tính (\underline{\texttt{id}}, \texttt{activity\_id}, \texttt{name}, \texttt{description}), gắn kết trực tiếp với hoạt động trao thưởng.
+        \item \texttt{Trophy}: Thực thể danh hiệu vinh danh gồm 4 thuộc tính (\underline{\texttt{id}}, \texttt{activity\_id}, \texttt{name}, \texttt{description}), gắn kết trực tiếp với hoạt động trao thưởng (quan hệ $1:0..1$, mỗi hoạt động thiết lập tối đa một Trophy).
     \end{itemize}
     \item \textbf{Thuộc tính (Hình bầu dục/Elip):} Biểu diễn các trường dữ liệu của từng thực thể, với các thuộc tính định danh duy nhất (Khóa chính) được gạch chân (\underline{\texttt{id}}).
     \item \textbf{Mối quan hệ (Hình thoi) và Ràng buộc tham gia (Participation):}
     \begin{itemize}
-        \item \textbf{Tham gia toàn phần (Total Participation --- Đường nét đôi):} Biểu thị sự tồn tại phụ thuộc bắt buộc. Cụ thể: \texttt{Comment} bắt buộc thuộc về \texttt{Activity} (\textit{has}) và do \texttt{User} tạo (\textit{create}); \texttt{Activity} bắt buộc có người chủ trì \texttt{User} (\textit{create}); \texttt{Group} bắt buộc có người sáng lập \texttt{User} (\textit{create}); \texttt{Notification} bắt buộc gắn với người nhận \texttt{User} (\textit{receive}); \texttt{Trophy} bắt buộc thuộc về sự kiện \texttt{Activity} (\textit{reward}).
+        \item \textbf{Tham gia toàn phần (Total Participation --- Đường nét đôi):} Biểu thị sự tồn tại phụ thuộc bắt buộc. Cụ thể: \texttt{Comment} bắt buộc thuộc về \texttt{Activity} (\textit{has}) và do \texttt{User} tạo (\textit{create}); \texttt{Activity} bắt buộc có người chủ trì \texttt{User} (\textit{create}); \texttt{Group} bắt buộc có người sáng lập \texttt{User} (\textit{create}); \texttt{Notification} bắt buộc gắn với người nhận \texttt{User} (\textit{receive}); \texttt{Trophy} bắt buộc thuộc về sự kiện \texttt{Activity} (\textit{reward}, quan hệ $1:0..1$).
         \item \textbf{Tham gia một phần (Partial Participation --- Đường nét đơn):} Biểu thị sự tham gia tùy biến, không bắt buộc. Ví dụ: \texttt{Activity} có thể được tạo bởi cá nhân mà không nhất thiết thuộc \texttt{Group} (\textit{has}); một \texttt{Comment} gốc không bắt buộc có bình luận cha (\textit{reply}); người dùng có thể tham gia hoặc không tham gia các nhóm, sự kiện.
         \item \textbf{Quan hệ tự thân (Self-referential):} Bao gồm mạng lưới kết nối theo dõi giữa các sinh viên (\texttt{User} -- \textit{follow} -- \texttt{User}, lực lượng $N:M$) và cấu trúc phân cấp thảo luận lồng nhau (\texttt{Comment} -- \textit{reply} -- \texttt{Comment}, lực lượng $1:N$).
     \end{itemize}
@@ -563,9 +563,9 @@ Sơ đồ tại Hình~\ref{fig:mo_hinh_erd_chen} biểu diễn phân hệ tươn
     \label{fig:mo_hinh_erd}
 \end{figure}
 
-\subsubsection{Danh sách thực thể và thuộc tính (22 Domain Entities)}
+\subsubsection{Danh sách thực thể và thuộc tính (23 Domain Entities)}
 
-Nhằm bảo đảm tính chính xác kỹ thuật tuyệt đối và loại bỏ hoàn toàn sai lệch tài liệu (documentation drift), danh mục 22 thực thể nghiệp vụ (Domain Entities) dưới đây được trích xuất và ánh xạ trực tiếp từ các lớp mô hình ORM (SQLAlchemy Models) thuộc mã nguồn hệ thống UniConnect:
+Nhằm bảo đảm tính chính xác kỹ thuật tuyệt đối và loại bỏ hoàn toàn sai lệch tài liệu (documentation drift), danh mục 23 thực thể nghiệp vụ (Domain Entities) dưới đây được trích xuất và ánh xạ trực tiếp từ các lớp mô hình ORM (SQLAlchemy Models) thuộc mã nguồn hệ thống UniConnect:
 
 \begin{enumerate}
     \item \textbf{Nhóm Người dùng và Đồ thị xã hội (Users \& Social Graph):}
@@ -576,7 +576,7 @@ Nhằm bảo đảm tính chính xác kỹ thuật tuyệt đối và loại b�
 
     \item \textbf{Nhóm Hoạt động sự kiện (Activities Module):}
     \begin{itemize}
-        \item \texttt{activities} (Model: \texttt{Activity}, 25 cột): Thực thể trung tâm quản lý các sự kiện và phong trào ngoại khóa. Bao gồm khóa chính \texttt{id} (UUID); khóa ngoại người chủ trì \texttt{host\_id} (UUID, FK $\rightarrow$ \texttt{users.id}, ON DELETE CASCADE); nhóm tổ chức \texttt{group\_id} (UUID, Nullable, FK $\rightarrow$ \texttt{groups.id}, ON DELETE SET NULL); biểu mẫu khảo sát đính kèm \texttt{custom\_form\_id} (UUID, Nullable, FK $\rightarrow$ \texttt{custom\_forms.id}, ON DELETE SET NULL); tiêu đề \texttt{title} (VARCHAR(150), Index); nội dung mô tả công khai \texttt{description} (TEXT) và mô tả nội bộ chỉ thành viên tham gia xem được \texttt{private\_description} (TEXT); phân loại chủ đề \texttt{category} (VARCHAR(50), Index); tọa độ ghim bản đồ số \texttt{marker\_location} (PostGIS \texttt{geography(POINT, 4326)}); địa điểm tập trung \texttt{meeting\_location} (VARCHAR(200)); vector nhúng ngữ nghĩa \texttt{embedding} (\texttt{VECTOR(768)}) phục vụ tìm kiếm ngữ nghĩa và Trợ lý AI RAG; khung thời gian diễn ra gồm \texttt{start\_time} và \texttt{end\_time} (TIMESTAMP WITH TIME ZONE, Index); quy mô kiểm soát gồm \texttt{max\_participants} (INTEGER) và \texttt{current\_participants} (INTEGER, mặc định: 1, ràng buộc kiểm tra không âm \texttt{ck\_nonneg\_participants}); chế độ hiển thị \texttt{privacy} (Enum: \texttt{public}, \texttt{private}); cờ yêu cầu duyệt đơn \texttt{require\_approval} (BOOLEAN, mặc định: True); số ngày CTXH quy đổi \texttt{social\_work\_days} (FLOAT); cấu hình điểm danh chống gian lận gồm phương thức \texttt{attendance\_mode} (VARCHAR(20), mặc định: \texttt{manual}), mã bảo mật điểm danh \texttt{check\_in\_code} (VARCHAR(64), UNIQUE, Nullable) và bán kính định vị GPS Geofencing \texttt{check\_in\_radius} (INTEGER, mặc định: 300 mét); cờ xóa mềm \texttt{is\_deleted} (BOOLEAN) cùng \texttt{deleted\_at}; và dấu thời gian \texttt{created\_at}, \texttt{updated\_at}.
+        \item \texttt{activities} (Model: \texttt{Activity}, 26 cột): Thực thể trung tâm quản lý các sự kiện và phong trào ngoại khóa. Bao gồm khóa chính \texttt{id} (UUID); khóa ngoại người chủ trì \texttt{host\_id} (UUID, FK $\rightarrow$ \texttt{users.id}, ON DELETE CASCADE); nhóm tổ chức \texttt{group\_id} (UUID, Nullable, FK $\rightarrow$ \texttt{groups.id}, ON DELETE SET NULL); biểu mẫu khảo sát đính kèm \texttt{custom\_form\_id} (UUID, Nullable, FK $\rightarrow$ \texttt{custom\_forms.id}, ON DELETE SET NULL); tiêu đề \texttt{title} (VARCHAR(150), Index); nội dung mô tả công khai \texttt{description} (TEXT) và mô tả nội bộ chỉ thành viên tham gia xem được \texttt{private\_description} (TEXT); phân loại chủ đề \texttt{category} (VARCHAR(50), Index); tọa độ ghim bản đồ số \texttt{marker\_location} (PostGIS \texttt{geography(POINT, 4326)}); địa điểm tập trung \texttt{meeting\_location} (VARCHAR(200)); vector nhúng ngữ nghĩa \texttt{embedding} (\texttt{VECTOR(768)}) phục vụ tìm kiếm ngữ nghĩa và Trợ lý AI RAG; khung thời gian diễn ra gồm \texttt{start\_time} và \texttt{end\_time} (TIMESTAMP WITH TIME ZONE, Index); quy mô kiểm soát gồm \texttt{max\_participants} (INTEGER) và \texttt{current\_participants} (INTEGER, mặc định: 1, ràng buộc kiểm tra không âm \texttt{ck\_nonneg\_participants}); chế độ hiển thị \texttt{privacy} (Enum: \texttt{public}, \texttt{private}); cờ yêu cầu duyệt đơn \texttt{require\_approval} (BOOLEAN, mặc định: True); số ngày CTXH quy đổi \texttt{social\_work\_days} (FLOAT); cấu hình điểm danh chống gian lận gồm phương thức \texttt{attendance\_mode} (VARCHAR(20), mặc định: \texttt{manual}), mã bảo mật điểm danh \texttt{check\_in\_code} (VARCHAR(64), UNIQUE, Nullable) và bán kính định vị GPS Geofencing \texttt{check\_in\_radius} (INTEGER, mặc định: 300 mét); dấu thời gian chốt điểm danh \texttt{attendance\_finalized\_at} (TIMESTAMP WITH TIME ZONE, Nullable); cờ xóa mềm \texttt{is\_deleted} (BOOLEAN) cùng \texttt{deleted\_at}; và dấu thời gian \texttt{created\_at}, \texttt{updated\_at}.
     \end{itemize}
 
     \item \textbf{Phân hệ Hội nhóm sinh viên và Đồng tổ chức (Groups \& Co-hosting):}
@@ -611,8 +611,9 @@ Nhằm bảo đảm tính chính xác kỹ thuật tuyệt đối và loại b�
 
     \item \textbf{Nhóm Trò chơi hóa và Thành tích (Gamification \& Trophies):}
     \begin{itemize}
-        \item \texttt{trophies} (Model: \texttt{Trophy}, 6 cột): Quản lý danh hiệu và huy hiệu vinh danh gắn với hoạt động. Gồm khóa chính \texttt{id} (UUID); hoạt động thiết lập trao thưởng \texttt{activity\_id} (UUID, Nullable, FK $\rightarrow$ \texttt{activities.id}, ON DELETE CASCADE); tên danh hiệu duy nhất \texttt{name} (VARCHAR(100), UNIQUE); mô tả ý nghĩa \texttt{description} (TEXT); cùng dấu thời gian \texttt{created\_at}, \texttt{updated\_at}.
-        \item \texttt{user\_trophies} (Model: \texttt{UserTrophy}, 6 cột): Bảng ghi nhận chứng nhận danh hiệu đã trao cho sinh viên sau khi hoàn thành điểm danh hợp lệ. Gồm khóa chính \texttt{id} (UUID); sinh viên thụ hưởng \texttt{user\_id} (UUID, FK $\rightarrow$ \texttt{users.id}, ON DELETE CASCADE); danh hiệu tương ứng \texttt{trophy\_id} (UUID, FK $\rightarrow$ \texttt{trophies.id}, ON DELETE CASCADE); sự kiện đạt được \texttt{activity\_id} (UUID, Nullable, FK $\rightarrow$ \texttt{activities.id}, ON DELETE CASCADE); cùng dấu thời gian \texttt{created\_at}, \texttt{updated\_at}. Ràng buộc: \texttt{UNIQUE(user\_id, trophy\_id)}.
+        \item \texttt{trophies} (Model: \texttt{Trophy}, 6 cột): Quản lý danh hiệu và huy hiệu vinh danh gắn với hoạt động (mỗi hoạt động có thể không có hoặc có tối đa một Trophy). Gồm khóa chính \texttt{id} (UUID); hoạt động thiết lập trao thưởng \texttt{activity\_id} (UUID, Nullable, FK $\rightarrow$ \texttt{activities.id}, ON DELETE CASCADE); tên danh hiệu duy nhất \texttt{name} (VARCHAR(100), UNIQUE); mô tả ý nghĩa \texttt{description} (TEXT); cùng dấu thời gian \texttt{created\_at}, \texttt{updated\_at}.
+        \item \texttt{user\_trophies} (Model: \texttt{UserTrophy}, 6 cột): Bảng ghi nhận chứng nhận danh hiệu đã trao cho sinh viên sau khi hoàn thành điểm danh và được Admin phê duyệt. Gồm khóa chính \texttt{id} (UUID); sinh viên thụ hưởng \texttt{user\_id} (UUID, FK $\rightarrow$ \texttt{users.id}, ON DELETE CASCADE); danh hiệu tương ứng \texttt{trophy\_id} (UUID, FK $\rightarrow$ \texttt{trophies.id}, ON DELETE CASCADE); sự kiện đạt được \texttt{activity\_id} (UUID, Nullable, FK $\rightarrow$ \texttt{activities.id}, ON DELETE CASCADE); cùng dấu thời gian \texttt{created\_at}, \texttt{updated\_at}. Ràng buộc: \texttt{UNIQUE(activity\_id, user\_id)} (mỗi sinh viên chỉ nhận tối đa 1 Trophy cho cùng một hoạt động).
+        \item \texttt{trophy\_grant\_requests} (Model: \texttt{TrophyGrantRequest}, 11 cột): Quản lý yêu cầu xét duyệt cấp Trophy sau khi sự kiện kết thúc. Gồm khóa chính \texttt{id} (UUID); hoạt động liên kết \texttt{activity\_id} (UUID, UNIQUE, FK $\rightarrow$ \texttt{activities.id}, ON DELETE CASCADE); danh hiệu tương ứng \texttt{trophy\_id} (UUID, FK $\rightarrow$ \texttt{trophies.id}, ON DELETE CASCADE); trạng thái xét duyệt \texttt{status} (Enum: \texttt{insufficient\_quorum}, \texttt{eligible\_for\_review}, \texttt{approved}, \texttt{rejected}); ngưỡng túc số bắt buộc \texttt{min\_participants\_required} (INTEGER, mặc định: 10); số người tham gia thực tế \texttt{actual\_attended\_count} (INTEGER); ghi chú thẩm định của Admin \texttt{admin\_notes} (TEXT, Nullable); quản trị viên thụ lý \texttt{reviewed\_by} (UUID, Nullable, FK $\rightarrow$ \texttt{users.id}, ON DELETE SET NULL); thời điểm thẩm định \texttt{reviewed\_at} (TIMESTAMP WITH TIME ZONE, Nullable); cùng dấu thời gian \texttt{created\_at}, \texttt{updated\_at}.
     \end{itemize}
 
     \item \textbf{Nhóm Quản trị, Thông báo và Giám sát (Administration \& Notifications):}
@@ -700,15 +701,15 @@ Nhằm bảo đảm tính chính xác kỹ thuật tuyệt đối và loại b�
         \item Quản trị viên thẩm định và phê duyệt lưu tại \texttt{reviewed\_by} $\rightarrow$ \texttt{users.id} (Nullable).
     \end{itemize} \\ \hline
 
-    \texttt{activities} -- \texttt{trophies} & Reward \newline (1 -- N) & 
+    \texttt{activities} -- \texttt{trophies} & Reward \newline (1 -- 0..1) & 
     \begin{itemize}
-        \item Mỗi hoạt động có thể thiết lập các danh hiệu vinh danh trao tặng cho sinh viên hoàn thành (\texttt{trophies.activity\_id} $\rightarrow$ \texttt{activities.id}, ON DELETE CASCADE).
+        \item Mỗi hoạt động có thể không có hoặc có tối đa một danh hiệu Trophy vinh danh trao tặng cho sinh viên hoàn thành (\texttt{trophies.activity\_id} $\rightarrow$ \texttt{activities.id}, ON DELETE CASCADE).
     \end{itemize} \\ \hline
 
     \texttt{users} -- \texttt{trophies} \newline (qua \texttt{user\_trophies}) & Achieve / Earn \newline (N -- N) & 
     \begin{itemize}
         \item Người dùng tích lũy nhiều danh hiệu \texttt{trophies}; danh hiệu được trao cho nhiều sinh viên.
-        \item Bảng \texttt{user\_trophies} lưu mốc thời gian trao tặng và hoạt động đạt được (\texttt{activity\_id}), ràng buộc \texttt{UNIQUE(user\_id, trophy\_id)}.
+        \item Bảng \texttt{user\_trophies} lưu mốc thời gian trao tặng và hoạt động đạt được (\texttt{activity\_id}), ràng buộc \texttt{UNIQUE(activity\_id, user\_id)}.
     \end{itemize} \\ \hline
 
     \texttt{users} -- \texttt{user\_busy\_slots} & Busy Schedule \newline (1 -- N) & 
@@ -897,7 +898,7 @@ Biểu đồ tại Hình~\ref{fig:sequence_tham_gia_hoat_dong} mô tả quy trì
 \clearpage
 \subsubsection{Trình tự Xác thực điểm danh HMAC và Trao thưởng Gamification}
 
-Hình~\ref{fig:sequence_diem_danh_gamification} thể hiện chu trình xác thực kép chống gian lận: tiếp nhận mã token HMAC-SHA256 xoay vòng và tọa độ GPS thực tế từ Client, kiểm tra tính toàn vẹn trong cửa sổ thời gian trôi, cập nhật trạng thái tham dự và kích hoạt dịch vụ Gamification để trao tặng Trophy cùng ngày CTXH tích lũy trong một giao dịch nguyên tử:
+Hình~\ref{fig:sequence_diem_danh_gamification} thể hiện chu trình xác thực kép chống gian lận: tiếp nhận mã token HMAC-SHA256 xoay vòng và tọa độ GPS thực tế từ Client, kiểm tra tính toàn vẹn trong cửa sổ thời gian trôi, cập nhật trạng thái tham dự (\texttt{attended}) và cộng dồn ngày CTXH tích lũy trong một giao dịch nguyên tử (Atomic Transaction). Quy trình xét duyệt Trophy được phân tách xử lý độc lập sau khi sự kiện kết thúc qua các bước: chốt điểm danh (Finalize), kiểm tra túc số $N \ge 10$ và Quản trị viên phê duyệt:
 
 \begin{figure}[H]
 \centering
@@ -937,20 +938,20 @@ Hình~\ref{fig:sequence_diem_danh_gamification} thể hiện chu trình xác th�
 \draw[msg] (7.0,-5.0) -- node[above] {6. Cập nhật trạng thái xác nhận đã tham gia (Attended)} (13.8,-5.0);
 \draw[reply] (7.0,-5.6) -- node[above] {7. Xác nhận ghi nhận điểm danh thành công} (13.8,-5.6);
 
-\draw[msg] (7.0,-6.3) -- node[above] {8. Kích hoạt tính toán ngày CTXH và danh hiệu} (10.5,-6.3);
+\draw[msg] (7.0,-6.3) -- node[above] {8. Kích hoạt ghi nhận tích lũy ngày CTXH} (10.5,-6.3);
 
-\draw[msg] (10.5,-6.9) -- ++(1.0,0) |- node[pos=0.5, right=2pt, font=\scriptsize] {9. Xử lý Gamification (Cộng CTXH, Mở Trophy)} (10.5,-7.6);
+\draw[msg] (10.5,-6.9) -- ++(1.0,0) |- node[pos=0.5, right=2pt, font=\scriptsize] {9. Xử lý tích lũy ngày CTXH sinh viên} (10.5,-7.6);
 
-\draw[msg] (10.5,-8.3) -- node[above] {10. Ghi nhận Trophy mới và cập nhật thành tích} (13.8,-8.3);
+\draw[msg] (10.5,-8.3) -- node[above] {10. Ghi nhận số ngày CTXH vào cơ sở dữ liệu} (13.8,-8.3);
 \draw[reply] (10.5,-8.9) -- node[above] {11. Xác nhận giao dịch hoàn tất (Atomic Commit)} (13.8,-8.9);
 
-\draw[reply] (7.0,-9.5) -- node[above] {12. Trả về kết quả vinh danh và ngày CTXH} (10.5,-9.5);
-\draw[reply] (3.5,-10.1) -- node[above] {13. Phản hồi hoàn tất điểm danh kèm phần thưởng} (7.0,-10.1);
-\draw[reply] (0,-10.7) -- node[above] {14. Thông báo thành công \& Mở khóa Trophy} (3.5,-10.7);
+\draw[reply] (7.0,-9.5) -- node[above] {12. Trả về kết quả ghi nhận điểm danh \& CTXH} (10.5,-9.5);
+\draw[reply] (3.5,-10.1) -- node[above] {13. Phản hồi hoàn tất điểm danh thành công} (7.0,-10.1);
+\draw[reply] (0,-10.7) -- node[above] {14. Thông báo thành công \& Cập nhật trạng thái} (3.5,-10.7);
 
 \end{tikzpicture}
 }
-\caption{Sequence Diagram: Luồng tích hợp xác thực điểm danh và phân bổ phần thưởng Gamification}
+\caption{Sequence Diagram: Luồng tích hợp xác thực điểm danh kép và ghi nhận ngày CTXH}
 \label{fig:sequence_diem_danh_gamification}
 \end{figure}
 

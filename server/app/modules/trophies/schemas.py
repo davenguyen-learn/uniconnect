@@ -3,8 +3,10 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 class ActivitySimple(BaseModel):
-    id: uuid.UUID
+    id: uuid.UUID | None = None
     title: str
+    privacy: str = "public"
+    is_accessible: bool = True
 
     model_config = {"from_attributes": True}
 
@@ -36,3 +38,24 @@ class UserTrophyResponse(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+class TrophyGrantRequestResponse(BaseModel):
+    id: uuid.UUID
+    activity_id: uuid.UUID
+    trophy_id: uuid.UUID
+    status: str
+    min_participants_required: int
+    actual_attended_count: int
+    admin_notes: str | None = None
+    reviewed_by: uuid.UUID | None = None
+    reviewed_at: datetime | None = None
+    created_at: datetime
+    updated_at: datetime
+    activity: ActivitySimple | None = None
+    trophy: TrophyResponse | None = None
+
+    model_config = {"from_attributes": True}
+
+class TrophyGrantReviewRequest(BaseModel):
+    action: str = Field(description="'approve' or 'reject'")
+    admin_notes: str | None = None

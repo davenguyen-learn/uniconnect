@@ -1,9 +1,19 @@
 import { useState, type FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { groupsApi } from '../../api/groups';
 import { useToast } from '../../components/Toast/ToastContext';
 import Button from '../../components/Button/Button';
-import Input, { Textarea } from '../../components/Input/Input';
+import {
+  Users,
+  UserCheck,
+  Sparkles,
+  FileText,
+  Plus,
+  Trash2,
+  ArrowLeft,
+  Info,
+  ShieldCheck,
+} from 'lucide-react';
 import './CreateGroup.css';
 
 export default function CreateGroup() {
@@ -13,214 +23,343 @@ export default function CreateGroup() {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [publicDescription, setPublicDescription] = useState('');
-  const [privateDescription, setPrivateDescription] = useState('');
-  const [privacy, setPrivacy] = useState<'public' | 'private'>('public');
   const [requireApproval, setRequireApproval] = useState(true);
   const [allowActivities, setAllowActivities] = useState(true);
 
   // Custom Form Builder state for group membership
-  const [customFormFields, setCustomFormFields] = useState<Array<{ id: string; label: string; field_type: string; is_required: boolean }>>([]);
-  const [showFormBuilder, setShowFormBuilder] = useState(false);
+  const [customFormFields, setCustomFormFields] = useState<
+    Array<{ id: string; label: string; field_type: string; is_required: boolean }>
+  >([]);
 
   const [loading, setLoading] = useState(false);
+  const [attemptedSubmit, setAttemptedSubmit] = useState(false);
+
+  const isNameMissing = attemptedSubmit && !name.trim();
+
+  const handleAddField = () => {
+    setCustomFormFields((prev) => [
+      ...prev,
+      {
+        id: Math.random().toString(),
+        label: '',
+        field_type: 'text',
+        is_required: true,
+      },
+    ]);
+  };
+
+  const handleRemoveField = (index: number) => {
+    setCustomFormFields((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleFieldChange = (index: number, key: string, value: any) => {
+    setCustomFormFields((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], [key]: value };
+      return next;
+    });
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    setAttemptedSubmit(true);
+
+    if (!name.trim()) {
+      toast.error('Vui lòng nhập tên nhóm / câu lạc bộ');
+      return;
+    }
+
+    const filledCustomFields = customFormFields.filter((f) => f.label.trim().length > 0);
+    if (customFormFields.length > 0 && filledCustomFields.length < customFormFields.length) {
+      toast.error('Vui lòng nhập đầy đủ câu hỏi cho các trường biểu mẫu hoặc nhấn nút xóa trường trống');
+      return;
+    }
 
     setLoading(true);
     try {
       const payload: any = {
-        name,
-        description,
-        public_description: publicDescription || undefined,
-        private_description: privateDescription || undefined,
-        privacy,
+        name: name.trim(),
+        description: description.trim() || undefined,
+        public_description: publicDescription.trim() || undefined,
+        privacy: 'public',
         require_approval: requireApproval,
         allow_member_activities: allowActivities,
       };
 
-      if (customFormFields.length > 0) {
+      if (filledCustomFields.length > 0) {
         payload.custom_form = {
-          title: "Group Membership Form",
-          description: "Please answer these questions to apply for group membership.",
-          fields: customFormFields.map((f, idx) => ({
-            label: f.label,
-            field_type: f.field_type,
+          title: 'Biểu mẫu xin gia nhập nhóm',
+          description: 'Vui lòng trả lời các câu hỏi sau để Quản trị viên duyệt tham gia nhóm.',
+          fields: filledCustomFields.map((f, idx) => ({
+            label: f.label.trim(),
+            field_type: f.field_type === 'boolean' ? 'checkbox' : f.field_type,
             is_required: f.is_required,
-            order: idx
-          }))
+            order: idx,
+          })),
         };
       }
 
       const response = await groupsApi.createGroup(payload);
       toast.success('Tạo nhóm thành công!');
       navigate(`/groups/${response.id}`);
-    } catch (err) {
-      toast.error('Không thể tạo nhóm');
+    } catch (err: any) {
+      const errData = err.response?.data?.error;
+      if (errData?.details?.fields && errData.details.fields.length > 0) {
+        const detailMsg = errData.details.fields.map((f: any) => `${f.field}: ${f.message}`).join(', ');
+        toast.error(`Lỗi dữ liệu: ${detailMsg}`);
+      } else if (errData?.message) {
+        toast.error(errData.message);
+      } else if (err.response?.data?.detail) {
+        toast.error(err.response.data.detail);
+      } else {
+        toast.error('Không thể tạo nhóm');
+      }
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="container create-group-page">
-      <div className="glass create-group-card">
-        <h1 className="create-group-title">Tạo nhóm</h1>
-
-        <form onSubmit={handleSubmit} className="create-group-form">
-          <Input
-            label="Tên nhóm"
-            placeholder="Ví dụ: Câu lạc bộ Khoa học Máy tính"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            maxLength={100}
-          />
-
-          <Textarea
-            label="Mô tả ngắn"
-            placeholder="Nhóm này về chủ đề gì?"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-
-          <div className="form-group">
-            <label htmlFor="privacy" className="form-label">Loại quyền riêng tư</label>
-            <select
-              id="privacy"
-              className="form-select"
-              value={privacy}
-              onChange={(e) => setPrivacy(e.target.value as 'public' | 'private')}
-            >
-              <option value="public">Công khai (Bất kỳ ai cũng có thể xem và tham gia)</option>
-              <option value="private">Riêng tư (Hạn chế thành viên, ẩn thông tin riêng tư)</option>
-            </select>
+    <div className="create-group-page">
+      <div className="create-group-container">
+        {/* Navigation & Header */}
+        <div className="create-group-header">
+          <Link to="/groups" className="create-group-back-btn">
+            <ArrowLeft size={18} />
+            <span>Danh sách nhóm</span>
+          </Link>
+          <div className="create-group-header-text">
+            <h1 className="create-group-heading">Tạo nhóm mới</h1>
           </div>
+        </div>
 
-          <Textarea
-            label="Tổng quan công khai (Mọi người đều có thể thấy)"
-            placeholder="Quy tắc chi tiết, sứ mệnh, thông báo công khai..."
-            value={publicDescription}
-            onChange={(e) => setPublicDescription(e.target.value)}
-          />
-
-          {privacy === 'private' && (
-            <div className="callout callout--error">
-              <Textarea
-                label="Mô tả riêng tư (Chỉ dành cho thành viên) 🔒"
-                placeholder="Link nhóm Discord/Zalo, link Google Drive riêng tư, mật mã cuộc họp (chỉ hiển thị cho thành viên được duyệt)..."
-                value={privateDescription}
-                onChange={(e) => setPrivateDescription(e.target.value)}
+        <form noValidate onSubmit={handleSubmit} className="create-group-form">
+          {/* Hero Name Input */}
+          <div className="create-group-hero-section">
+            <div className="create-group-hero-wrapper">
+              <input
+                type="text"
+                id="group-name"
+                name="name"
+                className={`create-group-hero-input ${isNameMissing ? 'input-error' : ''}`}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                placeholder="Nhập tên nhóm hoặc câu lạc bộ..."
+                maxLength={100}
+                autoFocus
               />
             </div>
-          )}
-
-          <div className="create-group-checkboxes">
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={requireApproval}
-                onChange={(e) => setRequireApproval(e.target.checked)}
-              />
-              <span>Yêu cầu quản trị viên phê duyệt để tham gia (Yêu cầu tham gia)</span>
-            </label>
-
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={allowActivities}
-                onChange={(e) => setAllowActivities(e.target.checked)}
-              />
-              <span>Cho phép thành viên tạo hoạt động</span>
-            </label>
-          </div>
-
-          {/* Membership Custom Form Builder */}
-          <div className="form-group">
-            <div className="form-builder-toggle">
-              <label className="form-label form-label--inline">Biểu mẫu đăng ký tham gia</label>
-              <Button type="button" size="sm" variant="secondary" onClick={() => setShowFormBuilder(!showFormBuilder)}>
-                {showFormBuilder ? 'Ẩn công cụ tạo biểu mẫu' : 'Thêm biểu mẫu đăng ký'}
-              </Button>
-            </div>
-
-            {showFormBuilder && (
-              <div className="form-builder-container">
-                <p className="form-builder-hint">
-                  Đặt câu hỏi cho các thành viên tương lai trước khi phê duyệt họ.
-                </p>
-                {customFormFields.map((field, index) => (
-                  <div key={field.id} className="form-builder-row">
-                    <div className="form-builder-row__field">
-                      <label className="form-builder-label">Câu hỏi / Nhãn</label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        value={field.label}
-                        onChange={(e) => {
-                          const newFields = [...customFormFields];
-                          newFields[index].label = e.target.value;
-                          setCustomFormFields(newFields);
-                        }}
-                        placeholder="Ví dụ: Tại sao bạn muốn tham gia?"
-                      />
-                    </div>
-                    <div className="form-builder-row__type">
-                      <label className="form-builder-label">Loại</label>
-                      <select
-                        className="form-input"
-                        value={field.field_type}
-                        onChange={(e) => {
-                          const newFields = [...customFormFields];
-                          newFields[index].field_type = e.target.value;
-                          setCustomFormFields(newFields);
-                        }}
-                      >
-                        <option value="text">Văn bản</option>
-                        <option value="number">Số</option>
-                        <option value="boolean">Checkbox</option>
-                      </select>
-                    </div>
-                    <div className="form-builder-row__req">
-                      <label className="form-builder-req-label">
-                        <input
-                          type="checkbox"
-                          checked={field.is_required}
-                          onChange={(e) => {
-                            const newFields = [...customFormFields];
-                            newFields[index].is_required = e.target.checked;
-                            setCustomFormFields(newFields);
-                          }}
-                        /> Bắt buộc
-                      </label>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      onClick={() => setCustomFormFields(customFormFields.filter((_, i) => i !== index))}
-                    >
-                      X
-                    </Button>
-                  </div>
-                ))}
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={() => setCustomFormFields([...customFormFields, { id: Math.random().toString(), label: '', field_type: 'text', is_required: true }])}
-                >
-                  + Thêm câu hỏi
-                </Button>
-              </div>
+            {isNameMissing && (
+              <span className="field-error-msg">Vui lòng nhập tên nhóm / câu lạc bộ</span>
             )}
           </div>
 
+          {/* Section 1: Thông tin cơ bản */}
+          <div className="create-group-card">
+            <div className="create-group-section-title">
+              <div className="section-icon-wrap">
+                <Info size={18} />
+              </div>
+              <div>
+                <h3>Thông tin cơ bản</h3>
+              </div>
+            </div>
+
+            <div className="create-group-fields">
+              <div className="form-group">
+                <label htmlFor="description" className="create-group-label">
+                  Mô tả ngắn gọn
+                </label>
+                <textarea
+                  id="description"
+                  name="description"
+                  className="form-input"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Mô tả súc tích về nhóm trong 1-2 câu (hiển thị trên thẻ nhóm và tìm kiếm)..."
+                  rows={2}
+                  maxLength={250}
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="publicDescription" className="create-group-label">
+                  Giới thiệu chi tiết
+                </label>
+                <textarea
+                  id="publicDescription"
+                  name="publicDescription"
+                  className="form-input"
+                  value={publicDescription}
+                  onChange={(e) => setPublicDescription(e.target.value)}
+                  placeholder="Mục tiêu hoạt động, sứ mệnh, quyền lợi khi tham gia, lịch sinh hoạt định kỳ..."
+                  rows={4}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Section 2: Quản lý & Cấu hình */}
+          <div className="create-group-card">
+            <div className="create-group-section-title">
+              <div className="section-icon-wrap">
+                <ShieldCheck size={18} />
+              </div>
+              <div>
+                <h3>Cấu hình nhóm</h3>
+              </div>
+            </div>
+
+            {/* Switch 1: Approval */}
+            <div
+              className={`approval-toggle-card ${requireApproval ? 'active' : ''}`}
+              onClick={() => setRequireApproval((prev) => !prev)}
+              role="button"
+              tabIndex={0}
+            >
+              <div className="approval-toggle-content">
+                <div className="approval-toggle-icon">
+                  <UserCheck size={18} />
+                </div>
+                <div className="approval-toggle-info">
+                  <span className="approval-toggle-title">Yêu cầu xét duyệt thành viên</span>
+                  <span className="approval-toggle-desc">
+                    Quản trị viên cần duyệt đơn xin gia nhập trước khi sinh viên trở thành thành viên chính thức.
+                  </span>
+                </div>
+              </div>
+              <div className={`approval-switch ${requireApproval ? 'on' : ''}`}>
+                <span className="approval-switch-handle" />
+              </div>
+            </div>
+
+            {/* Switch 2: Member Activities */}
+            <div
+              className={`approval-toggle-card ${allowActivities ? 'active' : ''}`}
+              onClick={() => setAllowActivities((prev) => !prev)}
+              role="button"
+              tabIndex={0}
+            >
+              <div className="approval-toggle-content">
+                <div className="approval-toggle-icon activity-icon">
+                  <Sparkles size={18} />
+                </div>
+                <div className="approval-toggle-info">
+                  <span className="approval-toggle-title">Cho phép thành viên tự tạo hoạt động</span>
+                  <span className="approval-toggle-desc">
+                    Thành viên có thể chủ động tạo và lên lịch các hoạt động cho nhóm (nếu tắt, chỉ Ban quản trị mới có quyền tạo).
+                  </span>
+                </div>
+              </div>
+              <div className={`approval-switch ${allowActivities ? 'on' : ''}`}>
+                <span className="approval-switch-handle" />
+              </div>
+            </div>
+          </div>
+
+          {/* Section 3: Biểu mẫu đăng ký tham gia */}
+          <div className="create-group-card">
+            <div className="create-group-section-title">
+              <div className="section-icon-wrap">
+                <FileText size={18} />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-base font-semibold">Biểu mẫu đăng ký gia nhập</h3>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    onClick={handleAddField}
+                  >
+                    <Plus size={15} className="mr-1" />
+                    Thêm câu hỏi
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <div className="form-builder-container">
+              {customFormFields.length === 0 ? (
+                <div className="form-builder-empty">
+                  <p>Chưa có câu hỏi đăng ký nào.</p>
+                  <span className="text-xs text-[var(--color-text-secondary)]">
+                    Nhấn <strong>"+ Thêm câu hỏi"</strong> ở trên nếu bạn muốn người xin vào nhóm trả lời một số câu hỏi trước khi duyệt.
+                  </span>
+                </div>
+              ) : (
+                <div className="form-builder-list">
+                  {customFormFields.map((field, index) => (
+                    <div key={field.id} className="form-builder-row">
+                      <div className="form-builder-row__field">
+                        <label className="form-builder-label">Câu hỏi</label>
+                        <input
+                          type="text"
+                          className="form-input rounded-lg"
+                          value={field.label}
+                          placeholder="Ví dụ: MSSV, Khoa, Lý do muốn tham gia..."
+                          onChange={(e) => handleFieldChange(index, 'label', e.target.value)}
+                        />
+                      </div>
+                      <div className="form-builder-row__type--wide">
+                        <label className="form-builder-label">Loại câu trả lời</label>
+                        <select
+                          className="form-input rounded-lg"
+                          value={field.field_type === 'boolean' ? 'checkbox' : field.field_type}
+                          onChange={(e) => handleFieldChange(index, 'field_type', e.target.value)}
+                        >
+                          <option value="text">Văn bản</option>
+                          <option value="number">Số</option>
+                          <option value="checkbox">Có / Không</option>
+                        </select>
+                      </div>
+                      <div className="form-builder-row__req">
+                        <label className="form-builder-switch-label-wrap">
+                          <input
+                            type="checkbox"
+                            className="sr-only"
+                            checked={field.is_required}
+                            onChange={(e) => handleFieldChange(index, 'is_required', e.target.checked)}
+                          />
+                          <div className={`form-builder-switch ${field.is_required ? 'on' : ''}`}>
+                            <span className="form-builder-switch-handle" />
+                          </div>
+                          <span className="form-builder-switch-text">Bắt buộc</span>
+                        </label>
+                      </div>
+                      <button
+                        type="button"
+                        className="form-builder-delete-btn"
+                        onClick={() => handleRemoveField(index)}
+                        title="Xóa câu hỏi này"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Form Actions Footer */}
           <div className="create-group-actions">
-            <Button variant="ghost" type="button" onClick={() => navigate('/groups')}>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => navigate('/groups')}
+            >
               Hủy
             </Button>
-            <Button type="submit" loading={loading} disabled={!name.trim()}>
-              Tạo nhóm
+            <Button
+              type="submit"
+              disabled={loading || !name.trim()}
+              loading={loading}
+              className="create-group-submit-btn"
+            >
+              <Users size={16} className="mr-1.5" />
+              <span>{loading ? 'Đang tạo...' : 'Tạo nhóm'}</span>
             </Button>
           </div>
         </form>

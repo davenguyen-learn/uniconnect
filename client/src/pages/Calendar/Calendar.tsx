@@ -12,7 +12,6 @@ import {
   Repeat,
   Trash2,
   X,
-  Sparkles,
 } from 'lucide-react';
 import {
   calendarApi,
@@ -259,14 +258,7 @@ export default function CalendarPage() {
       {/* Header */}
       <div className="calendar-header">
         <div className="calendar-title-group">
-          <div className="calendar-badge-top">
-            <Sparkles size={14} className="sparkle-icon" />
-            <span>Smart Schedule Engine</span>
-          </div>
-          <h1>Lịch Cá Nhân Thông Minh</h1>
-          <p className="calendar-subtitle">
-            Tự động đồng bộ hoạt động đã duyệt, phát hiện trùng lịch và điều phối khung giờ học tập
-          </p>
+          <h1>Lịch cá nhân</h1>
         </div>
 
         <div className="calendar-header-actions">
@@ -356,15 +348,15 @@ export default function CalendarPage() {
       <div className="calendar-legend">
         <div className="legend-item">
           <span className="legend-dot dot-busy" />
-          <span>Lịch bận cá nhân / Lịch học</span>
+          <span>Lịch cá nhân</span>
         </div>
         <div className="legend-item">
           <span className="legend-dot dot-joined" />
-          <span>Hoạt động đã đăng ký tham gia</span>
+          <span>Hoạt động đã đăng ký</span>
         </div>
         <div className="legend-item">
           <span className="legend-dot dot-hosted" />
-          <span>Hoạt động bạn làm Host</span>
+          <span>Hoạt động bạn tổ chức</span>
         </div>
       </div>
 
@@ -422,7 +414,7 @@ export default function CalendarPage() {
                           <Clock size={12} className="inline-icon" />
                           <span>{ev.timeRange}</span>
                         </div>
-                        <div className="card-title">{ev.title}</div>
+                        <div className="card-title" title={ev.title}>{ev.title}</div>
                         {ev.isRecurring && (
                           <span className="card-badge-recurring">
                             <Repeat size={10} /> Lặp tuần
@@ -466,9 +458,8 @@ export default function CalendarPage() {
               return (
                 <div
                   key={i}
-                  className={`month-cell ${!isCurrentMonth ? 'is-other-month' : ''} ${
-                    isToday ? 'is-today' : ''
-                  }`}
+                  className={`month-cell ${!isCurrentMonth ? 'is-other-month' : ''} ${isToday ? 'is-today' : ''
+                    }`}
                 >
                   <div className="month-cell-header">
                     <span className="month-cell-num">{cellDate.getDate()}</span>
@@ -658,7 +649,7 @@ export default function CalendarPage() {
                         />
                       </div>
                       <div className="form-group">
-                        <label>Đến ngày (tùy chọn kết thúc kỳ)</label>
+                        <label>Đến ngày</label>
                         <input
                           type="date"
                           className="form-control"
