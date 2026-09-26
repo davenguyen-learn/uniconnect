@@ -5,7 +5,7 @@ import { calendarApi, type ConflictInfo } from '../../api/calendar';
 import { trophiesApi, type TrophyResponse } from '../../api/trophies';
 import { useToast } from '../../components/Toast/ToastContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { Lock, Trophy, UserCheck, Clock, QrCode, ShieldCheck, AlertCircle, AlertTriangle } from 'lucide-react';
+import { Lock, Trophy, UserCheck, Clock, QrCode, ShieldCheck, AlertCircle, AlertTriangle, HeartHandshake } from 'lucide-react';
 import Button from '../../components/Button/Button';
 import LocationPicker from '../../components/Map/LocationPicker';
 import './CreateActivity.css';
@@ -477,23 +477,33 @@ export default function CreateActivity() {
           </div>
 
           {(user?.role === 'edu_org' || user?.role === 'admin') && (
-            <div className="form-group p-4 border border-emerald-500/30 bg-emerald-500/5 rounded-xl flex flex-col gap-2">
-              <label className="flex items-center gap-2 cursor-pointer select-none font-semibold text-emerald-700">
-                <input
-                  type="checkbox"
-                  className="w-4 h-4 rounded accent-emerald-600 cursor-pointer"
-                  checked={isSocialWork}
-                  onChange={(e) => {
-                    setIsSocialWork(e.target.checked);
-                    if (e.target.checked && socialWorkDays <= 0) {
-                      setSocialWorkDays(1);
-                    }
-                  }}
-                />
-                <span>Hoạt động cấp ngày Công tác Xã hội (CTXH)</span>
-              </label>
+            <div className="flex flex-col gap-3">
+              <div
+                className={`approval-toggle-card approval-toggle-card--emerald ${isSocialWork ? 'active' : ''}`}
+                onClick={() => {
+                  const nextState = !isSocialWork;
+                  setIsSocialWork(nextState);
+                  if (nextState && socialWorkDays <= 0) {
+                    setSocialWorkDays(1);
+                  }
+                }}
+              >
+                <div className="approval-toggle-content">
+                  <div className="approval-toggle-icon">
+                    <HeartHandshake size={18} />
+                  </div>
+                  <div className="approval-toggle-info">
+                    <span className="approval-toggle-title">Hoạt động cấp ngày Công tác Xã hội (CTXH)</span>
+                    <span className="approval-toggle-desc">Ghi nhận số ngày CTXH chính thức cho sinh viên sau khi hoàn thành điểm danh</span>
+                  </div>
+                </div>
+                <div className={`approval-switch ${isSocialWork ? 'on' : ''}`}>
+                  <span className="approval-switch-handle" />
+                </div>
+              </div>
+
               {isSocialWork && (
-                <div className="flex items-center gap-3 pt-2">
+                <div className="flex items-center gap-3 p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-xl">
                   <label htmlFor="social_work_days" className="text-sm font-medium text-[var(--color-text-primary)]">
                     Số ngày CTXH được cấp:
                   </label>
@@ -514,22 +524,27 @@ export default function CreateActivity() {
           )}
 
           {isOrg && (
-            <div className="form-group p-4 border border-amber-500/30 bg-amber-500/5 rounded-xl flex flex-col gap-3">
-              <label className="flex items-center gap-2 cursor-pointer select-none font-semibold text-amber-700">
-                <input
-                  type="checkbox"
-                  className="w-4 h-4 rounded accent-amber-600 cursor-pointer"
-                  checked={hasTrophy}
-                  onChange={(e) => setHasTrophy(e.target.checked)}
-                />
-                <span className="flex items-center gap-1.5">
-                  <Trophy size={16} className="text-amber-600" />
-                  <span>Hoạt động cấp Danh hiệu / Trophy vinh danh</span>
-                </span>
-              </label>
+            <div className="flex flex-col gap-3">
+              <div
+                className={`approval-toggle-card approval-toggle-card--amber ${hasTrophy ? 'active' : ''}`}
+                onClick={() => setHasTrophy(!hasTrophy)}
+              >
+                <div className="approval-toggle-content">
+                  <div className="approval-toggle-icon">
+                    <Trophy size={18} />
+                  </div>
+                  <div className="approval-toggle-info">
+                    <span className="approval-toggle-title">Hoạt động cấp Danh hiệu / Trophy vinh danh</span>
+                    <span className="approval-toggle-desc">Tặng huy hiệu và điểm thưởng thành tích cho người tham gia hoàn thành</span>
+                  </div>
+                </div>
+                <div className={`approval-switch ${hasTrophy ? 'on' : ''}`}>
+                  <span className="approval-switch-handle" />
+                </div>
+              </div>
 
               {hasTrophy && (
-                <div className="flex flex-col gap-3 pl-6 pt-1 border-l-2 border-amber-400/40">
+                <div className="flex flex-col gap-3 p-4 border border-amber-500/20 bg-amber-500/5 rounded-xl">
                   <div className="flex flex-col gap-1">
                     <label className="text-sm font-medium text-[var(--color-text-primary)]">
                       Chọn Trophy trao tặng:
