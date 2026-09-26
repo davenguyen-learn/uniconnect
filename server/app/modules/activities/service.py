@@ -4,6 +4,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ConflictError, ForbiddenError, NotFoundError, ValidationError
@@ -225,7 +226,6 @@ async def get_activity(
             # Check if user is member of any accepted co-host group
             if not is_authorized:
                 from app.modules.groups.models import ActivityCoHost, GroupMember
-                from sqlalchemy import select, and_
                 cohost_res = await db.execute(
                     select(GroupMember.id).join(
                         ActivityCoHost, ActivityCoHost.group_id == GroupMember.group_id
@@ -242,7 +242,6 @@ async def get_activity(
             # Check if user has an approved join request
             if not is_authorized:
                 from app.modules.participation.models import JoinRequest, RequestStatus
-                from sqlalchemy import select, and_
                 part_res = await db.execute(
                     select(JoinRequest.id).where(
                         and_(
@@ -275,7 +274,6 @@ async def get_activity(
         revealed_private_desc = activity.private_description
     elif user_id:
         from app.modules.participation.models import JoinRequest, RequestStatus
-        from sqlalchemy import select, and_
         result = await db.execute(
             select(JoinRequest).where(and_(
                 JoinRequest.activity_id == activity_id,
