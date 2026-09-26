@@ -162,16 +162,6 @@ export default function CalendarPage() {
     setCurrentDate(new Date());
   };
 
-  // Preset shortcuts for slot creation (Presentation convenience)
-  const applyPreset = (startTime: string, endTime: string, defaultTitle?: string) => {
-    setSlotForm((prev) => ({
-      ...prev,
-      start_time_of_day: startTime,
-      end_time_of_day: endTime,
-      title: prev.title ? prev.title : (defaultTitle || prev.title),
-    }));
-  };
-
   // Submit Busy Slot
   const handleSaveSlot = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -570,35 +560,7 @@ export default function CalendarPage() {
                 {slotForm.recurrence === 'weekly' ? (
                   <>
                     {/* Presets shortcut */}
-                    <div className="form-group">
-                      <label className="label-with-hint">
-                        <span>Khung giờ gợi ý</span>
-                        <span className="hint-text">Chọn nhanh</span>
-                      </label>
-                      <div className="preset-pill-group">
-                        <button
-                          type="button"
-                          className="btn-preset-pill"
-                          onClick={() => applyPreset('07:30', '11:30', 'Học ca sáng')}
-                        >
-                          Ca sáng (07:30 - 11:30)
-                        </button>
-                        <button
-                          type="button"
-                          className="btn-preset-pill"
-                          onClick={() => applyPreset('13:00', '17:00', 'Học ca chiều')}
-                        >
-                          Ca chiều (13:00 - 17:00)
-                        </button>
-                        <button
-                          type="button"
-                          className="btn-preset-pill"
-                          onClick={() => applyPreset('18:00', '21:00', 'Học ca tối')}
-                        >
-                          Ca tối (18:00 - 21:00)
-                        </button>
-                      </div>
-                    </div>
+
 
                     <div className="form-group">
                       <label>Ngày trong tuần *</label>
