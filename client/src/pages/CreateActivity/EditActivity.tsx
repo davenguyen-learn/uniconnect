@@ -30,7 +30,6 @@ export default function EditActivity() {
   // Trophy & Attendance state for Organization hosts
   const [hasTrophy, setHasTrophy] = useState(false);
   const [trophyName, setTrophyName] = useState('');
-  const [trophyIcon, setTrophyIcon] = useState('🏆');
   const [trophyDescription, setTrophyDescription] = useState('');
   const [attendanceMode, setAttendanceMode] = useState<'manual' | 'auto'>('manual');
 
@@ -94,7 +93,6 @@ export default function EditActivity() {
           if (act.trophy) {
             setHasTrophy(true);
             setTrophyName(act.trophy.name || '');
-            setTrophyIcon(act.trophy.icon || '🏆');
             setTrophyDescription(act.trophy.description || '');
           }
           if (act.attendance_mode) {
@@ -212,7 +210,7 @@ export default function EditActivity() {
           const createdOrUpdatedTrophy = await trophiesApi.create({
             name: trophyName.trim(),
             description: trophyDescription.trim() || undefined,
-            icon: trophyIcon.trim() || '🏆',
+            icon: '🏆',
           });
           finalTrophyId = createdOrUpdatedTrophy.id;
         } catch (err: any) {
@@ -543,33 +541,18 @@ export default function EditActivity() {
 
               {hasTrophy && (
                 <div className="toggle-panel-body flex flex-col gap-3">
-                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                    <div className="sm:col-span-3 flex flex-col gap-1">
-                      <label className="text-sm font-medium text-[var(--color-text-primary)]">
-                        Tên Danh hiệu <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        className="form-input rounded-lg"
-                        placeholder="VD: Chiến sĩ tình nguyện xuất sắc, Top 1 Cuộc thi..."
-                        value={trophyName}
-                        onChange={(e) => setTrophyName(e.target.value)}
-                        maxLength={100}
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-sm font-medium text-[var(--color-text-primary)]">
-                        Biểu tượng
-                      </label>
-                      <input
-                        type="text"
-                        className="form-input rounded-lg text-center text-lg"
-                        value={trophyIcon}
-                        onChange={(e) => setTrophyIcon(e.target.value)}
-                        placeholder="🏆"
-                        maxLength={10}
-                      />
-                    </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm font-medium text-[var(--color-text-primary)]">
+                      Tên Danh hiệu <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="form-input rounded-lg"
+                      placeholder="VD: Chiến sĩ tình nguyện xuất sắc, Top 1 Cuộc thi..."
+                      value={trophyName}
+                      onChange={(e) => setTrophyName(e.target.value)}
+                      maxLength={100}
+                    />
                   </div>
                   <div className="flex flex-col gap-1">
                     <label className="text-sm font-medium text-[var(--color-text-primary)]">
