@@ -190,7 +190,6 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
           <NavLink
             to="/activities/create"
             className="sidebar__cta-btn"
-            title="Tạo hoạt động mới"
             aria-label="Tạo hoạt động mới"
           >
             <PlusCircle size={20} />
