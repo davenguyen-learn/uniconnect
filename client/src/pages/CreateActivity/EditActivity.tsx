@@ -199,12 +199,12 @@ export default function EditActivity() {
       let finalTrophyId: string | null = null;
       if (isOrg && hasTrophy) {
         if (!trophyName.trim()) {
-          toast.error('Vui lòng nhập tên Danh hiệu / Trophy');
+          toast.error('Vui lòng nhập tên Danh hiệu');
           setLoading(false);
           return;
         }
         if (trophyName.trim().length < 2) {
-          toast.error('Tên Danh hiệu / Trophy phải có ít nhất 2 ký tự');
+          toast.error('Tên Danh hiệu phải có ít nhất 2 ký tự');
           setLoading(false);
           return;
         }
@@ -216,7 +216,7 @@ export default function EditActivity() {
           });
           finalTrophyId = createdOrUpdatedTrophy.id;
         } catch (err: any) {
-          const detail = err.response?.data?.detail || 'Không thể lưu Danh hiệu / Trophy';
+          const detail = err.response?.data?.detail || 'Không thể lưu Danh hiệu';
           toast.error(detail);
           setLoading(false);
           return;
@@ -532,8 +532,8 @@ export default function EditActivity() {
                     <Trophy size={18} />
                   </div>
                   <div className="approval-toggle-info">
-                    <span className="approval-toggle-title">Hoạt động cấp Danh hiệu / Trophy vinh danh</span>
-                    <span className="approval-toggle-desc">Tặng huy hiệu và điểm thưởng thành tích cho người tham gia hoàn thành</span>
+                    <span className="approval-toggle-title">Hoạt động cấp danh hiệu</span>
+                    <span className="approval-toggle-desc">Tặng danh hiệu thành tích cho người tham gia hoàn thành</span>
                   </div>
                 </div>
                 <div className={`approval-switch ${hasTrophy ? 'on' : ''}`}>
@@ -546,7 +546,7 @@ export default function EditActivity() {
                   <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                     <div className="sm:col-span-3 flex flex-col gap-1">
                       <label className="text-sm font-medium text-[var(--color-text-primary)]">
-                        Tên Danh hiệu / Trophy <span className="text-red-500">*</span>
+                        Tên Danh hiệu <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"

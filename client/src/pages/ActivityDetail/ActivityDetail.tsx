@@ -730,7 +730,7 @@ export default function ActivityDetail() {
                           <div className="font-bold text-emerald-800">Đã xác nhận có mặt!</div>
                           {activity.trophy && (
                             <div className="text-xs text-[var(--color-text-secondary)] mt-1 flex items-center justify-center gap-1">
-                              <Trophy size={14} className="text-amber-500" /> Đã nhận Trophy: <strong>{activity.trophy.name}</strong> (+{activity.trophy.points} điểm).
+                              <Trophy size={14} className="text-amber-500" /> Đã nhận Danh hiệu: <strong>{activity.trophy.name}</strong> (+{activity.trophy.points} điểm).
                             </div>
                           )}
                           <Button

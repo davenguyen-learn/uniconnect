@@ -140,12 +140,12 @@ export default function CreateActivity() {
       let createdTrophyId: string | undefined = undefined;
       if (isOrg && hasTrophy) {
         if (!trophyName.trim()) {
-          toast.error('Vui lòng nhập tên Danh hiệu / Trophy');
+          toast.error('Vui lòng nhập tên Danh hiệu');
           setLoading(false);
           return;
         }
         if (trophyName.trim().length < 2) {
-          toast.error('Tên Danh hiệu / Trophy phải có ít nhất 2 ký tự');
+          toast.error('Tên Danh hiệu phải có ít nhất 2 ký tự');
           setLoading(false);
           return;
         }
@@ -157,7 +157,7 @@ export default function CreateActivity() {
           });
           createdTrophyId = createdTrophy.id;
         } catch (err: any) {
-          const detail = err.response?.data?.detail || 'Không thể tạo Danh hiệu / Trophy';
+          const detail = err.response?.data?.detail || 'Không thể tạo Danh hiệu';
           toast.error(detail);
           setLoading(false);
           return;
@@ -560,7 +560,7 @@ export default function CreateActivity() {
                   <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                     <div className="sm:col-span-3 flex flex-col gap-1">
                       <label className="text-sm font-medium text-[var(--color-text-primary)]">
-                        Tên Danh hiệu / Trophy <span className="text-red-500">*</span>
+                        Tên Danh hiệu <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"

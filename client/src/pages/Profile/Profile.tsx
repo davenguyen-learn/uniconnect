@@ -515,7 +515,7 @@ export default function Profile() {
             </div>
 
             <div className="ctxh-stat-box">
-              <span className="ctxh-stat-box-label">Huy hiệu Trophy</span>
+              <span className="ctxh-stat-box-label">Danh hiệu đạt được</span>
               <span className="ctxh-stat-box-value text-amber-700">
                 {stats.total_trophies_count} danh hiệu
               </span>
@@ -531,7 +531,7 @@ export default function Profile() {
           <div className="flex items-center gap-3">
             <Trophy size={26} className="text-amber-500" />
             <div>
-              <h2 className="trophies-title">Bộ sưu tập Trophy</h2>
+              <h2 className="trophies-title">Bộ sưu tập Danh hiệu</h2>
             </div>
           </div>
         </div>
@@ -552,8 +552,8 @@ export default function Profile() {
             <Trophy size={36} className="mx-auto mb-2 text-gray-400" />
             <p className="text-sm text-[var(--color-text-secondary)]">
               {isOwnProfile
-                ? 'Bạn chưa nhận được Trophy nào. Hãy tham gia các hoạt động để nhận Trophy vinh danh!'
-                : 'Người dùng này chưa có Trophy nào.'}
+                ? 'Bạn chưa nhận được danh hiệu nào. Hãy tham gia các hoạt động để nhận danh hiệu vinh danh!'
+                : 'Người dùng này chưa có danh hiệu nào.'}
             </p>
           </div>
         ) : (

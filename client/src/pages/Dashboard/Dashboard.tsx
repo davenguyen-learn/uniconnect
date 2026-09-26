@@ -346,8 +346,8 @@ export const Dashboard: React.FC = () => {
             )}
             {filterTrophyOnly && (
               <span className="active-filter-pill">
-                <span>Có Trophy</span>
-                <button type="button" onClick={() => setFilterTrophyOnly(false)} aria-label="Bỏ lọc Trophy"><X size={12} /></button>
+                <span>Có danh hiệu</span>
+                <button type="button" onClick={() => setFilterTrophyOnly(false)} aria-label="Bỏ lọc danh hiệu"><X size={12} /></button>
               </span>
             )}
             {hideConflicts && (
@@ -425,7 +425,7 @@ export const Dashboard: React.FC = () => {
                   aria-pressed={filterTrophyOnly}
                 >
                   <Award size={14} className="chip-btn__icon" />
-                  <span>Có Trophy</span>
+                  <span>Có danh hiệu</span>
                 </button>
 
                 <button
