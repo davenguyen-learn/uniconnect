@@ -60,6 +60,11 @@ class BusySlotResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class BusySlotExceptionCreate(BaseModel):
+    skip_date: date
+
+
+
 class CalendarEventItem(BaseModel):
     id: str
     title: str

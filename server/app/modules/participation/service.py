@@ -219,6 +219,13 @@ async def leave_activity(
     if not act:
         raise NotFoundError("Activity not found.")
 
+    now = datetime.now(timezone.utc)
+    if act.start_time and act.start_time <= now:
+        raise ValidationError("Không thể rời khỏi hoạt động khi sự kiện đã bắt đầu.")
+
+    if jr.attendance_confirmed:
+        raise ValidationError("Không thể rời khỏi hoạt động khi đã xác nhận điểm danh.")
+
     # Decrement participant count safely
     await participation_repo.decrement_participants(db, activity_id)
     

@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
+from app.core.exceptions import NotFoundError
 from app.modules.calendar import repository as cal_repo
 from app.modules.calendar.models import UserBusySlot, RecurrenceType, UserVacationPeriod
 from app.modules.calendar.schemas import (
@@ -351,6 +352,44 @@ async def delete_busy_slot(db: AsyncSession, user_id: uuid.UUID, slot_id: uuid.U
     slot = await cal_repo.get_busy_slot_by_id(db, slot_id, user_id)
     if slot:
         await cal_repo.delete_busy_slot(db, slot)
+
+
+async def add_busy_slot_exception(
+    db: AsyncSession, user_id: uuid.UUID, slot_id: uuid.UUID, skip_date: date
+) -> BusySlotResponse:
+    slot = await cal_repo.get_busy_slot_by_id(db, slot_id, user_id)
+    if not slot:
+        raise NotFoundError("Busy slot not found")
+
+    existing = {e.skip_date for e in slot.exceptions}
+    if skip_date not in existing:
+        await cal_repo.add_slot_exception(db, slot_id, skip_date)
+
+    refreshed = await cal_repo.get_busy_slot_by_id(db, slot_id, user_id)
+    return BusySlotResponse(
+        id=refreshed.id,
+        user_id=refreshed.user_id,
+        title=refreshed.title,
+        recurrence=refreshed.recurrence,
+        start_datetime=refreshed.start_datetime,
+        end_datetime=refreshed.end_datetime,
+        day_of_week=refreshed.day_of_week,
+        start_time_of_day=refreshed.start_time_of_day,
+        end_time_of_day=refreshed.end_time_of_day,
+        valid_from=refreshed.valid_from,
+        valid_until=refreshed.valid_until,
+        exception_dates=[e.skip_date for e in refreshed.exceptions],
+    )
+
+
+async def remove_busy_slot_exception(
+    db: AsyncSession, user_id: uuid.UUID, slot_id: uuid.UUID, skip_date: date
+) -> None:
+    slot = await cal_repo.get_busy_slot_by_id(db, slot_id, user_id)
+    if not slot:
+        raise NotFoundError("Busy slot not found")
+    await cal_repo.remove_slot_exception(db, slot_id, skip_date)
+
 
 
 async def preview_reschedule_impact(

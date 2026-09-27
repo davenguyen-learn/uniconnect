@@ -5,7 +5,6 @@ import {
   AlertTriangle,
   RefreshCw,
   X,
-  Trophy,
   Navigation,
   Radio,
   Clock,
@@ -35,7 +34,7 @@ export const CheckInModal: React.FC<CheckInModalProps> = ({
   activityTitle,
   checkInRadius,
   trophyName,
-  trophyPoints,
+  trophyPoints: _trophyPoints,
 }) => {
   const [state, setState] = useState<CheckInState>('idle');
   const [code, setCode] = useState('');
@@ -433,9 +432,8 @@ export const CheckInModal: React.FC<CheckInModalProps> = ({
               </p>
               {trophyName && (
                 <div className="checkin-success-trophy">
-                  <Trophy size={16} />
                   <span>
-                    Đã nhận danh hiệu: <strong>{trophyName}</strong> (+{trophyPoints || 0} điểm)
+                    Đã nhận danh hiệu: <strong>{trophyName}</strong>
                   </span>
                 </div>
               )}

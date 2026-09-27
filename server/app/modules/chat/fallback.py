@@ -27,9 +27,9 @@ def classify_fallback_intent(msg: str) -> str:
     # 1. Safety & Academic Integrity / Unsupported refusal
     refusal_keywords = [
         "chứng khoán", "tiền ảo", "bitcoin", "crypto", "đầu tư tài chính",
-        "viết bài luận", "giải đề", "thi hộ", "làm bài tập hộ", "hack", "bẻ khóa"
+        "viết bài luận", "giải đề", "thi hộ", "làm bài tập hộ", "bẻ khóa"
     ]
-    if any(kw in m for kw in refusal_keywords):
+    if any(kw in m for kw in refusal_keywords) or (re.search(r"\bhack\b", m) and "hackathon" not in m):
         return "SAFETY_REFUSAL"
 
     # 2. iCalendar / Calendar Export

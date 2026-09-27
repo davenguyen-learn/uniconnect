@@ -9,6 +9,7 @@ from app.modules.calendar import repository as cal_repo
 from app.modules.calendar import service as cal_service
 from app.modules.calendar.schemas import (
     BusySlotCreate,
+    BusySlotExceptionCreate,
     BusySlotResponse,
     CalendarEventItem,
     ConflictCheckRequest,
@@ -81,6 +82,31 @@ async def delete_busy_slot(
     """Delete a custom busy slot."""
     user_id = uuid.UUID(current_user["sub"])
     await cal_service.delete_busy_slot(db, user_id, slot_id)
+
+
+@router.post("/busy-slots/{slot_id}/exceptions", response_model=BusySlotResponse)
+async def add_busy_slot_exception(
+    slot_id: uuid.UUID,
+    data: BusySlotExceptionCreate,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Add an exception (skip date) to a weekly recurring busy slot."""
+    user_id = uuid.UUID(current_user["sub"])
+    return await cal_service.add_busy_slot_exception(db, user_id, slot_id, data.skip_date)
+
+
+@router.delete("/busy-slots/{slot_id}/exceptions/{skip_date}", status_code=status.HTTP_204_NO_CONTENT)
+async def remove_busy_slot_exception(
+    slot_id: uuid.UUID,
+    skip_date: date,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Remove a skip date exception from a recurring busy slot (un-skip that date)."""
+    user_id = uuid.UUID(current_user["sub"])
+    await cal_service.remove_busy_slot_exception(db, user_id, slot_id, skip_date)
+
 
 
 @router.post("/check-conflict", response_model=ConflictInfo)

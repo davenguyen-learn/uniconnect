@@ -186,13 +186,9 @@ export const ActivityCardComponent: React.FC<ActivityCardProps> = ({
 
         {/* Tầng 3: Secondary Badges (Hình thức tham gia, CTXH, Trophy, Co-organizer) */}
         <div className="activity-card__secondary-row">
-          {vm.requireApproval ? (
+          {vm.requireApproval && (
             <span className="activity-badge activity-badge--approval" title="Cần người tổ chức phê duyệt để tham gia">
               <span>Cần phê duyệt</span>
-            </span>
-          ) : (
-            <span className="activity-badge activity-badge--free" title="Tham gia tự do, không cần phê duyệt">
-              <span>Tham gia tự do</span>
             </span>
           )}
 

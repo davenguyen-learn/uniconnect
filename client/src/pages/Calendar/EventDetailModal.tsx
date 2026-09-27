@@ -89,7 +89,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
               disabled={deleting}
             >
               <Trash2 size={16} />
-              {deleting ? 'Đang xóa...' : 'Xóa Lịch Bận'}
+              {deleting ? 'Đang xử lý...' : (event.isRecurring ? 'Hủy buổi này' : 'Xóa Lịch Bận')}
             </button>
           )}
 

@@ -157,14 +157,26 @@ export const Dashboard: React.FC = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setUserLocation([position.coords.latitude, position.coords.longitude]);
+          const loc: [number, number] = [position.coords.latitude, position.coords.longitude];
+          setUserLocation(loc);
+          try {
+            localStorage.setItem('uniconnect_user_location', JSON.stringify(loc));
+          } catch {}
         },
         () => {
-          setUserLocation([10.7769, 106.6953]); // TP. Hồ Chí Minh
+          const loc: [number, number] = [10.929718, 107.250381]; // Long Khánh (Vị trí hoạt động demo)
+          setUserLocation(loc);
+          try {
+            localStorage.setItem('uniconnect_user_location', JSON.stringify(loc));
+          } catch {}
         }
       );
     } else {
-      setUserLocation([10.7769, 106.6953]);
+      const loc: [number, number] = [10.929718, 107.250381];
+      setUserLocation(loc);
+      try {
+        localStorage.setItem('uniconnect_user_location', JSON.stringify(loc));
+      } catch {}
     }
   }, []);
 

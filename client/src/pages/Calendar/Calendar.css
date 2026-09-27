@@ -1,7 +1,9 @@
 .calendar-page {
-  max-width: 1200px;
+  width: 100%;
+  max-width: 1440px;
   margin: 0 auto;
-  padding: 24px 20px 80px;
+  padding: 16px 0 80px;
+  box-sizing: border-box;
   animation: calendarFadeIn 0.25s ease-out;
 }
 
@@ -207,18 +209,36 @@
 /* ── Week View Grid ── */
 .week-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(130px, 1fr));
   gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: auto;
+  padding-bottom: 12px;
+}
+
+.week-grid::-webkit-scrollbar {
+  height: 6px;
+}
+.week-grid::-webkit-scrollbar-track {
+  background: transparent;
+}
+.week-grid::-webkit-scrollbar-thumb {
+  background: var(--color-glass-border);
+  border-radius: 9999px;
 }
 
 .week-day-col {
   background: var(--color-bg-elevated);
   border: 1px solid var(--color-glass-border);
   border-radius: 12px;
-  min-height: 480px;
+  min-height: 420px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .week-day-header {
@@ -226,6 +246,8 @@
   text-align: center;
   border-bottom: 1px solid var(--color-glass-border);
   background: var(--color-bg-secondary);
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .week-day-header.is-today {
@@ -265,6 +287,8 @@
   flex-direction: column;
   gap: 8px;
   overflow-y: auto;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .no-events-hint {
@@ -284,6 +308,9 @@
   transition: transform 0.12s ease, box-shadow 0.12s ease;
   position: relative;
   cursor: pointer;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .calendar-card:hover {
@@ -314,6 +341,14 @@
   font-weight: 600;
   color: var(--color-text-secondary);
   margin-bottom: 3px;
+  min-width: 0;
+  padding-right: 22px;
+}
+
+.card-time span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .card-title {
@@ -390,7 +425,7 @@
 
 .month-days-header {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   background: var(--color-bg-secondary);
   border-bottom: 1px solid var(--color-glass-border);
   text-align: center;
@@ -402,11 +437,13 @@
 
 .month-cells-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
 }
 
 .month-cell {
   min-height: 108px;
+  min-width: 0;
+  box-sizing: border-box;
   border-right: 1px solid var(--color-glass-border);
   border-bottom: 1px solid var(--color-glass-border);
   padding: 6px;
@@ -548,7 +585,6 @@
 .agenda-events-list {
   display: flex;
   flex-direction: column;
-  divide-y: 1px solid var(--color-glass-border);
 }
 
 .agenda-card {
@@ -904,6 +940,111 @@
   color: var(--color-text-secondary);
 }
 
+.badge-rule-expired {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(148, 163, 184, 0.2);
+  color: #64748b;
+}
+
+.busy-rule-card--expired {
+  opacity: 0.75;
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.busy-rule-card--expired:hover {
+  opacity: 1;
+}
+
+/* ── Busy Manager Tabs ── */
+.busy-manager-tabs {
+  display: flex;
+  background: var(--color-bg-secondary);
+  border-radius: 10px;
+  padding: 4px;
+  gap: 4px;
+  margin: 14px 0 16px;
+  border: 1px solid var(--color-glass-border);
+}
+
+.busy-tab-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.busy-tab-btn.active {
+  background: var(--color-bg-elevated);
+  color: var(--color-text-primary);
+  font-weight: 600;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.tab-count-badge {
+  font-size: 0.725rem;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+  font-weight: 700;
+}
+
+.busy-tab-btn.active .tab-count-badge {
+  background: rgba(37, 99, 235, 0.12);
+  color: var(--color-primary);
+}
+
+/* ── Busy Manager Cleanup Bar ── */
+.busy-manager-cleanup-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: rgba(239, 68, 68, 0.06);
+  border: 1px dashed rgba(239, 68, 68, 0.25);
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.cleanup-hint {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+}
+
+.btn-cleanup-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 6px;
+  font-size: 0.775rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-cleanup-all:hover:not(:disabled) {
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #ef4444;
+}
+
 .busy-rule-meta {
   display: flex;
   align-items: center;
@@ -1104,7 +1245,9 @@
     flex: 1;
     justify-content: center;
   }
+}
 
+@media (max-width: 640px) {
   .week-grid {
     grid-template-columns: 1fr;
     gap: 16px;

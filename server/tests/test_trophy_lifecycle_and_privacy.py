@@ -187,7 +187,7 @@ async def test_edu_org_and_admin_can_create_trophy():
     mock_admin = MagicMock(spec=User)
     mock_admin.id = admin_id
     mock_admin.role = UserRole.admin
-    db.scalar = AsyncMock(return_value=mock_admin)
+    db.scalar = AsyncMock(side_effect=[mock_admin, None])
 
     data = TrophyCreate(name="BK Hackathon Champion", points=100)
     current_user = {"sub": str(admin_id), "role": "admin"}

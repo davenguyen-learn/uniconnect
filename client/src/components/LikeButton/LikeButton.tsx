@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { interactionsApi } from '../../api/interactions';
+import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../Toast/ToastContext';
 import './LikeButton.css';
 
@@ -20,6 +21,7 @@ export default function LikeButton({
   autoFetch = false,
   compact = false,
 }: LikeButtonProps) {
+  const { user } = useAuth();
   const [liked, setLiked] = useState(initialLiked);
   const [count, setCount] = useState(initialCount);
   const [animating, setAnimating] = useState(false);
@@ -35,8 +37,8 @@ export default function LikeButton({
 
   useEffect(() => {
     if (!autoFetch) return;
-    const token = localStorage.getItem('token');
-    if (!token) return;
+    const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+    if (!token && !user) return;
 
     let isMounted = true;
     interactionsApi
@@ -52,13 +54,13 @@ export default function LikeButton({
     return () => {
       isMounted = false;
     };
-  }, [autoFetch, targetType, targetId]);
+  }, [autoFetch, targetType, targetId, user]);
 
   async function handleToggle(e: React.MouseEvent) {
     e.stopPropagation();
 
-    const token = localStorage.getItem('token');
-    if (!token) {
+    const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+    if (!token && !user) {
       toast.info('Vui lòng đăng nhập để thích hoạt động');
       return;
     }

@@ -191,22 +191,42 @@ export default function CalendarPage() {
 
   // Delete Busy Slot via Event
   const handleDeleteSlot = async (eventItem: CalendarEventViewModel) => {
-    if (!window.confirm(`Bạn có chắc chắn muốn xóa lịch bận "${eventItem.title}"?`)) return;
-
     // extract busy slot id from id format (e.g. busy_weekly_UUID_date or busy_oneoff_UUID)
     const parts = eventItem.id.split('_');
     const slotId = parts[2] || parts[1];
 
-    setDeletingSlot(true);
-    try {
-      await calendarApi.deleteBusySlot(slotId);
-      toast.success('Đã xóa lịch bận');
-      setSelectedEvent(null);
-      fetchEvents();
-    } catch (err: any) {
-      toast.error('Không thể xóa: ' + err.message);
-    } finally {
-      setDeletingSlot(false);
+    if (eventItem.isRecurring) {
+      if (!window.confirm(`Bạn có muốn hủy lịch bận "${eventItem.title}" vào ${eventItem.dateDisplay}?\n(Lịch lặp lại của các tuần khác vẫn sẽ được giữ nguyên)`)) {
+        return;
+      }
+
+      setDeletingSlot(true);
+      try {
+        await calendarApi.addSlotException(slotId, eventItem.dateKey);
+        toast.success(`Đã hủy lịch bận ${eventItem.dateDisplay}. Các tuần khác vẫn giữ nguyên!`);
+        setSelectedEvent(null);
+        fetchEvents();
+      } catch (err: any) {
+        toast.error('Không thể hủy: ' + (err.message || 'Lỗi không xác định'));
+      } finally {
+        setDeletingSlot(false);
+      }
+    } else {
+      if (!window.confirm(`Bạn có chắc chắn muốn xóa vĩnh viễn lịch bận "${eventItem.title}"?`)) {
+        return;
+      }
+
+      setDeletingSlot(true);
+      try {
+        await calendarApi.deleteBusySlot(slotId);
+        toast.success('Đã xóa lịch bận');
+        setSelectedEvent(null);
+        fetchEvents();
+      } catch (err: any) {
+        toast.error('Không thể xóa: ' + (err.message || 'Lỗi không xác định'));
+      } finally {
+        setDeletingSlot(false);
+      }
     }
   };
 
@@ -357,7 +377,7 @@ export default function CalendarPage() {
                           <button
                             type="button"
                             className="btn-card-del"
-                            title="Xóa lịch bận"
+                            title={ev.isRecurring ? "Hủy buổi này (giữ các tuần khác)" : "Xóa lịch bận"}
                             onClick={(e) => {
                               e.stopPropagation();
                               handleDeleteSlot(ev);

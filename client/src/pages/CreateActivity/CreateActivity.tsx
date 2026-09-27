@@ -38,7 +38,7 @@ export default function CreateActivity() {
     end_time: '',
     max_participants: 10,
     privacy: 'public' as 'public' | 'private',
-    require_approval: true,
+    require_approval: false,
   });
 
   const [location, setLocation] = useState<[number, number] | null>(null);

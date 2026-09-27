@@ -52,6 +52,36 @@ export function normalizeCategoryName(category?: string | null): string {
   return CATEGORY_TRANSLATIONS[trimmed] || trimmed;
 }
 
+export function computeHaversineDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+export function getUserCurrentLocation(): [number, number] {
+  try {
+    const raw = localStorage.getItem('uniconnect_user_location');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length === 2 && typeof parsed[0] === 'number') {
+        return parsed as [number, number];
+      }
+    }
+  } catch {
+    // Ignore parse error
+  }
+  return [10.929718, 107.250381];
+}
+
+
 export interface ActivityCardViewModel {
   id: string;
   title: string;
@@ -152,10 +182,14 @@ export function mapActivityToCardViewModel(
       : `${startDay} ${startTime} - ${endDay} ${endTime}`
     : `${startDay} • ${startTime}`;
 
-  const distanceKm =
-    typeof activity.distance_meters === 'number'
-      ? `${(activity.distance_meters / 1000).toFixed(1)} km`
-      : null;
+  let distanceKm: string | null = null;
+  if (typeof activity.distance_meters === 'number') {
+    distanceKm = `${(activity.distance_meters / 1000).toFixed(1)} km`;
+  } else if (typeof activity.latitude === 'number' && typeof activity.longitude === 'number') {
+    const [userLat, userLng] = getUserCurrentLocation();
+    const dKm = computeHaversineDistanceKm(userLat, userLng, activity.latitude, activity.longitude);
+    distanceKm = `${dKm.toFixed(1)} km`;
+  }
 
   const host = activity.host
     ? {

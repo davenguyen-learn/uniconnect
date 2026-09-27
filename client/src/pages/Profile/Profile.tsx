@@ -560,19 +560,19 @@ export default function Profile() {
           <div className="trophies-grid">
             {trophies.map((ut) => (
               <div key={ut.id} className="trophy-item-card glass">
-                <div className="trophy-icon-wrapper">
-                  <span className="trophy-icon-display">{ut.trophy?.icon || '🏆'}</span>
-                  <span className="trophy-points-tag">+{ut.trophy?.points || 0} điểm</span>
-                </div>
                 <div className="trophy-item-info">
-                  <h3 className="trophy-item-name">{ut.trophy?.name}</h3>
+                  <h3 className="trophy-item-name" title={ut.trophy?.name}>
+                    {ut.trophy?.name}
+                  </h3>
                   {ut.trophy?.description && (
-                    <p className="trophy-item-desc">{ut.trophy.description}</p>
+                    <p className="trophy-item-desc" title={ut.trophy.description}>
+                      {ut.trophy.description}
+                    </p>
                   )}
                   {ut.activity && (
                     ut.activity.is_accessible && ut.activity.id ? (
-                      <Link to={`/activities/${ut.activity.id}`} className="trophy-activity-link">
-                        <ExternalLink size={12} /> {ut.activity.title}
+                      <Link to={`/activities/${ut.activity.id}`} className="trophy-activity-link" title={ut.activity.title}>
+                        {ut.activity.title}
                       </Link>
                     ) : (
                       <span className="trophy-activity-private-tag">

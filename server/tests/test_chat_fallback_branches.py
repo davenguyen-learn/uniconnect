@@ -15,6 +15,12 @@ from app.modules.chat.schemas import ChatRequest, ChatMessage, ActivitySearchToo
 from app.modules.chat.service import handle_chat
 
 
+@pytest.fixture(autouse=True)
+def mock_gemini_api_key():
+    with patch("app.modules.chat.service.settings.GEMINI_API_KEY", "test-mock-gemini-key"):
+        yield
+
+
 @pytest.mark.asyncio
 async def test_branch_1_search_returns_cards_with_empty_synthesis():
     """Branch 1: Tool returns cards, synthesis response is empty string -> preamble with cards."""

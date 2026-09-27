@@ -1,6 +1,6 @@
 import uuid
 from datetime import date, datetime
-from sqlalchemy import select, and_, or_
+from sqlalchemy import select, and_, or_, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -48,6 +48,16 @@ async def add_slot_exception(db: AsyncSession, slot_id: uuid.UUID, skip_date: da
     await db.commit()
     await db.refresh(exc)
     return exc
+
+
+async def remove_slot_exception(db: AsyncSession, slot_id: uuid.UUID, skip_date: date) -> None:
+    stmt = delete(BusySlotException).where(
+        BusySlotException.busy_slot_id == slot_id,
+        BusySlotException.skip_date == skip_date,
+    )
+    await db.execute(stmt)
+    await db.commit()
+
 
 
 async def get_user_vacations(db: AsyncSession, user_id: uuid.UUID) -> list[UserVacationPeriod]:

@@ -1,21 +1,22 @@
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 import pytest
 
 
 @pytest.mark.asyncio
 async def test_health_check_healthy_with_latency_and_timing_header(async_client):
     """Verify /health returns 200, healthy DB status, latency_ms, and X-Process-Time header."""
-    response = await async_client.get("/health")
-    assert response.status_code == 200
-    data = response.json()
-    assert data["status"] == "ok"
-    assert data["db"] == "healthy"
-    assert isinstance(data["latency_ms"], (int, float))
-    assert data["latency_ms"] >= 0
-    assert "version" in data
-    # Observability timing header
-    assert "X-Process-Time" in response.headers
-    assert response.headers["X-Process-Time"].endswith("ms")
+    with patch("app.main.check_db_connectivity", new_callable=AsyncMock):
+        response = await async_client.get("/health")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "ok"
+        assert data["db"] == "healthy"
+        assert isinstance(data["latency_ms"], (int, float))
+        assert data["latency_ms"] >= 0
+        assert "version" in data
+        # Observability timing header
+        assert "X-Process-Time" in response.headers
+        assert response.headers["X-Process-Time"].endswith("ms")
 
 
 @pytest.mark.asyncio

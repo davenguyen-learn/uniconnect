@@ -60,8 +60,8 @@ class Activity(PrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
     )
     
     require_approval: Mapped[bool] = mapped_column(
-        default=True,
-        server_default="true",
+        default=False,
+        server_default="false",
     )
 
     social_work_days: Mapped[float | None] = mapped_column(Float, nullable=True, default=None)

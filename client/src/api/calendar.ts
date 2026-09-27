@@ -103,6 +103,12 @@ export const calendarApi = {
   deleteBusySlot: (slotId: string) =>
     api.delete<void>(`/calendar/busy-slots/${slotId}`),
 
+  addSlotException: (slotId: string, skipDate: string) =>
+    api.post<BusySlotResponse>(`/calendar/busy-slots/${slotId}/exceptions`, { skip_date: skipDate }),
+
+  removeSlotException: (slotId: string, skipDate: string) =>
+    api.delete<void>(`/calendar/busy-slots/${slotId}/exceptions/${skipDate}`),
+
   checkConflict: (data: ConflictCheckRequest) =>
     api.post<ConflictInfo>('/calendar/check-conflict', data),
 

@@ -44,6 +44,7 @@ export interface BusySlotRuleViewModel {
   recurrenceLabel: string;
   timeRange: string;
   validityRange: string;
+  isExpired: boolean;
   rawSlot: BusySlotResponse;
 }
 
@@ -154,6 +155,18 @@ export function mapBusySlotToRuleViewModel(slot: BusySlotResponse): BusySlotRule
   }
 
   let validityRange = 'Không thời hạn';
+  let isExpired = false;
+  const now = new Date();
+  const todayStr = now.toISOString().split('T')[0];
+
+  if (isWeekly) {
+    if (slot.valid_until && slot.valid_until < todayStr) {
+      isExpired = true;
+    }
+  } else if (slot.end_datetime) {
+    isExpired = new Date(slot.end_datetime).getTime() < now.getTime();
+  }
+
   if (slot.valid_from && slot.valid_until) {
     validityRange = `${slot.valid_from} → ${slot.valid_until}`;
   } else if (slot.valid_from) {
@@ -169,6 +182,7 @@ export function mapBusySlotToRuleViewModel(slot: BusySlotResponse): BusySlotRule
     recurrenceLabel,
     timeRange,
     validityRange,
+    isExpired,
     rawSlot: slot,
   };
 }

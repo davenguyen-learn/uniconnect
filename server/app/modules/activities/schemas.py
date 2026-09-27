@@ -38,7 +38,7 @@ class ActivityCreate(BaseModel):
     end_time: datetime
     max_participants: int = Field(gt=0, le=1000)
     privacy: str = "public"
-    require_approval: bool = True
+    require_approval: bool = False
     social_work_days: float | None = Field(default=None, ge=0)
     group_id: uuid.UUID | None = None
     trophy_id: uuid.UUID | None = None

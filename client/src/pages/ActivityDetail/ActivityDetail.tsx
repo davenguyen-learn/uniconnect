@@ -2,9 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   Calendar as CalendarIcon,
-  Trophy,
   Lock,
-  Unlock,
   CheckCircle2,
   AlertTriangle,
   FileText,
@@ -504,16 +502,12 @@ export default function ActivityDetail() {
           <div className="activity-header-section">
             <div className="activity-badges-row">
               <div className="category-badge">{normalizeCategoryName(activity.category)}</div>
-              <div className={`join-type-badge ${activity.require_approval ? 'join-type-badge--approval' : 'join-type-badge--free'}`}>
-                {activity.require_approval ? (
-                  <>
-                    <ShieldCheck size={13} />
-                    <span>Cần phê duyệt</span>
-                  </>
-                ) : (
-                  <span>Tham gia tự do</span>
-                )}
-              </div>
+              {activity.require_approval && (
+                <div className="join-type-badge join-type-badge--approval">
+                  <ShieldCheck size={13} />
+                  <span>Cần phê duyệt</span>
+                </div>
+              )}
               {typeof activity.social_work_days === 'number' && activity.social_work_days > 0 ? (
                 <div className="social-work-badge">
                   {formatCtxh(activity.social_work_days)} ngày CTXH
@@ -599,11 +593,11 @@ export default function ActivityDetail() {
             <p className="activity-description">{activity.description}</p>
 
             {activity.private_description ? (
-              <div className="callout">
-                <h4 className="flex items-center gap-1.5 text-emerald-600 font-semibold">
-                  <Unlock size={16} /> Nội dung dành cho thành viên
+              <div className="activity-member-private-box">
+                <h4 className="activity-member-private-title">
+                  Nội dung dành cho thành viên
                 </h4>
-                <p className="text-pre-wrap">{activity.private_description}</p>
+                <p className="activity-member-private-content">{activity.private_description}</p>
               </div>
             ) : activity.privacy === 'private' && !isHost && (
               <div className="callout callout--muted flex items-center gap-1.5">
@@ -622,7 +616,7 @@ export default function ActivityDetail() {
               <div className="activity-info-item">
                 <span className="activity-info-label">Hình thức tham gia:</span>
                 <span className={`activity-info-value ${activity.require_approval ? 'text-indigo-600' : 'text-emerald-600'}`}>
-                  {activity.require_approval ? 'Cần xét duyệt (Host phê duyệt)' : 'Tham gia tự do (Không cần phê duyệt)'}
+                  {activity.require_approval ? 'Cần xét duyệt' : 'Công khai'}
                 </span>
               </div>
               <div className="activity-info-item">
@@ -730,7 +724,7 @@ export default function ActivityDetail() {
                           <div className="font-bold text-emerald-800">Đã xác nhận có mặt!</div>
                           {activity.trophy && (
                             <div className="text-xs text-[var(--color-text-secondary)] mt-1 flex items-center justify-center gap-1">
-                              <Trophy size={14} className="text-amber-500" /> Đã nhận Danh hiệu: <strong>{activity.trophy.name}</strong> (+{activity.trophy.points} điểm).
+                              Đã nhận Danh hiệu: <strong>{activity.trophy.name}</strong>
                             </div>
                           )}
                           <Button
@@ -775,14 +769,16 @@ export default function ActivityDetail() {
                         ) : null
                       )}
 
-                      <Button
-                        variant="secondary"
-                        fullWidth
-                        className="mt-4"
-                        onClick={handleLeaveActivity}
-                      >
-                        Rời khỏi hoạt động
-                      </Button>
+                      {new Date() < new Date(activity.start_time) && !myRequest.attendance_confirmed && (
+                        <Button
+                          variant="secondary"
+                          fullWidth
+                          className="mt-4"
+                          onClick={handleLeaveActivity}
+                        >
+                          Rời khỏi hoạt động
+                        </Button>
+                      )}
                     </>
                   )}
                 </div>
@@ -869,7 +865,7 @@ export default function ActivityDetail() {
                 Người tham gia
               </h3>
               <span className="stat-value">
-                {activity.current_participants} / {activity.max_participants}
+                {participants.length > 0 ? ((activity.host ? 1 : 0) + allDisplayParticipants.length) : activity.current_participants} / {activity.max_participants}
               </span>
             </div>
 
