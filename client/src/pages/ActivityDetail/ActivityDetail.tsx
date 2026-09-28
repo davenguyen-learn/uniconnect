@@ -16,9 +16,10 @@ import {
   Loader2,
   Search,
   Download,
+  Clock,
 } from 'lucide-react';
 import { activitiesApi, type ActivityResponse } from '../../api/activities';
-import { groupsApi, type GroupResponse } from '../../api/groups';
+import { groupsApi, type GroupResponse, type CoHostInvitationResponse } from '../../api/groups';
 import { participationApi, type JoinRequestResponse, type JoinRequestCreate } from '../../api/participation';
 import { calendarApi, type ConflictInfo } from '../../api/calendar';
 import { interactionsApi, type CommentResponse } from '../../api/interactions';
@@ -103,6 +104,21 @@ export default function ActivityDetail() {
   const [coHostSearchLoading, setCoHostSearchLoading] = useState(false);
   const [invitingGroupId, setInvitingGroupId] = useState<string | null>(null);
   const [coHostMessage, setCoHostMessage] = useState('');
+  const [coHostInvitations, setCoHostInvitations] = useState<CoHostInvitationResponse[]>([]);
+  const [coHostInvitationsLoading, setCoHostInvitationsLoading] = useState(false);
+
+  const fetchCoHostInvitations = useCallback(async () => {
+    if (!id) return;
+    try {
+      setCoHostInvitationsLoading(true);
+      const res = await groupsApi.getActivityCoHostInvitations(id);
+      setCoHostInvitations(res || []);
+    } catch {
+      // Ignored if user not authorized
+    } finally {
+      setCoHostInvitationsLoading(false);
+    }
+  }, [id]);
 
   const fetchCoHostCandidates = useCallback(async (query: string = '') => {
     if (!id) return;
@@ -123,8 +139,9 @@ export default function ActivityDetail() {
   useEffect(() => {
     if (showInviteCoHostModal && id) {
       fetchCoHostCandidates(coHostSearchQuery);
+      fetchCoHostInvitations();
     }
-  }, [showInviteCoHostModal, id, fetchCoHostCandidates]);
+  }, [showInviteCoHostModal, id, fetchCoHostCandidates, fetchCoHostInvitations]);
 
   useEffect(() => {
     if (id === 'create' || id === 'new') {
@@ -173,11 +190,16 @@ export default function ActivityDetail() {
       // Check if user is host
       const isHost = user?.id === act.host_id;
 
-      if (isHost) {
+      if (isHost || user?.role === 'admin' || user?.role === 'edu_org') {
         // Fetch all pending requests for this activity
         const reqs = await participationApi.listByActivity(id!);
         // filter pending locally if API doesn't filter
         setRequests(reqs.filter(r => r.status === 'pending'));
+
+        // Fetch co-host invitations for this activity
+        groupsApi.getActivityCoHostInvitations(id!)
+          .then(res => setCoHostInvitations(res || []))
+          .catch(() => {});
       } else {
         // If not host, fetch my own request status safely
         try {
@@ -537,6 +559,32 @@ export default function ActivityDetail() {
                     <Building2 size={14} />
                     {activity.group.name}
                   </Link>
+                </>
+              )}
+              {activity.co_hosts && activity.co_hosts.length > 0 && (
+                <>
+                  <span className="meta-dot">•</span>
+                  <span className="text-xs text-slate-500 font-medium">Đồng tổ chức:</span>
+                  {activity.co_hosts.map(ch => (
+                    <Link key={ch.id} to={`/groups/${ch.id}`} className="activity-group-link">
+                      <Building2 size={14} />
+                      {ch.name}
+                    </Link>
+                  ))}
+                </>
+              )}
+              {canManage && coHostInvitations.some(inv => inv.status === 'pending') && (
+                <>
+                  <span className="meta-dot">•</span>
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-colors"
+                    onClick={() => setShowInviteCoHostModal(true)}
+                    title="Nhấn để xem các lời mời đang chờ phản hồi"
+                  >
+                    <Clock size={12} />
+                    {coHostInvitations.filter(inv => inv.status === 'pending').length} lời mời đang đợi chấp nhận
+                  </button>
                 </>
               )}
               <span className="meta-dot">•</span>
@@ -1265,8 +1313,9 @@ export default function ActivityDetail() {
                                 message: coHostMessage.trim() || undefined,
                               });
                               toast.success(`Đã gửi lời mời đồng tổ chức đến ${g.name}`);
-                              // Remove from results
+                              // Remove from results and refresh invitations
                               setCoHostSearchResults(prev => prev.filter(r => r.id !== g.id));
+                              await fetchCoHostInvitations();
                             } catch (err: any) {
                               toast.error(err?.response?.data?.detail || 'Không thể gửi lời mời');
                             } finally {
@@ -1295,6 +1344,57 @@ export default function ActivityDetail() {
                         ? 'Thử từ khóa khác để tìm kiếm'
                         : 'Hiện chưa có nhóm khả dụng để mời'}
                     </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Sent invitations list */}
+              <div className="cohost-sent-section mt-5 pt-4 border-t border-slate-100">
+                <div className="flex items-center justify-between mb-2.5">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                    Lời mời đã gửi ({coHostInvitations.length})
+                  </h4>
+                  {coHostInvitationsLoading && <Loader2 size={13} className="animate-spin text-slate-400" />}
+                </div>
+
+                {coHostInvitations.length === 0 ? (
+                  <p className="text-xs text-slate-400 italic">Chưa có lời mời đồng tổ chức nào được gửi cho hoạt động này.</p>
+                ) : (
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                    {coHostInvitations.map(inv => {
+                      const isPending = inv.status === 'pending';
+                      const isAccepted = inv.status === 'accepted';
+                      return (
+                        <div key={inv.id} className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs">
+                              {inv.invited_group_name ? inv.invited_group_name.charAt(0).toUpperCase() : 'G'}
+                            </div>
+                            <div>
+                              <div className="text-xs font-semibold text-slate-800">{inv.invited_group_name || 'Nhóm'}</div>
+                              {inv.message && <div className="text-[11px] text-slate-400 truncate max-w-[200px]">"{inv.message}"</div>}
+                            </div>
+                          </div>
+                          <div>
+                            {isPending && (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                                <Clock size={11} /> Đang đợi chấp nhận
+                              </span>
+                            )}
+                            {isAccepted && (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                <CheckCircle2 size={11} /> Đã chấp thuận
+                              </span>
+                            )}
+                            {!isPending && !isAccepted && (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
+                                Đã từ chối
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>

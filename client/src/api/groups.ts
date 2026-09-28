@@ -140,6 +140,9 @@ export const groupsApi = {
   inviteCoHost: (activityId: string, data: { invited_group_id: string; message?: string }) =>
     api.post<CoHostInvitationResponse>(`/activities/${activityId}/invite-cohost`, data),
 
+  getActivityCoHostInvitations: (activityId: string) =>
+    api.get<CoHostInvitationResponse[]>(`/activities/${activityId}/cohost-invitations`),
+
   joinGroup: (id: string, payload?: { form_responses?: Record<string, any> }) => 
     api.post(`/groups/${id}/join`, payload),
 

@@ -195,6 +195,59 @@ async def invite_cohost_endpoint(
     )
 
 
+@router.get("/{activity_id}/cohost-invitations")
+async def get_activity_cohost_invitations_endpoint(
+    activity_id: uuid.UUID,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Lead host views all co-host invitations sent for this activity."""
+    from fastapi import HTTPException
+    from sqlalchemy import select
+    from sqlalchemy.orm import joinedload
+    from app.modules.groups.permissions import can_invite_cohost
+    from app.modules.groups.models import ActivityCoHostInvitation
+    from app.modules.groups.schemas import CoHostInvitationResponse
+
+    user_id = uuid.UUID(current_user["sub"])
+    user_role = current_user.get("role")
+    
+    if user_role != "admin" and not await can_invite_cohost(db, user_id, activity_id):
+        raise HTTPException(
+            status_code=403,
+            detail="Chỉ người tổ chức hoặc ban quản trị nhóm mới có quyền xem danh sách lời mời."
+        )
+
+    stmt = (
+        select(ActivityCoHostInvitation)
+        .options(
+            joinedload(ActivityCoHostInvitation.activity),
+            joinedload(ActivityCoHostInvitation.host_group),
+            joinedload(ActivityCoHostInvitation.invited_group),
+        )
+        .where(ActivityCoHostInvitation.activity_id == activity_id)
+        .order_by(ActivityCoHostInvitation.created_at.desc())
+    )
+    res = await db.execute(stmt)
+    invitations = res.unique().scalars().all()
+
+    return [
+        CoHostInvitationResponse(
+            id=inv.id,
+            activity_id=inv.activity_id,
+            activity_title=inv.activity.title if inv.activity else None,
+            host_group_id=inv.host_group_id,
+            host_group_name=inv.host_group.name if inv.host_group else None,
+            invited_group_id=inv.invited_group_id,
+            invited_group_name=inv.invited_group.name if inv.invited_group else None,
+            status=inv.status,
+            message=inv.message,
+            created_at=inv.created_at,
+        )
+        for inv in invitations
+    ]
+
+
 @router.post("/{activity_id}/finalize-attendance", status_code=status.HTTP_200_OK)
 async def finalize_attendance_endpoint(
     activity_id: uuid.UUID,
