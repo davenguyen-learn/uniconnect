@@ -268,23 +268,86 @@
   color: var(--color-text-secondary);
 }
 
-.group-modal-form-response-header {
+/* ── Applicant Form Card ── */
+.group-modal-form-card {
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-glass-border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.group-modal-form-card-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 6px;
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
-  margin-bottom: var(--space-2);
+  border-bottom: 1px dashed var(--color-glass-border);
+  padding-bottom: var(--space-2);
 }
 
-.group-modal-form-response-list {
-  padding-left: var(--space-5);
-  font-size: var(--font-size-xs);
-  color: var(--color-text-secondary);
+.group-modal-form-card-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.group-modal-form-card-expand-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  font-size: 0.72rem;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.group-modal-form-card-expand-btn:hover {
+  background: rgba(99, 102, 241, 0.1);
+  text-decoration: underline;
+}
+
+.group-modal-form-card-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--space-2);
+}
+
+.group-modal-form-field-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.group-modal-form-field-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.group-modal-form-field-value {
+  font-size: 0.825rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  background: var(--color-bg-primary);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-glass-border);
+  word-break: break-word;
 }
 
 /* ── Item Actions ── */
@@ -348,6 +411,18 @@
 .group-modal-btn--ghost:hover {
   background: var(--color-bg-tertiary);
   color: var(--color-text-primary);
+}
+
+.group-modal-btn--view-form {
+  background: rgba(99, 102, 241, 0.08);
+  color: var(--color-primary);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+}
+
+.group-modal-btn--view-form:hover:not(:disabled) {
+  background: rgba(99, 102, 241, 0.16);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
 }
 
 /* ── Member Row ── */

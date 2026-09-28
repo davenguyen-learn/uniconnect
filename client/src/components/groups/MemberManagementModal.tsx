@@ -10,7 +10,8 @@ import {
   Loader2,
   AlertCircle,
   FileText,
-  CheckCircle2
+  CheckCircle2,
+  Eye,
 } from 'lucide-react';
 import { groupsApi } from '../../api/groups';
 import {
@@ -19,6 +20,7 @@ import {
   type GroupMemberViewModel,
   type GroupJoinRequestViewModel
 } from '../../types/groups-mapper';
+import { getFormFieldResponse } from '../../utils/formResponses';
 import './GroupModals.css';
 
 interface MemberManagementModalProps {
@@ -28,6 +30,7 @@ interface MemberManagementModalProps {
   onClose: () => void;
   onUpdated?: () => void;
   isAdmin?: boolean;
+  customForm?: any;
 }
 
 export const MemberManagementModal: React.FC<MemberManagementModalProps> = ({
@@ -36,8 +39,17 @@ export const MemberManagementModal: React.FC<MemberManagementModalProps> = ({
   onClose,
   onUpdated,
   isAdmin = false,
+  customForm,
 }) => {
   const [activeTab, setActiveTab] = useState<'members' | 'requests'>(isAdmin ? 'requests' : 'members');
+  const [loadedCustomForm, setLoadedCustomForm] = useState<any>(customForm || null);
+  const [selectedReviewRequest, setSelectedReviewRequest] = useState<GroupJoinRequestViewModel | null>(null);
+
+  useEffect(() => {
+    if (customForm) {
+      setLoadedCustomForm(customForm);
+    }
+  }, [customForm]);
 
   useEffect(() => {
     if (isOpen) {
@@ -62,12 +74,64 @@ export const MemberManagementModal: React.FC<MemberManagementModalProps> = ({
       } else {
         const res = await groupsApi.getJoinRequests(groupId, { status: 'pending', limit: 50 });
         setJoinRequests(res.map(mapGroupJoinRequestToViewModel));
+
+        if (!loadedCustomForm) {
+          try {
+            const groupData = await groupsApi.getGroup(groupId);
+            if (groupData?.custom_form) {
+              setLoadedCustomForm(groupData.custom_form);
+            }
+          } catch {
+            // ignore
+          }
+        }
       }
     } catch (err: any) {
       setError(err?.response?.data?.detail || 'Không thể tải dữ liệu thành viên');
     } finally {
       setLoading(false);
     }
+  };
+
+  const getFormFieldList = (responses?: Record<string, any> | null) => {
+    if (!responses || typeof responses !== 'object') return [];
+
+    if (loadedCustomForm?.fields && Array.isArray(loadedCustomForm.fields) && loadedCustomForm.fields.length > 0) {
+      const sortedFields = [...loadedCustomForm.fields].sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
+      const processedKeys = new Set<string>();
+
+      const list = sortedFields.map((field: any) => {
+        processedKeys.add(String(field.id));
+        if (field.label) processedKeys.add(field.label);
+        return {
+          id: field.id || field.label,
+          label: field.label || 'Câu hỏi',
+          isRequired: Boolean(field.is_required),
+          value: getFormFieldResponse(field, responses),
+        };
+      });
+
+      // Extra unmapped keys if any
+      Object.entries(responses).forEach(([k, v]) => {
+        if (!processedKeys.has(String(k))) {
+          list.push({
+            id: k,
+            label: k,
+            isRequired: false,
+            value: typeof v === 'boolean' ? (v ? 'Có' : 'Không') : String(v ?? 'Chưa trả lời'),
+          });
+        }
+      });
+
+      return list;
+    }
+
+    return Object.entries(responses).map(([k, v]) => ({
+      id: k,
+      label: k,
+      isRequired: false,
+      value: typeof v === 'boolean' ? (v ? 'Có' : 'Không') : String(v ?? 'Chưa trả lời'),
+    }));
   };
 
   useEffect(() => {
@@ -170,63 +234,91 @@ export const MemberManagementModal: React.FC<MemberManagementModalProps> = ({
               </div>
             ) : (
               <div className="group-modal-list">
-                {joinRequests.map((req) => (
-                  <div key={req.id} className="group-modal-item">
-                    <div className="group-modal-item-header">
-                      <div className="group-modal-item-info">
-                        <div className="group-modal-item-title-row">
-                          <span className="group-modal-item-name">{req.applicantName}</span>
-                          {req.applicantUsername && (
-                            <span className="group-modal-item-username">{req.applicantUsername}</span>
-                          )}
+                {joinRequests.map((req) => {
+                  const formFields = getFormFieldList(req.formResponses);
+                  const hasFormResponses = formFields.length > 0;
+
+                  return (
+                    <div key={req.id} className="group-modal-item">
+                      <div className="group-modal-item-header">
+                        <div className="group-modal-item-info">
+                          <div className="group-modal-item-title-row">
+                            <span className="group-modal-item-name">{req.applicantName}</span>
+                            {req.applicantUsername && (
+                              <span className="group-modal-item-username">{req.applicantUsername}</span>
+                            )}
+                          </div>
+                          <p className="group-modal-item-meta">
+                            Ngày nộp đơn: <strong>{req.requestedDateFormatted}</strong>
+                          </p>
                         </div>
-                        <p className="group-modal-item-meta">
-                          Ngày nộp đơn: {req.requestedDateFormatted}
-                        </p>
+
+                        <div className="group-modal-item-actions" style={{ borderTop: 'none', marginTop: 0, paddingTop: 0 }}>
+                          {hasFormResponses && (
+                            <button
+                              type="button"
+                              onClick={() => setSelectedReviewRequest(req)}
+                              className="group-modal-btn group-modal-btn--view-form"
+                              title="Xem chi tiết đơn ứng tuyển"
+                            >
+                              <FileText className="w-3.5 h-3.5" />
+                              Xem đơn ứng tuyển
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleActionRequest(req.id, 'rejected')}
+                            disabled={processingId === req.id}
+                            className="group-modal-btn group-modal-btn--outline"
+                          >
+                            <UserX className="w-3.5 h-3.5" />
+                            Từ chối
+                          </button>
+                          <button
+                            onClick={() => handleActionRequest(req.id, 'approved')}
+                            disabled={processingId === req.id}
+                            className="group-modal-btn group-modal-btn--primary"
+                          >
+                            {processingId === req.id ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <UserCheck className="w-3.5 h-3.5" />
+                            )}
+                            Phê duyệt
+                          </button>
+                        </div>
                       </div>
 
-                      <div className="group-modal-item-actions" style={{ borderTop: 'none', marginTop: 0, paddingTop: 0 }}>
-                        <button
-                          onClick={() => handleActionRequest(req.id, 'rejected')}
-                          disabled={processingId === req.id}
-                          className="group-modal-btn group-modal-btn--outline"
-                        >
-                          <UserX className="w-3.5 h-3.5" />
-                          Từ chối
-                        </button>
-                        <button
-                          onClick={() => handleActionRequest(req.id, 'approved')}
-                          disabled={processingId === req.id}
-                          className="group-modal-btn group-modal-btn--primary"
-                        >
-                          {processingId === req.id ? (
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          ) : (
-                            <UserCheck className="w-3.5 h-3.5" />
-                          )}
-                          Phê duyệt
-                        </button>
-                      </div>
-                    </div>
-
-                    {req.formResponses && Object.keys(req.formResponses).length > 0 && (
-                      <div className="group-modal-message-box">
-                        <div className="group-modal-form-response-header">
-                          <FileText className="w-3.5 h-3.5" style={{ color: 'var(--color-primary)' }} />
-                          <span>Câu trả lời form ứng tuyển:</span>
-                        </div>
-                        <div className="group-modal-form-response-list">
-                          {Object.entries(req.formResponses).map(([key, val]) => (
-                            <div key={key}>
-                              <span style={{ fontWeight: 600 }}>{key}: </span>
-                              <span>{String(val)}</span>
+                      {hasFormResponses && (
+                        <div className="group-modal-form-card">
+                          <div className="group-modal-form-card-header">
+                            <div className="group-modal-form-card-title">
+                              <FileText className="w-3.5 h-3.5" style={{ color: 'var(--color-primary)' }} />
+                              <span>Câu trả lời đơn ứng tuyển:</span>
                             </div>
-                          ))}
+                            <button
+                              type="button"
+                              onClick={() => setSelectedReviewRequest(req)}
+                              className="group-modal-form-card-expand-btn"
+                            >
+                              <Eye className="w-3 h-3" />
+                              <span>Xem toàn bộ</span>
+                            </button>
+                          </div>
+                          <div className="group-modal-form-card-list">
+                            {formFields.map((field) => (
+                              <div key={field.id} className="group-modal-form-field-row">
+                                <span className="group-modal-form-field-label">
+                                  {field.label} {field.isRequired && <span style={{ color: 'var(--color-error)' }}>*</span>}:
+                                </span>
+                                <div className="group-modal-form-field-value">{field.value}</div>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )
           ) : (
@@ -271,6 +363,108 @@ export const MemberManagementModal: React.FC<MemberManagementModalProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Detailed Form Review Modal Dialog */}
+      {selectedReviewRequest && (
+        <div
+          className="modal-overlay"
+          style={{ zIndex: 1200 }}
+          onClick={() => setSelectedReviewRequest(null)}
+        >
+          <div
+            className="group-modal-container"
+            style={{ maxWidth: 540 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="group-modal-header">
+              <div className="group-modal-header-info">
+                <FileText className="w-5 h-5" style={{ color: 'var(--color-primary)' }} />
+                <div>
+                  <h3 className="group-modal-title">Đơn ứng tuyển gia nhập nhóm</h3>
+                  <p className="group-modal-subtitle">
+                    Ứng viên: <strong>{selectedReviewRequest.applicantName}</strong> {selectedReviewRequest.applicantUsername}
+                    {' • '}Ngày nộp: <strong>{selectedReviewRequest.requestedDateFormatted}</strong>
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedReviewRequest(null)}
+                className="group-modal-close-btn"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="group-modal-body" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+              <div className="group-modal-form-card-list" style={{ gap: 'var(--space-3)' }}>
+                {getFormFieldList(selectedReviewRequest.formResponses).map((field) => (
+                  <div key={field.id} className="group-modal-form-field-row">
+                    <span className="group-modal-form-field-label" style={{ fontSize: '0.8rem' }}>
+                      {field.label} {field.isRequired && <span style={{ color: 'var(--color-error)' }}>*</span>}:
+                    </span>
+                    <div
+                      className="group-modal-form-field-value"
+                      style={{ padding: '8px 12px', fontSize: '0.875rem' }}
+                    >
+                      {field.value}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div
+              className="group-modal-footer"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'flex-end',
+                gap: 'var(--space-2)',
+                padding: 'var(--space-4) var(--space-6)',
+                borderTop: '1px solid var(--color-glass-border)',
+                background: 'var(--color-bg-secondary)',
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => setSelectedReviewRequest(null)}
+                className="group-modal-btn group-modal-btn--ghost"
+              >
+                Đóng
+              </button>
+              <button
+                type="button"
+                disabled={processingId === selectedReviewRequest.id}
+                onClick={async () => {
+                  await handleActionRequest(selectedReviewRequest.id, 'rejected');
+                  setSelectedReviewRequest(null);
+                }}
+                className="group-modal-btn group-modal-btn--outline"
+              >
+                <UserX className="w-3.5 h-3.5" />
+                Từ chối
+              </button>
+              <button
+                type="button"
+                disabled={processingId === selectedReviewRequest.id}
+                onClick={async () => {
+                  await handleActionRequest(selectedReviewRequest.id, 'approved');
+                  setSelectedReviewRequest(null);
+                }}
+                className="group-modal-btn group-modal-btn--primary"
+              >
+                {processingId === selectedReviewRequest.id ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <UserCheck className="w-3.5 h-3.5" />
+                )}
+                Phê duyệt
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

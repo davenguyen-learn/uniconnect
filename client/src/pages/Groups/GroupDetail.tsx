@@ -825,6 +825,7 @@ export default function GroupDetail() {
         onClose={() => setShowMemberManagement(false)}
         onUpdated={() => loadGroupAndStats()}
         isAdmin={isAdmin}
+        customForm={group.custom_form}
       />
 
       {/* Dynamic Form Join Modal */}
