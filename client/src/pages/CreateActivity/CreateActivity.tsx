@@ -26,7 +26,6 @@ export default function CreateActivity() {
   // Trophy & Attendance state for Organization hosts
   const [hasTrophy, setHasTrophy] = useState(false);
   const [trophyName, setTrophyName] = useState('');
-  const [trophyDescription, setTrophyDescription] = useState('');
   const [attendanceMode, setAttendanceMode] = useState<'manual' | 'auto'>('manual');
 
   const [formData, setFormData] = useState({
@@ -167,7 +166,6 @@ export default function CreateActivity() {
         try {
           const createdTrophy = await trophiesApi.create({
             name: trophyName.trim(),
-            description: trophyDescription.trim() || undefined,
             icon: '🏆',
           });
           createdTrophyId = createdTrophy.id;
@@ -593,23 +591,10 @@ export default function CreateActivity() {
                     <input
                       type="text"
                       className="form-input rounded-lg"
-                      placeholder="VD: Chiến sĩ tình nguyện xuất sắc, Top 1 Cuộc thi..."
+                      placeholder="VD: Chiến sĩ Áo Xanh Bách Khoa 2026..."
                       value={trophyName}
                       onChange={(e) => setTrophyName(e.target.value)}
                       maxLength={100}
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <label className="text-sm font-medium text-[var(--color-text-primary)]">
-                      Mô tả vinh danh <span className="text-xs text-[var(--color-text-secondary)] font-normal">(tùy chọn)</span>
-                    </label>
-                    <input
-                      type="text"
-                      className="form-input rounded-lg"
-                      placeholder="Trao cho thành viên đã tham gia đầy đủ và tích cực..."
-                      value={trophyDescription}
-                      onChange={(e) => setTrophyDescription(e.target.value)}
-                      maxLength={200}
                     />
                   </div>
                 </div>
