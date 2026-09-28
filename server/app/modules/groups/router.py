@@ -110,8 +110,9 @@ async def leave_group(
 async def get_group_activities(
     group_id: uuid.UUID,
     category: str | None = Query(default=None),
+    search: str | None = Query(default=None),
     include_past: bool = Query(default=True),
-    limit: int = Query(default=20, ge=1, le=100),
+    limit: int = Query(default=50, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -130,8 +131,10 @@ async def get_group_activities(
     if group_privacy_val == "private" and not await is_member(db, group_id, user_id) and group.owner_id != user_id:
         return {"items": [], "total": 0, "has_more": False}
 
+    clean_category = category if category and category.lower() != "all" else None
+
     return await list_activities(
-        db, user_id=current_user["sub"], category=category, group_id=group_id,
+        db, user_id=current_user["sub"], category=clean_category, search=search, group_id=group_id,
         limit=limit, offset=offset, include_past=include_past, include_conflicts=True,
     )
 

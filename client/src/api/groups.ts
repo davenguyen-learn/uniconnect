@@ -149,9 +149,10 @@ export const groupsApi = {
   leaveGroup: (id: string) => 
     api.post(`/groups/${id}/leave`),
 
-  getGroupActivities: (id: string, params?: { category?: string; include_past?: boolean; limit?: number; offset?: number }) => {
+  getGroupActivities: (id: string, params?: { category?: string; search?: string; include_past?: boolean; limit?: number; offset?: number }) => {
     const queryParams = new URLSearchParams();
     if (params?.category) queryParams.append('category', params.category);
+    if (params?.search) queryParams.append('search', params.search);
     if (params?.include_past !== undefined) queryParams.append('include_past', String(params.include_past));
     if (params?.limit) queryParams.append('limit', params.limit.toString());
     if (params?.offset) queryParams.append('offset', params.offset.toString());

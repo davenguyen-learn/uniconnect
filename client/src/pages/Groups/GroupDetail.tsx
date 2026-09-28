@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   Users,
@@ -16,7 +16,22 @@ import {
   Loader2,
   FileText,
   Camera,
-  Trash2
+  Trash2,
+  Search,
+  SlidersHorizontal,
+  X,
+  BookOpen,
+  Heart,
+  Trophy,
+  GraduationCap,
+  Lightbulb,
+  Utensils,
+  Coffee,
+  Flame,
+  PartyPopper,
+  Gamepad2,
+  Music,
+  Compass
 } from 'lucide-react';
 import { resolveAvatarUrl } from '../../utils/avatar';
 import { formatCtxh } from '../../utils/format';
@@ -38,6 +53,22 @@ import { CoHostInboxModal } from '../../components/groups/CoHostInboxModal';
 import { MemberManagementModal } from '../../components/groups/MemberManagementModal';
 import './GroupDetail.css';
 
+const categoryChips = [
+  { id: 'all', label: 'Tất cả' },
+  { id: 'Học tập', label: 'Học tập', icon: BookOpen },
+  { id: 'Workshop', label: 'Workshop', icon: Lightbulb },
+  { id: 'Tình nguyện', label: 'Tình nguyện', icon: Heart },
+  { id: 'CTXH', label: 'CTXH', icon: GraduationCap },
+  { id: 'Thể thao', label: 'Thể thao', icon: Trophy },
+  { id: 'Vận động', label: 'Vận động', icon: Flame },
+  { id: 'Hướng nghiệp', label: 'Hướng nghiệp', icon: Compass },
+  { id: 'Giải trí', label: 'Giải trí', icon: PartyPopper },
+  { id: 'Âm nhạc', label: 'Âm nhạc', icon: Music },
+  { id: 'Game', label: 'Game', icon: Gamepad2 },
+  { id: 'Cà phê', label: 'Cà phê', icon: Coffee },
+  { id: 'Ăn uống', label: 'Ăn uống', icon: Utensils },
+];
+
 export default function GroupDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -58,6 +89,110 @@ export default function GroupDetail() {
   const [activities, setActivities] = useState<ActivityResponse[]>([]);
   const [loadingContent, setLoadingContent] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+
+  // Activities Search & Filter state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [scopeFilter, setScopeFilter] = useState<'all' | 'lead' | 'cohost'>('all');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [timeFilter, setTimeFilter] = useState<'all' | 'upcoming' | 'past'>('all');
+  const [filterCtxhOnly, setFilterCtxhOnly] = useState(false);
+  const [filterTrophyOnly, setFilterTrophyOnly] = useState(false);
+  const [hideConflicts, setHideConflicts] = useState(false);
+  const [sortBy, setSortBy] = useState<'time_asc' | 'time_desc' | 'created_desc'>('time_asc');
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery.trim());
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const activeFilterCount =
+    (categoryFilter !== 'all' ? 1 : 0) +
+    (scopeFilter !== 'all' ? 1 : 0) +
+    (timeFilter !== 'all' ? 1 : 0) +
+    (filterCtxhOnly ? 1 : 0) +
+    (filterTrophyOnly ? 1 : 0) +
+    (hideConflicts ? 1 : 0) +
+    (sortBy !== 'time_asc' ? 1 : 0);
+
+  const handleResetFilters = useCallback(() => {
+    setSearchQuery('');
+    setDebouncedSearch('');
+    setScopeFilter('all');
+    setCategoryFilter('all');
+    setTimeFilter('all');
+    setFilterCtxhOnly(false);
+    setFilterTrophyOnly(false);
+    setHideConflicts(false);
+    setSortBy('time_asc');
+  }, []);
+
+  const leadCount = useMemo(() => activities.filter(a => a.group_id === id).length, [activities, id]);
+  const cohostCount = useMemo(() => activities.filter(a => a.group_id !== id).length, [activities, id]);
+
+  const filteredActivities = useMemo(() => {
+    let result = [...activities];
+
+    if (debouncedSearch) {
+      const q = debouncedSearch.toLowerCase();
+      result = result.filter(a => 
+        a.title.toLowerCase().includes(q) ||
+        (a.description && a.description.toLowerCase().includes(q)) ||
+        (a.location_name && a.location_name.toLowerCase().includes(q)) ||
+        (a.meeting_location && a.meeting_location.toLowerCase().includes(q))
+      );
+    }
+
+    if (scopeFilter === 'lead') {
+      result = result.filter(a => a.group_id === id);
+    } else if (scopeFilter === 'cohost') {
+      result = result.filter(a => a.group_id !== id);
+    }
+
+    if (categoryFilter !== 'all') {
+      result = result.filter(a => a.category === categoryFilter);
+    }
+
+    const now = new Date();
+    if (timeFilter === 'upcoming') {
+      result = result.filter(a => new Date(a.end_time || a.start_time) >= now);
+    } else if (timeFilter === 'past') {
+      result = result.filter(a => new Date(a.end_time || a.start_time) < now);
+    }
+
+    if (filterCtxhOnly) {
+      result = result.filter(a => typeof a.social_work_days === 'number' && a.social_work_days > 0);
+    }
+
+    if (filterTrophyOnly) {
+      result = result.filter(a => !!a.trophy);
+    }
+
+    if (hideConflicts) {
+      result = result.filter(a => !a.conflict_info?.has_conflict);
+    }
+
+    result.sort((a, b) => {
+      const aStart = new Date(a.start_time).getTime();
+      const bStart = new Date(b.start_time).getTime();
+      const aCreated = new Date(a.created_at || a.start_time).getTime();
+      const bCreated = new Date(b.created_at || b.start_time).getTime();
+
+      if (sortBy === 'time_asc') {
+        return aStart - bStart;
+      } else if (sortBy === 'time_desc') {
+        return bStart - aStart;
+      } else if (sortBy === 'created_desc') {
+        return bCreated - aCreated;
+      }
+      return 0;
+    });
+
+    return result;
+  }, [activities, debouncedSearch, scopeFilter, categoryFilter, timeFilter, filterCtxhOnly, filterTrophyOnly, hideConflicts, sortBy, id]);
 
   // Modals
   const [showCoHostInbox, setShowCoHostInbox] = useState(false);
@@ -613,8 +748,9 @@ export default function GroupDetail() {
       {/* ── 4. Tab Content ── */}
       <div className="club-tab-content">
         {activeTab === 'activities' && (
-          <div className="activities-section space-y-6">
-            <div className="flex items-center justify-between">
+          <div className="activities-section space-y-5">
+            {/* Header & Quick Scope Tabs */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <h3 className="text-lg font-bold text-slate-900">
                   Hoạt động của nhóm
@@ -623,16 +759,260 @@ export default function GroupDetail() {
                   Bao gồm các sự kiện nhóm chủ trì và các hoạt động đồng tổ chức
                 </p>
               </div>
+
+              {/* Quick scope tabs */}
+              <div className="group-activities-scope-tabs">
+                <button
+                  type="button"
+                  className={`scope-pill-btn ${scopeFilter === 'all' ? 'scope-pill-btn--active' : ''}`}
+                  onClick={() => setScopeFilter('all')}
+                >
+                  Tất cả ({activities.length})
+                </button>
+                <button
+                  type="button"
+                  className={`scope-pill-btn ${scopeFilter === 'lead' ? 'scope-pill-btn--active' : ''}`}
+                  onClick={() => setScopeFilter('lead')}
+                >
+                  Chủ trì ({leadCount})
+                </button>
+                <button
+                  type="button"
+                  className={`scope-pill-btn ${scopeFilter === 'cohost' ? 'scope-pill-btn--active' : ''}`}
+                  onClick={() => setScopeFilter('cohost')}
+                >
+                  🤝 Đồng tổ chức ({cohostCount})
+                </button>
+              </div>
             </div>
 
+            {/* Search Bar & Advanced Filter Toggle */}
+            <div className="group-activity-search-container">
+              <div className="dashboard-search-bar">
+                <Search size={18} className="dashboard-search-icon" />
+                <input
+                  type="text"
+                  className="dashboard-search-input"
+                  placeholder="Tìm kiếm theo tên hoạt động, địa điểm, chủ đề..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  aria-label="Tìm kiếm hoạt động trong nhóm"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    className="dashboard-search-clear"
+                    onClick={() => setSearchQuery('')}
+                    aria-label="Xóa nội dung tìm kiếm"
+                  >
+                    <X size={15} />
+                  </button>
+                )}
+              </div>
+
+              <button
+                type="button"
+                className={`chip-filter-toggle ${showAdvancedFilters ? 'chip-filter-toggle--open' : ''} ${activeFilterCount > 0 ? 'chip-filter-toggle--has-active' : ''}`}
+                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                title="Bộ lọc nâng cao"
+              >
+                <SlidersHorizontal size={16} />
+                <span className="chip-filter-toggle-text">Bộ lọc</span>
+                {activeFilterCount > 0 && (
+                  <span className="filter-count-badge">{activeFilterCount}</span>
+                )}
+              </button>
+            </div>
+
+            {/* Active Filters Summary */}
+            {activeFilterCount > 0 && !showAdvancedFilters && (
+              <div className="group-active-filters-row">
+                <span className="active-filters-title">Đang lọc:</span>
+                {scopeFilter !== 'all' && (
+                  <span className="active-filter-pill">
+                    <span>{scopeFilter === 'lead' ? 'Nhóm chủ trì' : 'Đồng tổ chức'}</span>
+                    <button type="button" onClick={() => setScopeFilter('all')}><X size={12} /></button>
+                  </span>
+                )}
+                {categoryFilter !== 'all' && (
+                  <span className="active-filter-pill">
+                    <span>{categoryChips.find(c => c.id === categoryFilter)?.label || categoryFilter}</span>
+                    <button type="button" onClick={() => setCategoryFilter('all')}><X size={12} /></button>
+                  </span>
+                )}
+                {timeFilter !== 'all' && (
+                  <span className="active-filter-pill">
+                    <span>{timeFilter === 'upcoming' ? 'Sắp diễn ra' : 'Đã kết thúc'}</span>
+                    <button type="button" onClick={() => setTimeFilter('all')}><X size={12} /></button>
+                  </span>
+                )}
+                {filterCtxhOnly && (
+                  <span className="active-filter-pill">
+                    <span>Có CTXH</span>
+                    <button type="button" onClick={() => setFilterCtxhOnly(false)}><X size={12} /></button>
+                  </span>
+                )}
+                {filterTrophyOnly && (
+                  <span className="active-filter-pill">
+                    <span>Có danh hiệu</span>
+                    <button type="button" onClick={() => setFilterTrophyOnly(false)}><X size={12} /></button>
+                  </span>
+                )}
+                {hideConflicts && (
+                  <span className="active-filter-pill">
+                    <span>Ẩn trùng lịch</span>
+                    <button type="button" onClick={() => setHideConflicts(false)}><X size={12} /></button>
+                  </span>
+                )}
+                {sortBy !== 'time_asc' && (
+                  <span className="active-filter-pill">
+                    <span>{sortBy === 'time_desc' ? 'Xếp: Xa nhất' : 'Xếp: Mới đăng'}</span>
+                    <button type="button" onClick={() => setSortBy('time_asc')}><X size={12} /></button>
+                  </span>
+                )}
+                <button
+                  type="button"
+                  className="btn-clear-all-filters"
+                  onClick={handleResetFilters}
+                >
+                  Đặt lại
+                </button>
+              </div>
+            )}
+
+            {/* Advanced Filters Panel */}
+            {showAdvancedFilters && (
+              <div className="group-filters-panel">
+                {/* 1. Danh mục hoạt động */}
+                <div className="filters-panel-section">
+                  <span className="filters-panel-title">Danh mục hoạt động</span>
+                  <div className="filters-panel-chips">
+                    {categoryChips.map((chip) => {
+                      const IconComponent = chip.icon;
+                      const isActive = categoryFilter === chip.id;
+                      return (
+                        <button
+                          key={chip.id}
+                          type="button"
+                          className={`chip-btn ${isActive ? 'chip-btn--active' : ''}`}
+                          onClick={() => setCategoryFilter(chip.id)}
+                        >
+                          {IconComponent && <IconComponent size={14} className="chip-btn__icon" />}
+                          <span>{chip.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 2. Trạng thái & Sắp xếp */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-[var(--color-glass-border)]">
+                  <div className="filters-panel-section">
+                    <span className="filters-panel-title">Thời gian diễn ra</span>
+                    <div className="flex gap-2 flex-wrap">
+                      <button
+                        type="button"
+                        className={`chip-btn ${timeFilter === 'all' ? 'chip-btn--active' : ''}`}
+                        onClick={() => setTimeFilter('all')}
+                      >
+                        Tất cả
+                      </button>
+                      <button
+                        type="button"
+                        className={`chip-btn ${timeFilter === 'upcoming' ? 'chip-btn--active' : ''}`}
+                        onClick={() => setTimeFilter('upcoming')}
+                      >
+                        Sắp diễn ra
+                      </button>
+                      <button
+                        type="button"
+                        className={`chip-btn ${timeFilter === 'past' ? 'chip-btn--active' : ''}`}
+                        onClick={() => setTimeFilter('past')}
+                      >
+                        Đã kết thúc
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="filters-panel-section">
+                    <span className="filters-panel-title">Sắp xếp theo</span>
+                    <div className="flex gap-2 flex-wrap">
+                      <button
+                        type="button"
+                        className={`chip-btn ${sortBy === 'time_asc' ? 'chip-btn--active' : ''}`}
+                        onClick={() => setSortBy('time_asc')}
+                      >
+                        Sắp diễn ra
+                      </button>
+                      <button
+                        type="button"
+                        className={`chip-btn ${sortBy === 'time_desc' ? 'chip-btn--active' : ''}`}
+                        onClick={() => setSortBy('time_desc')}
+                      >
+                        Xa nhất
+                      </button>
+                      <button
+                        type="button"
+                        className={`chip-btn ${sortBy === 'created_desc' ? 'chip-btn--active' : ''}`}
+                        onClick={() => setSortBy('created_desc')}
+                      >
+                        Mới đăng
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Tiêu chí đặc biệt (Checkboxes) */}
+                <div className="filters-panel-footer">
+                  <div className="flex items-center gap-4 flex-wrap">
+                    <label className="filter-checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={filterCtxhOnly}
+                        onChange={(e) => setFilterCtxhOnly(e.target.checked)}
+                      />
+                      <span>Chỉ hoạt động có CTXH</span>
+                    </label>
+
+                    <label className="filter-checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={filterTrophyOnly}
+                        onChange={(e) => setFilterTrophyOnly(e.target.checked)}
+                      />
+                      <span>Có danh hiệu</span>
+                    </label>
+
+                    <label className="filter-checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={hideConflicts}
+                        onChange={(e) => setHideConflicts(e.target.checked)}
+                      />
+                      <span>Ẩn trùng lịch cá nhân</span>
+                    </label>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="btn-clear-all-filters"
+                    onClick={handleResetFilters}
+                  >
+                    Đặt lại bộ lọc
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Activities Results */}
             {loadingContent ? (
               <div className="flex flex-col items-center justify-center py-16 text-slate-400">
                 <Loader2 className="w-8 h-8 animate-spin mb-2" />
                 <p className="text-sm">Đang tải hoạt động...</p>
               </div>
-            ) : activities.length > 0 ? (
+            ) : filteredActivities.length > 0 ? (
               <div className="activities-grid">
-                {activities.map((activity) => (
+                {filteredActivities.map((activity) => (
                   <ActivityCard
                     key={activity.id}
                     activity={activity}
@@ -647,7 +1027,22 @@ export default function GroupDetail() {
                   />
                 ))}
               </div>
+            ) : activities.length > 0 ? (
+              /* When filters produce 0 results */
+              <div className="empty-filter-results-box">
+                <Search className="w-10 h-10 text-slate-300 mb-2" />
+                <h4 className="text-base font-semibold text-slate-700">
+                  Không tìm thấy hoạt động phù hợp
+                </h4>
+                <p className="text-xs text-slate-400 max-w-sm mt-1 mb-4">
+                  Không có hoạt động nào trong nhóm thỏa mãn các điều kiện tìm kiếm hoặc bộ lọc hiện tại.
+                </p>
+                <Button size="sm" variant="secondary" onClick={handleResetFilters}>
+                  Xóa bộ lọc
+                </Button>
+              </div>
             ) : (
+              /* When group genuinely has 0 activities */
               <div className="glass empty-activities-box">
                 <Calendar className="w-12 h-12 text-slate-300 mb-3" />
                 <h4 className="text-base font-semibold text-slate-700">
