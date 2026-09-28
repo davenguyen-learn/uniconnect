@@ -748,44 +748,7 @@ export default function GroupDetail() {
       {/* ── 4. Tab Content ── */}
       <div className="club-tab-content">
         {activeTab === 'activities' && (
-          <div className="activities-section space-y-5">
-            {/* Header & Quick Scope Tabs */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <h3 className="text-lg font-bold text-slate-900">
-                  Hoạt động của nhóm
-                </h3>
-                <p className="text-xs text-slate-500">
-                  Bao gồm các sự kiện nhóm chủ trì và các hoạt động đồng tổ chức
-                </p>
-              </div>
-
-              {/* Quick scope tabs */}
-              <div className="group-activities-scope-tabs">
-                <button
-                  type="button"
-                  className={`scope-pill-btn ${scopeFilter === 'all' ? 'scope-pill-btn--active' : ''}`}
-                  onClick={() => setScopeFilter('all')}
-                >
-                  Tất cả ({activities.length})
-                </button>
-                <button
-                  type="button"
-                  className={`scope-pill-btn ${scopeFilter === 'lead' ? 'scope-pill-btn--active' : ''}`}
-                  onClick={() => setScopeFilter('lead')}
-                >
-                  Chủ trì ({leadCount})
-                </button>
-                <button
-                  type="button"
-                  className={`scope-pill-btn ${scopeFilter === 'cohost' ? 'scope-pill-btn--active' : ''}`}
-                  onClick={() => setScopeFilter('cohost')}
-                >
-                  🤝 Đồng tổ chức ({cohostCount})
-                </button>
-              </div>
-            </div>
-
+          <div className="activities-section space-y-4">
             {/* Search Bar & Advanced Filter Toggle */}
             <div className="group-activity-search-container">
               <div className="dashboard-search-bar">
@@ -902,6 +865,34 @@ export default function GroupDetail() {
                         </button>
                       );
                     })}
+                  </div>
+                </div>
+
+                {/* Vai trò tổ chức */}
+                <div className="filters-panel-section pt-2 border-t border-[var(--color-glass-border)]">
+                  <span className="filters-panel-title">Vai trò tổ chức của nhóm</span>
+                  <div className="flex gap-2 flex-wrap">
+                    <button
+                      type="button"
+                      className={`chip-btn ${scopeFilter === 'all' ? 'chip-btn--active' : ''}`}
+                      onClick={() => setScopeFilter('all')}
+                    >
+                      Tất cả ({activities.length})
+                    </button>
+                    <button
+                      type="button"
+                      className={`chip-btn ${scopeFilter === 'lead' ? 'chip-btn--active' : ''}`}
+                      onClick={() => setScopeFilter('lead')}
+                    >
+                      Nhóm chủ trì ({leadCount})
+                    </button>
+                    <button
+                      type="button"
+                      className={`chip-btn ${scopeFilter === 'cohost' ? 'chip-btn--active' : ''}`}
+                      onClick={() => setScopeFilter('cohost')}
+                    >
+                      🤝 Đồng tổ chức ({cohostCount})
+                    </button>
                   </div>
                 </div>
 
