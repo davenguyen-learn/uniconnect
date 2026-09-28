@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { activitiesApi, type ActivityCreate } from '../../api/activities';
 import { calendarApi, type ConflictInfo } from '../../api/calendar';
@@ -14,6 +14,7 @@ export default function CreateActivity() {
   const navigate = useNavigate();
   const toast = useToast();
   const { user } = useAuth();
+  const titleTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   const isOrg = user?.role === 'edu_org' || user?.role === 'admin';
 
@@ -82,6 +83,13 @@ export default function CreateActivity() {
       setScheduleConflict(null);
     }
   }, [formData.start_time, formData.end_time]);
+
+  useEffect(() => {
+    if (titleTextareaRef.current) {
+      titleTextareaRef.current.style.height = 'auto';
+      titleTextareaRef.current.style.height = `${titleTextareaRef.current.scrollHeight}px`;
+    }
+  }, [formData.title]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -226,13 +234,22 @@ export default function CreateActivity() {
       <div className="create-activity-container">
         <form noValidate onSubmit={handleSubmit} className="create-activity-form">
           <div className="title-input-wrapper">
-            <input
-              type="text"
+            <textarea
+              ref={titleTextareaRef}
               id="title"
               name="title"
               className={`activity-hero-title-input ${isTitleMissing ? 'input-error' : ''}`}
               value={formData.title}
-              onChange={handleChange}
+              onChange={(e) => {
+                const cleanedValue = e.target.value.replace(/[\r\n]+/g, ' ');
+                setFormData(prev => ({ ...prev, title: cleanedValue }));
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                }
+              }}
+              rows={1}
               required
               placeholder="Nhập tiêu đề hoạt động..."
               maxLength={100}

@@ -34,15 +34,21 @@
 
 .activity-hero-title-input {
   width: 100%;
-  font-size: clamp(1.6rem, 2.8vw, 2.25rem);
+  font-size: clamp(1.4rem, 2.5vw, 2.1rem);
   font-weight: 700;
   color: var(--color-text-primary);
   background: transparent;
   border: none !important;
   outline: none;
   padding: var(--space-2) 0;
-  line-height: 1.3;
+  line-height: 1.35;
   transition: all var(--transition-fast);
+  resize: none;
+  overflow: hidden;
+  font-family: inherit;
+  white-space: pre-wrap;
+  word-break: break-word;
+  display: block;
 }
 
 .activity-hero-title-input::placeholder {
