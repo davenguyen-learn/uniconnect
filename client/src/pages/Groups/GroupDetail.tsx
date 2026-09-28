@@ -163,7 +163,7 @@ export default function GroupDetail() {
     if (activeTab === 'activities' && id) {
       loadActivities();
     }
-  }, [activeTab, id]);
+  }, [activeTab, id, user?.id]);
 
   async function loadActivities() {
     if (!id) return;

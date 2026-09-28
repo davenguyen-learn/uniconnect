@@ -132,7 +132,7 @@ async def get_group_activities(
 
     return await list_activities(
         db, user_id=current_user["sub"], category=category, group_id=group_id,
-        limit=limit, offset=offset, include_past=include_past,
+        limit=limit, offset=offset, include_past=include_past, include_conflicts=True,
     )
 
 
