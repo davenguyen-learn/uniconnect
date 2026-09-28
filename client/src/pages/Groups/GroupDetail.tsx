@@ -449,19 +449,6 @@ export default function GroupDetail() {
               </Button>
             )}
 
-            {canCreateActivity && (
-              <Link to={`/activities/new?group_id=${id}`} state={{ group_id: id }}>
-                <Button
-                  variant="primary"
-                  className="create-activity-btn flex items-center gap-1.5"
-                  title="Tạo hoạt động mới cho nhóm"
-                >
-                  <CalendarPlus className="w-4 h-4 mr-1" />
-                  Tạo hoạt động
-                </Button>
-              </Link>
-            )}
-
             <Button
               variant={isMember ? 'secondary' : 'primary'}
               onClick={handleJoinLeaveClick}
@@ -520,7 +507,7 @@ export default function GroupDetail() {
                   )}
                 </button>
                 {canCreateActivity && (
-                  <Link to="/activities/new">
+                  <Link to={`/activities/new?group_id=${id}`} state={{ group_id: id }}>
                     <button className="leadership-tool-btn leadership-tool-btn--primary">
                       <CalendarPlus className="w-4 h-4" />
                       Tạo hoạt động mới
