@@ -5,7 +5,7 @@ import { calendarApi, type ReschedulePreviewResponse } from '../../api/calendar'
 import { trophiesApi } from '../../api/trophies';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../components/Toast/ToastContext';
-import { Trophy, Clock, AlertTriangle, CheckCircle2, BarChart2, UserCheck } from 'lucide-react';
+import { Trophy, Clock, AlertTriangle, CheckCircle2, BarChart2, UserCheck, Lock } from 'lucide-react';
 import Button from '../../components/Button/Button';
 import LocationPicker from '../../components/Map/LocationPicker';
 import './CreateActivity.css';
@@ -44,6 +44,7 @@ export default function EditActivity() {
     max_participants: 10,
     privacy: 'public' as 'public' | 'private',
     require_approval: true,
+    private_description: '',
   });
   
   const [location, setLocation] = useState<[number, number] | null>(null);
@@ -78,6 +79,7 @@ export default function EditActivity() {
             max_participants: act.max_participants,
             privacy: act.privacy as 'public' | 'private',
             require_approval: act.require_approval ?? true,
+            private_description: act.private_description || '',
           });
           if (act.custom_form?.fields) {
             const sorted = [...act.custom_form.fields].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
@@ -196,6 +198,7 @@ export default function EditActivity() {
         max_participants: Number(formData.max_participants),
         privacy: formData.privacy,
         require_approval: formData.require_approval,
+        private_description: formData.private_description ? formData.private_description.trim() : undefined,
         latitude: location[0],
         longitude: location[1],
       };
@@ -490,6 +493,26 @@ export default function EditActivity() {
               <option value="public">Công khai</option>
               <option value="private">Riêng tư</option>
             </select>
+          </div>
+
+          <div className="form-group private-field-callout">
+            <label htmlFor="private_description" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Lock size={15} className="text-amber-500" />
+              <span className="font-semibold text-[var(--color-text-primary)]">Nội dung dành cho thành viên đã tham gia</span>
+              <span className="text-xs text-[var(--color-text-secondary)] font-normal">(tùy chọn)</span>
+            </label>
+            <textarea
+              id="private_description"
+              name="private_description"
+              className="form-input auto-expand-textarea"
+              value={formData.private_description}
+              onChange={handleChange}
+              placeholder="VD: Link nhóm Zalo tiếp nhận chiến sĩ, số điện thoại khẩn cấp của Trưởng đoàn, lưu ý trang phục..."
+              rows={3}
+            />
+            <span className="text-xs text-[var(--color-text-tertiary)] mt-1 block">
+              🔒 Nội dung này chỉ được hiển thị cho người tổ chức và các thành viên sau khi được phê duyệt tham gia.
+            </span>
           </div>
 
           <div

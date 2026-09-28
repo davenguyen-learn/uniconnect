@@ -454,23 +454,25 @@ export default function CreateActivity() {
             </select>
           </div>
 
-          {formData.privacy === 'private' && (
-            <div className="form-group private-field-callout">
-              <label htmlFor="private_description" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span>Mô tả riêng tư (Chỉ dành cho thành viên)</span>
-                <Lock size={13} className="text-gray-400" />
-              </label>
-              <textarea
-                id="private_description"
-                name="private_description"
-                className="form-input"
-                value={formData.private_description}
-                onChange={handleChange}
-                placeholder="Hướng dẫn bí mật, link Zoom, hoặc địa chỉ chính xác (chỉ được tiết lộ cho người tham gia được phê duyệt)..."
-                rows={3}
-              />
-            </div>
-          )}
+          <div className="form-group private-field-callout">
+            <label htmlFor="private_description" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Lock size={15} className="text-amber-500" />
+              <span className="font-semibold text-[var(--color-text-primary)]">Nội dung dành cho thành viên đã tham gia</span>
+              <span className="text-xs text-[var(--color-text-secondary)] font-normal">(tùy chọn)</span>
+            </label>
+            <textarea
+              id="private_description"
+              name="private_description"
+              className="form-input auto-expand-textarea"
+              value={formData.private_description}
+              onChange={handleChange}
+              placeholder="VD: Link nhóm Zalo tiếp nhận chiến sĩ, số điện thoại khẩn cấp của Trưởng đoàn, lưu ý trang phục..."
+              rows={3}
+            />
+            <span className="text-xs text-[var(--color-text-tertiary)] mt-1 block">
+              🔒 Nội dung này chỉ được hiển thị cho người tổ chức và các thành viên sau khi được phê duyệt tham gia.
+            </span>
+          </div>
 
           <div
             className={`approval-toggle-card ${formData.require_approval ? 'active' : ''}`}
