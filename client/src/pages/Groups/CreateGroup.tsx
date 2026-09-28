@@ -6,7 +6,7 @@ import Button from '../../components/Button/Button';
 import {
   Users,
   UserCheck,
-  Sparkles,
+  CalendarPlus,
   FileText,
   Plus,
   Trash2,
@@ -243,7 +243,7 @@ export default function CreateGroup() {
             >
               <div className="approval-toggle-content">
                 <div className="approval-toggle-icon activity-icon">
-                  <Sparkles size={18} />
+                  <CalendarPlus size={18} />
                 </div>
                 <div className="approval-toggle-info">
                   <span className="approval-toggle-title">Cho phép thành viên tự tạo hoạt động</span>
