@@ -88,6 +88,7 @@ export interface ActivityCreate {
   trophy_id?: string | null;
   attendance_mode?: 'manual' | 'auto' | 'qr_code';
   check_in_radius?: number;
+  group_id?: string | null;
 }
 
 export interface ActivityUpdate {

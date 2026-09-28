@@ -1,17 +1,33 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { activitiesApi, type ActivityCreate } from '../../api/activities';
+import { groupsApi, type GroupResponse } from '../../api/groups';
 import { calendarApi, type ConflictInfo } from '../../api/calendar';
 import { trophiesApi } from '../../api/trophies';
 import { useToast } from '../../components/Toast/ToastContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { Trophy, Clock, AlertCircle, AlertTriangle, HeartHandshake, UserCheck } from 'lucide-react';
+import { Trophy, Clock, AlertCircle, AlertTriangle, HeartHandshake, UserCheck, Users } from 'lucide-react';
 import Button from '../../components/Button/Button';
 import LocationPicker from '../../components/Map/LocationPicker';
 import './CreateActivity.css';
 
 export default function CreateActivity() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const routeLocation = useLocation();
+  const locationState = routeLocation.state as { group_id?: string } | null;
+  const groupId = searchParams.get('group_id') || locationState?.group_id;
+
+  const [groupInfo, setGroupInfo] = useState<GroupResponse | null>(null);
+
+  useEffect(() => {
+    if (groupId) {
+      groupsApi.getGroup(groupId)
+        .then(setGroupInfo)
+        .catch(() => {});
+    }
+  }, [groupId]);
+
   const toast = useToast();
   const { user } = useAuth();
   const titleTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -194,6 +210,7 @@ export default function CreateActivity() {
         social_work_days: (canAssignSocialWork && isSocialWork && !isNaN(parsedSocialWork) && parsedSocialWork > 0) ? parsedSocialWork : undefined,
         trophy_id: createdTrophyId,
         attendance_mode: attendanceMode,
+        group_id: groupId || undefined,
       };
 
       const filledCustomFields = customFormFields.filter(f => f.label.trim().length > 0);
@@ -238,6 +255,18 @@ export default function CreateActivity() {
   return (
     <div className="create-activity-page">
       <div className="create-activity-container">
+        {groupInfo && (
+          <div className="activity-group-badge-bar mb-4 p-3 rounded-xl bg-indigo-50/80 border border-indigo-100 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-600 text-white">
+                <Users size={13} /> Trực thuộc nhóm
+              </span>
+              <span className="text-sm font-bold text-slate-800">{groupInfo.name}</span>
+            </div>
+            <span className="text-xs text-slate-500 hidden sm:inline">Hoạt động sẽ được hiển thị trên trang của nhóm</span>
+          </div>
+        )}
+
         <form noValidate onSubmit={handleSubmit} className="create-activity-form" spellCheck={false}>
           <div className="title-input-wrapper">
             <textarea

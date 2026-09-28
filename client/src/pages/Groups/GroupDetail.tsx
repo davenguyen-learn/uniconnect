@@ -657,7 +657,7 @@ export default function GroupDetail() {
                   Khi nhóm chủ trì hoặc tham gia Đồng tổ chức hoạt động ngoại khóa, thông tin sẽ xuất hiện tại đây.
                 </p>
                 {canCreateActivity && (
-                  <Link to="/activities/new">
+                  <Link to={`/activities/new?group_id=${id}`} state={{ group_id: id }}>
                     <Button size="sm">Tạo hoạt động đầu tiên</Button>
                   </Link>
                 )}
