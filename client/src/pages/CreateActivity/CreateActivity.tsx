@@ -286,7 +286,6 @@ export default function CreateActivity() {
           <div className="form-group">
             <label htmlFor="private_description">
               Nội dung dành cho thành viên đã tham gia{' '}
-              <span className="text-xs text-[var(--color-text-secondary)] font-normal">(tùy chọn)</span>
             </label>
             <textarea
               id="private_description"

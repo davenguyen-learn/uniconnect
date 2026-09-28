@@ -23,11 +23,11 @@ export default function EditActivity() {
   const toast = useToast();
   const { user } = useAuth();
   const isOrg = user?.role === 'edu_org' || user?.role === 'admin';
-  
+
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const descriptionTextareaRef = useRef<HTMLTextAreaElement>(null);
-  
+
   // Trophy & Attendance state for Organization hosts
   const [hasTrophy, setHasTrophy] = useState(false);
   const [trophyName, setTrophyName] = useState('');
@@ -46,9 +46,9 @@ export default function EditActivity() {
     require_approval: true,
     private_description: '',
   });
-  
+
   const [location, setLocation] = useState<[number, number] | null>(null);
-  
+
   // Custom Form Builder state
   const [customFormFields, setCustomFormFields] = useState<Array<{ id: string; label: string; field_type: string; is_required: boolean }>>([]);
 
@@ -319,7 +319,6 @@ export default function EditActivity() {
           <div className="form-group">
             <label htmlFor="private_description">
               Nội dung dành cho thành viên đã tham gia{' '}
-              <span className="text-xs text-[var(--color-text-secondary)] font-normal">(tùy chọn)</span>
             </label>
             <textarea
               id="private_description"
@@ -489,9 +488,9 @@ export default function EditActivity() {
           <div className="form-group map-group">
             <label>Vị trí trên bản đồ <span className="required">*</span></label>
             <div className={isLocationMissing ? 'map-error-wrapper' : ''}>
-              <LocationPicker 
-                position={location} 
-                onChange={(lat, lng) => setLocation([lat, lng])} 
+              <LocationPicker
+                position={location}
+                onChange={(lat, lng) => setLocation([lat, lng])}
               />
             </div>
             {isLocationMissing ? (
