@@ -15,6 +15,7 @@ export default function CreateActivity() {
   const toast = useToast();
   const { user } = useAuth();
   const titleTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const descriptionTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   const isOrg = user?.role === 'edu_org' || user?.role === 'admin';
 
@@ -90,6 +91,13 @@ export default function CreateActivity() {
       titleTextareaRef.current.style.height = `${titleTextareaRef.current.scrollHeight}px`;
     }
   }, [formData.title]);
+
+  useEffect(() => {
+    if (descriptionTextareaRef.current) {
+      descriptionTextareaRef.current.style.height = 'auto';
+      descriptionTextareaRef.current.style.height = `${descriptionTextareaRef.current.scrollHeight}px`;
+    }
+  }, [formData.description]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -260,11 +268,16 @@ export default function CreateActivity() {
           <div className="form-group">
             <label htmlFor="description">Mô tả <span className="required">*</span></label>
             <textarea
+              ref={descriptionTextareaRef}
               id="description"
               name="description"
-              className={`form-input ${isDescriptionMissing ? 'input-error' : ''}`}
+              className={`form-input auto-expand-textarea ${isDescriptionMissing ? 'input-error' : ''}`}
               value={formData.description}
-              onChange={handleChange}
+              onChange={(e) => {
+                handleChange(e);
+                e.target.style.height = 'auto';
+                e.target.style.height = `${e.target.scrollHeight}px`;
+              }}
               required
               placeholder="Cho mọi người biết sự kiện này về điều gì..."
               rows={4}

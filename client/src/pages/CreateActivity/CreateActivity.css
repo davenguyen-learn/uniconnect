@@ -70,6 +70,16 @@
   padding: var(--space-2) var(--space-3) !important;
 }
 
+.auto-expand-textarea {
+  overflow: hidden !important;
+  resize: none;
+  min-height: 120px;
+  line-height: 1.55;
+  transition: height 0.1s ease;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 .create-activity-title {
   font-size: clamp(1.5rem, 2.8vw, 2.1rem);
   font-weight: 700;
