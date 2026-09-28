@@ -238,7 +238,7 @@ export default function CreateActivity() {
   return (
     <div className="create-activity-page">
       <div className="create-activity-container">
-        <form noValidate onSubmit={handleSubmit} className="create-activity-form">
+        <form noValidate onSubmit={handleSubmit} className="create-activity-form" spellCheck={false}>
           <div className="title-input-wrapper">
             <textarea
               ref={titleTextareaRef}
@@ -257,6 +257,9 @@ export default function CreateActivity() {
               }}
               rows={1}
               required
+              spellCheck={false}
+              autoCorrect="off"
+              autoCapitalize="off"
               placeholder="Nhập tiêu đề hoạt động..."
               maxLength={100}
             />
@@ -277,6 +280,9 @@ export default function CreateActivity() {
                 e.target.style.height = `${e.target.scrollHeight}px`;
               }}
               required
+              spellCheck={false}
+              autoCorrect="off"
+              autoCapitalize="off"
               placeholder="Cho mọi người biết sự kiện này về điều gì..."
               rows={4}
             />
@@ -297,6 +303,9 @@ export default function CreateActivity() {
                 e.target.style.height = 'auto';
                 e.target.style.height = `${e.target.scrollHeight}px`;
               }}
+              spellCheck={false}
+              autoCorrect="off"
+              autoCapitalize="off"
               placeholder="VD: Link nhóm Zalo tiếp nhận chiến sĩ, số điện thoại khẩn cấp của Trưởng đoàn, lưu ý trang phục..."
               rows={3}
             />

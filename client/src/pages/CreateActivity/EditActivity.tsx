@@ -279,7 +279,7 @@ export default function EditActivity() {
         <h1 className="create-activity-title">Chỉnh sửa hoạt động</h1>
         <p className="create-activity-subtitle">Cập nhật thông tin chi tiết về sự kiện của bạn.</p>
 
-        <form noValidate onSubmit={handleSubmit} className="create-activity-form">
+        <form noValidate onSubmit={handleSubmit} className="create-activity-form" spellCheck={false}>
           <div className="form-group">
             <label htmlFor="title">Tiêu đề <span className="required">*</span></label>
             <input
@@ -290,6 +290,9 @@ export default function EditActivity() {
               value={formData.title}
               onChange={handleChange}
               required
+              spellCheck={false}
+              autoCorrect="off"
+              autoCapitalize="off"
               placeholder="Ví dụ: Cùng nhau học tập tại KTX"
               maxLength={100}
             />
@@ -310,6 +313,9 @@ export default function EditActivity() {
                 e.target.style.height = `${e.target.scrollHeight}px`;
               }}
               required
+              spellCheck={false}
+              autoCorrect="off"
+              autoCapitalize="off"
               placeholder="Cho mọi người biết sự kiện này về điều gì..."
               rows={4}
             />
@@ -330,6 +336,9 @@ export default function EditActivity() {
                 e.target.style.height = 'auto';
                 e.target.style.height = `${e.target.scrollHeight}px`;
               }}
+              spellCheck={false}
+              autoCorrect="off"
+              autoCapitalize="off"
               placeholder="VD: Link nhóm Zalo tiếp nhận chiến sĩ, số điện thoại khẩn cấp của Trưởng đoàn, lưu ý trang phục..."
               rows={3}
             />
