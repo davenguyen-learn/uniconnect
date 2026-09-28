@@ -598,4 +598,25 @@
   transform: translateX(20px);
 }
 
+/* ── Join Group Dynamic Form Modal ── */
+.group-join-modal {
+  width: 95% !important;
+  max-width: 640px !important;
+  padding: 28px 32px !important;
+  border-radius: 20px !important;
+  background: #ffffff !important;
+  box-shadow: 0 20px 45px -10px rgba(15, 23, 42, 0.18), 0 0 0 1px rgba(226, 232, 240, 0.8) !important;
+}
+
+.group-join-modal h2 {
+  font-size: 1.25rem !important;
+  line-height: 1.4 !important;
+}
+
+.group-join-modal .input-field {
+  padding: 10px 14px !important;
+  font-size: 0.925rem !important;
+  border-radius: 10px !important;
+}
+
 

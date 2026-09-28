@@ -830,7 +830,7 @@ export default function GroupDetail() {
       {/* Dynamic Form Join Modal */}
       {showJoinModal && (
         <div className="modal-overlay">
-          <div className="glass modal-content">
+          <div className="glass modal-content group-join-modal">
             <h2 className="text-lg font-bold text-slate-900">
               Đơn đăng ký gia nhập {group.name}
             </h2>
