@@ -6,7 +6,7 @@ import { calendarApi, type ConflictInfo } from '../../api/calendar';
 import { trophiesApi } from '../../api/trophies';
 import { useToast } from '../../components/Toast/ToastContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { Trophy, Clock, AlertCircle, AlertTriangle, HeartHandshake, UserCheck, Users } from 'lucide-react';
+import { Trophy, Clock, AlertCircle, AlertTriangle, HeartHandshake, UserCheck } from 'lucide-react';
 import Button from '../../components/Button/Button';
 import LocationPicker from '../../components/Map/LocationPicker';
 import './CreateActivity.css';
@@ -24,7 +24,7 @@ export default function CreateActivity() {
     if (groupId) {
       groupsApi.getGroup(groupId)
         .then(setGroupInfo)
-        .catch(() => {});
+        .catch(() => { });
     }
   }, [groupId]);
 
@@ -256,14 +256,13 @@ export default function CreateActivity() {
     <div className="create-activity-page">
       <div className="create-activity-container">
         {groupInfo && (
-          <div className="activity-group-badge-bar mb-4 p-3 rounded-xl bg-indigo-50/80 border border-indigo-100 flex items-center justify-between">
+          <div className="activity-group-badge-bar mb-4 p-3 rounded-xl shadow-sm flex items-center">
             <div className="flex items-center gap-2.5">
               <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-600 text-white">
-                <Users size={13} /> Trực thuộc nhóm
+                Hoạt động của nhóm
               </span>
               <span className="text-sm font-bold text-slate-800">{groupInfo.name}</span>
             </div>
-            <span className="text-xs text-slate-500 hidden sm:inline">Hoạt động sẽ được hiển thị trên trang của nhóm</span>
           </div>
         )}
 
