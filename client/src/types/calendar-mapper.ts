@@ -61,7 +61,10 @@ export function formatTimeRange(startIso: string, endIso: string): string {
 }
 
 export function formatDateKey(date: Date): string {
-  return date.toISOString().split('T')[0];
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 export function formatDateDisplay(dateIso: string): string {
@@ -79,7 +82,7 @@ export function formatDateDisplay(dateIso: string): string {
 
 export function mapCalendarEventToViewModel(event: CalendarEventItem): CalendarEventViewModel {
   const d = new Date(event.start_time);
-  const dateKey = !isNaN(d.getTime()) ? d.toISOString().split('T')[0] : '';
+  const dateKey = !isNaN(d.getTime()) ? formatDateKey(d) : '';
   
   let typeLabel = 'Lịch bận cá nhân';
   if (event.event_type === 'activity_joined') {

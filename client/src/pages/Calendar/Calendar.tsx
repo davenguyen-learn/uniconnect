@@ -18,6 +18,7 @@ import {
 } from '../../api/calendar';
 import {
   mapCalendarEventToViewModel,
+  formatDateKey,
   DAYS_OF_WEEK_VI,
   type CalendarEventViewModel,
 } from '../../types/calendar-mapper';
@@ -50,7 +51,7 @@ export default function CalendarPage() {
     end_time_of_day: '11:30',
     start_datetime: '',
     end_datetime: '',
-    valid_from: new Date().toISOString().split('T')[0],
+    valid_from: formatDateKey(new Date()),
     valid_until: '',
   });
 
@@ -74,8 +75,8 @@ export default function CalendarPage() {
       sunday.setHours(23, 59, 59, 999);
 
       return {
-        viewStartDate: monday.toISOString().split('T')[0],
-        viewEndDate: sunday.toISOString().split('T')[0],
+        viewStartDate: formatDateKey(monday),
+        viewEndDate: formatDateKey(sunday),
         weekDays: days,
       };
     } else {
@@ -91,8 +92,8 @@ export default function CalendarPage() {
       end.setHours(23, 59, 59, 999);
 
       return {
-        viewStartDate: monday.toISOString().split('T')[0],
-        viewEndDate: end.toISOString().split('T')[0],
+        viewStartDate: formatDateKey(monday),
+        viewEndDate: formatDateKey(end),
         weekDays: [],
       };
     }
@@ -178,7 +179,7 @@ export default function CalendarPage() {
         end_time_of_day: '11:30',
         start_datetime: '',
         end_datetime: '',
-        valid_from: new Date().toISOString().split('T')[0],
+        valid_from: formatDateKey(new Date()),
         valid_until: '',
       });
       fetchEvents();
@@ -194,6 +195,7 @@ export default function CalendarPage() {
     // extract busy slot id from id format (e.g. busy_weekly_UUID_date or busy_oneoff_UUID)
     const parts = eventItem.id.split('_');
     const slotId = parts[2] || parts[1];
+    const skipDate = (parts.length >= 4 && parts[3]) ? parts[3] : eventItem.dateKey;
 
     if (eventItem.isRecurring) {
       if (!window.confirm(`Bạn có muốn hủy lịch bận "${eventItem.title}" vào ${eventItem.dateDisplay}?\n(Lịch lặp lại của các tuần khác vẫn sẽ được giữ nguyên)`)) {
@@ -202,7 +204,7 @@ export default function CalendarPage() {
 
       setDeletingSlot(true);
       try {
-        await calendarApi.addSlotException(slotId, eventItem.dateKey);
+        await calendarApi.addSlotException(slotId, skipDate);
         toast.success(`Đã hủy lịch bận ${eventItem.dateDisplay}. Các tuần khác vẫn giữ nguyên!`);
         setSelectedEvent(null);
         fetchEvents();
@@ -341,7 +343,7 @@ export default function CalendarPage() {
         <div className="week-grid">
           {weekDays.map((dayDate, idx) => {
             const isToday = dayDate.toDateString() === new Date().toDateString();
-            const dateStr = dayDate.toISOString().split('T')[0];
+            const dateStr = formatDateKey(dayDate);
 
             const dayEvents = events.filter((ev) => ev.dateKey === dateStr);
 
