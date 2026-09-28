@@ -166,13 +166,6 @@ async def create_activity(
         embedding=generate_embedding(embedding_text),
     )
 
-    if data.trophy_id:
-        from app.modules.trophies.models import Trophy
-        from sqlalchemy import select
-        trophy = await db.scalar(select(Trophy).where(Trophy.id == data.trophy_id))
-        if trophy:
-            trophy.activity_id = activity.id
-    
     if data.custom_form:
         from app.modules.forms.models import CustomForm, FormField, FieldType
         form_fields = []
@@ -191,6 +184,15 @@ async def create_activity(
         )
 
     activity = await repository.create(db, activity)
+
+    if data.trophy_id:
+        from app.modules.trophies.models import Trophy
+        from sqlalchemy import select
+        trophy = await db.scalar(select(Trophy).where(Trophy.id == data.trophy_id))
+        if trophy:
+            trophy.activity_id = activity.id
+            await db.flush()
+
     return _activity_to_response(activity, data.latitude, data.longitude, private_description=data.private_description)
 
 

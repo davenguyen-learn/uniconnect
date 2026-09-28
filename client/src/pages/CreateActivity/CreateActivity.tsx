@@ -602,7 +602,7 @@ export default function CreateActivity() {
                     <input
                       type="text"
                       className="form-input rounded-lg"
-                      placeholder="VD: Chiến sĩ Áo Xanh Bách Khoa 2026..."
+                      placeholder="VD: Sinh viên tích cực"
                       value={trophyName}
                       onChange={(e) => setTrophyName(e.target.value)}
                       maxLength={100}

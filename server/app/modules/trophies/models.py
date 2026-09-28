@@ -20,7 +20,7 @@ class Trophy(PrimaryKeyMixin, TimestampMixin, Base):
     activity_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("activities.id", ondelete="CASCADE"), nullable=True, index=True
     )
-    name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True, index=True)
+    name: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Relationships

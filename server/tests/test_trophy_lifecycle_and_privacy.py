@@ -197,6 +197,28 @@ async def test_edu_org_and_admin_can_create_trophy():
     db.commit.assert_called_once()
 
 
+@pytest.mark.asyncio
+async def test_trophies_can_have_duplicate_names():
+    """Verify different activities can create trophies with the same name."""
+    db = AsyncMock()
+    user_id = uuid.uuid4()
+    mock_org = MagicMock(spec=User)
+    mock_org.id = user_id
+    mock_org.role = UserRole.edu_org
+    db.scalar = AsyncMock(return_value=mock_org)
+
+    data1 = TrophyCreate(name="Chiến sĩ Áo Xanh Bách Khoa 2026")
+    current_user = {"sub": str(user_id), "role": "edu_org"}
+
+    trophy1 = await create_trophy(data=data1, current_user=current_user, db=db)
+    assert trophy1.name == "Chiến sĩ Áo Xanh Bách Khoa 2026"
+
+    data2 = TrophyCreate(name="Chiến sĩ Áo Xanh Bách Khoa 2026")
+    trophy2 = await create_trophy(data=data2, current_user=current_user, db=db)
+    assert trophy2.name == "Chiến sĩ Áo Xanh Bách Khoa 2026"
+    assert trophy1 is not trophy2
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Contract C: Attendance Finalization & Quorum Tests
 # ─────────────────────────────────────────────────────────────────────────────
