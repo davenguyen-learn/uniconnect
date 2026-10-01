@@ -31,7 +31,10 @@ import {
   PartyPopper,
   Gamepad2,
   Music,
-  Compass
+  Compass,
+  Crown,
+  PauseCircle,
+  PlayCircle
 } from 'lucide-react';
 import { resolveAvatarUrl } from '../../utils/avatar';
 import { formatCtxh } from '../../utils/format';
@@ -246,9 +249,15 @@ export default function GroupDetail() {
   const memberRecord = group?.members?.find(m => m.user_id === user?.id);
   const isOwner = group?.owner_id === user?.id;
   const isAdmin = memberRecord?.role === 'admin' || isOwner;
-  const isInactive = group?.status === 'inactive';
+  const isInactive = group?.status === 'inactive' || group?.status === 'suspended';
 
   const canCreateActivity = !isInactive && (isAdmin || (isMember && group?.allow_member_activities));
+
+  const [suspendLoading, setSuspendLoading] = useState(false);
+  const [showSuspendModal, setShowSuspendModal] = useState(false);
+  const [transferMemberId, setTransferMemberId] = useState('');
+  const [transferringOwner, setTransferringOwner] = useState(false);
+  const [showTransferConfirmModal, setShowTransferConfirmModal] = useState(false);
 
   const loadGroupAndStats = useCallback(async () => {
     if (!id) return;
@@ -384,6 +393,42 @@ export default function GroupDetail() {
     }
   }
 
+  async function handleToggleSuspend() {
+    if (!id || !group || suspendLoading) return;
+    setSuspendLoading(true);
+    try {
+      if (isInactive) {
+        await groupsApi.resumeGroup(id);
+        toast.success('Đã kích hoạt lại hoạt động nhóm thành công!');
+      } else {
+        await groupsApi.suspendGroup(id);
+        toast.success('Đã tạm dừng hoạt động nhóm.');
+      }
+      setShowSuspendModal(false);
+      loadGroupAndStats();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.detail || 'Không thể thay đổi trạng thái nhóm');
+    } finally {
+      setSuspendLoading(false);
+    }
+  }
+
+  async function handleTransferOwnership() {
+    if (!id || !transferMemberId || transferringOwner) return;
+    setTransferringOwner(true);
+    try {
+      await groupsApi.transferOwnership(id, transferMemberId);
+      toast.success('Đã chuyển giao quyền Trưởng nhóm thành công!');
+      setShowTransferConfirmModal(false);
+      setTransferMemberId('');
+      loadGroupAndStats();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.detail || 'Chuyển quyền Trưởng nhóm thất bại');
+    } finally {
+      setTransferringOwner(false);
+    }
+  }
+
   const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -484,9 +529,9 @@ export default function GroupDetail() {
             {isInactive && (
               <span
                 className="club-pill-badge"
-                style={{ backgroundColor: '#fee2e2', color: '#b91c1c', border: '1px solid #fca5a5' }}
+                style={{ backgroundColor: '#fef3c7', color: '#92400e', border: '1px solid #fcd34d' }}
               >
-                ⚠️ Đã dừng hoạt động
+                ⏸ Tạm dừng hoạt động
               </span>
             )}
           </div>
@@ -649,34 +694,68 @@ export default function GroupDetail() {
                     </button>
                   </Link>
                 )}
+                {isOwner && (
+                  <button
+                    onClick={() => setShowSuspendModal(true)}
+                    className="leadership-tool-btn"
+                    title={isInactive ? 'Kích hoạt lại hoạt động nhóm' : 'Tạm dừng hoạt động nhóm'}
+                  >
+                    {isInactive ? (
+                      <>
+                        <PlayCircle className="w-4 h-4 text-emerald-500" />
+                        Tiếp tục hoạt động
+                      </>
+                    ) : (
+                      <>
+                        <PauseCircle className="w-4 h-4 text-amber-500" />
+                        Tạm dừng hoạt động
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
             </div>
           )}
         </div>
       </div>
 
-      {/* Inactive Warning Alert */}
+      {/* Inactive / Suspended Warning Alert */}
       {isInactive && (
         <div
           style={{
             margin: '18px 0',
             padding: '12px 18px',
-            borderRadius: 12,
-            backgroundColor: '#fef2f2',
-            border: '1px solid #fecaca',
-            color: '#991b1b',
+            borderRadius: 14,
+            backgroundColor: '#fffbeb',
+            border: '1px solid #fde68a',
+            color: '#92400e',
             display: 'flex',
             alignItems: 'center',
+            justifyContent: 'space-between',
             gap: 12,
             fontSize: '0.95rem',
             fontWeight: 500,
             boxShadow: 'var(--shadow-sm)',
+            flexWrap: 'wrap',
           }}
         >
-          <AlertTriangle className="w-5 h-5 flex-shrink-0 text-red-600" />
-          <span>
-            Nhóm này hiện <strong>đã dừng hoạt động</strong>. Các tính năng tạo hoạt động mới và gửi đơn tham gia tạm thời bị khóa.
-          </span>
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="w-5 h-5 flex-shrink-0 text-amber-600" />
+            <span>
+              Nhóm này hiện <strong>đang tạm dừng hoạt động</strong>. Các tính năng tạo hoạt động mới và gửi đơn tham gia tạm thời bị khóa.
+            </span>
+          </div>
+          {isOwner && (
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setShowSuspendModal(true)}
+              className="text-xs shrink-0 bg-white hover:bg-amber-100 text-amber-900 border-amber-300"
+            >
+              <PlayCircle className="w-4 h-4 mr-1 text-emerald-600" />
+              Tiếp tục hoạt động
+            </Button>
+          )}
         </div>
       )}
 
@@ -1098,83 +1177,204 @@ export default function GroupDetail() {
         )}
 
         {activeTab === 'settings' && isOwner && (
-          <div className="settings-section glass p-6 rounded-2xl">
-            <form onSubmit={handleSaveSettings} className="settings-form max-w-xl space-y-4">
-              <Input
-                label="Tên nhóm"
-                value={settingsForm.name}
-                onChange={e => setSettingsForm({ ...settingsForm, name: e.target.value })}
-                required
-              />
-              <Textarea
-                label="Mô tả ngắn (hiển thị trên thẻ tìm kiếm)"
-                value={settingsForm.description}
-                onChange={e => setSettingsForm({ ...settingsForm, description: e.target.value })}
-              />
-              <Textarea
-                label="Tổng quan công khai"
-                value={settingsForm.publicDescription}
-                onChange={e => setSettingsForm({ ...settingsForm, publicDescription: e.target.value })}
-              />
-              <Textarea
-                label="Mô tả & Kênh liên lạc nội bộ (Chỉ thành viên thấy)"
-                value={settingsForm.privateDescription}
-                onChange={e => setSettingsForm({ ...settingsForm, privateDescription: e.target.value })}
-              />
+          <div className="space-y-6">
+            {/* 1. General Info & Permissions */}
+            <div className="settings-section glass p-6 rounded-2xl">
+              <h3 className="text-base font-bold text-slate-900 mb-1">Cài đặt thông tin & Hoạt động</h3>
+              <p className="text-xs text-slate-500 mb-5">Quản lý tên, mô tả và quyền hạn cơ bản của thành viên trong nhóm.</p>
 
-              <div className="form-group">
-                <label htmlFor="privacy_select" className="form-label text-sm font-semibold">
-                  Chế độ hiển thị
-                </label>
-                <select
-                  id="privacy_select"
-                  className="form-select group-settings-select"
-                  value={settingsForm.privacy}
-                  onChange={e => setSettingsForm({ ...settingsForm, privacy: e.target.value as any })}
+              <form onSubmit={handleSaveSettings} className="settings-form max-w-xl space-y-4">
+                <Input
+                  label="Tên nhóm"
+                  value={settingsForm.name}
+                  onChange={e => setSettingsForm({ ...settingsForm, name: e.target.value })}
+                  required
+                />
+                <Textarea
+                  label="Mô tả ngắn (hiển thị trên thẻ tìm kiếm)"
+                  value={settingsForm.description}
+                  onChange={e => setSettingsForm({ ...settingsForm, description: e.target.value })}
+                />
+                <Textarea
+                  label="Tổng quan công khai"
+                  value={settingsForm.publicDescription}
+                  onChange={e => setSettingsForm({ ...settingsForm, publicDescription: e.target.value })}
+                />
+                <Textarea
+                  label="Mô tả & Kênh liên lạc nội bộ (Chỉ thành viên thấy)"
+                  value={settingsForm.privateDescription}
+                  onChange={e => setSettingsForm({ ...settingsForm, privateDescription: e.target.value })}
+                />
+
+                <div className="form-group">
+                  <label htmlFor="privacy_select" className="form-label text-sm font-semibold">
+                    Chế độ hiển thị
+                  </label>
+                  <select
+                    id="privacy_select"
+                    className="form-select group-settings-select"
+                    value={settingsForm.privacy}
+                    onChange={e => setSettingsForm({ ...settingsForm, privacy: e.target.value as any })}
+                  >
+                    <option value="public">Công khai (Ai cũng có thể tìm thấy)</option>
+                    <option value="private">Riêng tư (Chỉ thành viên thấy nội dung)</option>
+                  </select>
+                </div>
+
+                <div className="space-y-3 pt-2">
+                  <label className="group-switch-row">
+                    <span className="group-switch-label">
+                      Yêu cầu Ban Quản Trị duyệt đơn để gia nhập
+                    </span>
+                    <input
+                      type="checkbox"
+                      className="sr-only"
+                      checked={settingsForm.requireApproval}
+                      onChange={(e) => setSettingsForm({ ...settingsForm, requireApproval: e.target.checked })}
+                    />
+                    <div className={`group-toggle-switch ${settingsForm.requireApproval ? 'on' : ''}`}>
+                      <span className="group-toggle-handle" />
+                    </div>
+                  </label>
+
+                  <label className="group-switch-row">
+                    <span className="group-switch-label">
+                      Cho phép thành viên tạo hoạt động ngoại khóa
+                    </span>
+                    <input
+                      type="checkbox"
+                      className="sr-only"
+                      checked={settingsForm.allowActivities}
+                      onChange={(e) => setSettingsForm({ ...settingsForm, allowActivities: e.target.checked })}
+                    />
+                    <div className={`group-toggle-switch ${settingsForm.allowActivities ? 'on' : ''}`}>
+                      <span className="group-toggle-handle" />
+                    </div>
+                  </label>
+                </div>
+
+                <div className="pt-4">
+                  <Button type="submit" loading={savingSettings}>
+                    Lưu thay đổi
+                  </Button>
+                </div>
+              </form>
+            </div>
+
+            {/* 2. Group Operation Status */}
+            <div className="settings-section glass p-6 rounded-2xl">
+              <div className="flex items-start justify-between gap-4 flex-wrap">
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 flex items-center gap-2 mb-1">
+                    {isInactive ? (
+                      <PauseCircle className="w-5 h-5 text-amber-500" />
+                    ) : (
+                      <PlayCircle className="w-5 h-5 text-emerald-500" />
+                    )}
+                    Trạng thái hoạt động của nhóm
+                  </h3>
+                  <p className="text-xs text-slate-500 max-w-lg leading-relaxed">
+                    {isInactive
+                      ? 'Nhóm hiện đang tạm dừng hoạt động. Các thành viên không thể tạo hoạt động mới và sinh viên bên ngoài không thể gửi đơn tham gia.'
+                      : 'Nhóm đang hoạt động bình thường. Thành viên và Ban Quản Trị có thể tổ chức hoạt động và tuyển thành viên mới.'}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
+                      isInactive
+                        ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                        : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                    }`}
+                  >
+                    <span className={`w-2 h-2 rounded-full ${isInactive ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+                    {isInactive ? 'Đang tạm dừng' : 'Đang hoạt động'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between flex-wrap gap-3">
+                <p className="text-xs text-slate-500">
+                  {isInactive
+                    ? 'Bạn có thể kích hoạt lại để câu lạc bộ/nhóm tiếp tục hoạt động bất cứ lúc nào.'
+                    : 'Tạm dừng sẽ khóa tạm thời các chức năng nộp đơn và tạo hoạt động mới.'}
+                </p>
+                <Button
+                  type="button"
+                  variant={isInactive ? 'primary' : 'secondary'}
+                  onClick={() => setShowSuspendModal(true)}
+                  className="flex items-center gap-1.5"
                 >
-                  <option value="public">Công khai (Ai cũng có thể tìm thấy)</option>
-                  <option value="private">Riêng tư (Chỉ thành viên thấy nội dung)</option>
-                </select>
-              </div>
-
-              <div className="space-y-3 pt-2">
-                <label className="group-switch-row">
-                  <span className="group-switch-label">
-                    Yêu cầu Ban Quản Trị duyệt đơn để gia nhập
-                  </span>
-                  <input
-                    type="checkbox"
-                    className="sr-only"
-                    checked={settingsForm.requireApproval}
-                    onChange={(e) => setSettingsForm({ ...settingsForm, requireApproval: e.target.checked })}
-                  />
-                  <div className={`group-toggle-switch ${settingsForm.requireApproval ? 'on' : ''}`}>
-                    <span className="group-toggle-handle" />
-                  </div>
-                </label>
-
-                <label className="group-switch-row">
-                  <span className="group-switch-label">
-                    Cho phép thành viên tạo hoạt động ngoại khóa
-                  </span>
-                  <input
-                    type="checkbox"
-                    className="sr-only"
-                    checked={settingsForm.allowActivities}
-                    onChange={(e) => setSettingsForm({ ...settingsForm, allowActivities: e.target.checked })}
-                  />
-                  <div className={`group-toggle-switch ${settingsForm.allowActivities ? 'on' : ''}`}>
-                    <span className="group-toggle-handle" />
-                  </div>
-                </label>
-              </div>
-
-              <div className="pt-4">
-                <Button type="submit" loading={savingSettings}>
-                  Lưu thay đổi
+                  {isInactive ? (
+                    <>
+                      <PlayCircle className="w-4 h-4 text-emerald-500 mr-1" />
+                      Tiếp tục hoạt động
+                    </>
+                  ) : (
+                    <>
+                      <PauseCircle className="w-4 h-4 text-amber-600 mr-1" />
+                      Tạm dừng hoạt động
+                    </>
+                  )}
                 </Button>
               </div>
-            </form>
+            </div>
+
+            {/* 3. Transfer Group Ownership */}
+            <div className="settings-section glass p-6 rounded-2xl border border-amber-100/60">
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 shrink-0">
+                  <Crown className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 mb-1">
+                    Chuyển giao quyền Trưởng nhóm
+                  </h3>
+                  <p className="text-xs text-slate-500 leading-relaxed max-w-xl">
+                    Chuyển giao toàn quyền điều hành câu lạc bộ/nhóm cho một thành viên chính thức khác.
+                    Sau khi chuyển nhượng, người được chỉ định sẽ là <strong>Trưởng nhóm (Owner)</strong>,
+                    và bạn sẽ giữ vai trò <strong>Quản trị viên (Admin)</strong>.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5 pt-4 border-t border-slate-100 max-w-xl space-y-3">
+                <label className="text-xs font-semibold text-slate-700 block">
+                  Chọn thành viên tiếp quản:
+                </label>
+                <div className="flex gap-2 flex-wrap sm:flex-nowrap">
+                  <select
+                    className="form-select flex-1 p-2.5 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:border-amber-400"
+                    value={transferMemberId}
+                    onChange={(e) => setTransferMemberId(e.target.value)}
+                  >
+                    <option value="">-- Chọn thành viên chính thức trong nhóm --</option>
+                    {group.members
+                      ?.filter((m) => m.user_id !== group.owner_id)
+                      .map((m) => (
+                        <option key={m.user_id} value={m.user_id}>
+                          {m.full_name || m.username || 'Thành viên'} (@{m.username || 'user'})
+                          {m.role === 'admin' ? ' [Quản trị viên]' : ''}
+                        </option>
+                      ))}
+                  </select>
+                  <Button
+                    type="button"
+                    disabled={!transferMemberId}
+                    onClick={() => setShowTransferConfirmModal(true)}
+                    className="shrink-0 bg-amber-600 hover:bg-amber-700 text-white font-semibold border-none"
+                  >
+                    <Crown className="w-4 h-4 mr-1.5" />
+                    Chuyển quyền
+                  </Button>
+                </div>
+                {group.members?.filter((m) => m.user_id !== group.owner_id).length === 0 && (
+                  <p className="text-xs text-slate-400 italic">
+                    Nhóm chưa có thành viên nào khác để chuyển giao quyền Trưởng nhóm.
+                  </p>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -1198,6 +1398,8 @@ export default function GroupDetail() {
         onClose={() => setShowMemberManagement(false)}
         onUpdated={() => loadGroupAndStats()}
         isAdmin={isAdmin}
+        isOwner={isOwner}
+        ownerId={group.owner_id}
         customForm={group.custom_form}
       />
 
@@ -1248,6 +1450,124 @@ export default function GroupDetail() {
                 </Button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Suspend / Resume Modal */}
+      {showSuspendModal && (
+        <div className="modal-overlay" onClick={() => !suspendLoading && setShowSuspendModal(false)}>
+          <div className="glass modal-content max-w-md w-full p-6 text-slate-900" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-3">
+              {isInactive ? (
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                  <PlayCircle className="w-6 h-6" />
+                </div>
+              ) : (
+                <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                  <PauseCircle className="w-6 h-6" />
+                </div>
+              )}
+              <div>
+                <h3 className="text-base font-bold">
+                  {isInactive ? 'Kích hoạt lại hoạt động nhóm' : 'Tạm dừng hoạt động nhóm'}
+                </h3>
+                <p className="text-xs text-slate-500">Xác nhận thay đổi trạng thái nhóm</p>
+              </div>
+            </div>
+
+            <div className="text-sm text-slate-600 my-4 space-y-2">
+              {isInactive ? (
+                <p>
+                  Bạn có chắc muốn kích hoạt lại <strong>{group.name}</strong>? Nhóm sẽ mở lại tính năng nộp đơn tham gia và cho phép tạo các hoạt động ngoại khóa mới.
+                </p>
+              ) : (
+                <>
+                  <p>
+                    Bạn có chắc muốn tạm dừng hoạt động nhóm <strong>{group.name}</strong>?
+                  </p>
+                  <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-800 space-y-1">
+                    <p>• Thành viên sẽ <strong>không thể tạo hoạt động mới</strong> dưới danh nghĩa nhóm.</p>
+                    <p>• Sinh viên khác <strong>không thể gửi đơn xin gia nhập</strong> nhóm.</p>
+                    <p>• Bạn có thể kích hoạt lại hoạt động của nhóm bất cứ khi nào.</p>
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
+              <Button
+                variant="secondary"
+                disabled={suspendLoading}
+                onClick={() => setShowSuspendModal(false)}
+              >
+                Hủy
+              </Button>
+              <Button
+                variant={isInactive ? 'primary' : 'secondary'}
+                onClick={handleToggleSuspend}
+                loading={suspendLoading}
+                className={!isInactive ? 'bg-amber-600 hover:bg-amber-700 text-white border-none' : ''}
+              >
+                {isInactive ? 'Xác nhận mở lại' : 'Xác nhận tạm dừng'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Transfer Ownership Confirmation Modal */}
+      {showTransferConfirmModal && (
+        <div className="modal-overlay" onClick={() => !transferringOwner && setShowTransferConfirmModal(false)}>
+          <div className="glass modal-content max-w-md w-full p-6 text-slate-900" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                <Crown className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold">Xác nhận chuyển quyền Trưởng nhóm</h3>
+                <p className="text-xs text-slate-500">Chuyển giao quyền điều hành cao nhất</p>
+              </div>
+            </div>
+
+            {(() => {
+              const target = group.members?.find(m => m.user_id === transferMemberId);
+              return (
+                <div className="text-sm text-slate-600 my-4 space-y-3">
+                  <p>
+                    Bạn đang chuẩn bị chuyển giao toàn quyền Trưởng nhóm <strong>{group.name}</strong> cho thành viên:
+                  </p>
+                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs">
+                    <p className="font-bold text-slate-900 text-sm">
+                      {target?.full_name || target?.username || 'Thành viên'}
+                    </p>
+                    <p className="text-slate-500">@{target?.username || 'user'}</p>
+                  </div>
+                  <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-800 space-y-1">
+                    <p>• Người này sẽ nắm quyền quản lý cao nhất của nhóm.</p>
+                    <p>• Bạn sẽ chuyển sang vai trò <strong>Quản trị viên (Admin)</strong>.</p>
+                    <p>• Thao tác này có hiệu lực ngay lập tức.</p>
+                  </div>
+                </div>
+              );
+            })()}
+
+            <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
+              <Button
+                variant="secondary"
+                disabled={transferringOwner}
+                onClick={() => setShowTransferConfirmModal(false)}
+              >
+                Hủy
+              </Button>
+              <Button
+                onClick={handleTransferOwnership}
+                loading={transferringOwner}
+                className="bg-amber-600 hover:bg-amber-700 text-white font-semibold border-none"
+              >
+                Xác nhận chuyển giao
+              </Button>
+            </div>
           </div>
         </div>
       )}

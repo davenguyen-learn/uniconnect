@@ -30,6 +30,8 @@ interface MemberManagementModalProps {
   onClose: () => void;
   onUpdated?: () => void;
   isAdmin?: boolean;
+  isOwner?: boolean;
+  ownerId?: string;
   customForm?: any;
 }
 
@@ -39,11 +41,15 @@ export const MemberManagementModal: React.FC<MemberManagementModalProps> = ({
   onClose,
   onUpdated,
   isAdmin = false,
+  isOwner = false,
+  ownerId,
   customForm,
 }) => {
   const [activeTab, setActiveTab] = useState<'members' | 'requests'>(isAdmin ? 'requests' : 'members');
   const [loadedCustomForm, setLoadedCustomForm] = useState<any>(customForm || null);
   const [selectedReviewRequest, setSelectedReviewRequest] = useState<GroupJoinRequestViewModel | null>(null);
+  const [transferCandidate, setTransferCandidate] = useState<GroupMemberViewModel | null>(null);
+  const [transferring, setTransferring] = useState(false);
 
   useEffect(() => {
     if (customForm) {
@@ -153,6 +159,24 @@ export const MemberManagementModal: React.FC<MemberManagementModalProps> = ({
       setError(err?.response?.data?.detail || 'Lỗi khi xử lý yêu cầu gia nhập');
     } finally {
       setProcessingId(null);
+    }
+  };
+
+  const handleConfirmTransfer = async () => {
+    if (!transferCandidate) return;
+    setTransferring(true);
+    setError(null);
+    setSuccessMsg(null);
+    try {
+      await groupsApi.transferOwnership(groupId, transferCandidate.userId);
+      setSuccessMsg(`Đã chuyển giao quyền Trưởng nhóm cho ${transferCandidate.displayName} thành công!`);
+      setTransferCandidate(null);
+      await fetchData();
+      if (onUpdated) onUpdated();
+    } catch (err: any) {
+      setError(err?.response?.data?.detail || 'Chuyển giao quyền Trưởng nhóm thất bại');
+    } finally {
+      setTransferring(false);
     }
   };
 
@@ -338,18 +362,32 @@ export const MemberManagementModal: React.FC<MemberManagementModalProps> = ({
                     </div>
                   </div>
 
-                  <span
-                    className={`group-modal-role-badge ${m.roleBadge.variant === 'gold'
-                      ? 'group-modal-role-badge--gold'
-                      : m.roleBadge.variant === 'blue'
-                        ? 'group-modal-role-badge--blue'
-                        : 'group-modal-role-badge--default'
-                      }`}
-                  >
-                    {m.roleBadge.variant === 'gold' && <Crown className="w-3 h-3" />}
-                    {m.roleBadge.variant === 'blue' && <Shield className="w-3 h-3" />}
-                    {m.roleBadge.label}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`group-modal-role-badge ${m.roleBadge.variant === 'gold'
+                        ? 'group-modal-role-badge--gold'
+                        : m.roleBadge.variant === 'blue'
+                          ? 'group-modal-role-badge--blue'
+                          : 'group-modal-role-badge--default'
+                        }`}
+                    >
+                      {m.roleBadge.variant === 'gold' && <Crown className="w-3 h-3" />}
+                      {m.roleBadge.variant === 'blue' && <Shield className="w-3 h-3" />}
+                      {m.roleBadge.label}
+                    </span>
+
+                    {isOwner && ownerId && m.userId !== ownerId && (
+                      <button
+                        type="button"
+                        onClick={() => setTransferCandidate(m)}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-lg border border-amber-200 transition-colors cursor-pointer"
+                        title={`Chuyển quyền Trưởng nhóm cho ${m.displayName}`}
+                      >
+                        <Crown className="w-3.5 h-3.5 text-amber-600" />
+                        <span>Chuyển Trưởng nhóm</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -460,6 +498,85 @@ export const MemberManagementModal: React.FC<MemberManagementModalProps> = ({
                   <UserCheck className="w-3.5 h-3.5" />
                 )}
                 Phê duyệt
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Transfer Ownership Confirmation Modal */}
+      {transferCandidate && (
+        <div
+          className="modal-overlay"
+          style={{ zIndex: 1200 }}
+          onClick={() => !transferring && setTransferCandidate(null)}
+        >
+          <div
+            className="group-modal-container"
+            style={{ maxWidth: 460 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="group-modal-header">
+              <div className="group-modal-header-info">
+                <Crown className="w-5 h-5 text-amber-500" />
+                <div>
+                  <h3 className="group-modal-title">Chuyển quyền Trưởng nhóm</h3>
+                  <p className="group-modal-subtitle">Xác nhận chuyển nhượng quyền lãnh đạo nhóm</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => !transferring && setTransferCandidate(null)}
+                className="group-modal-close-btn"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="group-modal-body" style={{ padding: '20px 24px', fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
+              <p className="mb-3">
+                Bạn có chắc chắn muốn chuyển giao toàn quyền quản lý câu lạc bộ/nhóm cho thành viên <strong>{transferCandidate.displayName}</strong> ({transferCandidate.username})?
+              </p>
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 space-y-1.5 leading-relaxed">
+                <p>• Thành viên này sẽ trở thành <strong>Trưởng nhóm (Owner)</strong> với toàn quyền quyết định.</p>
+                <p>• Bạn sẽ chuyển sang vai trò <strong>Quản trị viên (Admin)</strong> của nhóm.</p>
+                <p>• Hành động này sẽ có hiệu lực ngay lập tức.</p>
+              </div>
+            </div>
+
+            <div
+              className="group-modal-footer"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'flex-end',
+                gap: 'var(--space-2)',
+                padding: 'var(--space-4) var(--space-6)',
+                borderTop: '1px solid var(--color-glass-border)',
+                background: 'var(--color-bg-secondary)',
+              }}
+            >
+              <button
+                type="button"
+                disabled={transferring}
+                onClick={() => setTransferCandidate(null)}
+                className="group-modal-btn group-modal-btn--ghost"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                disabled={transferring}
+                onClick={handleConfirmTransfer}
+                className="group-modal-btn"
+                style={{ backgroundColor: '#d97706', borderColor: '#d97706', color: '#ffffff', fontWeight: 600 }}
+              >
+                {transferring ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" />
+                ) : (
+                  <Crown className="w-3.5 h-3.5 mr-1" />
+                )}
+                Xác nhận chuyển quyền
               </button>
             </div>
           </div>

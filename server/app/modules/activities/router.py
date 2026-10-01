@@ -43,6 +43,7 @@ async def discover_nearby(
     has_trophy: bool | None = Query(default=None),
     sort_by: str = Query(default="distance"),
     exclude_my_activities: bool = Query(default=True),
+    exclude_joined: bool = Query(default=False),
     limit: int = Query(default=20, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
     include_conflicts: bool = Query(default=False),
@@ -56,6 +57,7 @@ async def discover_nearby(
         days_ahead=days_ahead, is_ctxh=is_ctxh, has_trophy=has_trophy,
         sort_by=sort_by,
         exclude_my_activities=exclude_my_activities,
+        exclude_joined=exclude_joined,
         limit=limit, offset=offset
     )
     return await service.discover_nearby(

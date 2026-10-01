@@ -3,6 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { Check, X } from 'lucide-react';
 import { participationApi, type CertificateResponse } from '../../api/participation';
 import { formatCtxh } from '../../utils/format';
+import { formatTrophyTitle } from '../../components/CertificateModal/CertificateModal';
 import Button from '../../components/Button/Button';
 
 export default function VerifyCertificate() {
@@ -182,7 +183,7 @@ export default function VerifyCertificate() {
               {cert.trophy_name && (
                 <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-4">
                   <span className="text-neutral-500 font-medium sm:w-44 shrink-0">Danh hiệu đạt được:</span>
-                  <span className="font-bold text-black">{cert.trophy_name}</span>
+                  <span className="font-bold text-black">{formatTrophyTitle(cert.trophy_name)}</span>
                 </div>
               )}
             </div>

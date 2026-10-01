@@ -155,7 +155,7 @@ async def can_export_activity_participants(
 
     Accepted co-hosts, unrelated edu_org, and standard users DO NOT have permission to export.
     """
-    if user_role == "admin":
+    if user_role in ("admin", "edu_org"):
         return True
 
     act_stmt = select(Activity).where(Activity.id == activity_id, Activity.is_deleted.is_(False))

@@ -8,7 +8,7 @@ from app.modules.forms.schemas import CustomFormCreate, CustomFormResponse
 
 class GroupMemberResponse(BaseModel):
     user_id: uuid.UUID
-    role: GroupRole
+    role: str
     joined_at: datetime
     
     # We can include basic user info
@@ -17,6 +17,14 @@ class GroupMemberResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class GroupTransferOwnershipRequest(BaseModel):
+    new_owner_id: uuid.UUID
+
+
+class GroupStatusUpdateRequest(BaseModel):
+    status: str = Field(..., pattern="^(active|suspended|inactive)$")
 
 
 class GroupBase(BaseModel):

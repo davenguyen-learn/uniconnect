@@ -183,6 +183,7 @@ async def find_within_radius(
     has_trophy: bool | None = None,
     sort_by: str | None = "distance",
     exclude_my_activities: bool = True,
+    exclude_joined_activities: bool = False,
     limit: int = 20,
     offset: int = 0,
     followed_user_ids: list[uuid.UUID] | None = None,
@@ -193,6 +194,7 @@ async def find_within_radius(
     """
     from app.modules.groups.models import ActivityCoHost, GroupMember
     from datetime import timedelta
+    from sqlalchemy.orm import selectinload
 
     now = datetime.now(timezone.utc)
     point = ST_SetSRID(ST_MakePoint(lng, lat), 4326)
@@ -229,6 +231,14 @@ async def find_within_radius(
 
     if exclude_my_activities and user_id:
         base_filter = and_(base_filter, Activity.host_id != user_id)
+
+    if exclude_joined_activities and user_id:
+        from app.modules.participation.models import JoinRequest, RequestStatus
+        joined_subq = select(JoinRequest.activity_id).where(
+            JoinRequest.user_id == user_id,
+            JoinRequest.status.in_([RequestStatus.approved, RequestStatus.pending]),
+        )
+        base_filter = and_(base_filter, Activity.id.not_in(joined_subq))
 
     if category:
         category_synonyms: dict[str, list[str]] = {
@@ -295,7 +305,9 @@ async def find_within_radius(
     if is_ctxh:
         base_filter = and_(base_filter, Activity.social_work_days.is_not(None), Activity.social_work_days > 0)
     if has_trophy:
-        base_filter = and_(base_filter, Activity.trophy_id.is_not(None))
+        from app.modules.trophies.models import Trophy
+        trophy_subq = select(Trophy.activity_id).where(Trophy.activity_id.is_not(None))
+        base_filter = and_(base_filter, Activity.id.in_(trophy_subq))
 
     # Count
     count_q = select(func.count()).select_from(Activity).where(base_filter)
@@ -320,7 +332,7 @@ async def find_within_radius(
 
     query = (
         select(Activity, distance_col)
-        .options(joinedload(Activity.host))
+        .options(joinedload(Activity.host), selectinload(Activity.trophies))
         .where(base_filter)
         .order_by(*order_clauses)
         .limit(limit)

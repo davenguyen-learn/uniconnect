@@ -23,23 +23,65 @@ const DEFAULT_CHIPS = [
   'Nhóm nào đang tuyển thành viên mới?',
 ];
 
+const FLOATING_AI_STORAGE_KEY = 'unic_floating_ai_session';
+
+const getInitialFloatingState = () => {
+  try {
+    const raw = sessionStorage.getItem(FLOATING_AI_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed.messages) && parsed.messages.length > 0) {
+        return {
+          messages: parsed.messages as ChatMessageViewModel[],
+          conversationId: (parsed.conversationId as string) || null,
+          suggestions: (parsed.suggestions as string[]) || DEFAULT_CHIPS,
+        };
+      }
+    }
+  } catch (err) {
+    console.error('Failed to load floating AI session', err);
+  }
+
+  return {
+    messages: [
+      {
+        id: 'init-welcome',
+        role: 'assistant' as const,
+        content: 'Xin chào! Mình là Trợ lý AI UniConnect. Bạn cần tìm hoạt động CTXH, kiểm tra lịch học rảnh hay tìm nhóm phù hợp cứ hỏi mình nhé!',
+        cards: [],
+        timeFormatted: '',
+      },
+    ],
+    conversationId: null,
+    suggestions: DEFAULT_CHIPS,
+  };
+};
+
 export const FloatingAIAssistant: React.FC = () => {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
-  const [conversationId, setConversationId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<ChatMessageViewModel[]>([
-    {
-      id: 'init-welcome',
-      role: 'assistant',
-      content: 'Xin chào! Mình là Trợ lý AI UniConnect. Bạn cần tìm hoạt động CTXH, kiểm tra lịch học rảnh hay tìm nhóm phù hợp cứ hỏi mình nhé!',
-      cards: [],
-      timeFormatted: '',
-    },
-  ]);
+  const initial = getInitialFloatingState();
+  const [conversationId, setConversationId] = useState<string | null>(initial.conversationId);
+  const [messages, setMessages] = useState<ChatMessageViewModel[]>(initial.messages);
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(false);
-  const [suggestions, setSuggestions] = useState<string[]>(DEFAULT_CHIPS);
+  const [suggestions, setSuggestions] = useState<string[]>(initial.suggestions);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(
+        FLOATING_AI_STORAGE_KEY,
+        JSON.stringify({
+          conversationId,
+          messages,
+          suggestions,
+        })
+      );
+    } catch (e) {
+      console.error(e);
+    }
+  }, [conversationId, messages, suggestions]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -212,7 +254,23 @@ export const FloatingAIAssistant: React.FC = () => {
                     }`}
                   >
                     <div className="prose prose-xs max-w-none text-left">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                          a: ({ href, children, ...props }) => (
+                            <a
+                              href={href}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="chat-link inline-flex items-center gap-0.5 font-semibold text-indigo-600 hover:underline"
+                              title="Mở trong tab mới"
+                              {...props}
+                            >
+                              <span>{children}</span>
+                            </a>
+                          ),
+                        }}
+                      >
                         {msg.content}
                       </ReactMarkdown>
                     </div>

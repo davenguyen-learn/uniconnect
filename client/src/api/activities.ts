@@ -124,6 +124,7 @@ export interface NearbyQuery {
   has_trophy?: boolean;
   sort_by?: 'distance' | 'time' | 'created_at';
   exclude_my_activities?: boolean;
+  exclude_joined?: boolean;
   limit?: number;
   offset?: number;
   include_conflicts?: boolean;

@@ -86,6 +86,14 @@ class Activity(PrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
     attendance_finalized_at = mapped_column(
         DateTime(timezone=True), nullable=True, default=None
     )
+    live_checkin_lat: Mapped[float | None] = mapped_column(Float, nullable=True)
+    live_checkin_lng: Mapped[float | None] = mapped_column(Float, nullable=True)
+    live_checkin_radius: Mapped[int | None] = mapped_column(
+        Integer, default=50, server_default="50", nullable=True
+    )
+    live_checkin_expires_at = mapped_column(
+        DateTime(timezone=True), nullable=True, default=None
+    )
 
     # Relationships
     host = relationship("User", backref="hosted_activities", lazy="joined")

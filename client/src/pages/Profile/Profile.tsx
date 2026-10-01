@@ -564,11 +564,6 @@ export default function Profile() {
                   <h3 className="trophy-item-name" title={ut.trophy?.name}>
                     {ut.trophy?.name}
                   </h3>
-                  {ut.trophy?.description && (
-                    <p className="trophy-item-desc" title={ut.trophy.description}>
-                      {ut.trophy.description}
-                    </p>
-                  )}
                   {ut.activity && (
                     ut.activity.is_accessible && ut.activity.id ? (
                       <Link to={`/activities/${ut.activity.id}`} className="trophy-activity-link" title={ut.activity.title}>

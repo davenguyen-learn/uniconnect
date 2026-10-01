@@ -21,6 +21,8 @@ from app.modules.groups.schemas import (
     CoHostInvitationResponse,
     CoHostActionRequest,
     CoHostInvitationCreate,
+    GroupTransferOwnershipRequest,
+    GroupStatusUpdateRequest,
 )
 
 router = APIRouter(prefix="/groups", tags=["groups"])
@@ -248,6 +250,53 @@ async def delete_group_avatar(
         db=db,
         group_id=group_id,
         user_id=uuid.UUID(current_user["sub"]),
+    )
+
+
+@router.post("/{group_id}/suspend", response_model=GroupDetailResponse)
+async def suspend_group(
+    group_id: uuid.UUID,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Suspend group activities (owner or system admin only)."""
+    return await group_service.suspend_group(
+        db,
+        group_id=group_id,
+        user_id=uuid.UUID(current_user["sub"]),
+        user_role=current_user.get("role"),
+    )
+
+
+@router.post("/{group_id}/resume", response_model=GroupDetailResponse)
+async def resume_group(
+    group_id: uuid.UUID,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Resume group activities (owner or system admin only)."""
+    return await group_service.resume_group(
+        db,
+        group_id=group_id,
+        user_id=uuid.UUID(current_user["sub"]),
+        user_role=current_user.get("role"),
+    )
+
+
+@router.post("/{group_id}/transfer-ownership", response_model=GroupDetailResponse)
+async def transfer_group_ownership(
+    group_id: uuid.UUID,
+    data: GroupTransferOwnershipRequest,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Transfer group ownership to another member (owner or system admin only)."""
+    return await group_service.transfer_group_ownership(
+        db,
+        group_id=group_id,
+        current_user_id=uuid.UUID(current_user["sub"]),
+        new_owner_id=data.new_owner_id,
+        user_role=current_user.get("role"),
     )
 
 

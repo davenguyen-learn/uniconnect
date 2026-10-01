@@ -4,7 +4,15 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from fastapi import HTTPException
 
-from app.modules.groups.models import Group, GroupMember, GroupRole, GroupJoinRequest, ActivityCoHost, ActivityCoHostInvitation
+from app.modules.groups.models import (
+    Group,
+    GroupMember,
+    GroupRole,
+    GroupJoinRequest,
+    ActivityCoHost,
+    ActivityCoHostInvitation,
+    GroupPrivacy,
+)
 from app.modules.activities.models import Activity
 from app.modules.participation.models import JoinRequest, RequestStatus
 from app.modules.groups.permissions import (
@@ -468,3 +476,99 @@ async def test_cohost_invitation_privacy_rules():
                 )
                 assert res.status == "pending"
                 assert res.invited_group_id == private_group_id
+
+
+# ── 6. Group Suspension and Ownership Transfer Tests ──
+
+@pytest.mark.asyncio
+async def test_suspend_and_resume_group():
+    from app.modules.groups.service import suspend_group, resume_group
+    group_id = uuid.uuid4()
+    owner_id = uuid.uuid4()
+    stranger_id = uuid.uuid4()
+
+    mock_db = AsyncMock()
+    group = Group(
+        id=group_id,
+        name="CLB Robotics",
+        owner_id=owner_id,
+        status="active",
+        privacy=GroupPrivacy.public,
+        created_at=datetime.now(timezone.utc),
+    )
+    group.members = []
+
+    with patch("app.modules.groups.repository.get_group_by_id", return_value=group):
+        with patch("app.modules.groups.repository.get_group_with_members", return_value=group):
+            # Stranger cannot suspend
+            with pytest.raises(HTTPException) as exc:
+                await suspend_group(mock_db, group_id, stranger_id, user_role="student")
+            assert exc.value.status_code == 403
+
+            # Owner can suspend
+            res = await suspend_group(mock_db, group_id, owner_id, user_role="student")
+            assert group.status == "suspended"
+            assert res.status == "suspended"
+
+            # Owner can resume
+            res_resume = await resume_group(mock_db, group_id, owner_id, user_role="student")
+            assert group.status == "active"
+            assert res_resume.status == "active"
+
+
+@pytest.mark.asyncio
+async def test_transfer_group_ownership():
+    from app.modules.groups.service import transfer_group_ownership
+    group_id = uuid.uuid4()
+    old_owner_id = uuid.uuid4()
+    new_owner_id = uuid.uuid4()
+    stranger_id = uuid.uuid4()
+
+    mock_db = AsyncMock()
+    group = Group(
+        id=group_id,
+        name="CLB Tin Học",
+        owner_id=old_owner_id,
+        status="active",
+        privacy=GroupPrivacy.public,
+        created_at=datetime.now(timezone.utc),
+    )
+    new_member = GroupMember(group_id=group_id, user_id=new_owner_id, role=GroupRole.member)
+    old_member = GroupMember(group_id=group_id, user_id=old_owner_id, role=GroupRole.admin)
+    group.members = [old_member, new_member]
+
+    with patch("app.modules.groups.repository.get_group_by_id", return_value=group):
+        with patch("app.modules.groups.repository.get_group_with_members", return_value=group):
+            # Stranger cannot transfer
+            with pytest.raises(HTTPException) as exc1:
+                await transfer_group_ownership(mock_db, group_id, stranger_id, new_owner_id, user_role="student")
+            assert exc1.value.status_code == 403
+
+            # Cannot transfer to someone not a member
+            with patch("app.modules.groups.repository.is_member", return_value=False):
+                with pytest.raises(HTTPException) as exc2:
+                    await transfer_group_ownership(mock_db, group_id, old_owner_id, stranger_id, user_role="student")
+                assert exc2.value.status_code == 400
+                assert "thành viên" in exc2.value.detail
+
+            # Cannot transfer to self (current owner)
+            with pytest.raises(HTTPException) as exc3:
+                await transfer_group_ownership(mock_db, group_id, old_owner_id, old_owner_id, user_role="student")
+            assert exc3.value.status_code == 400
+
+            # Successful transfer
+            with patch("app.modules.groups.repository.is_member", return_value=True):
+                mock_new_mem_res = MagicMock()
+                mock_new_mem_res.scalar_one_or_none.return_value = new_member
+                mock_old_mem_res = MagicMock()
+                mock_old_mem_res.scalar_one_or_none.return_value = old_member
+
+                mock_db.execute.side_effect = [mock_new_mem_res, mock_old_mem_res]
+
+                with patch("app.modules.notifications.repository.create_notification", new_callable=AsyncMock) as mock_notif:
+                    await transfer_group_ownership(mock_db, group_id, old_owner_id, new_owner_id, user_role="student")
+                    assert group.owner_id == new_owner_id
+                    assert new_member.role == GroupRole.admin
+                    assert old_member.role == GroupRole.admin
+                    mock_notif.assert_called_once()
+

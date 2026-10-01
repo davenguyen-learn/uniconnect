@@ -119,8 +119,8 @@ async def create_activity(
         from app.modules.groups.repository import get_group_by_id
         group = await get_group_by_id(db, data.group_id)
         if group:
-            if getattr(group, "status", "active") == "inactive":
-                raise ValidationError("Nhóm này đã dừng hoạt động, không thể tạo hoạt động mới.")
+            if getattr(group, "status", "active") in ("inactive", "suspended"):
+                raise ValidationError("Nhóm này đang tạm dừng hoạt động, không thể tạo hoạt động mới.")
             if group.owner_id != uuid.UUID(user_id) and not group.allow_member_activities:
                 raise ForbiddenError("Group members are not allowed to post activities.")
 
@@ -272,6 +272,8 @@ async def get_activity(
 
     # Only reveal private_description to host or approved participants
     revealed_private_desc = None
+    user_joined_at = None
+    user_attendance = None
     if is_host:
         revealed_private_desc = activity.private_description
     elif user_id:
@@ -280,11 +282,15 @@ async def get_activity(
             select(JoinRequest).where(and_(
                 JoinRequest.activity_id == activity_id,
                 JoinRequest.user_id == uuid.UUID(user_id),
-                JoinRequest.status == RequestStatus.approved,
+                JoinRequest.status.in_([RequestStatus.approved, RequestStatus.pending]),
             ))
         )
-        if result.unique().scalar_one_or_none():
-            revealed_private_desc = activity.private_description
+        user_jr = result.unique().scalar_one_or_none()
+        if user_jr:
+            if user_jr.status == RequestStatus.approved:
+                revealed_private_desc = activity.private_description
+            user_joined_at = user_jr.created_at
+            user_attendance = user_jr.attendance_confirmed
 
     # Fetch co-hosts
     from app.modules.groups.models import ActivityCoHost, Group
@@ -299,7 +305,13 @@ async def get_activity(
         for g in cohost_res.unique().scalars().all()
     ]
 
-    return _activity_to_response(activity, lat, lng, private_description=revealed_private_desc, co_hosts=co_hosts_list)
+    return _activity_to_response(
+        activity, lat, lng,
+        private_description=revealed_private_desc,
+        co_hosts=co_hosts_list,
+        attendance_confirmed=user_attendance,
+        joined_at=user_joined_at,
+    )
 
 
 async def update_activity(
@@ -532,8 +544,10 @@ async def list_activities(
         limit=limit, offset=offset, followed_user_ids=followed_user_ids, include_past=include_past
     )
 
-    # Batch load co-hosts for returned activities
+    # Batch load co-hosts & join status for returned activities
     co_hosts_map: dict[uuid.UUID, list[GroupInfo]] = {}
+    joined_map: dict[uuid.UUID, datetime] = {}
+    attendance_map: dict[uuid.UUID, bool] = {}
     if activities:
         from app.modules.groups.models import ActivityCoHost, Group
         from app.modules.activities.schemas import GroupInfo
@@ -551,6 +565,20 @@ async def list_activities(
                 GroupInfo(id=g.id, name=g.name, avatar_url=getattr(g, "avatar_url", None))
             )
 
+        if user_id:
+            from app.modules.participation.models import JoinRequest, RequestStatus
+            jr_stmt = select(JoinRequest.activity_id, JoinRequest.created_at, JoinRequest.attendance_confirmed).where(
+                and_(
+                    JoinRequest.activity_id.in_(act_ids),
+                    JoinRequest.user_id == uuid.UUID(user_id),
+                    JoinRequest.status.in_([RequestStatus.approved, RequestStatus.pending]),
+                )
+            )
+            jr_res = await db.execute(jr_stmt)
+            for aid, j_at, att in jr_res.all():
+                joined_map[aid] = j_at
+                attendance_map[aid] = att
+
     detector = None
     if user_id:
         try:
@@ -567,7 +595,13 @@ async def list_activities(
         coords = await repository.get_coordinates_from_db(db, activity.id)
         lat, lng = coords if coords else (0, 0)
         lat, lng = obfuscate_coordinates(lat, lng)  # Always obfuscate in listings
-        items.append(_activity_to_response(activity, lat, lng, conflict_info=conflict, co_hosts=co_hosts_map.get(activity.id, [])))
+        items.append(_activity_to_response(
+            activity, lat, lng,
+            conflict_info=conflict,
+            co_hosts=co_hosts_map.get(activity.id, []),
+            attendance_confirmed=attendance_map.get(activity.id),
+            joined_at=joined_map.get(activity.id),
+        ))
 
     return ActivityListResponse(
         items=items, total=total, limit=limit, offset=offset, has_more=(offset + limit < total)
@@ -625,6 +659,7 @@ async def discover_nearby(
         has_trophy=query.has_trophy,
         sort_by=query.sort_by,
         exclude_my_activities=query.exclude_my_activities,
+        exclude_joined_activities=getattr(query, "exclude_joined", False),
         limit=query.limit,
         offset=query.offset,
         followed_user_ids=followed_user_ids,
@@ -636,6 +671,23 @@ async def discover_nearby(
             detector = await get_detector_for_user(db, uuid.UUID(user_id))
         except Exception:
             detector = None
+
+    joined_map: dict[uuid.UUID, datetime] = {}
+    attendance_map: dict[uuid.UUID, bool] = {}
+    if user_id and results:
+        from app.modules.participation.models import JoinRequest, RequestStatus
+        act_ids = [act.id for act, _ in results]
+        jr_stmt = select(JoinRequest.activity_id, JoinRequest.created_at, JoinRequest.attendance_confirmed).where(
+            and_(
+                JoinRequest.activity_id.in_(act_ids),
+                JoinRequest.user_id == uuid.UUID(user_id),
+                JoinRequest.status.in_([RequestStatus.approved, RequestStatus.pending]),
+            )
+        )
+        jr_res = await db.execute(jr_stmt)
+        for aid, j_at, att in jr_res.all():
+            joined_map[aid] = j_at
+            attendance_map[aid] = att
 
     items = []
     for activity, distance in results:
@@ -651,7 +703,13 @@ async def discover_nearby(
         if not is_host:
             lat, lng = obfuscate_coordinates(lat, lng)
 
-        items.append(_activity_to_response(activity, lat, lng, distance=distance, conflict_info=conflict))
+        items.append(_activity_to_response(
+            activity, lat, lng,
+            distance=distance,
+            conflict_info=conflict,
+            attendance_confirmed=attendance_map.get(activity.id),
+            joined_at=joined_map.get(activity.id),
+        ))
 
     return ActivityListResponse(
         items=items, total=total, limit=query.limit, offset=query.offset,

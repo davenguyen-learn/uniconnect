@@ -16,6 +16,9 @@ from app.modules.participation.schemas import (
     CheckInResponse,
     JoinRequestCreate,
     JoinRequestResponse,
+    LiveCheckInOpenRequest,
+    LiveCheckInStatusResponse,
+    LiveCheckInVerifyRequest,
 )
 
 router = APIRouter(tags=["participation"])
@@ -203,3 +206,76 @@ async def verify_certificate(
 ):
     """Public verification of a certificate by its code."""
     return await service.verify_certificate_code(db, certificate_code)
+
+
+@router.post(
+    "/activities/{activity_id}/live-checkin/open",
+    response_model=dict,
+)
+async def open_live_checkin_session(
+    activity_id: uuid.UUID,
+    data: LiveCheckInOpenRequest,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Host opens a live location check-in session for participants."""
+    return await service.open_live_checkin(
+        db,
+        activity_id,
+        current_user["sub"],
+        data.latitude,
+        data.longitude,
+        radius=data.radius,
+        duration_seconds=data.duration_seconds,
+    )
+
+
+@router.post(
+    "/activities/{activity_id}/live-checkin/close",
+    response_model=dict,
+)
+async def close_live_checkin_session(
+    activity_id: uuid.UUID,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Host closes the live location check-in session."""
+    return await service.close_live_checkin(
+        db,
+        activity_id,
+        current_user["sub"],
+    )
+
+
+@router.get(
+    "/activities/{activity_id}/live-checkin/status",
+    response_model=LiveCheckInStatusResponse,
+)
+async def get_live_checkin_session_status(
+    activity_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    """Get active status of live location check-in session."""
+    return await service.get_live_checkin_status(db, activity_id)
+
+
+@router.post(
+    "/activities/{activity_id}/live-checkin/verify",
+    response_model=dict,
+)
+async def verify_live_checkin(
+    activity_id: uuid.UUID,
+    data: LiveCheckInVerifyRequest,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Participant verifies presence against Host's live check-in anchor."""
+    return await service.verify_live_checkin(
+        db,
+        activity_id,
+        current_user["sub"],
+        data.latitude,
+        data.longitude,
+        accuracy=data.accuracy,
+    )
+

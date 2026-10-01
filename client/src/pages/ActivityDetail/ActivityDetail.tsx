@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import {
   Calendar as CalendarIcon,
   Lock,
@@ -17,6 +17,7 @@ import {
   Search,
   Download,
   Clock,
+  MapPin,
 } from 'lucide-react';
 import { activitiesApi, type ActivityResponse } from '../../api/activities';
 import { groupsApi, type GroupResponse, type CoHostInvitationResponse } from '../../api/groups';
@@ -45,9 +46,12 @@ import '../../components/groups/GroupModals.css';
 
 export default function ActivityDetail() {
   const { id } = useParams<{ id: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const toast = useToast();
+
+  const [autoCheckInCode, setAutoCheckInCode] = useState<string | null>(null);
 
   const [activity, setActivity] = useState<ActivityResponse | null>(null);
   const [requests, setRequests] = useState<JoinRequestResponse[]>([]);
@@ -82,7 +86,23 @@ export default function ActivityDetail() {
     expires_in_seconds: number;
     check_in_radius: number;
   } | null>(null);
-  const [qrCountdown, setQrCountdown] = useState(30);
+  const [qrCountdown, setQrCountdown] = useState(60);
+
+  // Live Location Check-In state (Host Broadcast Radius)
+  const [liveSession, setLiveSession] = useState<{
+    is_active: boolean;
+    expires_at: string | null;
+    remaining_seconds: number;
+    radius: number;
+    opened_by_name: string | null;
+    attended_count?: number;
+    total_approved?: number;
+  } | null>(null);
+  const [liveCountdown, setLiveCountdown] = useState(0);
+  const [liveRadiusInput, setLiveRadiusInput] = useState(50);
+  const [isOpeningLiveCheckIn, setIsOpeningLiveCheckIn] = useState(false);
+  const [isClosingLiveCheckIn, setIsClosingLiveCheckIn] = useState(false);
+  const [isVerifyingLive, setIsVerifyingLive] = useState(false);
 
   const [showCheckInModal, setShowCheckInModal] = useState(false);
   const [updatingAttendanceUserId, setUpdatingAttendanceUserId] = useState<string | null>(null);
@@ -153,13 +173,61 @@ export default function ActivityDetail() {
     }
   }, [id, navigate]);
 
+  // Auto-trigger check-in when scanned QR code opens page with ?checkin_code=
+  useEffect(() => {
+    const codeFromUrl = searchParams.get('checkin_code') || searchParams.get('code');
+    if (codeFromUrl && activity) {
+      setAutoCheckInCode(codeFromUrl.toUpperCase());
+      setShowCheckInModal(true);
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('checkin_code');
+      newParams.delete('code');
+      setSearchParams(newParams, { replace: true });
+    }
+  }, [searchParams, activity]);
+
+  const fetchLiveCheckInStatus = useCallback(async () => {
+    if (!id) return;
+    try {
+      const res = await participationApi.getLiveCheckInStatus(id);
+      setLiveSession(res);
+      if (res.is_active && res.remaining_seconds > 0) {
+        setLiveCountdown(res.remaining_seconds);
+      }
+    } catch {
+      // ignore
+    }
+  }, [id]);
+
+  useEffect(() => {
+    fetchLiveCheckInStatus();
+    const interval = setInterval(() => {
+      fetchLiveCheckInStatus();
+    }, 8000);
+    return () => clearInterval(interval);
+  }, [fetchLiveCheckInStatus]);
+
+  useEffect(() => {
+    if (!liveSession?.is_active || liveCountdown <= 0) return;
+    const t = setInterval(() => {
+      setLiveCountdown(prev => {
+        if (prev <= 1) {
+          fetchLiveCheckInStatus();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(t);
+  }, [liveSession?.is_active, liveCountdown, fetchLiveCheckInStatus]);
+
   useEffect(() => {
     let timer: any;
     if (showHostQrModal && id) {
       activitiesApi.getCheckInCode(id)
         .then(data => {
           setHostQrData(data);
-          setQrCountdown(data.expires_in_seconds || 30);
+          setQrCountdown(data.expires_in_seconds || 60);
         })
         .catch(() => toast.error('Không thể lấy mã QR'));
 
@@ -169,10 +237,10 @@ export default function ActivityDetail() {
             activitiesApi.getCheckInCode(id)
               .then(data => {
                 setHostQrData(data);
-                return data.expires_in_seconds || 30;
+                return data.expires_in_seconds || 60;
               })
-              .catch(() => 30);
-            return 30;
+              .catch(() => 60);
+            return 60;
           }
           return prev - 1;
         });
@@ -199,7 +267,7 @@ export default function ActivityDetail() {
         // Fetch co-host invitations for this activity
         groupsApi.getActivityCoHostInvitations(id!)
           .then(res => setCoHostInvitations(res || []))
-          .catch(() => {});
+          .catch(() => { });
       } else {
         // If not host, fetch my own request status safely
         try {
@@ -366,6 +434,103 @@ export default function ActivityDetail() {
     setShowCheckInModal(true);
   };
 
+  const handleOpenLiveCheckIn = () => {
+    if (!id) return;
+    if (!navigator.geolocation) {
+      toast.error('Trình duyệt không hỗ trợ định vị GPS.');
+      return;
+    }
+    setIsOpeningLiveCheckIn(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const { latitude, longitude } = pos.coords;
+          const radius = Math.max(5, Number(liveRadiusInput) || 50);
+          const res = await participationApi.openLiveCheckIn(id, {
+            latitude,
+            longitude,
+            radius,
+            duration_seconds: 300,
+          });
+          toast.success(res.message);
+          setLiveSession({
+            is_active: true,
+            expires_at: res.expires_at,
+            remaining_seconds: res.remaining_seconds,
+            radius: res.radius,
+            opened_by_name: user?.username || null,
+          });
+          setLiveCountdown(res.remaining_seconds);
+        } catch (err: any) {
+          toast.error(err?.message || err.response?.data?.detail || 'Không thể mở phiên điểm danh.');
+        } finally {
+          setIsOpeningLiveCheckIn(false);
+        }
+      },
+      (err) => {
+        setIsOpeningLiveCheckIn(false);
+        if (err.code === err.PERMISSION_DENIED) {
+          toast.error('Bạn đã từ chối quyền truy cập GPS.');
+        } else {
+          toast.error('Không thể lấy toạ độ GPS. Vui lòng thử lại.');
+        }
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
+  const handleCloseLiveCheckIn = async () => {
+    if (!id) return;
+    try {
+      setIsClosingLiveCheckIn(true);
+      const res = await participationApi.closeLiveCheckIn(id);
+      toast.success(res.message);
+      setLiveSession(null);
+      setLiveCountdown(0);
+    } catch (err: any) {
+      toast.error(err?.message || err.response?.data?.detail || 'Không thể đóng phiên.');
+    } finally {
+      setIsClosingLiveCheckIn(false);
+    }
+  };
+
+  const handleVerifyLiveCheckIn = () => {
+    if (!id) return;
+    if (!navigator.geolocation) {
+      toast.error('Trình duyệt không hỗ trợ định vị GPS.');
+      return;
+    }
+    setIsVerifyingLive(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const { latitude, longitude, accuracy } = pos.coords;
+          const res = await participationApi.verifyLiveCheckIn(id, {
+            latitude,
+            longitude,
+            accuracy,
+          });
+          toast.success(res.message);
+          await loadData();
+          fetchLiveCheckInStatus();
+        } catch (err: any) {
+          toast.error(err?.message || err.response?.data?.detail || 'Điểm danh không thành công.');
+        } finally {
+          setIsVerifyingLive(false);
+        }
+      },
+      (err) => {
+        setIsVerifyingLive(false);
+        if (err.code === err.PERMISSION_DENIED) {
+          toast.error('Vui lòng cho phép quyền truy cập vị trí GPS để xác nhận khoảng cách.');
+        } else {
+          toast.error('Không thể xác định vị trí GPS.');
+        }
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
   const handleSetAttendance = async (participantUserId: string, attended: boolean) => {
     if (!id) return;
     try {
@@ -452,8 +617,10 @@ export default function ActivityDetail() {
     )
   );
   const isAdmin = user?.role === 'admin' || user?.role === 'edu_org';
-  const canExport = Boolean(isHost || user?.role === 'admin');
+  const canExport = Boolean(isHost || isAdmin);
   const canManage = isHost || isAdmin;
+  const currentAttendedCount = liveSession?.attended_count ?? participants.filter(p => p.attendance_confirmed).length;
+  const currentTotalApproved = liveSession?.total_approved ?? (participants.length || activity?.current_participants || 0);
 
   const handleExportCsv = async () => {
     if (!id || !activity) return;
@@ -536,9 +703,9 @@ export default function ActivityDetail() {
                 </div>
               ) : null}
               {activity.trophy && (
-                <div 
+                <div
                   className="trophy-badge"
-                  title={activity.trophy.description ? `${activity.trophy.name}: ${activity.trophy.description}` : activity.trophy.name}
+                  title={activity.trophy.name}
                 >
                   <span className="trophy-badge-name">{activity.trophy.name}</span>
                   {activity.trophy.points > 0 && (
@@ -578,7 +745,7 @@ export default function ActivityDetail() {
                   <span className="meta-dot">•</span>
                   <button
                     type="button"
-                    className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-colors"
+                    className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 shadow-sm hover:bg-amber-100 transition-colors"
                     onClick={() => setShowInviteCoHostModal(true)}
                     title="Nhấn để xem các lời mời đang chờ phản hồi"
                   >
@@ -686,15 +853,98 @@ export default function ActivityDetail() {
         <div className="activity-sidebar glass">
           {canManage ? (
             <div className="host-management">
-              {isHost && activity.attendance_mode === 'qr_code' && (
+              {isHost && (
                 <div className="host-actions mb-4">
-                  <Button
-                    variant="primary"
-                    fullWidth
+                  <button
+                    type="button"
                     onClick={() => setShowHostQrModal(true)}
+                    className="w-full h-full p-4 rounded-2xl bg-[var(--color-primary)] text-white shadow-md hover:opacity-95 transition-all flex flex-col items-center !justify-center text-center gap-1.5 cursor-pointer border-0"
                   >
-                    <QrCode size={16} className="inline mr-1.5" /> Hiển thị QR Điểm danh
-                  </Button>
+                    <div className="flex items-center gap-2 font-bold text-sm">
+                      <QrCode size={18} />
+                      <span>Hiển thị QR Điểm danh</span>
+                    </div>
+                    <span className="text-[11px] text-white/80 font-normal">
+                      Mã QR xoay vòng 60s & quét camera
+                    </span>
+                  </button>
+
+                  {/* Điểm danh theo phạm vi (Live GPS Proximity) */}
+                  <div className="p-4 rounded-2xl bg-white shadow-md text-left flex flex-col justify-between h-full border-0">
+                    <div className="text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        Điểm danh theo phạm vi
+                      </span>
+                      {liveSession?.is_active && (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full shadow-xs">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                          {Math.floor(liveCountdown / 60)}:{String(liveCountdown % 60).padStart(2, '0')}
+                        </span>
+                      )}
+                    </div>
+
+                    {liveSession?.is_active ? (
+                      <div className="flex flex-col justify-between flex-1 gap-2">
+                        <p className="text-[11px] text-slate-600 leading-tight">
+                          Đang mở phạm vi <strong>{liveSession.radius}m</strong> quanh vị trí của bạn (5 phút). Thành viên lân cận có thể tự bấm xác nhận.
+                        </p>
+                        <div className="flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-slate-50 text-xs shadow-2xs">
+                          <span className="text-slate-600 flex items-center gap-1 font-medium text-[11px]">
+                            <Users size={12} className="text-indigo-600" />
+                            Đã điểm danh:
+                          </span>
+                          <span className="font-bold text-slate-800 text-[11px]">
+                            <span className="text-emerald-600 font-extrabold">{currentAttendedCount}</span> / {currentTotalApproved}
+                          </span>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          fullWidth
+                          className="!text-rose-600 hover:!bg-rose-100 shadow-xs py-1.5 text-xs font-semibold mt-auto !border-0 bg-rose-50/80"
+                          onClick={handleCloseLiveCheckIn}
+                          disabled={isClosingLiveCheckIn}
+                        >
+                          {isClosingLiveCheckIn ? 'Đang đóng...' : 'Đóng phiên điểm danh này'}
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col justify-between flex-1 gap-2">
+                        <div className="flex items-center justify-between text-[11px] text-slate-500 leading-tight">
+                          <span>Mở phiên GPS 5 phút.</span>
+                          <span className="font-semibold text-slate-700">
+                            <span className="text-emerald-600 font-bold">{currentAttendedCount}</span>/{currentTotalApproved} đã có mặt
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 mt-auto">
+                          <div className="relative w-20 shrink-0">
+                            <input
+                              type="number"
+                              min={5}
+                              max={5000}
+                              value={liveRadiusInput}
+                              onChange={(e) => setLiveRadiusInput(Math.max(5, Number(e.target.value)))}
+                              placeholder="50"
+                              title="Bán kính cho phép (mét)"
+                              className="w-full text-xs font-semibold px-2.5 py-1.5 pr-5 rounded-lg bg-slate-50 shadow-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 border-0"
+                            />
+                            <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-slate-400">
+                              m
+                            </span>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="primary"
+                            className="flex-1 bg-indigo-600 hover:bg-indigo-700 whitespace-nowrap text-xs font-bold shadow-xs py-1.5 border-0"
+                            disabled={isOpeningLiveCheckIn}
+                            onClick={handleOpenLiveCheckIn}
+                          >
+                            Bắt đầu
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -716,7 +966,7 @@ export default function ActivityDetail() {
                           {req.form_responses && Object.keys(req.form_responses).length > 0 && (
                             <button
                               type="button"
-                              className="text-xs font-semibold text-primary-600 hover:text-primary-700 flex items-center gap-1.5 mt-1.5 mb-2 bg-primary-50 hover:bg-primary-100 py-1 px-2.5 rounded-lg border border-primary-200 transition-colors w-fit cursor-pointer"
+                              className="text-xs font-semibold text-primary-600 hover:text-primary-700 flex items-center gap-1.5 mt-1.5 mb-2 bg-primary-50 hover:bg-primary-100 py-1 px-2.5 rounded-lg shadow-sm transition-colors w-fit cursor-pointer"
                               onClick={() => setSelectedReviewRequest(req)}
                             >
                               <FileText size={13} />
@@ -767,7 +1017,7 @@ export default function ActivityDetail() {
                   {myRequest.status === 'approved' && (
                     <>
                       {myRequest.attendance_confirmed ? (
-                        <div className="mt-4 p-4 rounded-xl bg-emerald-50 border border-emerald-300 text-center">
+                        <div className="mt-4 p-4 rounded-xl bg-emerald-50 shadow-sm text-center">
                           <CheckCircle2 size={32} className="text-emerald-600 mx-auto mb-1" />
                           <div className="font-bold text-emerald-800">Đã xác nhận có mặt!</div>
                           {activity.trophy && (
@@ -788,40 +1038,114 @@ export default function ActivityDetail() {
                           </Button>
                         </div>
                       ) : (
-                        new Date() >= new Date(activity.start_time) ? (
-                          <div className="mt-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-center">
-                            <div className="text-sm font-semibold text-amber-700">Chưa xác nhận điểm danh</div>
-                            {activity.attendance_mode === 'qr_code' && (
-                              <div className="mt-2 flex flex-col gap-2">
-                                <p className="text-xs text-[var(--color-text-secondary)]">Quét mã QR hoặc nhập mã do Host hiển thị tại sự kiện.</p>
-                                <Button
-                                  variant="primary"
-                                  fullWidth
-                                  onClick={handleOpenCheckInModal}
-                                >
-                                  📍 Quét QR / Điểm danh tại sự kiện
-                                </Button>
+                        (() => {
+                          const now = new Date();
+                          const startTime = new Date(activity.start_time);
+                          const endTime = new Date(activity.end_time);
+                          const earliestCheckIn = new Date(startTime.getTime() - 30 * 60 * 1000);
+                          const latestCheckIn = new Date(endTime.getTime() + 2 * 60 * 60 * 1000);
+                          const isCheckInOpen = now >= earliestCheckIn && now <= latestCheckIn;
+                          const isCheckInClosed = now > latestCheckIn;
+
+                          if (isCheckInOpen || liveSession?.is_active) {
+                            return (
+                              <div className="mt-4 space-y-3">
+                                {/* Thẻ điểm danh theo phạm vi (Live Proximity) khi Host đang mở */}
+                                {liveSession?.is_active && (
+                                  <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-50/90 to-blue-50/90 border border-indigo-200/80 shadow-md text-left">
+                                    <div className="flex items-center justify-between mb-1.5">
+                                      <span className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-700 uppercase tracking-wide">
+                                        <span className="w-2 h-2 rounded-full bg-indigo-600 animate-ping" />
+                                        Điểm danh theo phạm vi
+                                      </span>
+                                      <span className="text-xs font-bold text-indigo-900 bg-white px-2.5 py-0.5 rounded-full shadow-2xs">
+                                        {Math.floor(liveCountdown / 60)}:{String(liveCountdown % 60).padStart(2, '0')}
+                                      </span>
+                                    </div>
+                                    <p className="text-xs text-slate-600 mb-3">
+                                      Host đang mở điểm danh tại chỗ trong bán kính <strong>{liveSession.radius}m</strong>. Nhấn nút để hệ thống xác nhận bạn đang có mặt.
+                                    </p>
+                                    <Button
+                                      variant="primary"
+                                      fullWidth
+                                      className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 shadow-sm"
+                                      onClick={handleVerifyLiveCheckIn}
+                                      disabled={isVerifyingLive}
+                                    >
+                                      {isVerifyingLive ? (
+                                        <>
+                                          <Loader2 size={16} className="animate-spin inline mr-1.5" />
+                                          Đang đo khoảng cách GPS...
+                                        </>
+                                      ) : (
+                                        <>
+                                          <MapPin size={16} className="inline mr-1.5" />
+                                          Xác nhận vị trí của tôi (Bán kính {liveSession.radius}m)
+                                        </>
+                                      )}
+                                    </Button>
+                                  </div>
+                                )}
+
+                                {/* Thẻ điểm danh QR / Nhập mã thông thường */}
+                                <div className="p-4 rounded-xl bg-amber-500/10 shadow-sm text-center">
+                                  <div className="text-sm font-semibold text-amber-800">Chưa xác nhận điểm danh</div>
+                                  {activity.attendance_mode !== 'auto' ? (
+                                    <div className="mt-2.5 flex flex-col gap-2">
+                                      <p className="text-xs text-[var(--color-text-secondary)]">
+                                        Nhập mã điểm danh hoặc quét mã QR do Host hiển thị tại sự kiện.
+                                      </p>
+                                      <Button
+                                        variant="primary"
+                                        fullWidth
+                                        onClick={handleOpenCheckInModal}
+                                      >
+                                        <QrCode size={16} className="inline mr-1.5" /> Quét QR / Điểm danh tại sự kiện
+                                      </Button>
+                                      {activity.attendance_mode === 'manual' && (
+                                        <p className="text-[11px] text-[var(--color-text-secondary)] mt-0.5">
+                                          (Hoặc liên hệ Host để được xác nhận điểm danh thủ công)
+                                        </p>
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <p className="text-xs text-[var(--color-text-secondary)] mt-1 flex items-center justify-center gap-1">
+                                      <CheckCircle2 size={13} className="text-emerald-600 shrink-0 inline" />
+                                      <span>Điểm danh tự động: Hệ thống sẽ tự ghi nhận tham gia sau khi sự kiện kết thúc.</span>
+                                    </p>
+                                  )}
+                                </div>
                               </div>
-                            )}
-                            {activity.attendance_mode === 'auto' && (
-                              <p className="text-xs text-[var(--color-text-secondary)] mt-1">
-                                🟢 Điểm danh tự động: Hệ thống sẽ tự ghi nhận tham gia sau khi sự kiện kết thúc.
-                              </p>
-                            )}
-                            {activity.attendance_mode === 'manual' && (
-                              <p className="text-xs text-[var(--color-text-secondary)] mt-1">
-                                👤 Vui lòng liên hệ Host tại sự kiện để được xác nhận điểm danh thủ công.
-                              </p>
-                            )}
-                          </div>
-                        ) : null
+                            );
+                          }
+
+                          if (isCheckInClosed) {
+                            return (
+                              <div className="mt-4 p-3 rounded-xl bg-slate-100 shadow-sm text-center">
+                                <div className="text-xs font-semibold text-slate-500 flex items-center justify-center gap-1.5">
+                                  <AlertTriangle size={14} className="text-amber-500 shrink-0 inline" />
+                                  <span>Phiên điểm danh cho hoạt động này đã kết thúc.</span>
+                                </div>
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <div className="mt-4 p-3 rounded-xl bg-slate-100 shadow-sm text-center">
+                              <div className="text-xs font-medium text-slate-600 flex items-center justify-center gap-1.5">
+                                <Clock size={14} className="text-slate-500 shrink-0 inline" />
+                                <span>Phiên điểm danh sẽ mở lúc {earliestCheckIn.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} (30 phút trước khi bắt đầu).</span>
+                              </div>
+                            </div>
+                          );
+                        })()
                       )}
 
                       {new Date() < new Date(activity.start_time) && !myRequest.attendance_confirmed && (
                         <Button
                           variant="secondary"
                           fullWidth
-                          className="mt-4"
+                          className="mt-4 btn-leave-activity"
                           onClick={handleLeaveActivity}
                         >
                           Rời khỏi hoạt động
@@ -829,6 +1153,17 @@ export default function ActivityDetail() {
                       )}
                     </>
                   )}
+                </div>
+              ) : (vm.isPast || vm.isStarted) ? (
+                <div className="p-4 rounded-2xl bg-slate-100 shadow-sm text-center">
+                  <div className="text-xs font-semibold text-slate-600 flex items-center justify-center gap-1.5">
+                    <Clock size={14} className="text-slate-500 shrink-0 inline" />
+                    <span>
+                      {vm.isPast
+                        ? 'Hoạt động đã kết thúc • Đã đóng đăng ký.'
+                        : 'Hoạt động đã bắt đầu • Đã đóng đăng ký tham gia.'}
+                    </span>
+                  </div>
                 </div>
               ) : (
                 <form onSubmit={handleJoinRequest} className="join-form">
@@ -841,7 +1176,7 @@ export default function ActivityDetail() {
                         borderRadius: '8px',
                         marginBottom: '14px',
                         background: conflictInfo?.level === 'hard_conflict' ? 'rgba(239, 68, 68, 0.08)' : 'rgba(245, 158, 11, 0.08)',
-                        border: `1px solid ${conflictInfo?.level === 'hard_conflict' ? 'rgba(239, 68, 68, 0.3)' : 'rgba(245, 158, 11, 0.3)'}`,
+                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
                         color: conflictInfo?.level === 'hard_conflict' ? '#dc2626' : '#d97706',
                         lineHeight: '1.4',
                         display: 'flex',
@@ -913,7 +1248,7 @@ export default function ActivityDetail() {
                 Người tham gia
               </h3>
               <span className="stat-value">
-                {participants.length > 0 ? ((activity.host ? 1 : 0) + allDisplayParticipants.length) : activity.current_participants} / {activity.max_participants}
+                {allDisplayParticipants.length || activity.current_participants} / {activity.max_participants}
               </span>
             </div>
 
@@ -967,25 +1302,24 @@ export default function ActivityDetail() {
       {/* Host QR Code Modal */}
       {showHostQrModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-md animate-fade-in">
-          <div className="glass bg-[var(--color-bg-surface)] p-6 rounded-3xl max-w-sm w-full border border-white/20 shadow-2xl flex flex-col items-center text-center">
+          <div className="bg-white p-6 rounded-3xl max-w-sm w-full shadow-2xl flex flex-col items-center text-center">
             <div className="flex items-center justify-between w-full mb-2">
-              <h3 className="text-lg font-bold text-[var(--color-text-primary)]">📱 Quét mã để điểm danh</h3>
+              <h3 className="text-lg font-bold text-slate-900">Quét mã để điểm danh</h3>
               <button
                 onClick={() => setShowHostQrModal(false)}
-                className="text-gray-400 hover:text-gray-600 text-xl font-bold p-1 cursor-pointer"
+                className="text-gray-400 hover:text-gray-600 p-1 cursor-pointer transition-colors"
+                aria-label="Đóng"
               >
-                ✕
+                <X size={20} />
               </button>
             </div>
 
-            <p className="text-xs text-[var(--color-text-secondary)] mb-4">
-              Người tham gia hướng camera điện thoại vào mã này
-            </p>
-
-            <div className="p-3 bg-white rounded-2xl shadow-inner border border-gray-100 flex items-center justify-center">
+            <div className="p-3 bg-white rounded-2xl shadow-sm flex items-center justify-center">
               {hostQrData ? (
                 <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(hostQrData.rotating_token)}`}
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(
+                    `${window.location.origin}/activities/${id}?checkin_code=${hostQrData.rotating_token}`
+                  )}`}
                   alt="Check-in QR Code"
                   className="w-56 h-56 rounded-lg"
                 />
@@ -995,7 +1329,7 @@ export default function ActivityDetail() {
             </div>
 
             {/* Rotating token countdown */}
-            <div className="flex items-center gap-2 mt-4 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-semibold">
+            <div className="flex items-center gap-2 mt-4 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-800 text-xs font-semibold shadow-sm">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
               <span>Mã đổi sau: {qrCountdown}s</span>
             </div>
@@ -1008,14 +1342,21 @@ export default function ActivityDetail() {
               </div>
             </div>
 
-            <div className="mt-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 text-left">
-              🛡️ <strong>Chống gian lận từ xa:</strong> Hệ thống bắt buộc người quét phải ở trong bán kính <strong>{activity.check_in_radius || 300}m</strong> qua GPS & mã đổi liên tục mỗi 30s.
+            {/* Live attendance count */}
+            <div className="flex items-center justify-between w-full px-3.5 py-2 mt-3.5 rounded-2xl bg-slate-50 text-xs shadow-2xs">
+              <span className="flex items-center gap-1.5 text-slate-500 font-medium">
+                <Users size={14} className="text-indigo-600" />
+                Tiến độ điểm danh:
+              </span>
+              <span className="font-bold text-slate-800">
+                <span className="text-emerald-600 font-extrabold">{currentAttendedCount}</span> / {currentTotalApproved} đã có mặt
+              </span>
             </div>
 
             <Button
               variant="secondary"
               fullWidth
-              className="mt-4"
+              className="mt-4 !border-0 shadow-sm hover:shadow-md bg-white hover:bg-slate-50 font-semibold"
               onClick={() => setShowHostQrModal(false)}
             >
               Đóng
@@ -1028,7 +1369,10 @@ export default function ActivityDetail() {
       {id && (
         <CheckInModal
           isOpen={showCheckInModal}
-          onClose={() => setShowCheckInModal(false)}
+          onClose={() => {
+            setShowCheckInModal(false);
+            setAutoCheckInCode(null);
+          }}
           onSuccess={() => {
             loadData();
           }}
@@ -1037,6 +1381,8 @@ export default function ActivityDetail() {
           checkInRadius={activity.check_in_radius || 200}
           trophyName={activity.trophy?.name}
           trophyPoints={activity.trophy?.points}
+          initialCode={autoCheckInCode || ''}
+          autoSubmit={!!autoCheckInCode}
         />
       )}
 
@@ -1140,25 +1486,23 @@ export default function ActivityDetail() {
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      {/* Nút Điểm danh (nền xanh chữ trắng) */}
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      {/* Switch Có mặt / Vắng */}
                       <button
                         type="button"
-                        className="btn-participant-action btn-participant-checkin"
+                        role="switch"
+                        aria-checked={p.attendance_confirmed}
                         disabled={updatingAttendanceUserId === p.user_id}
-                        onClick={() => handleSetAttendance(p.user_id, true)}
+                        onClick={() => handleSetAttendance(p.user_id, !p.attendance_confirmed)}
+                        className="attendance-switch-control"
+                        title={p.attendance_confirmed ? 'Đang có mặt (Nhấn để chuyển sang Vắng)' : 'Đang vắng (Nhấn để điểm danh Có mặt)'}
                       >
-                        {updatingAttendanceUserId === p.user_id ? '...' : 'Điểm danh'}
-                      </button>
-
-                      {/* Nút Vắng (nền cam chữ trắng) */}
-                      <button
-                        type="button"
-                        className="btn-participant-action btn-participant-absent"
-                        disabled={updatingAttendanceUserId === p.user_id}
-                        onClick={() => handleSetAttendance(p.user_id, false)}
-                      >
-                        {updatingAttendanceUserId === p.user_id ? '...' : 'Vắng'}
+                        <span className={`attendance-switch-track ${p.attendance_confirmed ? 'is-checked' : ''}`}>
+                          <span className="attendance-switch-thumb" />
+                        </span>
+                        <span className={`attendance-switch-label ${p.attendance_confirmed ? 'is-present' : 'is-absent'}`}>
+                          {updatingAttendanceUserId === p.user_id ? '...' : (p.attendance_confirmed ? 'Có mặt' : 'Vắng')}
+                        </span>
                       </button>
 
                       {/* Nút Xóa (nền đỏ chữ trắng) */}
@@ -1365,7 +1709,7 @@ export default function ActivityDetail() {
                       const isPending = inv.status === 'pending';
                       const isAccepted = inv.status === 'accepted';
                       return (
-                        <div key={inv.id} className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                        <div key={inv.id} className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 shadow-sm">
                           <div className="flex items-center gap-2.5">
                             <div className="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs">
                               {inv.invited_group_name ? inv.invited_group_name.charAt(0).toUpperCase() : 'G'}
@@ -1377,17 +1721,17 @@ export default function ActivityDetail() {
                           </div>
                           <div>
                             {isPending && (
-                              <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                              <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 shadow-sm">
                                 <Clock size={11} /> Đang đợi chấp nhận
                               </span>
                             )}
                             {isAccepted && (
-                              <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 shadow-sm">
                                 <CheckCircle2 size={11} /> Đã chấp thuận
                               </span>
                             )}
                             {!isPending && !isAccepted && (
-                              <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
+                              <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 shadow-sm">
                                 Đã từ chối
                               </span>
                             )}
@@ -1450,7 +1794,7 @@ export default function ActivityDetail() {
             {/* Content */}
             <div className="p-5 pt-2 overflow-y-auto space-y-4">
               {selectedReviewRequest.message && (
-                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                <div className="p-3.5 rounded-xl bg-slate-50 shadow-sm">
                   <div className="text-xs font-semibold text-slate-500 mb-1">Lời nhắn đính kèm:</div>
                   <div className="text-sm text-slate-700 italic">"{selectedReviewRequest.message}"</div>
                 </div>
@@ -1465,7 +1809,7 @@ export default function ActivityDetail() {
                       return (
                         <div
                           key={field.id}
-                          className="p-3.5 rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border-subtle)]"
+                          className="p-3.5 rounded-xl bg-[var(--color-bg-elevated)] shadow-sm"
                         >
                           <div className="text-xs font-semibold text-[var(--color-text-secondary)] mb-1 flex items-center gap-1">
                             <span>{field.label}</span>
@@ -1483,7 +1827,7 @@ export default function ActivityDetail() {
                   {Object.entries(selectedReviewRequest.form_responses).map(([key, val]) => (
                     <div
                       key={key}
-                      className="p-3.5 rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border-subtle)]"
+                      className="p-3.5 rounded-xl bg-[var(--color-bg-elevated)] shadow-sm"
                     >
                       <div className="text-xs font-semibold text-[var(--color-text-secondary)] mb-1">
                         {key}

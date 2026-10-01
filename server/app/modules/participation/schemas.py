@@ -90,3 +90,27 @@ class CertificateResponse(BaseModel):
     verification_url: str
     is_host: bool = False
 
+
+class LiveCheckInOpenRequest(BaseModel):
+    latitude: float
+    longitude: float
+    radius: int = 50
+    duration_seconds: int = 300
+
+
+class LiveCheckInStatusResponse(BaseModel):
+    is_active: bool
+    expires_at: datetime | None = None
+    remaining_seconds: int = 0
+    radius: int = 50
+    opened_by_name: str | None = None
+    attended_count: int = 0
+    total_approved: int = 0
+
+
+class LiveCheckInVerifyRequest(BaseModel):
+    latitude: float
+    longitude: float
+    accuracy: float | None = None
+
+

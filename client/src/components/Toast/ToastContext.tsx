@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from 'react';
+import { CheckCircle2, AlertCircle, Info, AlertTriangle, X } from 'lucide-react';
 import './Toast.css';
 
 type ToastType = 'success' | 'error' | 'info' | 'warning';
@@ -20,11 +21,17 @@ interface ToastContextType {
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
-const ICONS: Record<ToastType, string> = {
-  success: '✓',
-  error: '✕',
-  info: 'ℹ',
-  warning: '⚠',
+const renderToastIcon = (type: ToastType) => {
+  switch (type) {
+    case 'success':
+      return <CheckCircle2 size={18} className="text-emerald-500 shrink-0" />;
+    case 'error':
+      return <AlertCircle size={18} className="text-rose-500 shrink-0" />;
+    case 'info':
+      return <Info size={18} className="text-sky-500 shrink-0" />;
+    case 'warning':
+      return <AlertTriangle size={18} className="text-amber-500 shrink-0" />;
+  }
 };
 
 export function ToastProvider({ children }: { children: ReactNode }) {
@@ -65,13 +72,13 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       <div className="toast-container">
         {toasts.map((t) => (
           <div key={t.id} className={`toast toast-${t.type}`}>
-            <span className="toast-icon">{ICONS[t.type]}</span>
+            <span className="toast-icon">{renderToastIcon(t.type)}</span>
             <div className="toast-content">
               <div className="toast-title">{t.title}</div>
               {t.message && <div className="toast-message">{t.message}</div>}
             </div>
             <button className="toast-close" onClick={() => removeToast(t.id)} aria-label="Dismiss">
-              ✕
+              <X size={14} />
             </button>
           </div>
         ))}

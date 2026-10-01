@@ -64,6 +64,7 @@ export interface ActivityDetailViewModel {
   ctaDisabled: boolean;
   isHost: boolean;
   isPast: boolean;
+  isStarted: boolean;
   dynamicForm: {
     title: string | null;
     description: string | null;
@@ -89,6 +90,7 @@ export function mapActivityToDetailViewModel(params: {
   const endDate = new Date(activity.end_time || activity.start_time);
   const now = new Date();
   const isPast = endDate < now;
+  const isStarted = startDate <= now;
 
   const maxParticipants = activity.max_participants || 0;
   const currentParticipants = activity.current_participants || 0;
@@ -102,7 +104,7 @@ export function mapActivityToDetailViewModel(params: {
     myRequest?.status === 'pending' ||
     false;
 
-  const registrationState = isPast
+  const registrationState = (isPast || isStarted)
     ? 'deadline_passed'
     : computeActivityRegistrationState({
         isRegistered,
@@ -177,10 +179,13 @@ export function mapActivityToDetailViewModel(params: {
     canRegister:
       !isHost &&
       !isPast &&
+      !isStarted &&
       currentParticipants < maxParticipants &&
       (!myRequest || myRequest.status === 'cancelled' || myRequest.status === 'declined'),
     ctaText: isPast
-      ? 'Đã hết hạn'
+      ? 'Đã kết thúc'
+      : isStarted
+      ? 'Hoạt động đã bắt đầu'
       : currentParticipants >= maxParticipants
       ? 'Hoạt động đã đầy'
       : myRequest?.status === 'approved'
@@ -192,11 +197,13 @@ export function mapActivityToDetailViewModel(params: {
       : 'Tham gia hoạt động',
     ctaDisabled:
       isPast ||
+      isStarted ||
       currentParticipants >= maxParticipants ||
       myRequest?.status === 'approved' ||
       myRequest?.status === 'pending',
     isHost,
     isPast,
+    isStarted,
     dynamicForm: activity.custom_form
       ? {
           title: activity.custom_form.title,

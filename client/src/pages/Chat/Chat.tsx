@@ -1,12 +1,12 @@
 import { useState, useRef, useEffect, KeyboardEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { 
   Send, 
   Loader2, 
   AlertCircle,
-  RotateCcw
+  RotateCcw,
+  ExternalLink
 } from 'lucide-react';
 import { chatApi } from '../../api/chat';
 import { useToast } from '../../components/Toast/ToastContext';
@@ -20,23 +20,65 @@ const DEFAULT_SUGGESTIONS = [
   'Nhóm nào đang tuyển thành viên mới?',
 ];
 
+const CHAT_STORAGE_KEY = 'unic_chat_session_v1';
+
+const getInitialChatState = () => {
+  try {
+    const raw = sessionStorage.getItem(CHAT_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed.messages) && parsed.messages.length > 0) {
+        return {
+          messages: parsed.messages as ChatMessageViewModel[],
+          conversationId: (parsed.conversationId as string) || null,
+          suggestions: (parsed.suggestions as string[]) || DEFAULT_SUGGESTIONS,
+        };
+      }
+    }
+  } catch (err) {
+    console.error('Failed to load chat session from sessionStorage', err);
+  }
+
+  return {
+    messages: [
+      {
+        id: 'init-0',
+        role: 'assistant' as const,
+        content: 'Xin chào! Mình là Trợ lý AI UniConnect. Mình có thể giúp bạn tìm các hoạt động ngoại khóa, đối soát lịch học rảnh để không bị trùng giờ, hoặc giới thiệu các nhóm đang tuyển thành viên!',
+        cards: [],
+        timeFormatted: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+      },
+    ],
+    conversationId: null,
+    suggestions: DEFAULT_SUGGESTIONS,
+  };
+};
+
 export default function Chat() {
-  const navigate = useNavigate();
   const toast = useToast();
-  const [conversationId, setConversationId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<ChatMessageViewModel[]>([
-    {
-      id: 'init-0',
-      role: 'assistant',
-      content: 'Xin chào! Mình là Trợ lý AI UniConnect. Mình có thể giúp bạn tìm các hoạt động ngoại khóa, đối soát lịch học rảnh để không bị trùng giờ, hoặc giới thiệu các nhóm đang tuyển thành viên!',
-      cards: [],
-      timeFormatted: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
-    },
-  ]);
+  const initial = getInitialChatState();
+  const [conversationId, setConversationId] = useState<string | null>(initial.conversationId);
+  const [messages, setMessages] = useState<ChatMessageViewModel[]>(initial.messages);
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(false);
-  const [suggestions, setSuggestions] = useState<string[]>(DEFAULT_SUGGESTIONS);
+  const [suggestions, setSuggestions] = useState<string[]>(initial.suggestions);
   const [error, setError] = useState<string | null>(null);
+
+  // Sync conversation changes to sessionStorage so navigating away never loses state
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(
+        CHAT_STORAGE_KEY,
+        JSON.stringify({
+          conversationId,
+          messages,
+          suggestions,
+        })
+      );
+    } catch (e) {
+      console.error('Failed to save chat to sessionStorage', e);
+    }
+  }, [conversationId, messages, suggestions]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -122,10 +164,15 @@ export default function Chat() {
   };
 
   const handleReset = () => {
+    try {
+      sessionStorage.removeItem(CHAT_STORAGE_KEY);
+    } catch (e) {
+      console.error(e);
+    }
     setConversationId(null);
     setMessages([
       {
-        id: 'init-new',
+        id: `init-${Date.now()}`,
         role: 'assistant',
         content: 'Cuộc trò chuyện mới đã bắt đầu! Bạn muốn tìm hiểu hoạt động nào hôm nay?',
         cards: [],
@@ -134,6 +181,7 @@ export default function Chat() {
     ]);
     setSuggestions(DEFAULT_SUGGESTIONS);
     setError(null);
+    toast.success('Đã làm mới cuộc hội thoại');
   };
 
   return (
@@ -182,21 +230,17 @@ export default function Chat() {
                       remarkPlugins={[remarkGfm]}
                       components={{
                         a: ({ href, children, ...props }) => {
-                          const isInternal = href && (href.startsWith('/') || href.startsWith(window.location.origin));
-                          const path = href ? (href.startsWith('/') ? href : href.replace(window.location.origin, '')) : '#';
                           return (
                             <a
                               href={href}
-                              onClick={(e) => {
-                                if (isInternal) {
-                                  e.preventDefault();
-                                  navigate(path);
-                                }
-                              }}
-                              className="chat-link"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="chat-link inline-flex items-center gap-1 font-semibold text-indigo-600 hover:text-indigo-800 hover:underline"
+                              title="Mở trong tab mới để không mất đoạn chat"
                               {...props}
                             >
-                              {children}
+                              <span>{children}</span>
+                              <ExternalLink className="w-3 h-3 inline-block shrink-0 opacity-70" />
                             </a>
                           );
                         },

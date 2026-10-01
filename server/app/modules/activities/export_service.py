@@ -140,7 +140,7 @@ async def stream_activity_participants_csv(
         .order_by(JoinRequest.created_at.asc())
     )
     req_res = await db.execute(req_stmt)
-    records = req_res.scalars().all()
+    records = req_res.unique().scalars().all()
 
     # Status mapping
     status_map = {

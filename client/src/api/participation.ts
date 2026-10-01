@@ -89,4 +89,30 @@ export const participationApi = {
 
   verifyCertificate: (code: string) =>
     api.get<CertificateResponse>(`/certificates/verify/${code}`),
+
+  openLiveCheckIn: (activityId: string, data: { latitude: number; longitude: number; radius?: number; duration_seconds?: number }) =>
+    api.post<{ is_active: boolean; expires_at: string; remaining_seconds: number; radius: number; message: string }>(
+      `/activities/${activityId}/live-checkin/open`,
+      data
+    ),
+
+  closeLiveCheckIn: (activityId: string) =>
+    api.post<{ is_active: boolean; message: string }>(`/activities/${activityId}/live-checkin/close`),
+
+  getLiveCheckInStatus: (activityId: string) =>
+    api.get<{
+      is_active: boolean;
+      expires_at: string | null;
+      remaining_seconds: number;
+      radius: number;
+      opened_by_name: string | null;
+      attended_count?: number;
+      total_approved?: number;
+    }>(`/activities/${activityId}/live-checkin/status`),
+
+  verifyLiveCheckIn: (activityId: string, data: { latitude: number; longitude: number; accuracy?: number }) =>
+    api.post<{ message: string; attendance_confirmed: boolean; trophy_awarded: boolean; already_confirmed: boolean; distance_meters: number }>(
+      `/activities/${activityId}/live-checkin/verify`,
+      data
+    ),
 };

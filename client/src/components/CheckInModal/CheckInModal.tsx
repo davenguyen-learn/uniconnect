@@ -9,6 +9,8 @@ import {
   Radio,
   Clock,
   ShieldCheck,
+  Lock,
+  Lightbulb,
 } from 'lucide-react';
 import { activitiesApi } from '../../api/activities';
 import type { CheckInState } from '../../types/activity-states';
@@ -24,6 +26,8 @@ interface CheckInModalProps {
   checkInRadius: number;
   trophyName?: string;
   trophyPoints?: number;
+  initialCode?: string;
+  autoSubmit?: boolean;
 }
 
 export const CheckInModal: React.FC<CheckInModalProps> = ({
@@ -35,22 +39,14 @@ export const CheckInModal: React.FC<CheckInModalProps> = ({
   checkInRadius,
   trophyName,
   trophyPoints: _trophyPoints,
+  initialCode = '',
+  autoSubmit = false,
 }) => {
   const [state, setState] = useState<CheckInState>('idle');
-  const [code, setCode] = useState('');
+  const [code, setCode] = useState(initialCode);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [accuracyMeasured, setAccuracyMeasured] = useState<number | null>(null);
   const [distanceMeasured, setDistanceMeasured] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (isOpen) {
-      setState('idle');
-      setCode('');
-      setErrorMessage(null);
-      setAccuracyMeasured(null);
-      setDistanceMeasured(null);
-    }
-  }, [isOpen]);
 
   const handleStartCheckIn = useCallback(
     async (codeToSubmit?: string) => {
@@ -149,6 +145,21 @@ export const CheckInModal: React.FC<CheckInModalProps> = ({
     },
     [activityId, code, onSuccess]
   );
+
+  useEffect(() => {
+    if (isOpen) {
+      const codeVal = (initialCode || '').trim().toUpperCase();
+      setState('idle');
+      setCode(codeVal);
+      setErrorMessage(null);
+      setAccuracyMeasured(null);
+      setDistanceMeasured(null);
+
+      if (autoSubmit && codeVal) {
+        handleStartCheckIn(codeVal);
+      }
+    }
+  }, [isOpen, initialCode, autoSubmit, handleStartCheckIn]);
 
   if (!isOpen) return null;
 
@@ -269,7 +280,7 @@ export const CheckInModal: React.FC<CheckInModalProps> = ({
                 <div>
                   <strong>Quyền vị trí bị từ chối:</strong>
                   <p className="mt-1">
-                    Trình duyệt chưa được cấp quyền định vị. Vui lòng bấm vào biểu tượng ổ khóa 🔒 trên thanh địa chỉ, bật quyền <strong>Vị trí (Location)</strong> và bấm Thử lại.
+                    Trình duyệt chưa được cấp quyền định vị. Vui lòng bấm vào biểu tượng <Lock size={13} className="inline mx-0.5 text-slate-600 align-baseline" /> trên thanh địa chỉ, bật quyền <strong>Vị trí (Location)</strong> và bấm Thử lại.
                   </p>
                 </div>
               </div>
@@ -320,8 +331,9 @@ export const CheckInModal: React.FC<CheckInModalProps> = ({
                     {errorMessage ||
                       `Sai số đo lường (${accuracyMeasured ? `${accuracyMeasured}m` : 'lớn'} > 100m) không đủ tin cậy để xác nhận có mặt.`}
                   </p>
-                  <p className="mt-1 text-xs opacity-90">
-                    💡 <em>Gợi ý:</em> Di chuyển ra gần cửa sổ hoặc ngoài trời, bật Wi-Fi để hỗ trợ định vị chính xác hơn.
+                  <p className="mt-1 text-xs opacity-90 flex items-center gap-1">
+                    <Lightbulb size={13} className="text-amber-500 shrink-0 inline" />
+                    <span><em>Gợi ý:</em> Di chuyển ra gần cửa sổ hoặc ngoài trời, bật Wi-Fi để hỗ trợ định vị chính xác hơn.</span>
                   </p>
                 </div>
               </div>

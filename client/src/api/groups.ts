@@ -168,6 +168,15 @@ export const groupsApi = {
 
   deleteAvatar: (id: string) =>
     api.delete<GroupDetailResponse>(`/groups/${id}/avatar`),
+
+  suspendGroup: (id: string) =>
+    api.post<GroupDetailResponse>(`/groups/${id}/suspend`),
+
+  resumeGroup: (id: string) =>
+    api.post<GroupDetailResponse>(`/groups/${id}/resume`),
+
+  transferOwnership: (id: string, newOwnerId: string) =>
+    api.post<GroupDetailResponse>(`/groups/${id}/transfer-ownership`, { new_owner_id: newOwnerId }),
 };
 
 

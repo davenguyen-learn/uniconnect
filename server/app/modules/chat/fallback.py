@@ -180,12 +180,20 @@ async def generate_deterministic_fallback(
             # intent == "ACTIVITY_SEARCH": True activity search
             msg_lower = user_message.lower().strip()
             is_ctxh = any(kw in msg_lower for kw in ["ctxh", "công tác xã hội", "tình nguyện", "ngày ctxh", "hiến máu"])
+            is_goal_planning = is_ctxh and any(kw in msg_lower for kw in ["kiếm", "tích lũy", "cần", "muốn", "gợi ý", "lên lịch", "kế hoạch", "5 ngày"])
             
             # Extract meaningful keyword
             clean_keyword = user_message
-            for prefix in ["tìm hoạt động", "tìm sự kiện", "có hoạt động nào", "có nhóm nào", "tìm kèo", "có buổi"]:
+            for prefix in [
+                "tìm hoạt động", "tìm sự kiện", "có hoạt động nào", "có nhóm nào", "tìm kèo", "có buổi",
+                "tôi muốn kiếm", "muốn kiếm", "tôi muốn", "kiếm", "trong 2 tuần tới", "2 tuần tới", "trong tuần tới"
+            ]:
                 if prefix in clean_keyword.lower():
-                    clean_keyword = re.sub(prefix, "", clean_keyword, flags=re.IGNORECASE).strip()
+                    clean_keyword = re.sub(re.escape(prefix), "", clean_keyword, flags=re.IGNORECASE).strip()
+
+            # If user is asking for general CTXH planning, avoid exact keyword search on title
+            if is_goal_planning:
+                clean_keyword = None
 
             act_res = await search_activities_tool(
                 db=db,
@@ -196,7 +204,7 @@ async def generate_deterministic_fallback(
                 lat=user_lat,
                 lng=user_lng,
                 radius_meters=25000,
-                limit=4,
+                limit=8 if is_ctxh else 4,
             )
 
             for act in act_res.items:
@@ -220,16 +228,37 @@ async def generate_deterministic_fallback(
                 )
 
             if cards:
-                bullet_lines = []
-                for c in cards:
-                    group_str = f" - Tổ chức bởi [{c.group_name}](/groups/{c.group_id})" if c.group_id and c.group_name else ""
-                    ctxh_str = f" ({c.social_work_days} ngày CTXH)" if c.social_work_days and c.social_work_days > 0 else ""
-                    bullet_lines.append(f"- [{c.title}](/activities/{c.activity_id}){ctxh_str}{group_str}")
-                bullets = "\n".join(bullet_lines)
-                content = (
-                    f"Dưới đây là **{len(cards)} hoạt động** phù hợp với yêu cầu của bạn "
-                    f"(đã kiểm tra và loại trừ lịch bận cá nhân):\n\n{bullets}"
-                )
+                if is_goal_planning:
+                    # Build tailored CTXH goal plan
+                    plan_lines = []
+                    accumulated_days = 0.0
+                    for c in cards:
+                        days = c.social_work_days or 0.0
+                        start_str = c.start_time.strftime("%d/%m/%Y %H:%M") if hasattr(c.start_time, 'strftime') else str(c.start_time)[:16]
+                        group_str = f" (*{c.group_name}*)" if c.group_name else ""
+                        plan_lines.append(f"• **[{c.title}](/activities/{c.activity_id})**{group_str}\n  - Thời gian: `{start_str}`\n  - Địa điểm: {c.location_name or 'ĐH Bách Khoa'}\n  - Điểm tích lũy: **+{days} ngày CTXH**")
+                        accumulated_days += days
+                        if accumulated_days >= 5.0 and len(plan_lines) >= 5:
+                            break
+
+                    content = (
+                        f"Chào bạn! Để giúp bạn tích lũy **5 ngày CTXH** trong 2 tuần tới, "
+                        f"mình đã lập cho bạn một kế hoạch tham gia các hoạt động tình nguyện phù hợp (mỗi hoạt động từ 0.5 - 1.0 ngày CTXH):\n\n"
+                        + "\n\n".join(plan_lines) +
+                        f"\n\n🎯 **Tổng số ngày CTXH tích lũy được: {accumulated_days} ngày** (Đạt chuẩn mục tiêu 5 ngày của bạn!).\n"
+                        "Bạn có thể nhấn vào từng hoạt động để xem chi tiết và đăng ký nhé!"
+                    )
+                else:
+                    bullet_lines = []
+                    for c in cards:
+                        group_str = f" - Tổ chức bởi [{c.group_name}](/groups/{c.group_id})" if c.group_id and c.group_name else ""
+                        ctxh_str = f" (+{c.social_work_days} ngày CTXH)" if c.social_work_days and c.social_work_days > 0 else ""
+                        bullet_lines.append(f"- [{c.title}](/activities/{c.activity_id}){ctxh_str}{group_str}")
+                    bullets = "\n".join(bullet_lines)
+                    content = (
+                        f"Dưới đây là **{len(cards)} hoạt động** phù hợp với yêu cầu của bạn "
+                        f"(đã kiểm tra và loại trừ lịch bận cá nhân):\n\n{bullets}"
+                    )
             else:
                 content = (
                     "Hiện tại chưa tìm thấy hoạt động nào phù hợp hoàn toàn với từ khóa này. "

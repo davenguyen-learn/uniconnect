@@ -152,4 +152,4 @@ class AdminGroupList(BaseModel):
 
 
 class GroupStatusUpdate(BaseModel):
-    status: str = Field(..., pattern="^(active|inactive)$")
+    status: str = Field(..., pattern="^(active|inactive|suspended)$")

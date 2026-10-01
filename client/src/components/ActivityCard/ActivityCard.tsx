@@ -10,6 +10,7 @@ import {
   Trash2,
   User,
   FileText,
+  Handshake,
 } from 'lucide-react';
 import type { ActivityResponse } from '../../api/activities';
 import {
@@ -48,8 +49,9 @@ export const ActivityCardComponent: React.FC<ActivityCardProps> = ({
   const effectiveIsRegistered =
     Boolean(isRegistered) ||
     Boolean(activity.joined_at) ||
-    activity.attendance_confirmed !== undefined ||
-    isHost;
+    activity.attendance_confirmed === true ||
+    (activity as any).is_registered === true ||
+    (activity as any).isRegistered === true;
 
   const vm: ActivityCardViewModel = mapActivityToCardViewModel(activity, effectiveIsRegistered, undefined, user?.id);
 
@@ -185,31 +187,34 @@ export const ActivityCardComponent: React.FC<ActivityCardProps> = ({
         )}
 
         {/* Tầng 3: Secondary Badges (Hình thức tham gia, CTXH, Trophy, Co-organizer) */}
-        <div className="activity-card__secondary-row">
-          {vm.requireApproval && (
-            <span className="activity-badge activity-badge--approval" title="Cần người tổ chức phê duyệt để tham gia">
-              <span>Cần phê duyệt</span>
-            </span>
-          )}
+        {Boolean(vm.requireApproval || vm.socialWorkDays || vm.trophy || vm.coOrganizerName) && (
+          <div className="activity-card__secondary-row">
+            {vm.requireApproval && (
+              <span className="activity-badge activity-badge--approval" title="Cần người tổ chức phê duyệt để tham gia">
+                <span>Cần phê duyệt</span>
+              </span>
+            )}
 
-          {vm.socialWorkDays && (
-            <span className="activity-badge activity-badge--ctxh">
-              <span>+{formatCtxh(vm.socialWorkDays)} ngày CTXH</span>
-            </span>
-          )}
+            {vm.socialWorkDays && (
+              <span className="activity-badge activity-badge--ctxh">
+                <span>+{formatCtxh(vm.socialWorkDays)} ngày CTXH</span>
+              </span>
+            )}
 
-          {vm.trophy && (
-            <span className="activity-badge activity-badge--trophy">
-              <span>{vm.trophy.name}</span>
-            </span>
-          )}
+            {vm.trophy && (
+              <span className="activity-badge activity-badge--trophy">
+                <span>{vm.trophy.name}</span>
+              </span>
+            )}
 
-          {vm.coOrganizerName && (
-            <span className="activity-badge activity-badge--cohost" title={`Đồng tổ chức: ${vm.coOrganizerName}`}>
-              <span>🤝 {vm.coOrganizerName}</span>
-            </span>
-          )}
-        </div>
+            {vm.coOrganizerName && (
+              <span className="activity-badge activity-badge--cohost flex items-center gap-1" title={`Đồng tổ chức: ${vm.coOrganizerName}`}>
+                <Handshake size={13} className="shrink-0" />
+                <span>{vm.coOrganizerName}</span>
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Cảnh báo trùng lịch cá nhân (Bấm vào để chuyển đến hoạt động đang bị trùng lịch) */}
         {vm.hasConflict && (
@@ -293,8 +298,9 @@ export const ActivityCardComponent: React.FC<ActivityCardProps> = ({
                 {vm.coHosts && vm.coHosts.length > 0 && (
                   <>
                     <span className="activity-card__host-dot">•</span>
-                    <span className="activity-card__host-cohosts" title="Các đơn vị đồng tổ chức">
-                      🤝 {vm.coHosts.map((ch, idx) => (
+                    <span className="activity-card__host-cohosts inline-flex items-center gap-1" title="Các đơn vị đồng tổ chức">
+                      <Handshake size={13} className="shrink-0" />
+                      {vm.coHosts.map((ch, idx) => (
                         <span
                           key={ch.id}
                           role="button"

@@ -127,6 +127,7 @@ class NearbyQuery(BaseModel):
     has_trophy: bool | None = None
     sort_by: str = Field(default="distance")
     exclude_my_activities: bool = Field(default=True)
+    exclude_joined: bool = Field(default=False)
     limit: int = Field(default=20, ge=1, le=100)
     offset: int = Field(default=0, ge=0)
 

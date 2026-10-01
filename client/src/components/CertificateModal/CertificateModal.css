@@ -11,7 +11,7 @@
 
 .certificate-modal-container {
   width: 100%;
-  max-width: 720px;
+  max-width: 760px;
   max-height: 94vh;
   display: flex;
   flex-direction: column;
@@ -38,6 +38,8 @@
   padding: 0.85rem 1.25rem;
   background: #ffffff !important;
   border-bottom: 1px solid #e5e7eb !important;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .cert-modal-title {
@@ -45,6 +47,39 @@
   font-weight: 600;
   color: #111827 !important;
   margin: 0;
+}
+
+/* Page switcher in header */
+.cert-page-selector {
+  display: inline-flex;
+  align-items: center;
+  background: #f1f5f9;
+  padding: 2px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.cert-page-tab-btn {
+  padding: 3px 9px;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: #475569;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.cert-page-tab-btn:hover {
+  color: #0f172a;
+}
+
+.cert-page-tab-btn.active {
+  background: #ffffff;
+  color: #4f46e5;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .certificate-modal-close {
@@ -79,51 +114,70 @@
   transition: none !important;
 }
 
-/* --- Document Sheet --- */
-.cert-doc {
+.cert-pages-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+}
+
+/* --- Document Sheet (A4 Proportion) --- */
+.cert-page {
   width: 100%;
   max-width: 640px;
+  min-height: 890px;
   background: #ffffff !important;
   color: #000000 !important;
-  padding: 40px 48px;
+  padding: 44px 48px;
   border-radius: 4px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.12) !important;
   font-family: 'Times New Roman', 'Noto Serif', Georgia, serif;
   font-size: 14px;
   line-height: 1.6;
   cursor: default;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-sizing: border-box;
   transition: none !important;
   transform: none !important;
 }
 
-.cert-doc:hover {
+.cert-page:hover {
   background: #ffffff !important;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.12) !important;
   transform: none !important;
 }
 
-.cert-doc,
-.cert-doc * {
+.cert-page,
+.cert-page * {
   font-style: normal !important;
   color: #000000 !important;
   transition: none !important;
   transform: none !important;
 }
 
-.cert-doc *:hover {
+.cert-page *:hover {
   transition: none !important;
   transform: none !important;
 }
 
-.cert-doc-table tr:hover,
-.cert-doc-table td:hover {
-  background: transparent !important;
+.cert-page-top {
+  display: flex;
+  flex-direction: column;
+}
+
+.cert-page-bottom {
+  display: flex;
+  flex-direction: column;
+  margin-top: 20px;
 }
 
 /* Header */
 .cert-doc-header {
   text-align: center;
-  margin-bottom: 24px;
+  margin-bottom: 22px;
 }
 
 .cert-doc-org {
@@ -147,50 +201,62 @@
   width: 60px;
   height: 2px;
   background: #000000;
-  margin: 10px auto 0;
+  margin: 10px auto 16px;
 }
 
 /* Title */
 .cert-doc-title {
   text-align: center;
-  font-size: 17px;
+  font-size: 16.5px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: #000000;
-  margin: 0 0 24px 0;
+  margin: 0;
 }
 
-/* Body Table */
+/* Section Header (when paginated) */
+.cert-section-header {
+  font-size: 12.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #000000;
+  margin-bottom: 16px;
+  padding-bottom: 4px;
+  border-bottom: 1.5px solid #000000;
+}
+
+/* Body Fields - Natural inline rows (NO 2 columns!) */
 .cert-doc-body {
-  margin-bottom: 28px;
+  margin-bottom: 16px;
 }
 
-.cert-doc-table {
-  width: 100%;
-  border-collapse: collapse;
+.cert-doc-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   margin-bottom: 20px;
 }
 
-.cert-doc-table td {
-  padding: 6px 0;
-  vertical-align: top;
-  border: none;
+.cert-doc-row {
+  line-height: 1.6;
+  font-size: 14px;
+  color: #000000;
+  text-align: left;
 }
 
 .cert-doc-label {
-  width: 140px;
   font-weight: 400;
   color: #000000;
-  font-size: 13.5px;
-  white-space: nowrap;
-  padding-right: 12px;
+  margin-right: 6px;
+  display: inline;
 }
 
 .cert-doc-value {
-  font-weight: 400;
+  font-weight: 500;
   color: #000000;
-  font-size: 14px;
+  display: inline;
 }
 
 .cert-doc-value--name {
@@ -199,8 +265,7 @@
 }
 
 .cert-doc-value--activity {
-  font-weight: 600;
-  font-style: normal;
+  font-weight: 700;
 }
 
 .cert-doc-value--highlight {
@@ -212,9 +277,10 @@
   font-size: 13.5px;
   color: #000000;
   margin: 0;
-  padding-top: 10px;
+  padding-top: 12px;
   border-top: 1px solid #d0d0d0;
   font-style: normal;
+  line-height: 1.5;
 }
 
 /* Footer */
@@ -222,7 +288,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  margin-top: 8px;
+  margin-top: 6px;
 }
 
 .cert-doc-qr-section {
@@ -261,6 +327,16 @@
   margin-top: 2px;
 }
 
+.cert-page-number {
+  text-align: right;
+  font-size: 11.5px;
+  color: #555555;
+  margin-top: 12px;
+  border-top: 1px dotted #ccc;
+  padding-top: 6px;
+  font-family: 'Times New Roman', Georgia, serif;
+}
+
 /* PRINT STYLING - A4 Portrait */
 @media print {
   @page {
@@ -290,7 +366,7 @@
     border: none;
     max-width: none;
     width: 100%;
-    height: 100%;
+    height: auto;
     max-height: none;
     border-radius: 0;
     background: transparent;
@@ -299,6 +375,7 @@
   .certificate-modal-body {
     padding: 0;
     background: transparent;
+    overflow: visible;
   }
 
   .certificate-printable-wrapper,
@@ -306,13 +383,25 @@
     visibility: visible;
   }
 
-  .cert-doc {
+  .cert-pages-list {
+    gap: 0;
+  }
+
+  .cert-page {
     width: 100% !important;
     max-width: none !important;
+    min-height: 265mm !important;
     box-shadow: none !important;
-    padding: 20mm 15mm !important;
-    page-break-inside: avoid;
+    padding: 15mm 15mm !important;
+    page-break-after: always;
+    break-after: page;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
+
+  .cert-page:last-child {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
 }
+

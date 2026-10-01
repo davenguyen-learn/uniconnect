@@ -101,12 +101,13 @@ async def get_group(db: AsyncSession, group_id: uuid.UUID, user_id: uuid.UUID | 
     for m in group.members:
         if user_id and m.user_id == user_id:
             is_user_member = True
+        role_val = "owner" if m.user_id == group.owner_id else (m.role.value if hasattr(m.role, "value") else str(m.role))
         members_res.append(GroupMemberResponse(
             user_id=m.user_id,
-            role=m.role,
-            joined_at=m.created_at,
-            username=m.user.username,
-            full_name=m.user.full_name
+            role=role_val,
+            joined_at=m.created_at or datetime.now(timezone.utc),
+            username=m.user.username if getattr(m, "user", None) else None,
+            full_name=m.user.full_name if getattr(m, "user", None) else None,
         ))
 
     # Only reveal private_description to group members or owner
@@ -120,8 +121,8 @@ async def get_group(db: AsyncSession, group_id: uuid.UUID, user_id: uuid.UUID | 
         description=group.description,
         public_description=group.public_description,
         private_description=revealed_private_desc,
-        allow_member_activities=group.allow_member_activities,
-        require_approval=group.require_approval,
+        allow_member_activities=group.allow_member_activities if getattr(group, "allow_member_activities", None) is not None else True,
+        require_approval=group.require_approval if getattr(group, "require_approval", None) is not None else True,
         privacy=group.privacy.value if hasattr(group.privacy, 'value') else group.privacy,
         status=getattr(group, 'status', 'active') or 'active',
         owner_id=group.owner_id,
@@ -138,8 +139,8 @@ async def join_group(db: AsyncSession, group_id: uuid.UUID, user_id: uuid.UUID, 
     if not group:
         raise HTTPException(status_code=404, detail="Group not found")
 
-    if getattr(group, 'status', 'active') == 'inactive':
-        raise HTTPException(status_code=400, detail="Nhóm này đã dừng hoạt động, không thể tham gia.")
+    if getattr(group, 'status', 'active') in ('inactive', 'suspended'):
+        raise HTTPException(status_code=400, detail="Nhóm này đang tạm dừng hoạt động, không thể tham gia.")
         
     is_member = await group_repo.is_member(db, group_id, user_id)
     if is_member:
@@ -278,10 +279,13 @@ async def get_group_members_service(
     db: AsyncSession, group_id: uuid.UUID, limit: int = 20, offset: int = 0
 ) -> list[GroupMemberResponse]:
     members, _ = await group_repo.get_group_members_paginated(db, group_id, limit, offset)
+    group = await group_repo.get_group_by_id(db, group_id)
+    owner_id = group.owner_id if group else None
+
     return [
         GroupMemberResponse(
             user_id=m.user_id,
-            role=m.role,
+            role="owner" if owner_id and m.user_id == owner_id else (m.role.value if hasattr(m.role, "value") else str(m.role)),
             joined_at=m.created_at,
             username=m.user.username if m.user else None,
             full_name=m.user.full_name if m.user else None,
@@ -337,8 +341,8 @@ async def action_join_request(
         raise HTTPException(status_code=404, detail="Join request not found")
 
     grp = await group_repo.get_group_by_id(db, group_id)
-    if grp and getattr(grp, 'status', 'active') == 'inactive':
-        raise HTTPException(status_code=400, detail="Nhóm này đã dừng hoạt động.")
+    if grp and getattr(grp, 'status', 'active') in ('inactive', 'suspended'):
+        raise HTTPException(status_code=400, detail="Nhóm này đang tạm dừng hoạt động.")
 
     if req.status != "pending":
         raise HTTPException(status_code=400, detail="Cannot process request that is not pending")
@@ -696,5 +700,125 @@ async def delete_group_avatar(
         await storage.delete_file(old_avatar_url)
 
     return await get_group(db, group_id, user_id)
+
+
+async def suspend_group(
+    db: AsyncSession,
+    group_id: uuid.UUID,
+    user_id: uuid.UUID,
+    user_role: str | None = None,
+) -> GroupDetailResponse:
+    group = await group_repo.get_group_by_id(db, group_id)
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+
+    is_owner = group.owner_id == user_id
+    is_sys_admin = user_role in ("admin", "edu_org")
+    if not (is_owner or is_sys_admin):
+        raise HTTPException(
+            status_code=403,
+            detail="Chỉ Trưởng nhóm hoặc Quản trị viên hệ thống mới có quyền tạm dừng hoạt động nhóm.",
+        )
+
+    group.status = "suspended"
+    await db.commit()
+    await db.refresh(group)
+    return await get_group(db, group_id, user_id)
+
+
+async def resume_group(
+    db: AsyncSession,
+    group_id: uuid.UUID,
+    user_id: uuid.UUID,
+    user_role: str | None = None,
+) -> GroupDetailResponse:
+    group = await group_repo.get_group_by_id(db, group_id)
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+
+    is_owner = group.owner_id == user_id
+    is_sys_admin = user_role in ("admin", "edu_org")
+    if not (is_owner or is_sys_admin):
+        raise HTTPException(
+            status_code=403,
+            detail="Chỉ Trưởng nhóm hoặc Quản trị viên hệ thống mới có quyền kích hoạt lại nhóm.",
+        )
+
+    group.status = "active"
+    await db.commit()
+    await db.refresh(group)
+    return await get_group(db, group_id, user_id)
+
+
+async def transfer_group_ownership(
+    db: AsyncSession,
+    group_id: uuid.UUID,
+    current_user_id: uuid.UUID,
+    new_owner_id: uuid.UUID,
+    user_role: str | None = None,
+) -> GroupDetailResponse:
+    group = await group_repo.get_group_by_id(db, group_id)
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+
+    is_owner = group.owner_id == current_user_id
+    is_sys_admin = user_role in ("admin", "edu_org")
+    if not (is_owner or is_sys_admin):
+        raise HTTPException(
+            status_code=403,
+            detail="Chỉ Trưởng nhóm hiện tại mới có quyền chuyển nhượng quyền quản lý nhóm.",
+        )
+
+    if new_owner_id == group.owner_id:
+        raise HTTPException(status_code=400, detail="Thành viên này hiện đã là Trưởng nhóm.")
+
+    is_mem = await group_repo.is_member(db, group_id, new_owner_id)
+    if not is_mem:
+        raise HTTPException(
+            status_code=400,
+            detail="Người nhận chuyển nhượng phải là thành viên chính thức của nhóm.",
+        )
+
+    old_owner_id = group.owner_id
+    group.owner_id = new_owner_id
+
+    # Promote new owner to admin role in group_members if not already
+    new_mem_stmt = select(GroupMember).where(
+        GroupMember.group_id == group_id, GroupMember.user_id == new_owner_id
+    )
+    new_mem_res = await db.execute(new_mem_stmt)
+    new_mem = new_mem_res.scalar_one_or_none()
+    if new_mem:
+        new_mem.role = GroupRole.admin
+
+    # Keep former owner as an admin of the group
+    old_mem_stmt = select(GroupMember).where(
+        GroupMember.group_id == group_id, GroupMember.user_id == old_owner_id
+    )
+    old_mem_res = await db.execute(old_mem_stmt)
+    old_mem = old_mem_res.scalar_one_or_none()
+    if old_mem:
+        old_mem.role = GroupRole.admin
+    else:
+        db.add(GroupMember(group_id=group_id, user_id=old_owner_id, role=GroupRole.admin))
+
+    # Send in-app notification to the new owner
+    try:
+        from app.modules.notifications.repository import create_notification
+        await create_notification(
+            db=db,
+            user_id=new_owner_id,
+            actor_id=current_user_id,
+            type="group_ownership_transferred",
+            message=f'Bạn đã được chuyển giao quyền Trưởng nhóm của nhóm "{group.name}".',
+            action_url=f"/groups/{group.id}",
+        )
+    except Exception:
+        pass
+
+    await db.commit()
+    await db.refresh(group)
+    return await get_group(db, group_id, current_user_id)
+
 
 

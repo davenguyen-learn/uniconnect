@@ -8,7 +8,7 @@ import time
 import logging
 from datetime import datetime, timezone, timedelta
 
-from sqlalchemy import update, select
+from sqlalchemy import update, select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
@@ -62,6 +62,13 @@ async def request_to_join(
     # Host cannot join their own activity
     if str(activity.host_id) == user_id:
         raise ValidationError("You cannot join your own activity.")
+
+    # Cannot join after start time
+    now = datetime.now(timezone.utc)
+    if activity.start_time:
+        start_tz = activity.start_time if activity.start_time.tzinfo else activity.start_time.replace(tzinfo=timezone.utc)
+        if now >= start_tz:
+            raise ValidationError("Hoạt động đã bắt đầu, không thể đăng ký tham gia.")
 
     # Check capacity
     if activity.current_participants >= activity.max_participants:
@@ -268,8 +275,8 @@ def calculate_distance_meters(lat1: float, lon1: float, lat2: float, lon2: float
 
 
 def generate_rotating_token(secret: str, activity_id: uuid.UUID, time_offset_steps: int = 0) -> str:
-    """Generate 6-character dynamic OTP token for QR code rotation every 30s."""
-    step = int(time.time() // 30) + time_offset_steps
+    """Generate 6-character dynamic OTP token for QR code rotation every 60s."""
+    step = int(time.time() // 60) + time_offset_steps
     msg = f"{activity_id}:{step}".encode()
     return hmac.new(secret.encode(), msg, hashlib.sha256).hexdigest()[:6].upper()
 
@@ -303,7 +310,7 @@ async def get_check_in_code(db: AsyncSession, activity_id: uuid.UUID, user_id: s
     secret = activity.check_in_code
     rotating_token = generate_rotating_token(secret, activity.id, 0)
     now = time.time()
-    expires_in = int(30 - (now % 30))
+    expires_in = int(60 - (now % 60))
 
     return {
         "check_in_code": activity.check_in_code,
@@ -372,9 +379,10 @@ async def check_in_participant(
         # Accuracy enforcement: domain error mapped to gps_accuracy_low
         if accuracy is None:
             raise ValidationError("Thiết bị không cung cấp độ chính xác GPS. Vui lòng bật định vị chính xác cao.")
-        if accuracy > 100.0:
+        max_accuracy = 100.0 if (activity.check_in_radius and activity.check_in_radius <= 500) else 1500.0
+        if accuracy > max_accuracy:
             raise ValidationError(
-                f"Độ chính xác GPS không đủ tin cậy ({int(accuracy)}m > 100m). Vui lòng di chuyển ra nơi thoáng đãng để cải thiện tín hiệu vệ tinh."
+                f"Độ chính xác GPS không đủ tin cậy ({int(accuracy)}m > {int(max_accuracy)}m). Vui lòng di chuyển ra nơi thoáng đãng để cải thiện tín hiệu vệ tinh."
             )
 
         dist = calculate_distance_meters(lat, lng, act_lat, act_lng)
@@ -783,3 +791,206 @@ async def verify_certificate_code(db: AsyncSession, code: str) -> dict:
         return await get_certificate_data(db, act.id, str(act.host_id))
 
     raise NotFoundError("Không tìm thấy giấy chứng nhận hợp lệ với mã này.")
+
+
+async def open_live_checkin(
+    db: AsyncSession,
+    activity_id: uuid.UUID,
+    user_id: str,
+    latitude: float,
+    longitude: float,
+    radius: int = 50,
+    duration_seconds: int = 300,
+) -> dict:
+    """Host opens a live location check-in session for participants nearby."""
+    activity = await activity_repo.get_by_id(db, activity_id)
+    if not activity:
+        raise NotFoundError("Activity not found.")
+
+    from app.modules.groups.permissions import can_open_checkin
+    has_permission = await can_open_checkin(db, uuid.UUID(user_id), activity_id)
+    if not has_permission:
+        raise ForbiddenError("Chỉ có người tổ chức (Host hoặc Đồng tổ chức) mới được mở điểm danh theo phạm vi.")
+
+    if getattr(activity, "attendance_finalized_at", None) is not None:
+        raise ConflictError("Điểm danh của hoạt động này đã được chốt, không thể thay đổi.")
+
+    now = datetime.now(timezone.utc)
+    expires_at = now + timedelta(seconds=max(30, duration_seconds))
+
+    activity.live_checkin_lat = latitude
+    activity.live_checkin_lng = longitude
+    activity.live_checkin_radius = max(5, radius)
+    activity.live_checkin_expires_at = expires_at
+
+    await db.commit()
+    await db.refresh(activity)
+
+    return {
+        "is_active": True,
+        "expires_at": expires_at,
+        "remaining_seconds": int((expires_at - now).total_seconds()),
+        "radius": activity.live_checkin_radius,
+        "message": f"Đã mở điểm danh theo phạm vi {activity.live_checkin_radius}m trong {int(duration_seconds // 60)} phút.",
+    }
+
+
+async def close_live_checkin(
+    db: AsyncSession,
+    activity_id: uuid.UUID,
+    user_id: str,
+) -> dict:
+    """Host closes the active live check-in session."""
+    activity = await activity_repo.get_by_id(db, activity_id)
+    if not activity:
+        raise NotFoundError("Activity not found.")
+
+    from app.modules.groups.permissions import can_open_checkin
+    has_permission = await can_open_checkin(db, uuid.UUID(user_id), activity_id)
+    if not has_permission:
+        raise ForbiddenError("Chỉ có người tổ chức mới được đóng phiên điểm danh.")
+
+    activity.live_checkin_expires_at = None
+    await db.commit()
+
+    return {
+        "is_active": False,
+        "message": "Đã đóng phiên điểm danh theo phạm vi.",
+    }
+
+
+async def get_live_checkin_status(
+    db: AsyncSession,
+    activity_id: uuid.UUID,
+) -> dict:
+    """Get status of active live location check-in session."""
+    activity = await activity_repo.get_by_id(db, activity_id)
+    if not activity:
+        raise NotFoundError("Activity not found.")
+
+    now = datetime.now(timezone.utc)
+    is_active = False
+    remaining_seconds = 0
+
+    if activity.live_checkin_expires_at and activity.live_checkin_lat is not None:
+        expires_tz = activity.live_checkin_expires_at if activity.live_checkin_expires_at.tzinfo else activity.live_checkin_expires_at.replace(tzinfo=timezone.utc)
+        if expires_tz > now:
+            is_active = True
+            remaining_seconds = max(0, int((expires_tz - now).total_seconds()))
+
+    opened_by_name = activity.host.username if getattr(activity, "host", None) else None
+
+    # Count approved and attended participants
+    count_stmt = (
+        select(
+            func.count(JoinRequest.id),
+            func.count(JoinRequest.id).filter(JoinRequest.attendance_confirmed.is_(True))
+        ).where(
+            JoinRequest.activity_id == activity_id,
+            JoinRequest.status == RequestStatus.approved
+        )
+    )
+    counts = (await db.execute(count_stmt)).one()
+    total_approved = counts[0] or 0
+    attended_count = counts[1] or 0
+
+    return {
+        "is_active": is_active,
+        "expires_at": activity.live_checkin_expires_at if is_active else None,
+        "remaining_seconds": remaining_seconds,
+        "radius": activity.live_checkin_radius or 50,
+        "opened_by_name": opened_by_name,
+        "attended_count": attended_count,
+        "total_approved": total_approved,
+    }
+
+
+async def verify_live_checkin(
+    db: AsyncSession,
+    activity_id: uuid.UUID,
+    user_id: str,
+    latitude: float,
+    longitude: float,
+    accuracy: float | None = None,
+) -> dict:
+    """Participant verifies live proximity to Host's recorded location."""
+    activity = await activity_repo.get_by_id(db, activity_id)
+    if not activity:
+        raise NotFoundError("Activity not found.")
+
+    uid = uuid.UUID(user_id)
+    jr = await participation_repo.get_active_request(db, activity_id, uid)
+    if not jr or jr.status != RequestStatus.approved:
+        raise ForbiddenError("Bạn chưa được duyệt tham gia hoạt động này.")
+
+    if jr.attendance_confirmed:
+        return {
+            "message": "Bạn đã được điểm danh trước đó.",
+            "attendance_confirmed": True,
+            "trophy_awarded": False,
+            "already_confirmed": True,
+            "distance_meters": 0.0,
+        }
+
+    now = datetime.now(timezone.utc)
+    if not activity.live_checkin_expires_at or activity.live_checkin_lat is None:
+        raise ValidationError("Host hiện chưa mở phiên điểm danh theo phạm vi.")
+
+    expires_tz = activity.live_checkin_expires_at if activity.live_checkin_expires_at.tzinfo else activity.live_checkin_expires_at.replace(tzinfo=timezone.utc)
+    if now > expires_tz:
+        raise ValidationError("Phiên điểm danh theo phạm vi của Host đã kết thúc.")
+
+    if getattr(activity, "attendance_finalized_at", None) is not None:
+        raise ConflictError("Điểm danh của hoạt động này đã được chốt, không thể thay đổi.")
+
+    if accuracy is not None and accuracy > 1000.0:
+        raise ValidationError(f"Độ chính xác GPS quá thấp (sai số ~{int(accuracy)}m > 1000m). Vui lòng ra nơi thoáng đãng hoặc bật định vị chính xác cao.")
+
+    # Calculate distance to Host's live anchor
+    dist = calculate_distance_meters(
+        latitude, longitude, activity.live_checkin_lat, activity.live_checkin_lng
+    )
+    allowed_radius = activity.live_checkin_radius or 50
+
+    if dist > allowed_radius:
+        raise ValidationError(
+            f"Bạn đang ở cách Host khoảng {int(dist)}m (vượt quá bán kính cho phép {allowed_radius}m)."
+        )
+
+    # Atomic update
+    stmt = (
+        update(JoinRequest)
+        .where(
+            JoinRequest.id == jr.id,
+            JoinRequest.attendance_confirmed == False,
+        )
+        .values(
+            attendance_confirmed=True,
+            responded_at=now,
+        )
+    )
+    result = await db.execute(stmt)
+    if result.rowcount == 0:
+        return {
+            "message": "Bạn đã được điểm danh trước đó.",
+            "attendance_confirmed": True,
+            "trophy_awarded": False,
+            "already_confirmed": True,
+            "distance_meters": round(dist, 1),
+        }
+
+    logger.info(
+        f"[AUDIT LIVE CHECK-IN] User {uid} checked in to Activity {activity_id}. "
+        f"Distance to host: {dist:.1f}m (radius: {allowed_radius}m), Accuracy: {accuracy}m, Timestamp: {now.isoformat()}"
+    )
+
+    await db.commit()
+
+    return {
+        "message": f"Điểm danh thành công! (Khoảng cách tới Host: {int(dist)}m)",
+        "attendance_confirmed": True,
+        "trophy_awarded": False,
+        "already_confirmed": False,
+        "distance_meters": round(dist, 1),
+    }
+

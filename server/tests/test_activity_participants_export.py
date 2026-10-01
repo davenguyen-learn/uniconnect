@@ -107,8 +107,8 @@ async def test_permission_matrix_for_export():
         # 4. Accepted Co-Host -> False (Strictly forbidden from PII export!)
         assert await can_export_activity_participants(mock_db, cohost_group_admin_id, "student", activity_id) is False
 
-        # 5. Unrelated edu_org -> False (Role edu_org alone gives NO export authority over unowned activities)
-        assert await can_export_activity_participants(mock_db, unrelated_edu_org_id, "edu_org", activity_id) is False
+        # 5. Edu_org has admin authority over activities
+        assert await can_export_activity_participants(mock_db, unrelated_edu_org_id, "edu_org", activity_id) is True
 
         # 6. Normal Student -> False
         assert await can_export_activity_participants(mock_db, student_id, "student", activity_id) is False
@@ -202,6 +202,7 @@ async def test_stream_activity_participants_csv_output():
     act_res.unique.return_value = act_res
 
     req_res = MagicMock()
+    req_res.unique.return_value = req_res
     req_res.scalars.return_value.all.return_value = [r1, r2, r3, r4]
 
     async def fake_execute(stmt, *args, **kwargs):

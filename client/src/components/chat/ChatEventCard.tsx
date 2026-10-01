@@ -1,5 +1,4 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Clock, MapPin, Award, AlertTriangle, ArrowRight, Navigation } from 'lucide-react';
 import type { ChatEventCardViewModel } from '../../types/chat-mapper';
 
@@ -8,19 +7,20 @@ interface ChatEventCardProps {
 }
 
 export const ChatEventCard: React.FC<ChatEventCardProps> = ({ card }) => {
-  const navigate = useNavigate();
 
   return (
     <div className="p-3.5 rounded-xl border border-slate-200 bg-white shadow-sm hover:shadow-md hover:border-indigo-300 transition duration-200 text-left">
       {/* Header with Title & Conflict Warning */}
       <div className="flex items-start justify-between gap-2">
-        <h4 
-          onClick={() => navigate(`/activities/${card.activityId}`)}
-          className="font-bold text-slate-900 text-sm line-clamp-1 hover:text-indigo-600 cursor-pointer transition-colors"
-          title={card.title}
+        <a 
+          href={`/activities/${card.activityId}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-bold text-slate-900 text-sm line-clamp-1 hover:text-indigo-600 transition-colors"
+          title={`${card.title} (Mở trong tab mới)`}
         >
           {card.title}
-        </h4>
+        </a>
         {card.conflictBadge.variant !== 'none' && (
           <span
             className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold shrink-0 ${
@@ -38,16 +38,15 @@ export const ChatEventCard: React.FC<ChatEventCardProps> = ({ card }) => {
       {/* Organizing Group Link if any */}
       {card.groupName && card.groupId && (
         <div className="mt-1">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/groups/${card.groupId}`);
-            }}
+          <a
+            href={`/groups/${card.groupId}`}
+            target="_blank"
+            rel="noopener noreferrer"
             className="inline-flex items-center gap-1 text-[11px] font-medium text-indigo-600 hover:underline"
+            title={`${card.groupName} (Mở trong tab mới)`}
           >
             Nhóm: {card.groupName}
-          </button>
+          </a>
         </div>
       )}
 
@@ -94,13 +93,16 @@ export const ChatEventCard: React.FC<ChatEventCardProps> = ({ card }) => {
           {card.statusBadge.label}
         </span>
 
-        <button
-          onClick={() => navigate(`/activities/${card.activityId}`)}
+        <a
+          href={`/activities/${card.activityId}`}
+          target="_blank"
+          rel="noopener noreferrer"
           className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-700 hover:underline"
+          title="Mở chi tiết hoạt động trong tab mới"
         >
           {card.ctaLabel}
           <ArrowRight className="w-3.5 h-3.5" />
-        </button>
+        </a>
       </div>
     </div>
   );

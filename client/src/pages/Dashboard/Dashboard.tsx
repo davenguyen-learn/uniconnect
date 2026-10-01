@@ -47,7 +47,7 @@ import './Dashboard.css';
 // Lazy-load Leaflet Map to optimize initial bundle and page responsiveness
 const LazyMap = lazy(() => import('../../components/Map/Map'));
 
-const PAGE_SIZE = 12;
+const PAGE_SIZE = 20;
 
 export const Dashboard: React.FC = () => {
   const toast = useToast();
@@ -114,7 +114,8 @@ export const Dashboard: React.FC = () => {
   const [category, setCategory] = useState<string>('all');
   const [filterCtxhOnly, setFilterCtxhOnly] = useState(false);
   const [filterTrophyOnly, setFilterTrophyOnly] = useState(false);
-  const [hideConflicts, setHideConflicts] = useState(false);
+  const [hideConflicts, setHideConflicts] = useState(true);
+  const [hideJoined, setHideJoined] = useState(true);
   const [sortBy, setSortBy] = useState<'distance' | 'time' | 'created_at'>('distance');
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
@@ -123,6 +124,7 @@ export const Dashboard: React.FC = () => {
     (filterCtxhOnly ? 1 : 0) +
     (filterTrophyOnly ? 1 : 0) +
     (hideConflicts ? 1 : 0) +
+    (hideJoined ? 1 : 0) +
     (radius !== 50000 ? 1 : 0) +
     (sortBy !== 'distance' ? 1 : 0);
 
@@ -130,7 +132,8 @@ export const Dashboard: React.FC = () => {
     setCategory('all');
     setFilterCtxhOnly(false);
     setFilterTrophyOnly(false);
-    setHideConflicts(false);
+    setHideConflicts(true);
+    setHideJoined(true);
     setRadius(50000);
     setSortBy('distance');
     setPage(1);
@@ -150,7 +153,7 @@ export const Dashboard: React.FC = () => {
 
   useEffect(() => {
     setPage(1);
-  }, [radius, category, filterCtxhOnly, filterTrophyOnly, debouncedSearch, hideConflicts, sortBy]);
+  }, [radius, category, filterCtxhOnly, filterTrophyOnly, hideJoined, debouncedSearch, hideConflicts, sortBy]);
 
   // Geolocation
   useEffect(() => {
@@ -217,6 +220,7 @@ export const Dashboard: React.FC = () => {
         has_trophy: filterTrophyOnly || undefined,
         sort_by: sortBy,
         exclude_my_activities: true,
+        exclude_joined: hideJoined || undefined,
         include_conflicts: !hideConflicts,
       };
       const response = await activitiesApi.nearby(query);
@@ -228,7 +232,7 @@ export const Dashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [radius, page, category, debouncedSearch, filterCtxhOnly, filterTrophyOnly, sortBy, hideConflicts, toast]);
+  }, [radius, page, category, debouncedSearch, filterCtxhOnly, filterTrophyOnly, hideJoined, sortBy, hideConflicts, toast]);
 
   useEffect(() => {
     if (userLocation) {
@@ -240,6 +244,9 @@ export const Dashboard: React.FC = () => {
   const displayedActivities: ActivityResponse[] = useMemo(() => {
     let list = activities.filter((act) => {
       if (user?.id && (act.host_id === user.id || act.host?.username === user.username)) {
+        return false;
+      }
+      if (hideJoined && (act.joined_at || act.attendance_confirmed)) {
         return false;
       }
       if (hideConflicts && act.conflict_info?.has_conflict) {
@@ -258,7 +265,7 @@ export const Dashboard: React.FC = () => {
       return [...list].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     }
     return list;
-  }, [activities, hideConflicts, sortBy, user]);
+  }, [activities, hideConflicts, hideJoined, sortBy, user]);
 
   // Stable callbacks for ActivityCard to prevent unnecessary re-renders
   const handleCardShare = useCallback((activityId: string) => {
@@ -368,6 +375,12 @@ export const Dashboard: React.FC = () => {
                 <button type="button" onClick={() => setHideConflicts(false)} aria-label="Bỏ ẩn trùng lịch"><X size={12} /></button>
               </span>
             )}
+            {hideJoined && (
+              <span className="active-filter-pill">
+                <span>Ẩn đã tham gia</span>
+                <button type="button" onClick={() => setHideJoined(false)} aria-label="Bỏ ẩn đã tham gia"><X size={12} /></button>
+              </span>
+            )}
             {radius !== 50000 && (
               <span className="active-filter-pill">
                 <span>{radius / 1000} km</span>
@@ -448,6 +461,16 @@ export const Dashboard: React.FC = () => {
                 >
                   <CalendarOff size={14} className="chip-btn__icon" />
                   <span>Ẩn hoạt động trùng lịch</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`chip-btn ${hideJoined ? 'chip-btn--active' : ''}`}
+                  onClick={() => setHideJoined(!hideJoined)}
+                  aria-pressed={hideJoined}
+                >
+                  <Users size={14} className="chip-btn__icon" />
+                  <span>Ẩn hoạt động đã tham gia</span>
                 </button>
               </div>
             </div>
@@ -544,8 +567,8 @@ export const Dashboard: React.FC = () => {
               </div>
               <h3 className="empty-state-title">Chưa có hoạt động nào phù hợp</h3>
               <p className="empty-state-desc">
-                {hideConflicts
-                  ? 'Một số hoạt động có thể đã bị ẩn do trùng lịch cá nhân. Thử tắt "Ẩn trùng lịch" hoặc nới rộng bán kính tìm kiếm nhé!'
+                {hideConflicts || hideJoined
+                  ? 'Một số hoạt động có thể đã bị ẩn do bộ lọc (trùng lịch hoặc đã tham gia). Thử tắt bộ lọc hoặc nới rộng bán kính tìm kiếm nhé!'
                   : 'Thử nới rộng bán kính hoặc đổi danh mục bộ lọc để khám phá các sự kiện thú vị khác nhé!'}
               </p>
             </div>

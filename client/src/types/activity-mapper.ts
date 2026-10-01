@@ -137,15 +137,15 @@ export function mapActivityToCardViewModel(
   const endDate = new Date(activity.end_time || activity.start_time);
   const now = new Date();
   const isPast = endDate < now;
+  const isStarted = startDate <= now;
 
   const isHost = Boolean(currentUserId && String(activity.host_id) === String(currentUserId));
   const effectiveIsRegistered =
     Boolean(isRegistered) ||
     Boolean(activity.joined_at) ||
-    activity.attendance_confirmed !== undefined ||
+    activity.attendance_confirmed === true ||
     (activity as any).is_registered === true ||
-    (activity as any).isRegistered === true ||
-    isHost;
+    (activity as any).isRegistered === true;
 
   const maxParticipants = activity.max_participants || 0;
   const currentParticipants = activity.current_participants || 0;
@@ -154,15 +154,20 @@ export function mapActivityToCardViewModel(
       ? Math.min(100, Math.round((currentParticipants / maxParticipants) * 100))
       : 0;
 
-  const registrationState = isPast
-    ? 'deadline_passed'
-    : computeActivityRegistrationState({
-        isRegistered: effectiveIsRegistered,
-        registrationStatus: userRegistrationStatus,
-        currentParticipants,
-        maxParticipants,
-        hasConflict: activity.conflict_info?.has_conflict,
-      });
+  let registrationState: ActivityRegistrationState;
+  if (effectiveIsRegistered || userRegistrationStatus === 'approved' || userRegistrationStatus === 'pending') {
+    registrationState = 'registered';
+  } else if (isPast || isStarted) {
+    registrationState = 'deadline_passed';
+  } else {
+    registrationState = computeActivityRegistrationState({
+      isRegistered: false,
+      registrationStatus: userRegistrationStatus,
+      currentParticipants,
+      maxParticipants,
+      hasConflict: activity.conflict_info?.has_conflict,
+    });
+  }
 
   const formatDate = (d: Date) =>
     d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
