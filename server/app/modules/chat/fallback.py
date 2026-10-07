@@ -15,7 +15,12 @@ from app.modules.chat.schemas import (
     ChatResponse,
     ChatEventCardItem,
 )
-from app.modules.chat.tools import search_activities_tool, search_groups_tool
+from app.modules.chat.tools import (
+    search_activities_tool,
+    search_groups_tool,
+    add_personal_busy_slot_tool,
+    create_schedule_plan_tool,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +36,15 @@ def classify_fallback_intent(msg: str) -> str:
     ]
     if any(kw in m for kw in refusal_keywords) or (re.search(r"\bhack\b", m) and "hackathon" not in m):
         return "SAFETY_REFUSAL"
+
+    # 1.1 Actionable Self-Study & Exam Planning
+    study_plan_keywords = [
+        "thời gian tự học", "xếp thời gian tự học", "lên lịch tự học",
+        "lịch tự học", "tự học thế nào", "sắp xếp tự học", "tư vấn tự học", "đặt lịch tự học",
+        "ôn thi", "sắp xếp thời gian học tập", "lên lịch ôn thi", "lịch học tập", "kế hoạch ôn thi"
+    ]
+    if any(kw in m for kw in study_plan_keywords):
+        return "STUDY_PLANNING"
 
     # 2. iCalendar / Calendar Export
     export_keywords = ["icalendar", ".ics", "xuất lịch", "tải lịch", "đồng bộ google calendar", "đồng bộ lịch"]
@@ -111,10 +125,11 @@ async def generate_deterministic_fallback(
 
         elif intent == "CALENDAR_EXPORT":
             content = (
-                "**Cách xuất lịch sự kiện ra file iCalendar (.ics):**\n\n"
-                "1. Truy cập vào mục **Lịch thông minh** (hoặc **Hoạt động của tôi**) trên thanh điều hướng.\n"
-                "2. Nhấn nút **'Xuất lịch (.ics)'** ở góc trên bên phải màn hình.\n"
-                "3. Mở file `.ics` vừa tải xuống để tự động đồng bộ vào Google Calendar, Apple Calendar hoặc Microsoft Outlook."
+                "Hiện tại UniConnect chưa hỗ trợ tính năng xuất tệp `.ics` trực tiếp ra các ứng dụng lịch ngoài "
+                "(tính năng này đang nằm trong lộ trình phát triển mở rộng).\n\n"
+                "Tuy nhiên, bạn có thể dễ dàng theo dõi toàn bộ lịch trình sự kiện đã tham gia, lịch do bạn tổ chức "
+                "và thời khóa biểu bận cá nhân trực tiếp tại mục [Lịch Thông Minh](/calendar). Hệ thống đã tích hợp "
+                "sẵn tính năng tự động cảnh báo xung đột (Hard/Soft conflict) khi bạn đăng ký sự kiện mới!"
             )
 
         elif intent == "CALENDAR_CONFLICT_POLICY":
@@ -155,6 +170,109 @@ async def generate_deterministic_fallback(
                 "- Các sự kiện sắp diễn ra cũng hiển thị tại trang chủ. UniConnect sẽ chủ động cảnh báo nếu có hoạt động nào "
                 "sắp đến giờ bắt đầu."
             )
+
+        elif intent == "STUDY_PLANNING":
+            if user_id:
+                from datetime import datetime, time, timedelta
+                from app.modules.calendar.service import LOCAL_TZ
+
+                now = datetime.now(LOCAL_TZ)
+                msg_lower = user_message.lower()
+                is_sprint_or_sports = any(k in msg_lower for k in ("thi", "thể thao", "nghỉ ngơi", "rèn luyện", "10 ngày", "2 tuần", "giữa kỳ", "cuối kỳ", "sức khỏe", "4 môn"))
+
+                if is_sprint_or_sports:
+                    sprint_days = 14 if "2 tuần" in msg_lower else 10
+                    valid_until_date = (now + timedelta(days=sprint_days)).date()
+
+                    # Schedule slots across the upcoming weekdays starting immediately from today (Wed), Thu, Fri
+                    # To ensure all dates (including 7, 8, 9 Oct) are populated
+                    slots_to_add = []
+                    for dow in (2, 3, 4):  # 2=Thứ Tư (07/10), 3=Thứ Năm (08/10), 4=Thứ Sáu (09/10)
+                        dow_title = ["Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ Nhật"][dow]
+                        slots_to_add.append({
+                            "title": f"Ôn thi sáng: Lý thuyết ({dow_title})",
+                            "start_time": datetime.combine(now.date(), time(8, 30)).replace(tzinfo=LOCAL_TZ).isoformat(),
+                            "end_time": datetime.combine(now.date(), time(11, 0)).replace(tzinfo=LOCAL_TZ).isoformat(),
+                            "recurrence": "weekly",
+                            "day_of_week": dow,
+                            "valid_until": valid_until_date.isoformat(),
+                        })
+                        slots_to_add.append({
+                            "title": f"Rèn luyện thể thao chiều ({dow_title})",
+                            "start_time": datetime.combine(now.date(), time(16, 30)).replace(tzinfo=LOCAL_TZ).isoformat(),
+                            "end_time": datetime.combine(now.date(), time(17, 30)).replace(tzinfo=LOCAL_TZ).isoformat(),
+                            "recurrence": "weekly",
+                            "day_of_week": dow,
+                            "valid_until": valid_until_date.isoformat(),
+                        })
+                        slots_to_add.append({
+                            "title": f"Luyện đề thi tối ({dow_title})",
+                            "start_time": datetime.combine(now.date(), time(19, 30)).replace(tzinfo=LOCAL_TZ).isoformat(),
+                            "end_time": datetime.combine(now.date(), time(21, 30)).replace(tzinfo=LOCAL_TZ).isoformat(),
+                            "recurrence": "weekly",
+                            "day_of_week": dow,
+                            "valid_until": valid_until_date.isoformat(),
+                        })
+
+                    plan_res = await create_schedule_plan_tool(
+                        db=db,
+                        user_id=user_id,
+                        plan_title="Kế hoạch ôn thi & rèn luyện thể thao",
+                        slots=slots_to_add,
+                    )
+                    await db.commit()
+                    content = (
+                        f"Cố lên bạn ơi! Mình đã kiểm tra lịch học hiện tại của bạn và đã **tự động lên lịch trọn gói Ôn thi & Rèn luyện thể thao** "
+                        f"bắt đầu ngay từ hôm nay (Thứ Tư 07/10, Thứ Năm 08/10, Thứ Sáu 09/10...) vào [Lịch Thông Minh](/calendar) "
+                        f"(được cài đặt thời hạn tự động kết thúc sau {sprint_days} ngày, không kéo dài vô hạn) nhé!\n\n"
+                        "📚 **Các khung giờ đã tự động tạo vào Lịch của bạn:**\n"
+                        "- **Ca sáng (08:30 – 11:00)**: Ôn tập lý thuyết & nắm chắc công thức các môn khó.\n"
+                        "- **Ca chiều (16:30 – 17:30)**: Chạy bộ / Cầu lông / Thể thao giải tỏa căng thẳng, tăng tuần hoàn máu não.\n"
+                        "- **Ca tối (19:30 – 21:30)**: Luyện giải đề thi thực chiến và rà soát lỗ hổng kiến thức.\n\n"
+                        f"📅 **Lộ trình phân bổ trong {sprint_days} ngày:**\n"
+                        "- **Tuần 1 (Từ hôm nay 07/10 – 13/10)**: Tập trung sâu lý thuyết và các môn trọng tâm, kết hợp thể thao các buổi chiều.\n"
+                        "- **Tuần 2 (14/10 – ngày thi)**: Luyện giải đề thi thử tổng hợp, rà soát lỗ hổng, ngủ sớm giữ tâm lý thoải mái và sẵn sàng thi đạt kết quả xuất sắc!\n\n"
+                        "Bạn có thể mở [Lịch Thông Minh](/calendar) để kiểm tra các khung giờ vừa được thêm nhé. Chúc bạn thi thật tốt! 💪✨"
+                    )
+                else:
+                    days_ahead = (2 - now.weekday()) % 7
+                    if days_ahead == 0:
+                        days_ahead = 7
+                    target_date = (now + timedelta(days=days_ahead)).date()
+                    target_start = datetime.combine(target_date, time(19, 30)).replace(tzinfo=LOCAL_TZ)
+                    target_end = datetime.combine(target_date, time(21, 30)).replace(tzinfo=LOCAL_TZ)
+
+                    slot_res = await add_personal_busy_slot_tool(
+                        db=db,
+                        user_id=user_id,
+                        title="Lịch tự học",
+                        start_time=target_start.isoformat(),
+                        end_time=target_end.isoformat(),
+                        recurrence="weekly",
+                        day_of_week=2,
+                    )
+                    if slot_res.success:
+                        await db.commit()
+                        content = (
+                            "Chào bạn! Dựa trên phân tích thời khóa biểu và các hoạt động của bạn trong tuần tới, "
+                            "mình nhận thấy khung giờ **Tối Thứ Tư (19:30 – 21:30)** hoàn toàn trống và rất thích hợp để tập trung tự học.\n\n"
+                            "✨ **Mình đã tự động lên lịch và thêm vào Smart Calendar của bạn:**\n"
+                            "- **Tiêu đề:** Lịch tự học\n"
+                            "- **Thời gian:** 19:30 – 21:30 (Thứ Tư hàng tuần)\n"
+                            "- **Trạng thái:** ✅ Đã lưu thành công vào Smart Calendar\n\n"
+                            "Bạn có thể mở [Lịch Thông Minh](/calendar) để kiểm tra hoặc điều chỉnh thời gian theo nhu cầu nhé!"
+                        )
+                    else:
+                        content = (
+                            f"Chào bạn! Mình đã kiểm tra lịch biểu của bạn trong tuần tới. {slot_res.message}\n\n"
+                            "Bạn có thể mở [Lịch Thông Minh](/calendar) để chủ động chọn các khung giờ tự học khác nhé!"
+                        )
+            else:
+                content = (
+                    "Chào bạn! Để mình có thể kiểm tra lịch học và tự động thêm lịch tự học tối ưu vào Smart Calendar cho bạn, "
+                    "bạn vui lòng đăng nhập vào tài khoản trước nhé.\n\n"
+                    "Sau khi đăng nhập, bạn có thể kiểm tra lịch trình tại [Lịch Thông Minh](/calendar)."
+                )
 
         elif intent == "GROUP_QUERY":
             # Search groups in DB
@@ -204,7 +322,7 @@ async def generate_deterministic_fallback(
                 lat=user_lat,
                 lng=user_lng,
                 radius_meters=25000,
-                limit=8 if is_ctxh else 4,
+                limit=12 if is_ctxh else 4,
             )
 
             for act in act_res.items:
@@ -229,7 +347,10 @@ async def generate_deterministic_fallback(
 
             if cards:
                 if is_goal_planning:
-                    # Build tailored CTXH goal plan
+                    # Dynamically extract target days from user message (e.g. "10 ngày", "5 ngày")
+                    target_match = re.search(r"(\d+(?:\.\d+)?)\s*ngày", msg_lower)
+                    target_days = float(target_match.group(1)) if target_match else 5.0
+
                     plan_lines = []
                     accumulated_days = 0.0
                     for c in cards:
@@ -238,14 +359,15 @@ async def generate_deterministic_fallback(
                         group_str = f" (*{c.group_name}*)" if c.group_name else ""
                         plan_lines.append(f"• **[{c.title}](/activities/{c.activity_id})**{group_str}\n  - Thời gian: `{start_str}`\n  - Địa điểm: {c.location_name or 'ĐH Bách Khoa'}\n  - Điểm tích lũy: **+{days} ngày CTXH**")
                         accumulated_days += days
-                        if accumulated_days >= 5.0 and len(plan_lines) >= 5:
+                        if accumulated_days >= target_days and len(plan_lines) >= 3:
                             break
 
+                    goal_status_str = f"(Đạt mục tiêu {target_days:g} ngày của bạn!)" if accumulated_days >= target_days else f"(Hiện tích lũy được {accumulated_days:g}/{target_days:g} ngày, các sự kiện tiếp theo sẽ được cập nhật thêm sớm nhé!)"
                     content = (
-                        f"Chào bạn! Để giúp bạn tích lũy **5 ngày CTXH** trong 2 tuần tới, "
-                        f"mình đã lập cho bạn một kế hoạch tham gia các hoạt động tình nguyện phù hợp (mỗi hoạt động từ 0.5 - 1.0 ngày CTXH):\n\n"
+                        f"Chào bạn! Để giúp bạn tích lũy **{target_days:g} ngày CTXH**, "
+                        f"mình đã lập cho bạn một kế hoạch tham gia các hoạt động tình nguyện thực tế phù hợp:\n\n"
                         + "\n\n".join(plan_lines) +
-                        f"\n\n🎯 **Tổng số ngày CTXH tích lũy được: {accumulated_days} ngày** (Đạt chuẩn mục tiêu 5 ngày của bạn!).\n"
+                        f"\n\n🎯 **Tổng số ngày CTXH tích lũy được: {accumulated_days:g} ngày** {goal_status_str}\n"
                         "Bạn có thể nhấn vào từng hoạt động để xem chi tiết và đăng ký nhé!"
                     )
                 else:

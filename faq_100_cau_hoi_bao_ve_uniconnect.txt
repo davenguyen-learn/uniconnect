@@ -1,0 +1,379 @@
+============================================================
+BỘ 100 CÂU HỎI VÀ ĐÁP ÁN BẢO VỆ ĐỒ ÁN TỐT NGHIỆP – HỆ THỐNG UNICONNECT
+Dự án: Nền tảng kết nối hoạt động sinh viên thông minh UniConnect  
+Hội đồng chấm: Khoa Khoa học & Kỹ thuật Máy tính | Đại học Bách Khoa – ĐHQG-HCM
+
+---
+
+
+============================================================
+MỤC LỤC CÁC PHẦN
+- [PHẦN I: KIẾN TRÚC HỆ THỐNG & CÔNG NGHỆ CỐT LÕI (CÂU 1 – 15)](#phần-i-kiến-trúc-hệ-thống--công-nghệ-cốt-lõi)
+- [PHẦN II: AI, LLM, VECTOR SEARCH & CHATBOT RAG (CÂU 16 – 40)](#phần-ii-ai-llm-vector-search--chatbot-rag)
+- [PHẦN III: DỮ LIỆU ĐỊA LÝ & POSTGIS (CÂU 41 – 50)](#phần-iii-dữ-liệu-địa-lý--postgis)
+- [PHẦN IV: LỊCH BIỂU & PHÁT HIỆN XUNG ĐỘT (CÂU 51 – 60)](#phần-iv-lịch-biểu--phát-hiện-xung-đột)
+- [PHẦN V: ĐIỂM DANH, CHỐNG GIAN LẬN & MINH CHỨNG (CÂU 61 – 75)](#phần-v-điểm-danh-chống-gian-lận--minh-chứng)
+- [PHẦN VI: DANH HIỆU (TROPHY) & GAMIFICATION (CÂU 76 – 85)](#phần-vi-danh-hiệu-trophy--gamification)
+- [PHẦN VII: QUẢN TRỊ NHÓM & VÒNG ĐỜI HOẠT ĐỘNG (CÂU 86 – 95)](#phần-vii-quản-trị-nhóm--vòng-đời-hoạt-động)
+- [PHẦN VIII: BẢO MẬT, DATABASE & TESTING (CÂU 96 – 100)](#phần-viii-bảo-mật-database--testing)
+
+---
+
+
+============================================================
+PHẦN I: KIẾN TRÚC HỆ THỐNG & CÔNG NGHỆ CỐT LÕI
+
+Câu 1: Tại sao lựa chọn kiến trúc Modular Monolith thay vì Microservices?
+- Trả lời: Em chọn Modular Monolith vì 3 lý do: (1) Tính toàn vẹn giao dịch (ACID Transaction) khi điểm danh, cập nhật slot, tích lũy ngày CTXH và cấp danh hiệu cùng xảy ra trong 1 DB transaction; (2) Phù hợp quy mô trường đại học (vài chục ngàn người dùng), tránh overhead phức tạp của Microservices như distributed tracing, network latency, saga pattern; (3) Mã nguồn được chia module tách biệt tuyệt đối (activities, groups, chat, calendar, participation) giúp dễ dàng tách thành microservice sau này.
+
+Câu 2: Tại sao chọn FastAPI (Python) cho Backend mà không phải Express.js hay Spring Boot?
+- Trả lời: FastAPI hỗ trợ Async I/O Native với hiệu năng tiệm cận Go/NodeJS; tích hợp sẵn Pydantic v2 validation cực mạnh; sinh tự động tài liệu OpenAPI/Swagger; và quan trọng nhất là hệ sinh thái Python tối ưu nhất cho việc nhúng AI, tính toán Vector Embedding, làm việc với Gemini SDK và pgvector.
+
+Câu 3: Tại sao Frontend chọn React + Vite thay vì Next.js (SSR)?
+- Trả lời: Ứng dụng UniConnect chủ yếu là Single Page Application (SPA) mang tính cá nhân hóa cao theo từng tài khoản đăng nhập (lịch cá nhân, chat thời gian thực, bảng tin lân cận theo vị trí GPS của từng người). SPA tải nhẹ hơn, không tốn chi phí render Node server, và kết hợp Vite mang lại tốc độ build HMR cực nhanh.
+
+Câu 4: Cơ chế Connection Pooling trong dự án được cấu hình ra sao?
+- Trả lời: Sử dụng `async_sessionmaker` và `create_async_engine` của SQLAlchemy Asyncio kết nối với PostgreSQL. Thiết lập `pool_size=20`, `max_overflow=10`, `pool_recycle=1800` và `pool_pre_ping=True` để tự động phát hiện kết nối chết, tránh treo request khi lượng sinh viên truy cập tăng đột biến.
+
+Câu 5: Hệ thống xử lý Realtime Chat và Notification bằng công nghệ gì?
+- Trả lời: Sử dụng WebSocket native của FastAPI, quản lý phiên kết nối qua `ConnectionManager`. Hỗ trợ streaming phản hồi từ Gemini và thông báo real-time khi có yêu cầu tham gia hoặc tin nhắn mới.
+
+Câu 6: Tại sao chọn PostgreSQL thay vì MongoDB hay MySQL?
+- Trả lời: PostgreSQL là CSDL quan hệ chuẩn mực, hỗ trợ chuẩn PostGIS cho dữ liệu địa lý không gian (tốt nhất thị trường hiện nay) và extension `pgvector` cho tìm kiếm vector ngữ nghĩa. MySQL và MongoDB không hỗ trợ tính toán spatial và vector đồng bộ mạnh mẽ bằng Postgres.
+
+Câu 7: Dependency Injection trong FastAPI được áp dụng như thế nào?
+- Trả lời: Áp dụng qua hàm `Depends()` để inject DB Session (`get_db`), xác thực người dùng (`get_current_user`), kiểm tra quyền Admin (`require_admin`), đảm bảo nguyên tắc Separation of Concerns và dễ dàng mock khi viết Unit Test.
+
+Câu 8: Ứng dụng có thể scale horizontal (mở rộng theo chiều ngang) như thế nào?
+- Trả lời: Backend là stateless (xác thực qua JWT, session không lưu ở RAM ứng dụng). Ta có thể nhân bản nhiều container backend chạy sau Nginx Load Balancer, dùng Redis trung gian cho WebSocket pub/sub và cache.
+
+Câu 9: Giải pháp giảm tải khi có hàng ngàn sinh viên vào xem bảng tin hoạt động cùng lúc?
+- Trả lời: Áp dụng phân trang (Pagination 20 item/page), lazy loading bản đồ (Leaflet/Mapbox chỉ nạp khi cần), eager loading các quan hệ khóa ngoại (dùng `joinedload`/`selectinload` tránh lỗi N+1 query), và tạo chỉ mục (index) spatial/btree trên các cột filter.
+
+Câu 10: Tầng Service và Repository trong code tách biệt ra sao?
+- Trả lời: Controller/Router chỉ nhận request và trả response HTTP; Service xử lý toàn bộ Business Logic (kiểm tra điều kiện, tính toán xung đột lịch, gọi AI); Repository chuyên trách thao tác CRUD với Database thông qua SQLAlchemy.
+
+Câu 11: Làm sao để ngăn ngừa lỗi N+1 Query trong ORM?
+- Trả lời: Sử dụng `joinedload()` cho quan hệ 1-1 / N-1 (như Host của Activity) và `selectinload()` cho quan hệ 1-N (như Trophies của Activity), tuyệt đối không để ORM tự lazy-load trong vòng lặp.
+
+Câu 12: Hệ thống xử lý các tác vụ tốn thời gian (Background Tasks) như thế nào?
+- Trả lời: Dùng `BackgroundTasks` của FastAPI cho các tác vụ không bắt buộc người dùng chờ đợi: gửi email thông báo, tạo embedding vector cho bài đăng mới, ghi log kiểm toán (audit log).
+
+Câu 13: Xử lý CORS và bảo mật Header trong hệ thống ra sao?
+- Trả lời: Cấu hình `CORSMiddleware` chặt chẽ, chỉ cho phép các origin hợp lệ từ client; gắn các security header cơ bản để phòng ngừa clickjacking và sniffing.
+
+Câu 14: Client-side State Management dùng gì?
+- Trả lời: Dùng React Context kết hợp custom hooks (`AuthContext`, `ToastContext`), kết hợp lưu trữ an toàn `localStorage` cho auth token, tránh dùng thư viện rườm rà như Redux khi quy mô state vừa phải.
+
+Câu 15: Hệ thống container hóa bằng Docker như thế nào?
+- Trả lời: Dự án có `Dockerfile` multi-stage build cho Client và Server, kết hợp `docker-compose.yml` định nghĩa sẵn môi trường Postgres PostGIS, server FastAPI và client Nginx.
+
+---
+
+
+============================================================
+PHẦN II: AI, LLM, VECTOR SEARCH & CHATBOT RAG
+
+Câu 16: Nếu AI đã có thể gọi Tool (Function Calling), tại sao vẫn cần Vector Search?
+- Trả lời: Dù AI có biết gọi tool, nó cũng không thể khắc phục được vấn đề lệch từ vựng (Vocabulary Mismatch). Người dùng hỏi *"tìm chỗ xả hơi, giảm stress"*, nhưng host đặt tên là *"Giải cầu lông BK"*, *"Yoga cuối tuần"*. Nếu chỉ dùng SQL `ILIKE`, kết quả sẽ là 0! Vector Search ánh xạ ngữ cảnh vào không gian embedding, nhận diện *"xả hơi"* có độ tương đồng cosine rất cao với *"cầu lông, yoga, dã ngoại"*.
+
+Câu 17: Tại sao không để AI tự sinh 20 từ đồng nghĩa rồi tìm bằng SQL `OR LIKE`?
+- Trả lời: Có 3 lý do: (1) Mất ngữ cảnh: từ khóa *"giải trí"* sẽ tìm nhầm cả bài *"Cảnh báo nghiện game giải trí"*; (2) Hiệu năng: chuỗi `LIKE '%...%'` khiến Database phải Full Table Scan, làm tê liệt DB khi dữ liệu lớn; (3) Không thể chấm điểm (Scoring): SQL LIKE chỉ trả về đúng/sai, không thể xếp hạng từ 0 đến 1.0 xem hoạt động nào hợp gu người dùng nhất như Vector Cosine Similarity.
+
+Câu 18: Mô hình Hybrid Search trong UniConnect hoạt động như thế nào?
+- Trả lời: Đây là sự kết hợp tối ưu: Function Calling (AI) dùng để lọc các ràng buộc cứng (Hard Constraints) theo dữ liệu có cấu trúc (`is_ctxh=True`, `radius <= 10km`, `days_ahead=14`), còn Vector Search dùng để so khớp và xếp hạng ngữ nghĩa mềm (Soft Matching).
+
+Câu 19: Tại sao chọn pgvector tích hợp trong PostgreSQL mà không dùng Pinecone hay Milvus?
+- Trả lời: Tránh kiến trúc phân tán (Two-database problem). Với pgvector, ta có thể kết hợp toán tử vector `<=>` trực tiếp với các mệnh đề SQL `WHERE` (thời gian, địa lý, CTXH) trong cùng 1 câu truy vấn ACID. Dùng Pinecone phải sync 2 DB liên tục, dễ lệch dữ liệu và tăng chi phí.
+
+Câu 20: Dự án dùng mô hình Embedding nào? Chiều vector là bao nhiêu?
+- Trả lời: Sử dụng mô hình `text-embedding-004` (hoặc `gemini-embedding-001`) của Google Gemini với kích thước vector cố định là 768 chiều (768 dimensions), lưu dưới dạng cột `Vector(768)` trong PostgreSQL.
+
+Câu 21: Gemini có thể gọi 2 tool cùng một lúc không?
+- Trả lời: Có. Từ Gemini 1.5/2.0, Google hỗ trợ Parallel Function Calling. Trong 1 lượt phản hồi, Gemini có thể trả về mảng gồm nhiều tool call (ví dụ vừa lấy lịch cá nhân, vừa tìm hoạt động) để backend xử lý song song.
+
+Câu 22: Có khi nào Gemini phải thực hiện 3 query (3 round-trips) không?
+- Trả lời: Có, khi có phụ thuộc dữ liệu tuần tự (Sequential Function Calling): Tool 2 bắt buộc phải lấy output của Tool 1 làm tham số đầu vào. Turn 1: gọi `get_calendar()`; Turn 2: đọc slot rảnh rồi gọi `search_activities()`; Turn 3: nhận danh sách hoạt động và sinh câu trả lời tự nhiên.
+
+Câu 23: So sánh chi phí token giữa kịch bản 3 query tuần tự và 2 query song song?
+- Trả lời: Kịch bản 3 query tốn token hơn rất nhiều (khoảng 40-50%). Vì LLM là stateless, mỗi lượt gọi sau phải gửi lại toàn bộ ngữ cảnh tích lũy (System Prompt + User Prompt + Tool Response 1). Ở kịch bản 3 lượt, System Prompt và Data Tool 1 bị tính phí lặp lại 2-3 lần.
+
+Câu 24: Vậy trong UniConnect, làm sao tối ưu chỉ cần 2 query mà vẫn kiểm tra được lịch bận?
+- Trả lời: Backend tự động thực hiện kiểm tra xung đột qua `ConflictDetector` dựa trên `user_id` của token xác thực. Gemini chỉ cần gọi 1 tool duy nhất là `search_activities()`, backend tự lọc bỏ lịch trùng trước khi trả về. Nhờ vậy chỉ mất đúng 2 lượt: 1 lượt gọi tool và 1 lượt sinh câu trả lời, vừa tiết kiệm token vừa giảm độ trễ một nửa.
+
+Câu 25: Nếu backend đã tự lọc lịch bận, tool `get_calendar` có bị dư thừa không?
+- Trả lời: Hoàn toàn không. `get_calendar` phục vụ trường hợp sinh viên hỏi trực tiếp lịch cá nhân (*"Tuần này mình rảnh hôm nào?", "Thứ 7 có lịch gì không?"*) hoặc khi cần giải thích chi tiết lý do trùng lịch (*"Bạn bị kẹt môn Hệ điều hành tại phòng H6-201"*). Đây là nguyên lý Đơn trách nhiệm (Single Responsibility Principle).
+
+Câu 26: Chatbot xử lý chống ảo giác (Hallucination) bằng cách nào?
+- Trả lời: Áp dụng kỹ thuật Grounding Prompting: Trong System Instruction, quy định nghiêm ngặt: *"Chỉ được giới thiệu các hoạt động có trong dữ liệu do Tool trả về, tuyệt đối không tự bịa đặt ID, thời gian hay địa điểm"*.
+
+Câu 27: Nếu người dùng hỏi các câu ngoài phạm vi (như giải toán, viết code) thì Chatbot phản ứng ra sao?
+- Trả lời: System Prompt được cấu hình Guardrails: xác định vai trò trợ lý chuyên trách UniConnect. Nếu câu hỏi lạc đề, chatbot lịch sự từ chối và hướng người dùng quay lại các nội dung về hoạt động, câu lạc bộ, CTXH và lịch trình sinh viên.
+
+Câu 28: Cơ chế Fallback khi Gemini API bị quá hạn mức (Rate limit 429) hoặc mất mạng?
+- Trả lời: Hệ thống có module `fallback.py`. Khi gọi Gemini thất bại, backend tự động chuyển sang cơ chế Rule-based Intent Matching (trích xuất Regex từ khóa thời gian, CTXH, danh mục) để truy vấn DB và trả kết quả cho người dùng kèm thông báo trạng thái ngoại tuyến.
+
+Câu 29: Embedding vector của hoạt động được tạo ra từ những trường thông tin nào?
+- Trả lời: Được tổng hợp từ chuỗi text: `{title} {description} {category} {meeting_location}`. Nhờ đó, vector nắm bắt được toàn diện từ chủ đề, tính chất hoạt động đến địa bàn tổ chức.
+
+Câu 30: Khi người dùng sửa hoạt động, vector embedding có được cập nhật lại không?
+- Trả lời: Có. Trong hàm `update_activity`, nếu phát hiện có sự thay đổi ở tiêu đề, mô tả hoặc danh mục, hệ thống sẽ kích hoạt tạo lại embedding mới và ghi đè vào database.
+
+Câu 31: Cosine Similarity và Cosine Distance khác nhau như thế nào trong pgvector?
+- Trả lời: Cosine Distance = $1 - \text{Cosine Similarity}$. Trong pgvector sử dụng toán tử `<=>` (Cosine Distance). Khoảng cách càng nhỏ (gần 0) thì hai văn bản càng tương đồng về ngữ nghĩa.
+
+Câu 32: Đánh giá chất lượng của tìm kiếm RAG bằng các độ đo nào?
+- Trả lời: Đánh giá bằng Hit Rate (tỷ lệ tìm thấy kết quả đúng trong Top-K), MRR (Mean Reciprocal Rank) (vị trí của kết quả chính xác nhất trong danh sách trả về) và Context Relevance (mức độ liên quan của ngữ cảnh được đưa vào prompt).
+
+Câu 33: Chatbot có hỗ trợ Streaming text về màn hình người dùng không?
+- Trả lời: Có, backend sử dụng Server-Sent Events (SSE) hoặc WebSocket streaming chunks từ Gemini API về Frontend để người dùng thấy chữ chạy mượt mà ngay lập tức, giảm cảm giác phải chờ đợi.
+
+Câu 34: Chatbot ghi nhớ ngữ cảnh hội thoại (Multi-turn Conversation) như thế nào?
+- Trả lời: Lưu lịch sử các lượt chat gần nhất (thường là 5-10 turns) trong Database/Memory, sau đó format thành mảng các message `role: user` và `role: model` gửi kèm trong mỗi lần gọi Gemini API.
+
+Câu 35: Tại sao không cho AI tự động bấm đăng ký hoạt động luôn mà chỉ dừng ở mức gợi ý?
+- Trả lời: Vì tính minh bạch và an toàn: Mỗi hoạt động có thể có biểu mẫu riêng (Custom Form) yêu cầu thông tin đặc thù, hoặc có điều khoản cam kết. Để người dùng tự xem card và bấm đăng ký giúp đảm bảo sinh viên nắm rõ thông tin và trách nhiệm của mình.
+
+Câu 36: Tại sao chọn Gemini Flash thay vì Gemini Pro cho Chatbot?
+- Trả lời: Gemini Flash có tốc độ phản hồi cực nhanh (độ trễ chỉ khoảng 0.5 – 1 giây), chi phí token rẻ hơn 4-5 lần so với bản Pro, trong khi khả năng Function Calling và hiểu tiếng Việt hoàn toàn đáp ứng tốt nghiệp vụ kết nối sinh viên.
+
+Câu 37: Làm sao giải quyết vấn đề Context Window khi số lượng hoạt động trả về quá nhiều?
+- Trả lời: Luôn giới hạn `limit=5` hoặc `10` trong câu lệnh gọi tool tìm kiếm. Chỉ đưa vào context những hoạt động có điểm tương đồng cao nhất, tránh làm loãng context và gây tốn token không cần thiết.
+
+Câu 38: RAG trong đề tài là Dense Retrieval hay Sparse Retrieval?
+- Trả lời: Là Hybrid Retrieval: Dense Retrieval dựa trên vector embedding (ngữ nghĩa) kết hợp Sparse/Attribute Filtering dựa trên các trường SQL có cấu trúc (bán kính GPS, cờ CTXH, thời gian).
+
+Câu 39: Vector Search có bị ảnh hưởng bởi lỗi chính tả hay teencode không?
+- Trả lời: Nhờ mô hình embedding hiện đại được huấn luyện trên khối lượng dữ liệu khổng lồ đa ngôn ngữ (có cả tiếng Việt), vector embedding rất bền vững (robust) trước các lỗi chính tả nhẹ hoặc từ viết tắt phổ biến của sinh viên.
+
+Câu 40: Nếu một hoạt động đã diễn ra trong quá khứ, AI có gợi ý không?
+- Trả lời: Không. Mọi câu query tìm kiếm hoạt động trong repository luôn có điều kiện cứng `Activity.end_time > now()` và `Activity.is_deleted == False`.
+
+---
+
+
+============================================================
+PHẦN III: DỮ LIỆU ĐỊA LÝ & POSTGIS
+
+Câu 41: Tại sao chọn kiểu dữ liệu Geography thay vì Geometry trong PostGIS?
+- Trả lời: Kiểu `Geography` tính toán trên mặt cầu Trái Đất (Ellipsoid WGS 84 - SRID 4326), đơn vị đo trực tiếp là mét. Nếu dùng `Geometry`, đơn vị tính là độ (degree), khi tính khoảng cách mét sẽ bị méo mó và sai số tùy theo vĩ độ nếu không chuyển đổi hệ tọa độ phức tạp.
+
+Câu 42: Hàm `ST_DWithin` và `ST_Distance` hoạt động ra sao trong câu query?
+- Trả lời: `ST_DWithin(marker_location, point, radius_meters)` dùng trong mệnh đề `WHERE` để tận dụng chỉ mục không gian lọc nhanh các hoạt động nằm trong bán kính. `ST_Distance(marker_location, point)` dùng ở mệnh đề `SELECT` và `ORDER BY` để tính chính xác khoảng cách mét và sắp xếp từ gần đến xa.
+
+Câu 43: Spatial Index trong PostgreSQL dùng loại chỉ mục gì?
+- Trả lời: Sử dụng GiST (Generalized Search Tree) hoặc SP-GiST index trên cột `marker_location`. GiST chia không gian thành các hình hộp bao (Bounding Boxes - R-Tree), giúp giảm độ phức tạp tìm kiếm từ $O(N)$ xuống $O(\log N)$.
+
+Câu 44: Tại sao cần cơ chế làm mờ tọa độ (Obfuscate Coordinates)?
+- Trả lời: Đây là tính năng bảo vệ quyền riêng tư cá nhân: Đối với các hoạt động do cá nhân tổ chức, người chưa tham gia hoặc người lạ chỉ xem được vị trí xấp xỉ trên bản đồ (lệch ngẫu nhiên 100 - 300m). Chỉ khi được duyệt tham gia hoặc là Host thì mới nhìn thấy vị trí chính xác và mô tả phòng họp riêng.
+
+Câu 45: Công thức làm mờ tọa độ được cài đặt như thế nào?
+- Trả lời: Sử dụng hàm lượng giác cộng một góc lệch ngẫu nhiên $\theta \in [0, 2\pi]$ và khoảng cách bán kính ngẫu nhiên $r \in [R_{min}, R_{max}]$, sau đó chuyển đổi ngược lại độ lệch vĩ độ/kinh độ ($1^\circ \text{lat} \approx 111{,}000\text{m}$).
+
+Câu 46: Hệ toạ độ SRID 4326 là gì?
+- Trả lời: Là hệ tọa độ chuẩn không gian quốc tế WGS 84, biểu diễn vị trí bằng Kinh độ (Longitude: -180 đến 180) và Vĩ độ (Latitude: -90 đến 90), được định vị toàn cầu GPS và các dịch vụ bản đồ như Google Maps, OpenStreetMap sử dụng.
+
+Câu 47: Thứ tự tham số trong hàm `ST_MakePoint` của PostGIS là gì?
+- Trả lời: Thứ tự bắt buộc là `ST_MakePoint(Longitude, Latitude)`, tức là Kinh độ trước, Vĩ độ sau (tương đương trục X, trục Y). Nếu viết ngược Vĩ độ trước sẽ bị lỗi vị trí bay sang Nam Cực.
+
+Câu 48: Làm sao xử lý trường hợp thiết bị người dùng chặn quyền truy cập vị trí GPS?
+- Trả lời: Frontend có fallback thông minh: nếu người dùng từ chối cấp quyền Geolocation, hệ thống sẽ sử dụng vị trí lưu trong `localStorage` từ lần trước, hoặc vị trí mặc định tại khuôn viên trường đại học (Campus Long Khánh / Dĩ An) và hiển thị thông báo gợi ý.
+
+Câu 49: Bán kính tìm kiếm mặc định trên Dashboard là bao nhiêu?
+- Trả lời: Mặc định là 50,000 mét (50 km) để bao quát toàn bộ cụm đại học và các khu vực lân cận, người dùng có thể tùy chỉnh nới rộng hoặc thu hẹp xuống 5 km, 10 km, 25 km qua panel bộ lọc.
+
+Câu 50: Làm thế nào tính toán thời gian di chuyển giữa các địa điểm hoạt động?
+- Trả lời: Hiện tại tính khoảng cách đường chim bay (Euclidean on Sphere) bằng PostGIS để tối ưu hiệu năng. Hướng mở rộng là tích hợp OSRM (Open Source Routing Machine) hoặc Google Distance Matrix API để tính thời gian di chuyển thực tế theo đường bộ.
+
+---
+
+
+============================================================
+PHẦN IV: LỊCH BIỂU & PHÁT HIỆN XUNG ĐỘT
+
+Câu 51: Thuật toán phát hiện xung đột lịch (`ConflictDetector`) hoạt động như thế nào?
+- Trả lời: Hai khoảng thời gian $[S_1, E_1]$ và $[S_2, E_2]$ bị xung đột khi và chỉ khi: $\max(S_1, S_2) < \min(E_1, E_2)$, tương đương điều kiện logic: $S_1 < E_2 \land S_2 < E_1$. Thuật toán so khớp lịch hoạt động mới với tập hợp các sự kiện có sẵn của sinh viên.
+
+Câu 52: Nguồn dữ liệu lịch cá nhân của sinh viên đến từ đâu?
+- Trả lời: Gồm 3 nguồn dữ liệu thực tế trong hệ thống: (1) Các hoạt động sinh viên đã đăng ký và được duyệt tham gia (`joined_approved`); (2) Các hoạt động do chính sinh viên làm Trưởng ban tổ chức (`hosted`); (3) Các khung giờ bận cá nhân (thời khóa biểu học, lịch bận riêng) do sinh viên tự thiết lập trực tiếp trên giao diện (hỗ trợ sự kiện một lần hoặc lịch lặp lại định kỳ hàng tuần kèm loại trừ ngày nghỉ).
+
+Câu 53: Cấu trúc dữ liệu tối ưu để tìm kiếm xung đột trong nhiều khoảng thời gian là gì?
+- Trả lời: Ở quy mô nhỏ/vừa, duyệt mảng đã sắp xếp theo `start_time` ($O(N \log N)$). Ở quy mô lớn hàng nghìn sự kiện, cấu trúc dữ liệu tối ưu nhất là Interval Tree hoặc Segment Tree, cho phép truy vấn xung đột trong thời gian $O(\log N + K)$.
+
+Câu 54: Tính năng "Xem trước khi đổi lịch" (Preview Reschedule) hỗ trợ người tổ chức ra sao?
+- Trả lời: Khi Host muốn dời lịch hoạt động sang thời gian mới, hệ thống sẽ quét toàn bộ danh sách người tham gia hiện tại và tính toán thống kê: có bao nhiêu bạn bị trùng lịch học, bao nhiêu bạn rảnh, giúp Host chọn được khung giờ tối ưu nhất trước khi chốt đổi lịch.
+
+Câu 55: Hệ thống xử lý Múi giờ (Timezone) như thế nào để tránh lệch giờ?
+- Trả lời: Mọi mốc thời gian lưu trong PostgreSQL đều sử dụng kiểu `TIMESTAMP WITH TIME ZONE (TIMESTAMPTZ)` và chuẩn hóa về UTC. Phía Client (React) nhận chuỗi ISO UTC và chuyển đổi hiển thị theo múi giờ địa phương của trình duyệt (`Asia/Ho_Chi_Minh` - GMT+7).
+
+Câu 56: Bộ lọc "Ẩn hoạt động trùng lịch" trên Dashboard hoạt động ở Client hay Server?
+- Trả lời: **Cốt lõi là ở Server**, nhưng có sự hỗ trợ của **Optimistic UI ở Client**:
+  1. **Ở Server (Bắt buộc để bảo đảm phân trang):** Nếu chỉ lọc ở Client, một trang 20 hoạt động sau khi lọc có thể chỉ còn vài hoạt động, làm vỡ phân trang (Broken Pagination). Do đó, khi bật nút "Ẩn trùng lịch", Client gửi `include_conflicts=False` lên Server. Server sử dụng `ConflictDetector` để loại bỏ các sự kiện xung đột ngay trên API và tính toán lại tổng số trang (`total`).
+  2. **Ở Client (Phản hồi tức thì - Optimistic UI):** Trong lúc chờ request API phản hồi, Client sử dụng `useMemo` để ẩn ngay lập tức các thẻ sự kiện trùng lịch đang hiển thị (0ms latency, không giật lag giao diện), sau đó dữ liệu mới từ Server trả về sẽ lấp đầy trang chuẩn 20 item.
+
+Câu 57: Khi sinh viên hủy tham gia một hoạt động, lịch bận được giải phóng như thế nào?
+- Trả lời: Trạng thái bản ghi `JoinRequest` chuyển thành `cancelled` hoặc bị xóa. `ConflictDetector` chỉ quét các yêu cầu có trạng thái `approved` hoặc `pending`, do đó khoảng thời gian đó lập tức trở thành lịch rảnh.
+
+Câu 58: Nếu sinh viên tham gia 2 hoạt động diễn ra sát giờ nhau (không trùng nhưng cách nhau 5 phút) thì sao?
+- Trả lời: Hệ thống hiện tại có trường `buffer_minutes` (thời gian đệm di chuyển). Có thể cấu hình thêm thời gian đệm 15-30 phút trước và sau sự kiện để cảnh báo nguy cơ trễ giờ di chuyển giữa 2 địa điểm khác nhau.
+
+Câu 59: Đồng bộ lịch UniConnect ra ngoài điện thoại bằng cách nào?
+- Trả lời: Hiện tại hệ thống **chưa hỗ trợ xuất file .ics** ra ngoài điện thoại (đây là tính năng nằm trong đề xuất định hướng phát triển - Future Roadmap trong Báo cáo). Hiện tại, sinh viên quản lý và theo dõi lịch trực tiếp trên giao diện [Lịch cá nhân](/calendar) của UniConnect với đầy đủ chế độ xem Tuần/Tháng và cơ chế tự động cảnh báo xung đột (Hard/Soft conflict) khi đăng ký sự kiện.
+
+Câu 60: Tại sao không dùng trực tiếp Google Calendar API để lưu trữ mà lại làm module Calendar riêng?
+- Trả lời: Vì tính độc lập và bảo mật học đường: Nhiều sinh viên không dùng hoặc không muốn cấp quyền truy cập tài khoản Google cá nhân cho ứng dụng trường học. Ngoài ra, việc lưu nội bộ giúp hệ thống thực hiện các phép join SQL phát hiện xung đột hàng loạt với hiệu năng cực cao.
+
+---
+
+
+============================================================
+PHẦN V: ĐIỂM DANH, CHỐNG GIAN LẬN & MINH CHỨNG
+
+Câu 61: Cơ chế Dynamic QR điểm danh bằng HMAC-SHA256 hoạt động ra sao?
+- Trả lời: Host mở màn hình hiển thị QR. Cứ mỗi 30 hoặc 60 giây, hệ thống tạo một token điểm danh dựa trên thuật toán TOTP: $\text{HMAC-SHA256}(\text{SecretKey}, \text{ActivityID} + \text{TimeWindow})$. Khi sinh viên quét mã, server tính toán lại hash trong cửa sổ thời gian hợp lệ; nếu trùng khớp và còn hạn thì mới chấp nhận.
+
+Câu 62: Cơ chế Dynamic QR chống được hành vi gian lận nào?
+- Trả lời: Chống được hành vi chụp ảnh màn hình QR gửi cho bạn bè ở nhà quét hộ. Vì mã chỉ sống trong vòng 30 – 60 giây, ảnh chụp gửi qua mạng xã hội sẽ bị hết hạn ngay khi người ở xa kịp quét.
+
+Câu 63: Hệ thống kết hợp kiểm tra GPS khi điểm danh như thế nào?
+- Trả lời: Khi sinh viên bấm điểm danh hoặc quét QR, trình duyệt bắt buộc gửi tọa độ GPS hiện tại. Server dùng công thức Haversine/PostGIS tính khoảng cách giữa sinh viên và địa điểm tổ chức. Nếu vượt quá bán kính quy định (ví dụ 300m), lượt điểm danh sẽ bị từ chối với lỗi "Ngoài phạm vi cho phép".
+
+Câu 64: Làm sao chống trường hợp sinh viên dùng ứng dụng Fake GPS (giả lập vị trí)?
+- Trả lời: Hệ thống kiểm tra cờ `coords.accuracy` từ Geolocation API, từ chối các tọa độ có sai số bất thường hoặc vị trí nhảy vọt phi lý trong thời gian ngắn, kết hợp mã hóa payload phía client.
+
+Câu 65: Quy trình "Chốt điểm danh" (Attendance Finalization) là gì?
+- Trả lời: Sau khi sự kiện kết thúc, Trưởng ban tổ chức (Host) bấm nút "Chốt danh sách điểm danh". Hệ thống lưu dấu thời gian `attendance_finalized_at`. Khi đã chốt: (1) Không ai được điểm danh thêm; (2) Khóa chỉnh sửa nội dung hoạt động; (3) Tự động kích hoạt quy trình cộng ngày CTXH và xét duyệt danh hiệu.
+
+Câu 66: "Khóa thời gian" (Temporal Lock) trước sự kiện là gì?
+- Trả lời: Trước giờ bắt đầu hoạt động 30 phút, Host không được phép thay đổi thời gian hay địa điểm để tránh việc người tham gia bị bất ngờ hoặc đi nhầm chỗ.
+
+Câu 67: Giấy xác nhận / Chứng nhận (Certificate) được sinh ra như thế nào?
+- Trả lời: Render component HTML chuẩn form văn bản hành chính khổ A4, sau đó sử dụng thư viện `html2canvas` để chụp vùng hiển thị ở độ phân giải 2x và dùng `jsPDF` xuất ra file PDF chất lượng cao có thể tải về hoặc in ấn.
+
+Câu 68: Làm sao để các cơ quan, nhà tuyển dụng xác minh Giấy chứng nhận là thật?
+- Trả lời: Mỗi Giấy chứng nhận có một mã code duy nhất (UUID/Hash) và một mã QR xác thực công khai in ở góc dưới. Bất kỳ ai quét mã QR sẽ được dẫn tới trang `VerifyCertificate` công khai của UniConnect để xem đối chiếu dữ liệu gốc từ máy chủ.
+
+Câu 69: Tại sao bỏ chia 2 cột trong Giấy xác nhận và thiết kế theo dạng văn bản đơn cột?
+- Trả lời: Dạng đơn cột tạo bố cục trang trọng, đúng quy chuẩn mẫu văn bản hành chính/bằng khen của trường đại học Việt Nam, dễ đọc liên tục từ thông tin sinh viên đến thông tin hoạt động và chữ ký/con dấu số.
+
+Câu 70: Khi thông tin giấy xác nhận quá dài, hệ thống xử lý phân trang ra sao?
+- Trả lời: Thiết lập thuật toán phân trang tự động: nếu tổng số trường thông tin vượt quá 9 dòng hoặc có nhiều câu trả lời form tùy chỉnh, modal sẽ tự động tách thành Trang 1 (Thông tin sinh viên & hoạt động cốt lõi) và Trang 2 (Thông tin mở rộng & mã xác nhận), có nút chuyển trang và xuất PDF 2 trang chuẩn xác.
+
+Câu 71: Xuất danh sách người tham gia dạng CSV hỗ trợ tiếng Việt như thế nào để Excel không bị lỗi font?
+- Trả lời: File CSV được gắn thêm ký tự đặc biệt UTF-8 BOM (`\uFEFF`) ở đầu nội dung. Ký tự này báo hiệu cho Microsoft Excel biết file sử dụng bảng mã UTF-8 chuẩn, giúp hiển thị toàn bộ ký tự tiếng Việt có dấu sắc nét mà không bị lỗi font biến dạng.
+
+Câu 72: Điểm danh tự động (Auto Check-in) là gì?
+- Trả lời: Dành cho các hoạt động thể thao/dã ngoại ngoài trời không tiện mang máy chiếu mã QR: Sinh viên chỉ cần có mặt trong bán kính quy định (Geofencing) trong khung giờ diễn ra sự kiện, hệ thống sẽ tự động xác nhận có mặt qua GPS.
+
+Câu 73: Sinh viên mất kết nối mạng 4G tại địa điểm tổ chức thì điểm danh thế nào?
+- Trả lời: Host có giao diện "Điểm danh thủ công": Host có quyền tích chọn có mặt trực tiếp cho sinh viên trong bảng điều khiển người tham gia (Participant Management).
+
+Câu 74: Tại sao số ngày CTXH chỉ được tính sau khi đã điểm danh thành công?
+- Trả lời: Để đảm bảo tính trung thực và công bằng. Đăng ký tham gia chỉ là dự kiến, chỉ những sinh viên thực sự có mặt tham gia và được xác nhận mới được hệ thống tích lũy ngày CTXH vào hồ sơ cá nhân.
+
+Câu 75: Dữ liệu điểm danh có thể bị Host gian lận tự ý sửa đổi sau sự kiện không?
+- Trả lời: Khi Host đã bấm "Chốt danh sách", trạng thái bị đóng băng vĩnh viễn (Immutable). Mọi thay đổi bất thường sau thời điểm chốt đều bị chặn ở tầng Service và có log kiểm toán lưu vết.
+
+---
+
+
+============================================================
+PHẦN VI: DANH HIỆU (TROPHY) & GAMIFICATION
+
+Câu 76: Danh hiệu (Trophy) trong UniConnect khác gì với Badge thông thường?
+- Trả lời: Danh hiệu trong UniConnect là thành tích chính danh gắn liền với hoạt động cụ thể (chứ không phải chỉ số ảo). Nó đòi hỏi sinh viên phải thực sự tham gia hoàn thành sự kiện và hoạt động đó phải đáp ứng điều kiện kiểm duyệt của nhà trường/tổ chức.
+
+Câu 77: Quy tắc Quorum (Số lượng tối thiểu) để xét duyệt danh hiệu là gì?
+- Trả lời: Để tránh việc một nhóm bạn lập hoạt động "ma" 2-3 người tự cấp danh hiệu cho nhau, hệ thống yêu cầu hoạt động phải đạt tỷ lệ điểm danh thực tế tối thiểu (Quorum, ví dụ $\ge 5$ người hoặc $\ge 50\%$ sĩ số) thì mới đủ điều kiện gửi lên Hàng đợi Phê duyệt của Admin.
+
+Câu 78: Vòng đời xét duyệt danh hiệu diễn ra qua các trạng thái nào?
+- Trả lời: Gồm 4 trạng thái (`TrophyGrantStatus`):
+  1. `insufficient_quorum`: Chưa đủ số người tham gia thực tế tối thiểu.
+  2. `eligible_for_review`: Đã chốt điểm danh và đủ điều kiện, đưa vào hàng đợi chờ duyệt.
+  3. `approved`: Ban Quản trị / Quản trị viên trường chấp thuận cấp danh hiệu.
+  4. `rejected`: Bị từ chối cấp do không đạt chất lượng.
+
+Câu 79: Tại sao quyết định loại bỏ phần "mô tả danh hiệu" và chỉ giữ lại tên danh hiệu?
+- Trả lời: Vì danh hiệu đã gắn liền trực tiếp với hoạt động cụ thể (ví dụ: *"Cầu thủ xuất sắc"* gắn với *"Giải bóng đá BK 2026"*). Người xem nhìn tên danh hiệu và bấm vào link hoạt động là hiểu đầy đủ ngữ cảnh. Việc thêm mô tả dài dòng làm giao diện bị rối mắt, trùng lặp nội dung với mô tả sự kiện.
+
+Câu 80: Danh hiệu được hiển thị trên Trang cá nhân (Profile) như thế nào?
+- Trả lời: Được hiển thị dạng Showcase Grid trực quan: Tên danh hiệu in đậm (tối đa 2 dòng), đi kèm link bài viết hoạt động đạt được và ngày cấp. Nếu là hoạt động nhóm riêng tư, link sẽ tự động gắn thẻ "Sự kiện riêng tư" để bảo mật.
+
+Câu 81: Ai có quyền tạo hoạt động có gắn Danh hiệu?
+- Trả lời: Chỉ những tài khoản có vai trò Quản trị viên (Admin) hoặc Tổ chức được xác thực (Educational Organization / Đoàn - Hội) mới có quyền tạo hoạt động gắn Trophy, nhằm đảm bảo giá trị của danh hiệu.
+
+Câu 82: Danh hiệu có điểm thưởng (Points) không?
+- Trả lời: Mô hình thiết kế sẵn trường `points` cho việc tích lũy điểm rèn luyện hoặc đổi quà tương lai. Hiện tại hệ thống tập trung vào giá trị vinh danh thành tích thực chất.
+
+Câu 83: Tại sao bộ lọc "Có danh hiệu" trên Dashboard từng bị lỗi và đã sửa thế nào?
+- Trả lời: Trước đây code gọi `Activity.trophy_id.is_not(None)`, nhưng `trophy_id` là một Python `@property` trên model chứ không phải cột trong bảng SQL, gây ra lỗi `AttributeError` 500. Đã sửa lại bằng cách dùng Subquery chuẩn SQL: `Activity.id.in_(select(Trophy.activity_id))`.
+
+Câu 84: Có thể hủy danh hiệu đã cấp cho sinh viên không?
+- Trả lời: Chỉ Quản trị viên cấp cao (Admin) mới có quyền thu hồi bản ghi `UserTrophy` nếu phát hiện có hành vi gian lận điểm danh hoặc sai phạm nghiêm trọng.
+
+Câu 85: Gamification đóng vai trò gì trong việc thúc đẩy sinh viên tham gia phong trào?
+- Trả lời: Giúp chuyển đổi các hoạt động Đoàn - Hội vốn bị xem là khô khan thành một hành trình trải nghiệm có mục tiêu rõ ràng: tích lũy ngày CTXH, sưu tập bộ danh hiệu trên trang cá nhân, và xây dựng một "CV số" chứng minh năng lực hoạt động ngoại khóa.
+
+---
+
+
+============================================================
+PHẦN VII: QUẢN TRỊ NHÓM & VÒNG ĐỜI HOẠT ĐỘNG
+
+Câu 86: Mô hình Đồng tổ chức (Co-hosting) giữa các CLB/Nhóm hoạt động ra sao?
+- Trả lời: Nhóm chủ trì có thể gửi lời mời đồng tổ chức cho nhóm khác (`ActivityCoHost`). Khi nhóm đối tác chấp nhận, thành viên của cả 2 nhóm đều nhận được thông báo, có quyền tham gia các hoạt động nội bộ và tên của cả 2 đơn vị đều xuất hiện trang trọng trên bài đăng và Giấy chứng nhận.
+
+Câu 87: Tính năng "Tạm dừng hoạt động nhóm" (Suspend Group) giải quyết bài toán gì?
+- Trả lời: Khi một CLB hoặc đội nhóm hết nhiệm kỳ, tạm ngưng sinh hoạt trong hè hoặc cần rà soát lại: Trưởng nhóm có thể chuyển trạng thái sang `suspended`. Khi đó, các thành viên không thể tạo thêm hoạt động mới dưới danh nghĩa nhóm, nhưng dữ liệu lịch sử và các hoạt động cũ vẫn được lưu giữ an toàn.
+
+Câu 88: Cơ chế chuyển quyền Trưởng nhóm (Transfer Admin Ownership) diễn ra thế nào?
+- Trả lời: Phục vụ bài toán chuyển giao nhiệm kỳ Ban chủ nhiệm CLB: Admin hiện tại có thể chọn một thành viên trong nhóm và thực hiện chuyển giao quyền lực. Thao tác này được bảo vệ trong 1 Transaction: hạ quyền Admin cũ xuống Member và thăng quyền Member mới lên Admin, tránh tình trạng nhóm có 2 chủ hoặc nhóm "vô chủ".
+
+Câu 89: Biểu mẫu đăng ký tùy chỉnh (Custom Form Builder) được thiết kế ra sao?
+- Trả lời: Cho phép Host tự tạo các câu hỏi riêng phù hợp từng sự kiện: câu hỏi văn bản (text), câu hỏi số (number), câu hỏi trắc nghiệm boolean/checkbox. Các trường này được lưu trữ có cấu trúc và hiển thị động khi sinh viên bấm đăng ký.
+
+Câu 90: Câu trả lời form tùy chỉnh của sinh viên được lưu ở đâu?
+- Trả lời: Được lưu trong bảng `form_responses` liên kết với `join_requests`, đảm bảo khi Host xuất file CSV thì các câu trả lời này được xuất thành các cột tương ứng để tiện quản lý.
+
+Câu 91: Các cấp độ quyền riêng tư (Privacy Levels) của một hoạt động là gì?
+- Trả lời: Gồm 2 cấp độ:
+  - `Public`: Công khai toàn bộ sinh viên, hiển thị trên bản đồ và bảng tin khám phá.
+  - `Private`: Dành riêng cho thành viên nội bộ của CLB hoặc các nhóm đồng tổ chức, người ngoài không thể tìm thấy hoặc xem chi tiết.
+
+Câu 92: Điều gì xảy ra khi Host hủy một hoạt động (Delete/Cancel Activity)?
+- Trả lời: Hệ thống áp dụng Soft Delete (`is_deleted = True`) để không làm mất toàn vẹn dữ liệu lịch sử. Tự động gửi thông báo đến toàn bộ sinh viên đã đăng ký và giải phóng các slot thời gian bị chiếm trên lịch cá nhân của họ.
+
+Câu 93: Làm sao để kiểm soát số lượng người tham gia tối đa (`max_participants`)?
+- Trả lời: Tại thời điểm sinh viên gửi yêu cầu tham gia, hệ thống thực hiện kiểm tra `current_participants < max_participants`. Nếu hoạt động yêu cầu duyệt (`require_approval=True`), chỉ khi Host bấm Chấp thuận thì biến đếm này mới tăng lên.
+
+Câu 94: Cơ chế phê duyệt người tham gia (Join Approval) hoạt động thế nào?
+- Trả lời: Đơn đăng ký sẽ ở trạng thái `pending`. Host có giao diện quản lý danh sách chờ để xem thông tin sinh viên, câu trả lời form tùy chỉnh và bấm "Phê duyệt" hoặc "Từ chối" kèm lý do.
+
+Câu 95: Sinh viên có thể tự hủy yêu cầu tham gia không?
+- Trả lời: Có, trước khi sự kiện diễn ra, sinh viên có quyền bấm "Rút lui" để nhường chỗ cho bạn khác. Biến đếm `current_participants` sẽ tự động giảm đi 1.
+
+---
+
+
+============================================================
+PHẦN VIII: BẢO MẬT, DATABASE & TESTING
+
+Câu 96: Cơ chế xác thực và phân quyền (Authentication & Authorization) được cài đặt ra sao?
+- Trả lời: Xác thực không trạng thái (Stateless) bằng JWT (JSON Web Token) ký bằng thuật toán HS256, hạn dùng cấu hình qua biến môi trường. Phân quyền dựa trên vai trò (RBAC) gồm các Role: `student`, `club_leader`, `edu_org`, `admin`.
+
+Câu 97: Mật khẩu người dùng được bảo vệ như thế nào?
+- Trả lời: Tuyệt đối không lưu mật khẩu dạng plaintext. Mật khẩu được mã hóa một chiều bằng thư viện Bcrypt kèm salt ngẫu nhiên (`gensalt`), chống lại các cuộc tấn công tra từ điển và Rainbow Table.
+
+Câu 98: Quản lý sự thay đổi cấu trúc Database (Database Migrations) bằng công cụ gì?
+- Trả lời: Sử dụng Alembic kết hợp với SQLAlchemy. Mọi thay đổi bảng, cột, khóa ngoại hay chỉ mục đều được viết thành các file migration có version rõ ràng, cho phép upgrade hoặc downgrade cấu trúc DB một cách an toàn và nhất quán trên mọi môi trường.
+
+Câu 99: Chiến lược kiểm thử tự động (Automated Testing) trong dự án gồm những gì?
+- Trả lời: Sử dụng framework Pytest và `pytest-asyncio`. Bao gồm:
+  - Unit Test: Kiểm tra tính đúng đắn của logic tính khoảng cách, thuật toán xung đột lịch, mã hóa HMAC TOTP.
+  - Integration Test: Kiểm thử luồng API đăng ký, điểm danh, xuất CSV, phân quyền nhóm và kiểm tra toàn vẹn giao dịch DB.
+
+Câu 100: Nếu được phát triển tiếp trong 6 tháng tới, em sẽ ưu tiên cải tiến tính năng gì nhất?
+- Trả lời: Em sẽ ưu tiên 3 hướng:
+  1. Triển khai Multi-modal RAG: Cho phép sinh viên gửi ảnh poster hoạt động để AI tự trích xuất thông tin, tạo sự kiện và gắn lịch tự động.
+  2. Push Notification Native: Tích hợp Web Push Notifications và ứng dụng di động React Native để nhắc nhở điểm danh và cảnh báo xung đột lịch theo thời gian thực.
+  3. Tích hợp SSO Trường đại học: Kết nối xác thực một chạm qua tài khoản trường (BKNetID / CAS / OAuth2) để tự động đồng bộ thời khóa biểu và điểm rèn luyện chính quy.

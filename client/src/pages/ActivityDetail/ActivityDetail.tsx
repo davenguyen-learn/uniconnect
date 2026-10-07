@@ -10,7 +10,6 @@ import {
   Users,
   Trash2,
   X,
-  ShieldCheck,
   Building2,
   UserPlus,
   Loader2,
@@ -28,6 +27,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../components/Toast/ToastContext';
 import { getFormFieldResponse } from '../../utils/formResponses';
 import Button from '../../components/Button/Button';
+import Badge from '../../components/Badge/Badge';
 import LikeButton from '../../components/LikeButton/LikeButton';
 import CommentSection from '../../components/CommentSection/CommentSection';
 import { ReportModal } from '../../components/ReportModal/ReportModal';
@@ -315,8 +315,12 @@ export default function ActivityDetail() {
       } catch {
         // Non-critical: interactions data failed to load
       }
-    } catch (error) {
-      toast.error('Không thể tải chi tiết hoạt động');
+    } catch (error: any) {
+      if (error?.response?.status === 403 || error?.status === 403) {
+        toast.error('Hoạt động này là nội bộ, chỉ dành riêng cho thành viên nhóm.');
+      } else {
+        toast.error('Không thể tải chi tiết hoạt động');
+      }
       navigate('/dashboard');
     } finally {
       setLoading(false);
@@ -690,28 +694,22 @@ export default function ActivityDetail() {
           {/* Header section inside the main card */}
           <div className="activity-header-section">
             <div className="activity-badges-row">
-              <div className="category-badge">{normalizeCategoryName(activity.category)}</div>
+              <Badge text={normalizeCategoryName(activity.category)} bg="var(--color-primary, #2563eb)" />
+              {activity.privacy === 'private' && (
+                <Badge text="Nội bộ nhóm" bg="#ef4444" />
+              )}
               {activity.require_approval && (
-                <div className="join-type-badge join-type-badge--approval">
-                  <ShieldCheck size={13} />
-                  <span>Cần phê duyệt</span>
-                </div>
+                <Badge text="Cần phê duyệt" bg="#7c3aed" />
               )}
               {typeof activity.social_work_days === 'number' && activity.social_work_days > 0 ? (
-                <div className="social-work-badge">
-                  {formatCtxh(activity.social_work_days)} ngày CTXH
-                </div>
+                <Badge text={`${formatCtxh(activity.social_work_days)} ngày CTXH`} bg="#16a34a" />
               ) : null}
               {activity.trophy && (
-                <div
-                  className="trophy-badge"
+                <Badge
+                  text={activity.trophy.points > 0 ? `${activity.trophy.name} (+${activity.trophy.points}đ)` : activity.trophy.name}
+                  bg="#d97706"
                   title={activity.trophy.name}
-                >
-                  <span className="trophy-badge-name">{activity.trophy.name}</span>
-                  {activity.trophy.points > 0 && (
-                    <span className="trophy-badge-points">+{activity.trophy.points}đ</span>
-                  )}
-                </div>
+                />
               )}
             </div>
 
@@ -1034,7 +1032,7 @@ export default function ActivityDetail() {
                               setShowCertificateModal(true);
                             }}
                           >
-                            <FileText size={16} className="inline mr-1.5" /> Xuất Giấy chứng nhận / Minh chứng (PDF)
+                            Xuất giấy xác nhận đã tham gia (PDF)
                           </Button>
                         </div>
                       ) : (
@@ -1286,7 +1284,7 @@ export default function ActivityDetail() {
         </div>
       </div>
 
-      {/* Comments Section */}
+      {/* Post-Event Reviews Section */}
       <div className="activity-comments glass">
         <CommentSection
           targetType="activities"
@@ -1296,6 +1294,9 @@ export default function ActivityDetail() {
           hasMore={commentHasMore}
           onRefresh={loadComments}
           onLoadMore={loadMoreComments}
+          isEnded={vm.isPast || (activity.end_time ? new Date() >= new Date(activity.end_time) : false)}
+          canReview={isHost || Boolean(myRequest?.attendance_confirmed)}
+          restrictionMessage="Chức năng đánh giá chỉ dành cho sinh viên đã tham gia và được điểm danh tại hoạt động."
         />
       </div>
 

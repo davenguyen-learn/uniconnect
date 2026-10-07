@@ -67,6 +67,8 @@ export interface ActivityResponse {
   check_in_radius?: number;
   attendance_confirmed?: boolean;
   joined_at?: string | null;
+  registration_status?: 'pending' | 'approved' | 'declined' | 'cancelled';
+  is_deleted?: boolean;
 }
 
 export interface ActivityCreate {

@@ -54,6 +54,7 @@ async def list_by_activity(
     db: AsyncSession, activity_id: uuid.UUID
 ) -> list[JoinRequest]:
     """List all join requests for an activity."""
+    await auto_expire_pending_requests(db, activity_id)
     result = await db.execute(
         select(JoinRequest)
         .options(joinedload(JoinRequest.user))
@@ -67,6 +68,7 @@ async def list_by_user(
     db: AsyncSession, activity_id: uuid.UUID, user_id: uuid.UUID
 ) -> list[JoinRequest]:
     """List a specific user's requests for an activity."""
+    await auto_expire_pending_requests(db, activity_id)
     result = await db.execute(
         select(JoinRequest)
         .options(joinedload(JoinRequest.user))
@@ -90,6 +92,29 @@ async def update_status(
         join_request.responded_at = datetime.now(timezone.utc)
     await db.flush()
     return join_request
+
+
+async def auto_expire_pending_requests(db: AsyncSession, activity_id: uuid.UUID | None = None) -> int:
+    """Auto-decline pending requests for activities that have already started."""
+    act_filter = and_(Activity.start_time <= func.now(), Activity.is_deleted == False)  # noqa: E712
+    if activity_id:
+        act_filter = and_(Activity.id == activity_id, act_filter)
+
+    stmt = (
+        update(JoinRequest)
+        .where(
+            and_(
+                JoinRequest.status == RequestStatus.pending,
+                JoinRequest.activity_id.in_(
+                    select(Activity.id).where(act_filter)
+                ),
+            )
+        )
+        .values(status=RequestStatus.declined, responded_at=datetime.now(timezone.utc))
+    )
+    res = await db.execute(stmt)
+    await db.commit()
+    return res.rowcount
 
 
 async def lock_and_increment_participants(

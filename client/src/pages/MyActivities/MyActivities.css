@@ -5,124 +5,204 @@
   min-height: calc(100vh - 64px);
 }
 
-.page-header {
-  display: flex;
-  justify-content: space-between;
+/* Nút Toggle Bộ lọc */
+.my-filter-toggle-btn {
+  display: inline-flex;
   align-items: center;
-  margin-bottom: var(--space-8);
-}
-
-.page-header h1 {
-  font-size: 2.5rem;
-  margin: 0;
+  gap: var(--space-2);
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-glass-border);
+  background-color: var(--color-bg-secondary);
   color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  user-select: none;
+  min-height: 42px;
 }
 
-.tabs {
+.my-filter-toggle-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background-color: var(--color-bg-primary);
+}
+
+.my-filter-toggle-btn--open {
+  background-color: var(--color-primary) !important;
+  color: #ffffff !important;
+  border-color: var(--color-primary) !important;
+}
+
+.my-filter-toggle-btn--has-active:not(.my-filter-toggle-btn--open) {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background-color: rgba(37, 99, 235, 0.08);
+}
+
+.my-filter-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-primary);
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--radius-full);
+}
+
+.my-filter-toggle-btn--open .my-filter-badge {
+  background: #ffffff;
+  color: var(--color-primary);
+}
+
+/* Hàng tóm tắt bộ lọc đang hoạt động */
+.my-active-filter-row {
   display: flex;
-  gap: var(--space-4);
-  margin-bottom: var(--space-6);
-  border-bottom: 1px solid var(--color-glass-border);
-  padding-bottom: var(--space-2);
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: var(--space-2) 0;
+  margin-bottom: var(--space-3);
+  font-size: var(--font-size-xs);
 }
 
-.tab {
-  background: none;
+.my-active-filter-label {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.my-active-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: rgba(37, 99, 235, 0.08);
+  color: var(--color-primary);
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid rgba(37, 99, 235, 0.2);
+}
+
+.my-active-pill button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+  border-radius: var(--radius-full);
+  opacity: 0.7;
+  transition: opacity var(--transition-fast);
+}
+
+.my-active-pill button:hover {
+  opacity: 1;
+}
+
+.my-btn-reset-filters {
+  background: transparent;
   border: none;
   color: var(--color-text-secondary);
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-medium);
-  padding: var(--space-2) var(--space-4);
+  font-size: 0.75rem;
   cursor: pointer;
-  position: relative;
-  transition: color var(--transition-fast) ease;
+  text-decoration: underline;
+  padding: 2px 6px;
 }
 
-.tab:hover {
-  color: var(--color-text-primary);
+.my-btn-reset-filters:hover {
+  color: var(--color-danger, #ef4444);
 }
 
-.tab.active {
-  color: var(--color-accent);
-}
-
-.tab.active::after {
-  content: '';
-  position: absolute;
-  bottom: -9px;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background: var(--color-accent);
-  border-radius: 2px;
-}
-
-.activities-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: var(--space-6);
-}
-
-.loading-state,
-.empty-state {
-  grid-column: 1 / -1;
-  text-align: center;
-  padding: var(--space-12);
-  color: var(--color-text-secondary);
-  border-radius: var(--radius-xl);
-}
-
-.activity-card {
-  padding: var(--space-5);
-  border-radius: var(--radius-xl);
+/* Panel Bộ lọc mở rộng */
+.my-filter-panel {
+  background-color: var(--color-bg-primary);
+  border: 1px solid var(--color-glass-border);
+  border-radius: var(--radius-xl, 16px);
+  padding: var(--space-4) var(--space-5);
   display: flex;
   flex-direction: column;
-  transition: transform var(--transition-fast) ease, border-color var(--transition-fast) ease;
+  gap: var(--space-4);
+  box-shadow: var(--shadow-md);
+  margin-bottom: var(--space-5);
+  animation: myFilterSlide 0.2s ease-out;
 }
 
-.activity-card:hover {
-  transform: translateY(-4px);
-  border-color: rgba(108, 92, 231, 0.4);
+@keyframes myFilterSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.card-header {
+.my-filter-section {
   display: flex;
-  justify-content: space-between;
-  margin-bottom: var(--space-3);
+  flex-direction: column;
+  gap: var(--space-2);
 }
 
-.category {
+.my-filter-title {
   font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-bold);
+  font-weight: 600;
   text-transform: uppercase;
-  color: var(--color-accent);
-}
-
-.privacy {
-  font-size: var(--font-size-xs);
-  padding: 2px 8px;
-  border-radius: var(--radius-full);
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.activity-card h3 {
-  margin: 0 0 var(--space-2) 0;
-  font-size: var(--font-size-lg);
-}
-
-.time {
-  font-size: var(--font-size-sm);
+  letter-spacing: 0.04em;
   color: var(--color-text-secondary);
-  margin: 0 0 var(--space-4) 0;
 }
 
-.stats {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-tertiary);
-  margin-bottom: var(--space-4);
-  flex-grow: 1;
+.my-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-.card-actions {
-  margin-top: auto;
+.my-chip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-glass-border);
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.my-chip-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background-color: var(--color-bg-primary);
+}
+
+.my-chip-btn--active {
+  background-color: var(--color-primary) !important;
+  color: #ffffff !important;
+  border-color: var(--color-primary) !important;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+}
+
+.my-chip-count {
+  font-size: 0.75rem;
+  opacity: 0.85;
+}
+
+.my-chip-btn--active .my-chip-count {
+  opacity: 1;
+  color: rgba(255, 255, 255, 0.9);
 }

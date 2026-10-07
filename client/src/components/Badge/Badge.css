@@ -1,0 +1,23 @@
+.app-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff !important;
+  padding: 4px 12px;
+  border-radius: var(--radius-full, 9999px);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+  white-space: nowrap;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  user-select: none;
+  box-sizing: border-box;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.app-badge:hover {
+  opacity: 0.95;
+}

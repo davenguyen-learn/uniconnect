@@ -125,6 +125,10 @@ export interface ActivityCardViewModel {
     avatarUrl?: string | null;
   }>;
   isHost: boolean;
+  isPrivate: boolean;
+  attendanceConfirmed: boolean;
+  userRegistrationStatus?: 'pending' | 'approved' | 'declined' | 'cancelled';
+  isDeleted?: boolean;
 }
 
 export function mapActivityToCardViewModel(
@@ -154,15 +158,25 @@ export function mapActivityToCardViewModel(
       ? Math.min(100, Math.round((currentParticipants / maxParticipants) * 100))
       : 0;
 
+  const rawStatus = userRegistrationStatus || (activity.registration_status as any);
+  let effectiveRegistrationStatus: 'pending' | 'approved' | 'declined' | 'cancelled' | undefined = rawStatus;
+  if (rawStatus === 'pending' && isStarted) {
+    effectiveRegistrationStatus = 'declined';
+  }
+
   let registrationState: ActivityRegistrationState;
-  if (effectiveIsRegistered || userRegistrationStatus === 'approved' || userRegistrationStatus === 'pending') {
+  if (
+    effectiveRegistrationStatus === 'approved' ||
+    (effectiveRegistrationStatus === 'pending' && !isStarted) ||
+    (effectiveIsRegistered && effectiveRegistrationStatus !== 'declined' && effectiveRegistrationStatus !== 'cancelled')
+  ) {
     registrationState = 'registered';
   } else if (isPast || isStarted) {
     registrationState = 'deadline_passed';
   } else {
     registrationState = computeActivityRegistrationState({
       isRegistered: false,
-      registrationStatus: userRegistrationStatus,
+      registrationStatus: effectiveRegistrationStatus,
       currentParticipants,
       maxParticipants,
       hasConflict: activity.conflict_info?.has_conflict,
@@ -261,5 +275,9 @@ export function mapActivityToCardViewModel(
     host,
     group,
     isHost,
+    isPrivate: activity.privacy === 'private',
+    attendanceConfirmed: Boolean(activity.attendance_confirmed),
+    userRegistrationStatus: effectiveRegistrationStatus,
+    isDeleted: Boolean(activity.is_deleted),
   };
 }

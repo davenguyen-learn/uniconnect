@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Clock, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../Toast/ToastContext';
 import { interactionsApi, type CommentResponse } from '../../api/interactions';
@@ -146,6 +147,9 @@ interface CommentSectionProps {
   hasMore: boolean;
   onRefresh: () => void;
   onLoadMore: () => void;
+  isEnded?: boolean;
+  canReview?: boolean;
+  restrictionMessage?: string;
 }
 
 export default function CommentSection({
@@ -156,6 +160,9 @@ export default function CommentSection({
   hasMore,
   onRefresh,
   onLoadMore,
+  isEnded = true,
+  canReview = true,
+  restrictionMessage,
 }: CommentSectionProps) {
   const { user } = useAuth();
   const toast = useToast();
@@ -163,6 +170,7 @@ export default function CommentSection({
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const isActivity = targetType === 'activities';
 
   async function handleSubmitComment(e: React.FormEvent) {
     e.preventDefault();
@@ -173,8 +181,9 @@ export default function CommentSection({
       await interactionsApi.createComment(targetType, targetId, { content: newComment.trim() });
       setNewComment('');
       onRefresh();
-    } catch {
-      toast.error('Không thể đăng bình luận');
+    } catch (err: any) {
+      const msg = err?.response?.data?.detail || err?.message || (isActivity ? 'Không thể gửi đánh giá' : 'Không thể đăng bình luận');
+      toast.error(msg);
     } finally {
       setSubmitting(false);
     }
@@ -193,8 +202,9 @@ export default function CommentSection({
       setReplyContent('');
       setReplyingTo(null);
       onRefresh();
-    } catch {
-      toast.error('Không thể đăng phản hồi');
+    } catch (err: any) {
+      const msg = err?.response?.data?.detail || err?.message || 'Không thể đăng phản hồi';
+      toast.error(msg);
     } finally {
       setSubmitting(false);
     }
@@ -228,56 +238,70 @@ export default function CommentSection({
   return (
     <div className="comment-section">
       <h3 className="comment-section-title">
-        Bình luận
+        {isActivity ? 'Đánh giá & Cảm nhận sau sự kiện' : 'Bình luận'}
         <span className="comment-count-badge">{total}</span>
       </h3>
 
-      {/* New comment form */}
-      <form onSubmit={handleSubmitComment} className="comment-form" id="comment-form">
-        <div className="comment-form-avatar">
-          {user?.avatar_url ? (
-            <img
-              src={resolveAvatarUrl(user.avatar_url)!}
-              alt={user.full_name || user.username}
-              className="comment-avatar-img"
-              onError={(e) => {
-                (e.target as HTMLElement).style.display = 'none';
-              }}
-            />
-          ) : (
-            <span>{getUserInitial(user?.full_name, user?.username)}</span>
-          )}
+      {isActivity && !isEnded ? (
+        <div className="p-4 rounded-xl bg-slate-100 text-slate-600 text-sm flex items-center gap-2 mb-4">
+          <Clock size={16} className="text-slate-500 shrink-0" />
+          <span>Hoạt động chưa kết thúc. Bạn chỉ có thể gửi đánh giá trải nghiệm sau khi hoạt động diễn ra xong.</span>
         </div>
-        <div className="comment-form-input-wrapper">
-          <textarea
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            placeholder="Viết bình luận..."
-            className="comment-input"
-            rows={3}
-            maxLength={1000}
-            id="comment-input"
-          />
-          <div className="comment-form-footer">
-            <span className="comment-char-count">
-              {newComment.length}/1000
-            </span>
-            <button
-              type="submit"
-              className="comment-submit-btn"
-              disabled={!newComment.trim() || submitting}
-              id="comment-submit-btn"
-            >
-              {submitting ? 'Đang đăng...' : 'Đăng'}
-            </button>
+      ) : isActivity && canReview === false ? (
+        <div className="p-4 rounded-xl bg-amber-50 text-amber-800 text-sm flex items-center gap-2 mb-4 border border-amber-200">
+          <AlertTriangle size={16} className="text-amber-600 shrink-0" />
+          <span>{restrictionMessage || 'Chức năng đánh giá chỉ dành cho sinh viên đã tham gia và được điểm danh tại sự kiện.'}</span>
+        </div>
+      ) : (
+        /* New comment form */
+        <form onSubmit={handleSubmitComment} className="comment-form" id="comment-form">
+          <div className="comment-form-avatar">
+            {user?.avatar_url ? (
+              <img
+                src={resolveAvatarUrl(user.avatar_url)!}
+                alt={user.full_name || user.username}
+                className="comment-avatar-img"
+                onError={(e) => {
+                  (e.target as HTMLElement).style.display = 'none';
+                }}
+              />
+            ) : (
+              <span>{getUserInitial(user?.full_name, user?.username)}</span>
+            )}
           </div>
-        </div>
-      </form>
+          <div className="comment-form-input-wrapper">
+            <textarea
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              placeholder={isActivity ? 'Chia sẻ cảm nhận và đánh giá của bạn sau khi tham gia hoạt động...' : 'Viết bình luận...'}
+              className="comment-input"
+              rows={3}
+              maxLength={1000}
+              id="comment-input"
+            />
+            <div className="comment-form-footer">
+              <span className="comment-char-count">
+                {newComment.length}/1000
+              </span>
+              <button
+                type="submit"
+                className="comment-submit-btn"
+                disabled={!newComment.trim() || submitting}
+                id="comment-submit-btn"
+              >
+                {submitting ? 'Đang gửi...' : (isActivity ? 'Gửi đánh giá' : 'Đăng')}
+              </button>
+            </div>
+          </div>
+        </form>
+      )}
 
       {/* Comment list */}
       <div className="comment-list">
         {comments.length === 0 ? (
-          <p className="comment-empty">Chưa có bình luận nào. Hãy là người đầu tiên bình luận!</p>
+          <p className="comment-empty">
+            {isActivity ? 'Chưa có đánh giá nào sau sự kiện.' : 'Chưa có bình luận nào. Hãy là người đầu tiên bình luận!'}
+          </p>
         ) : (
           <>
             {comments.map((comment) => (

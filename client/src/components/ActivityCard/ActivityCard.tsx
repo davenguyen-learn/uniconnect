@@ -11,6 +11,7 @@ import {
   User,
   FileText,
   Handshake,
+  Clock,
 } from 'lucide-react';
 import type { ActivityResponse } from '../../api/activities';
 import {
@@ -20,6 +21,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import LikeButton from '../LikeButton/LikeButton';
 import { formatCtxh } from '../../utils/format';
+import Badge from '../Badge/Badge';
 import './ActivityCard.css';
 
 interface ActivityCardProps {
@@ -139,6 +141,11 @@ export const ActivityCardComponent: React.FC<ActivityCardProps> = ({
               <MapPin size={12} /> {vm.distanceKm}
             </span>
           )}
+
+          {/* Private Badge */}
+          {vm.isPrivate && (
+            <Badge text="Nội bộ" bg="#ef4444" className="activity-card__private-badge" />
+          )}
         </div>
       )}
 
@@ -148,9 +155,10 @@ export const ActivityCardComponent: React.FC<ActivityCardProps> = ({
         {!vm.coverUrl && (
           <div className="activity-card__header-row">
             <div className="activity-card__meta-tags">
-              <span className="activity-card__category-tag">
-                {vm.category}
-              </span>
+              <Badge text={vm.category} bg="var(--color-primary, #2563eb)" />
+              {vm.isPrivate && (
+                <Badge text="Nội bộ" bg="#ef4444" />
+              )}
               {vm.distanceKm && (
                 <span className="activity-card__distance-tag">
                   <MapPin size={12} /> {vm.distanceKm}
@@ -190,28 +198,19 @@ export const ActivityCardComponent: React.FC<ActivityCardProps> = ({
         {Boolean(vm.requireApproval || vm.socialWorkDays || vm.trophy || vm.coOrganizerName) && (
           <div className="activity-card__secondary-row">
             {vm.requireApproval && (
-              <span className="activity-badge activity-badge--approval" title="Cần người tổ chức phê duyệt để tham gia">
-                <span>Cần phê duyệt</span>
-              </span>
+              <Badge text="Cần phê duyệt" bg="#7c3aed" title="Cần người tổ chức phê duyệt để tham gia" />
             )}
 
             {vm.socialWorkDays && (
-              <span className="activity-badge activity-badge--ctxh">
-                <span>+{formatCtxh(vm.socialWorkDays)} ngày CTXH</span>
-              </span>
+              <Badge text={`+${formatCtxh(vm.socialWorkDays)} ngày CTXH`} bg="#16a34a" />
             )}
 
             {vm.trophy && (
-              <span className="activity-badge activity-badge--trophy">
-                <span>{vm.trophy.name}</span>
-              </span>
+              <Badge text={vm.trophy.name} bg="#d97706" />
             )}
 
             {vm.coOrganizerName && (
-              <span className="activity-badge activity-badge--cohost flex items-center gap-1" title={`Đồng tổ chức: ${vm.coOrganizerName}`}>
-                <Handshake size={13} className="shrink-0" />
-                <span>{vm.coOrganizerName}</span>
-              </span>
+              <Badge text={`Đồng tổ chức: ${vm.coOrganizerName}`} bg="#047857" title={`Đồng tổ chức: ${vm.coOrganizerName}`} />
             )}
           </div>
         )}
@@ -368,22 +367,47 @@ export const ActivityCardComponent: React.FC<ActivityCardProps> = ({
             compact
           />
 
-          {onCertificate && vm.isPast ? (
-            <button
-              type="button"
-              className="card-btn card-btn--certificate"
-              onClick={(e) => {
-                e.stopPropagation();
-                onCertificate(vm.id);
-              }}
-              title="Xuất Giấy chứng nhận / Minh chứng tham gia"
-            >
-              <FileText size={14} />
-              <span>Xuất giấy xác nhận</span>
-            </button>
+          {isHost ? (
+            <span className="card-badge-status card-badge-status--host">
+              <CheckCircle2 size={15} />
+              <span>{vm.isPast ? 'Đã tổ chức' : 'Đang tổ chức'}</span>
+            </span>
+          ) : vm.isPast ? (
+            vm.registrationState === 'registered' ? (
+              vm.attendanceConfirmed ? (
+                onCertificate ? (
+                  <button
+                    type="button"
+                    className="card-btn card-btn--certificate"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onCertificate(vm.id);
+                    }}
+                    title="Xuất Giấy chứng nhận / Minh chứng tham gia"
+                  >
+                    <FileText size={14} />
+                    <span>Xuất giấy xác nhận</span>
+                  </button>
+                ) : (
+                  <span className="card-badge-status card-badge-status--success">
+                    <CheckCircle2 size={15} />
+                    <span>Đã tham gia</span>
+                  </span>
+                )
+              ) : (
+                <span className="card-badge-status card-badge-status--muted" title="Chưa được điểm danh tại hoạt động">
+                  <Clock size={15} />
+                  <span>Chưa được điểm danh</span>
+                </span>
+              )
+            ) : (
+              <span className="card-badge-status card-badge-status--muted">
+                Đã kết thúc
+              </span>
+            )
           ) : (
             <>
-              {vm.registrationState === 'available' && !isHost && (
+              {vm.registrationState === 'available' && (
                 <button
                   type="button"
                   className="card-btn card-btn--primary"
@@ -393,7 +417,7 @@ export const ActivityCardComponent: React.FC<ActivityCardProps> = ({
                 </button>
               )}
 
-              {vm.registrationState === 'conflict_warn' && !isHost && (
+              {vm.registrationState === 'conflict_warn' && (
                 <button
                   type="button"
                   className="card-btn card-btn--warning"
@@ -404,36 +428,22 @@ export const ActivityCardComponent: React.FC<ActivityCardProps> = ({
                 </button>
               )}
 
-              {isHost && !vm.isPast && (
-                <span className="card-badge-status card-badge-status--host">
-                  <CheckCircle2 size={15} />
-                  <span>Đang tổ chức</span>
-                </span>
-              )}
-
-              {isHost && vm.isPast && (
-                <span className="card-badge-status card-badge-status--host">
-                  <CheckCircle2 size={15} />
-                  <span>Đã tổ chức</span>
-                </span>
-              )}
-
-              {!isHost && vm.registrationState === 'registered' && (
+              {vm.registrationState === 'registered' && (
                 <span className="card-badge-status card-badge-status--success">
                   <CheckCircle2 size={15} />
-                  <span>{vm.isPast ? 'Đã tham gia' : 'Đã đăng ký'}</span>
+                  <span>Đã đăng ký</span>
                 </span>
               )}
 
-              {vm.registrationState === 'capacity_full' && !isHost && (
+              {vm.registrationState === 'capacity_full' && (
                 <span className="card-badge-status card-badge-status--muted">
                   Đã đủ số lượng
                 </span>
               )}
 
-              {vm.registrationState === 'deadline_passed' && !isHost && (
+              {vm.registrationState === 'deadline_passed' && (
                 <span className="card-badge-status card-badge-status--muted">
-                  Đã kết thúc
+                  Hết hạn đăng ký
                 </span>
               )}
             </>

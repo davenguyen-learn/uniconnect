@@ -1,6 +1,7 @@
 """Business logic for comments and likes (polymorphic)."""
 
 import uuid
+from datetime import datetime, timezone
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -19,16 +20,70 @@ from app.modules.interactions.schemas import (
 VALID_TARGET_TYPES = {"activity", "document"}
 
 
-async def _validate_target(db: AsyncSession, target_type: str, target_id: uuid.UUID):
-    """Verify the target exists and is not deleted."""
+async def _validate_target(
+    db: AsyncSession, target_type: str, target_id: uuid.UUID, user_id: uuid.UUID | None = None
+):
+    """Verify the target exists, is not deleted, and enforces access control if private."""
     if target_type not in VALID_TARGET_TYPES:
         raise ValidationError(f"Invalid target type: {target_type}")
 
     if target_type == "activity":
         from app.modules.activities.repository import get_by_id
+        from app.modules.activities.models import ActivityPrivacy
         obj = await get_by_id(db, target_id)
         if not obj:
             raise NotFoundError("Activity not found.")
+
+        is_private = (
+            obj.privacy == ActivityPrivacy.private
+            or str(obj.privacy).lower() in ("activityprivacy.private", "private")
+        )
+        if is_private:
+            if not user_id:
+                raise ForbiddenError("Hoạt động này là nội bộ, chỉ dành riêng cho thành viên nhóm.")
+
+            is_host = obj.host_id == user_id
+            if not is_host:
+                is_authorized = False
+                if obj.group_id:
+                    from app.modules.groups.repository import is_member
+                    if await is_member(db, obj.group_id, user_id):
+                        is_authorized = True
+
+                if not is_authorized:
+                    from sqlalchemy import select, and_
+                    from app.modules.groups.models import ActivityCoHost, GroupMember
+                    cohost_res = await db.execute(
+                        select(GroupMember.id).join(
+                            ActivityCoHost, ActivityCoHost.group_id == GroupMember.group_id
+                        ).where(
+                            and_(
+                                ActivityCoHost.activity_id == target_id,
+                                GroupMember.user_id == user_id,
+                            )
+                        )
+                    )
+                    if cohost_res.first():
+                        is_authorized = True
+
+                if not is_authorized:
+                    from sqlalchemy import select, and_
+                    from app.modules.participation.models import JoinRequest, RequestStatus
+                    part_res = await db.execute(
+                        select(JoinRequest.id).where(
+                            and_(
+                                JoinRequest.activity_id == target_id,
+                                JoinRequest.user_id == user_id,
+                                JoinRequest.status == RequestStatus.approved,
+                            )
+                        )
+                    )
+                    if part_res.first():
+                        is_authorized = True
+
+                if not is_authorized:
+                    raise ForbiddenError("Hoạt động này là nội bộ, chỉ dành riêng cho thành viên nhóm.")
+
         return obj
 
     raise ValidationError(f"Unsupported target type: {target_type}")
@@ -45,7 +100,36 @@ async def create_comment(
     data: CommentCreate,
 ) -> CommentResponse:
     """Create a comment or reply on an activity."""
-    target_obj = await _validate_target(db, target_type, target_id)
+    target_obj = await _validate_target(db, target_type, target_id, user_id=user_id)
+
+    # For activities: must be ended and user must be host or attended
+    if target_type in ("activity", "activities"):
+        end_time = getattr(target_obj, "end_time", None)
+        if end_time:
+            now = datetime.now(timezone.utc)
+            if end_time.tzinfo is None:
+                is_ended = datetime.utcnow() >= end_time
+            else:
+                is_ended = now >= end_time
+            if not is_ended:
+                raise ValidationError("Chỉ có thể gửi đánh giá sau khi hoạt động đã kết thúc.")
+
+        is_host = getattr(target_obj, "host_id", None) == user_id
+        if not is_host:
+            from sqlalchemy import select, and_
+            from app.modules.participation.models import JoinRequest, RequestStatus
+            part_res = await db.execute(
+                select(JoinRequest.id).where(
+                    and_(
+                        JoinRequest.activity_id == target_id,
+                        JoinRequest.user_id == user_id,
+                        JoinRequest.status == RequestStatus.approved,
+                        JoinRequest.attendance_confirmed == True,
+                    )
+                )
+            )
+            if not part_res.first():
+                raise ValidationError("Chức năng đánh giá chỉ dành cho sinh viên đã tham gia và được điểm danh tại hoạt động.")
 
     # Validate parent exists and enforce 1-level nesting
     if data.parent_id:
@@ -80,9 +164,10 @@ async def list_comments(
     target_id: uuid.UUID,
     limit: int = 20,
     offset: int = 0,
+    user_id: uuid.UUID | None = None,
 ) -> CommentListResponse:
     """List top-level comments with their replies."""
-    await _validate_target(db, target_type, target_id)
+    await _validate_target(db, target_type, target_id, user_id=user_id)
 
     comments, total = await repository.list_comments(db, target_id, limit, offset)
     return CommentListResponse(
@@ -136,7 +221,7 @@ async def toggle_like(
     user_id: uuid.UUID,
 ) -> LikeResponse:
     """Toggle like on an activity."""
-    target_obj = await _validate_target(db, target_type, target_id)
+    target_obj = await _validate_target(db, target_type, target_id, user_id=user_id)
 
     liked = await repository.toggle_like(db, target_id, user_id)
     
@@ -159,7 +244,7 @@ async def get_like_status(
     user_id: uuid.UUID,
 ) -> LikeResponse:
     """Get like status and count for an activity."""
-    await _validate_target(db, target_type, target_id)
+    await _validate_target(db, target_type, target_id, user_id=user_id)
 
     liked = await repository.is_liked_by_user(db, target_id, user_id)
     total = await repository.count_likes(db, target_id)
@@ -173,7 +258,7 @@ async def get_content_stats(
     user_id: uuid.UUID,
 ) -> ContentStatsResponse:
     """Get aggregated stats (like count, comment count, user like status)."""
-    await _validate_target(db, target_type, target_id)
+    await _validate_target(db, target_type, target_id, user_id=user_id)
 
     like_count = await repository.count_likes(db, target_id)
     comment_count = await repository.count_comments(db, target_id)

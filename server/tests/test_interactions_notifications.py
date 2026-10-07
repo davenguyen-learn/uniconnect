@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, timezone
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, patch, MagicMock
 import pytest
 
 from app.core.exceptions import ValidationError, NotFoundError
@@ -92,12 +92,12 @@ async def test_create_comment_service_success():
     mock_db = AsyncMock()
     act_id = uuid.uuid4()
     user_id = uuid.uuid4()
-    host_id = uuid.uuid4()
 
     mock_activity = AsyncMock()
     mock_activity.id = act_id
-    mock_activity.host_id = host_id
+    mock_activity.host_id = user_id
     mock_activity.title = "Tech Workshop"
+    mock_activity.end_time = datetime.now(timezone.utc)
 
     mock_created_comment = Comment(
         id=uuid.uuid4(),
@@ -126,7 +126,86 @@ async def test_create_comment_service_success():
             content="Awesome event!",
             parent_id=None,
         )
-        mock_notify.assert_awaited_once_with(mock_db, user_id, host_id, "comment", act_id, "Tech Workshop")
+        mock_notify.assert_awaited_once_with(mock_db, user_id, user_id, "comment", act_id, "Tech Workshop")
+
+
+@pytest.mark.asyncio
+async def test_create_comment_blocked_before_activity_ends():
+    """Verify cannot review/comment before activity ends."""
+    from datetime import timedelta
+    mock_db = AsyncMock()
+    act_id = uuid.uuid4()
+    user_id = uuid.uuid4()
+
+    mock_activity = AsyncMock()
+    mock_activity.id = act_id
+    mock_activity.host_id = user_id
+    mock_activity.end_time = datetime.now(timezone.utc) + timedelta(days=1)
+
+    with patch("app.modules.interactions.service._validate_target", return_value=mock_activity):
+        dto = CommentCreate(content="Too early")
+        with pytest.raises(ValidationError, match="hoạt động đã kết thúc"):
+            await create_comment(mock_db, "activities", act_id, user_id, dto)
+
+
+@pytest.mark.asyncio
+async def test_create_comment_blocked_when_not_attended():
+    """Verify non-attendee cannot review post-event activity."""
+    from datetime import timedelta
+    mock_db = AsyncMock()
+    mock_res = MagicMock()
+    mock_res.first.return_value = None  # No attendance confirmed
+    mock_db.execute.return_value = mock_res
+    act_id = uuid.uuid4()
+    user_id = uuid.uuid4()
+    host_id = uuid.uuid4()
+
+    mock_activity = AsyncMock()
+    mock_activity.id = act_id
+    mock_activity.host_id = host_id
+    mock_activity.end_time = datetime.now(timezone.utc) - timedelta(hours=2)
+
+    with patch("app.modules.interactions.service._validate_target", return_value=mock_activity):
+        dto = CommentCreate(content="I didn't attend")
+        with pytest.raises(ValidationError, match="được điểm danh"):
+            await create_comment(mock_db, "activities", act_id, user_id, dto)
+
+
+@pytest.mark.asyncio
+async def test_create_comment_allowed_when_attended():
+    """Verify attendee with attendance_confirmed can review post-event activity."""
+    from datetime import timedelta
+    mock_db = AsyncMock()
+    mock_res = MagicMock()
+    mock_res.first.return_value = (uuid.uuid4(),)  # Attendance confirmed!
+    mock_db.execute.return_value = mock_res
+    act_id = uuid.uuid4()
+    user_id = uuid.uuid4()
+    host_id = uuid.uuid4()
+
+    mock_activity = AsyncMock()
+    mock_activity.id = act_id
+    mock_activity.host_id = host_id
+    mock_activity.end_time = datetime.now(timezone.utc) - timedelta(hours=2)
+
+    mock_created_comment = Comment(
+        id=uuid.uuid4(),
+        activity_id=act_id,
+        user_id=user_id,
+        content="Great experience!",
+        parent_id=None,
+        is_deleted=False,
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
+    )
+
+    with patch("app.modules.interactions.service._validate_target", return_value=mock_activity), \
+         patch("app.modules.interactions.repository.create_comment", return_value=mock_created_comment), \
+         patch("app.modules.notifications.service.create_interaction_notification", new_callable=AsyncMock):
+
+        dto = CommentCreate(content="Great experience!")
+        res = await create_comment(mock_db, "activities", act_id, user_id, dto)
+        assert res.content == "Great experience!"
 
 
 @pytest.mark.asyncio
@@ -140,6 +219,8 @@ async def test_create_comment_parent_belonging_to_other_activity():
 
     mock_activity = AsyncMock()
     mock_activity.id = act_id
+    mock_activity.host_id = user_id
+    mock_activity.end_time = datetime.now(timezone.utc)
 
     mock_parent = Comment(
         id=parent_id,

@@ -191,10 +191,12 @@ export const BusySlotManagerModal: React.FC<BusySlotManagerModalProps> = ({
                           <Clock size={14} />
                           <span>{r.timeRange}</span>
                         </div>
-                        <div className="meta-line">
-                          <Calendar size={14} />
-                          <span>{r.validityRange}</span>
-                        </div>
+                        {r.recurrence === 'weekly' && r.validityRange && (
+                          <div className="meta-line">
+                            <Calendar size={14} />
+                            <span>{r.validityRange}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
 

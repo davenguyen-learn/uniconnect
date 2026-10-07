@@ -19,9 +19,11 @@ from app.modules.chat.tools import (
     search_activities_tool,
     get_user_schedule_tool,
     search_groups_tool,
+    add_personal_busy_slot_tool,
+    create_schedule_plan_tool,
 )
 from app.modules.chat.fallback import generate_deterministic_fallback
-from app.modules.chat.provider import CHAT_TOOLS, SYSTEM_INSTRUCTION, get_model_candidates
+from app.modules.chat.provider import CHAT_TOOLS, SYSTEM_INSTRUCTION, get_system_instruction, get_model_candidates
 
 logger = logging.getLogger(__name__)
 
@@ -116,7 +118,7 @@ async def handle_chat(
                     model=model_name,
                     contents=gemini_contents,
                     config=types.GenerateContentConfig(
-                        system_instruction=SYSTEM_INSTRUCTION,
+                        system_instruction=get_system_instruction(),
                         tools=[CHAT_TOOLS],
                         temperature=0.7,
                     ),
@@ -159,7 +161,7 @@ async def handle_chat(
                                 lat=lat,
                                 lng=lng,
                                 radius_meters=func_args.get("radius_meters", 25000),
-                                limit=func_args.get("limit", 4),
+                                limit=func_args.get("limit", 12 if func_args.get("is_social_work") else 4),
                             ),
                             timeout=TOOL_TIMEOUT_SECONDS,
                         )
@@ -211,6 +213,50 @@ async def handle_chat(
                         )
                         tool_payload = tool_result.model_dump()
 
+                    elif func_name == "add_personal_busy_slot":
+                        if user_id:
+                            tool_result = await asyncio.wait_for(
+                                add_personal_busy_slot_tool(
+                                    db=db,
+                                    user_id=user_id,
+                                    title=func_args.get("title", "Lịch tự học"),
+                                    start_time=str(func_args.get("start_time")),
+                                    end_time=str(func_args.get("end_time")),
+                                    recurrence=func_args.get("recurrence", "none"),
+                                    day_of_week=func_args.get("day_of_week"),
+                                    valid_until=func_args.get("valid_until"),
+                                ),
+                                timeout=TOOL_TIMEOUT_SECONDS,
+                            )
+                            if tool_result.success:
+                                await db.commit()
+                            tool_payload = tool_result.model_dump()
+                        else:
+                            tool_payload = {
+                                "success": False,
+                                "error": "Bạn cần đăng nhập để thêm lịch vào Smart Calendar.",
+                            }
+
+                    elif func_name == "create_schedule_plan":
+                        if user_id:
+                            tool_result = await asyncio.wait_for(
+                                create_schedule_plan_tool(
+                                    db=db,
+                                    user_id=user_id,
+                                    plan_title=func_args.get("plan_title", "Kế hoạch học tập & rèn luyện"),
+                                    slots=func_args.get("slots", []),
+                                ),
+                                timeout=TOOL_TIMEOUT_SECONDS * 2,
+                            )
+                            if tool_result.success:
+                                await db.commit()
+                            tool_payload = tool_result.model_dump()
+                        else:
+                            tool_payload = {
+                                "success": False,
+                                "error": "Bạn cần đăng nhập để thêm lịch vào Smart Calendar.",
+                            }
+
                     else:
                         tool_payload = {"error": f"Unknown tool name: {func_name}"}
 
@@ -235,15 +281,19 @@ async def handle_chat(
                 gemini_contents.append(response.candidates[0].content)
             gemini_contents.append(types.Content(role="user", parts=tool_parts))
 
-            # Synthesize final natural response
+            # Synthesize next round tool call or final natural response
             try:
+                gen_config = {
+                    "system_instruction": get_system_instruction(),
+                    "temperature": 0.7,
+                }
+                if current_round < MAX_TOOL_ROUNDS:
+                    gen_config["tools"] = [CHAT_TOOLS]
+
                 response = client.models.generate_content(
                     model=used_model,
                     contents=gemini_contents,
-                    config=types.GenerateContentConfig(
-                        system_instruction=SYSTEM_INSTRUCTION,
-                        temperature=0.7,
-                    ),
+                    config=types.GenerateContentConfig(**gen_config),
                 )
             except Exception as synth_err:
                 logger.warning(f"Synthesis step failed with {used_model}: {synth_err}")

@@ -157,7 +157,7 @@ export function mapBusySlotToRuleViewModel(slot: BusySlotResponse): BusySlotRule
     timeRange = `${formatDateDisplay(slot.start_datetime)} (${formatTimeRange(slot.start_datetime, slot.end_datetime)})`;
   }
 
-  let validityRange = 'Không thời hạn';
+  let validityRange = '';
   let isExpired = false;
   const now = new Date();
   const todayStr = now.toISOString().split('T')[0];
@@ -166,16 +166,17 @@ export function mapBusySlotToRuleViewModel(slot: BusySlotResponse): BusySlotRule
     if (slot.valid_until && slot.valid_until < todayStr) {
       isExpired = true;
     }
+    if (slot.valid_from && slot.valid_until) {
+      validityRange = `${slot.valid_from} → ${slot.valid_until}`;
+    } else if (slot.valid_from) {
+      validityRange = `Từ ${slot.valid_from}`;
+    } else if (slot.valid_until) {
+      validityRange = `Đến ${slot.valid_until}`;
+    } else {
+      validityRange = 'Không thời hạn';
+    }
   } else if (slot.end_datetime) {
     isExpired = new Date(slot.end_datetime).getTime() < now.getTime();
-  }
-
-  if (slot.valid_from && slot.valid_until) {
-    validityRange = `${slot.valid_from} → ${slot.valid_until}`;
-  } else if (slot.valid_from) {
-    validityRange = `Từ ${slot.valid_from}`;
-  } else if (slot.valid_until) {
-    validityRange = `Đến ${slot.valid_until}`;
   }
 
   return {

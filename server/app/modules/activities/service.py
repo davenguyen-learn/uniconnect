@@ -32,6 +32,8 @@ def _activity_to_response(
     attendance_confirmed: bool | None = None,
     joined_at: datetime | None = None,
     co_hosts: list[Any] | None = None,
+    registration_status: str | None = None,
+    is_deleted: bool | None = None,
 ) -> ActivityResponse:
     """Convert an Activity model to a response schema."""
     host_info = None
@@ -92,6 +94,8 @@ def _activity_to_response(
         check_in_radius=getattr(activity, 'check_in_radius', 300) or 300,
         attendance_confirmed=attendance_confirmed,
         joined_at=joined_at,
+        registration_status=registration_status,
+        is_deleted=is_deleted if is_deleted is not None else getattr(activity, 'is_deleted', False),
     )
 
 
@@ -620,7 +624,10 @@ async def get_my_activities(
     for activity in activities:
         coords = await repository.get_coordinates_from_db(db, activity.id)
         lat, lng = coords if coords else (0, 0)
-        items.append(_activity_to_response(activity, lat, lng))
+        items.append(_activity_to_response(
+            activity, lat, lng,
+            is_deleted=getattr(activity, 'is_deleted', False),
+        ))
 
     return ActivityListResponse(
         items=items, total=total, limit=limit, offset=offset, has_more=(offset + limit < total)
@@ -738,7 +745,7 @@ async def get_joined_activities(
     db: AsyncSession, user_id: str, status_filter: str | None = None, limit: int = 50, offset: int = 0
 ) -> ActivityListResponse:
     """List activities joined by the current user."""
-    activities, total, attendance_map, joined_at_map = await repository.list_joined_activities(
+    activities, total, attendance_map, joined_at_map, status_map = await repository.list_joined_activities(
         db, user_id=uuid.UUID(user_id), status_filter=status_filter, limit=limit, offset=offset
     )
 
@@ -750,6 +757,8 @@ async def get_joined_activities(
             activity, lat, lng,
             attendance_confirmed=attendance_map.get(activity.id, False),
             joined_at=joined_at_map.get(activity.id),
+            registration_status=status_map.get(activity.id),
+            is_deleted=getattr(activity, 'is_deleted', False),
         ))
 
     return ActivityListResponse(

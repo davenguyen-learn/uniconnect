@@ -20,7 +20,7 @@ from sqlalchemy.orm import joinedload
 from geoalchemy2.functions import ST_DWithin, ST_MakePoint, ST_SetSRID, ST_Distance
 
 from app.modules.activities.models import Activity, ActivityPrivacy
-from app.modules.groups.models import Group, GroupMember, GroupPrivacy
+from app.modules.groups.models import Group, GroupMember, GroupPrivacy, ActivityCoHost
 from app.modules.participation.models import JoinRequest, RequestStatus
 from app.modules.chat.schemas import (
     ActivitySearchToolItem,
@@ -29,6 +29,7 @@ from app.modules.chat.schemas import (
     UserScheduleToolResult,
     GroupSearchToolItem,
     GroupSearchToolResult,
+    AddBusySlotToolResult,
 )
 
 
@@ -48,20 +49,32 @@ async def search_activities_tool(
     """Search for activities using domain query filters and enrich with eligibility, conflict, and distance."""
     now = datetime.now(timezone.utc)
 
-    # Base access filter: Public activity OR activity not in a group OR user is in the group
+    # Base access filter: Public activity OR (Private activity AND user is host or member of host/co-host group)
     if user_id:
         access_filter = or_(
             Activity.privacy == ActivityPrivacy.public,
-            Activity.group_id.is_(None),
-            Activity.group_id.in_(
-                select(GroupMember.group_id).where(GroupMember.user_id == user_id)
+            and_(
+                Activity.privacy == ActivityPrivacy.private,
+                or_(
+                    Activity.host_id == user_id,
+                    and_(
+                        Activity.group_id.isnot(None),
+                        Activity.group_id.in_(
+                            select(GroupMember.group_id).where(GroupMember.user_id == user_id)
+                        ),
+                    ),
+                    Activity.id.in_(
+                        select(ActivityCoHost.activity_id).where(
+                            ActivityCoHost.group_id.in_(
+                                select(GroupMember.group_id).where(GroupMember.user_id == user_id)
+                            )
+                        )
+                    ),
+                ),
             ),
         )
     else:
-        access_filter = or_(
-            Activity.privacy == ActivityPrivacy.public,
-            Activity.group_id.is_(None),
-        )
+        access_filter = Activity.privacy == ActivityPrivacy.public
 
     base_filter = and_(
         Activity.is_deleted.is_(False),
@@ -249,7 +262,13 @@ async def get_user_schedule_tool(
             )
         )
 
-    return UserScheduleToolResult(busy_slots=busy_slots, total_busy_slots=len(busy_slots))
+    dow_names = ["Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ Nhật"]
+    today_dow = dow_names[today.weekday()]
+    return UserScheduleToolResult(
+        busy_slots=busy_slots,
+        total_busy_slots=len(busy_slots),
+        current_date=f"{today.isoformat()} ({today_dow})",
+    )
 
 
 async def search_groups_tool(
@@ -305,3 +324,207 @@ async def search_groups_tool(
     ]
 
     return GroupSearchToolResult(items=items, total=len(items))
+
+
+def _parse_iso_datetime(dt_val: Any) -> datetime:
+    """Parse string or datetime to timezone-aware datetime."""
+    from app.modules.calendar.service import LOCAL_TZ
+
+    if isinstance(dt_val, datetime):
+        return dt_val if dt_val.tzinfo else dt_val.replace(tzinfo=LOCAL_TZ)
+
+    s = str(dt_val).strip()
+    if s.endswith("Z"):
+        s = s[:-1] + "+00:00"
+
+    try:
+        dt = datetime.fromisoformat(s)
+    except Exception:
+        for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M"):
+            try:
+                dt = datetime.strptime(s, fmt)
+                break
+            except Exception:
+                pass
+        else:
+            raise ValueError(f"Không thể định dạng thời gian: {dt_val}")
+
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=LOCAL_TZ)
+    return dt
+
+
+async def add_personal_busy_slot_tool(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    title: str,
+    start_time: str,
+    end_time: str,
+    recurrence: str = "none",
+    day_of_week: int | None = None,
+    valid_until: str | None = None,
+) -> AddBusySlotToolResult:
+    """
+    Actionable AI Agent Tool: Create a personal busy or self-study slot in Smart Calendar.
+    Enforces conflict check before inserting (LOCK 3).
+    """
+    from app.modules.calendar.service import (
+        LOCAL_TZ,
+        get_detector_for_user,
+        create_busy_slot,
+    )
+    from app.modules.calendar.schemas import BusySlotCreate
+
+    try:
+        dt_start = _parse_iso_datetime(start_time)
+        dt_end = _parse_iso_datetime(end_time)
+    except Exception as e:
+        return AddBusySlotToolResult(
+            success=False,
+            title=title,
+            start_time=str(start_time),
+            end_time=str(end_time),
+            recurrence=recurrence,
+            message=f"Định dạng thời gian không hợp lệ: {e}",
+            has_conflict=False,
+        )
+
+    if dt_end <= dt_start:
+        return AddBusySlotToolResult(
+            success=False,
+            title=title,
+            start_time=dt_start.isoformat(),
+            end_time=dt_end.isoformat(),
+            recurrence=recurrence,
+            message="Thời gian kết thúc phải diễn ra sau thời gian bắt đầu.",
+            has_conflict=False,
+        )
+
+    # 1. Check schedule conflict before adding
+    detector = await get_detector_for_user(db, user_id)
+    conflict_info = detector.check_conflict(dt_start, dt_end)
+    if conflict_info.has_conflict and conflict_info.level == "hard_conflict":
+        return AddBusySlotToolResult(
+            success=False,
+            title=title,
+            start_time=dt_start.isoformat(),
+            end_time=dt_end.isoformat(),
+            recurrence=recurrence,
+            message=f"Xung đột lịch: {conflict_info.warning_message}",
+            has_conflict=True,
+        )
+
+    is_weekly = recurrence.lower() in ("weekly", "week", "hang_tuan", "hàng tuần")
+    dow = day_of_week
+    if is_weekly and dow is None:
+        dow = dt_start.astimezone(LOCAL_TZ).weekday()
+
+    local_start = dt_start.astimezone(LOCAL_TZ)
+    local_end = dt_end.astimezone(LOCAL_TZ)
+
+    dt_valid_until: date | None = None
+    if is_weekly and valid_until:
+        try:
+            dt_valid_until = date.fromisoformat(str(valid_until).split("T")[0])
+        except Exception:
+            pass
+
+    now_local = datetime.now(LOCAL_TZ).date()
+    valid_from_val = min(local_start.date(), now_local) if is_weekly else None
+
+    slot_create = BusySlotCreate(
+        title=title,
+        recurrence="weekly" if is_weekly else "none",
+        start_datetime=dt_start if not is_weekly else None,
+        end_datetime=dt_end if not is_weekly else None,
+        day_of_week=dow if is_weekly else None,
+        start_time_of_day=local_start.time() if is_weekly else None,
+        end_time_of_day=local_end.time() if is_weekly else None,
+        valid_from=valid_from_val,
+        valid_until=dt_valid_until if is_weekly else None,
+    )
+
+    saved = await create_busy_slot(db, user_id, slot_create)
+
+    return AddBusySlotToolResult(
+        success=True,
+        slot_id=str(saved.id),
+        title=saved.title,
+        start_time=dt_start.isoformat(),
+        end_time=dt_end.isoformat(),
+        recurrence="weekly" if is_weekly else "none",
+        message=f"Đã thêm thành công '{saved.title}' vào Smart Calendar của bạn.",
+        has_conflict=False,
+    )
+
+
+async def create_schedule_plan_tool(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    plan_title: str,
+    slots: list[dict[str, Any]],
+) -> Any:
+    """
+    Actionable AI Agent Tool: Create multiple study, sports, and rest slots simultaneously
+    for a comprehensive schedule plan (e.g., 10-day exam preparation sprint).
+    """
+    from app.modules.chat.schemas import (
+        CreateSchedulePlanItemResult,
+        CreateSchedulePlanToolResult,
+    )
+
+    item_results: list[CreateSchedulePlanItemResult] = []
+    success_count = 0
+
+    for slot_data in slots:
+        title = slot_data.get("title") or plan_title
+        st = slot_data.get("start_time")
+        et = slot_data.get("end_time")
+        rec = slot_data.get("recurrence", "none")
+        dow = slot_data.get("day_of_week")
+        vu = slot_data.get("valid_until")
+
+        if not st or not et:
+            item_results.append(
+                CreateSchedulePlanItemResult(
+                    success=False,
+                    title=title,
+                    start_time=str(st),
+                    end_time=str(et),
+                    recurrence=rec,
+                    message="Thiếu thông tin start_time hoặc end_time.",
+                )
+            )
+            continue
+
+        res = await add_personal_busy_slot_tool(
+            db=db,
+            user_id=user_id,
+            title=title,
+            start_time=st,
+            end_time=et,
+            recurrence=rec,
+            day_of_week=dow,
+            valid_until=vu,
+        )
+
+        item_results.append(
+            CreateSchedulePlanItemResult(
+                success=res.success,
+                title=res.title,
+                start_time=res.start_time,
+                end_time=res.end_time,
+                recurrence=res.recurrence,
+                message=res.message,
+            )
+        )
+        if res.success:
+            success_count += 1
+
+    overall_success = success_count > 0
+    return CreateSchedulePlanToolResult(
+        success=overall_success,
+        total_slots_created=success_count,
+        slots=item_results,
+        message=f"Đã tạo thành công {success_count}/{len(slots)} khung giờ cho kế hoạch '{plan_title}'.",
+    )

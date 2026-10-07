@@ -13,6 +13,7 @@ import {
   ArrowLeft,
   Info,
   ShieldCheck,
+  Lock,
 } from 'lucide-react';
 import './CreateGroup.css';
 
@@ -25,6 +26,7 @@ export default function CreateGroup() {
   const [publicDescription, setPublicDescription] = useState('');
   const [requireApproval, setRequireApproval] = useState(true);
   const [allowActivities, setAllowActivities] = useState(true);
+  const [privacy, setPrivacy] = useState<'public' | 'private'>('public');
 
   // Custom Form Builder state for group membership
   const [customFormFields, setCustomFormFields] = useState<
@@ -81,7 +83,7 @@ export default function CreateGroup() {
         name: name.trim(),
         description: description.trim() || undefined,
         public_description: publicDescription.trim() || undefined,
-        privacy: 'public',
+        privacy: privacy,
         require_approval: requireApproval,
         allow_member_activities: allowActivities,
       };
@@ -208,6 +210,33 @@ export default function CreateGroup() {
               </div>
               <div>
                 <h3>Cấu hình nhóm</h3>
+              </div>
+            </div>
+
+            {/* Switch 0: Privacy */}
+            <div
+              className={`approval-toggle-card ${privacy === 'private' ? 'active' : ''}`}
+              onClick={() => setPrivacy((prev) => (prev === 'public' ? 'private' : 'public'))}
+              role="button"
+              tabIndex={0}
+            >
+              <div className="approval-toggle-content">
+                <div className="approval-toggle-icon">
+                  <Lock size={18} />
+                </div>
+                <div className="approval-toggle-info">
+                  <span className="approval-toggle-title">
+                    {privacy === 'private' ? 'Nhóm Riêng tư (Private Group)' : 'Nhóm Công khai (Public Group)'}
+                  </span>
+                  <span className="approval-toggle-desc">
+                    {privacy === 'private'
+                      ? 'Hoạt động nội bộ của nhóm sẽ chỉ dành riêng cho các thành viên trong nhóm.'
+                      : 'Nhóm và các hoạt động công khai hiển thị cho toàn bộ sinh viên trong trường.'}
+                  </span>
+                </div>
+              </div>
+              <div className={`approval-switch ${privacy === 'private' ? 'on' : ''}`}>
+                <span className="approval-switch-handle" />
               </div>
             </div>
 

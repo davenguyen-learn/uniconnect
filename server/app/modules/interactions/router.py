@@ -67,9 +67,9 @@ async def list_comments(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """List top-level comments with replies for a target."""
+    user_id = uuid.UUID(current_user["sub"]) if current_user and "sub" in current_user else None
     return await service.list_comments(
-        db, _map_target_type(target_type), target_id, limit, offset
+        db, _map_target_type(target_type), target_id, limit, offset, user_id=user_id
     )
 
 

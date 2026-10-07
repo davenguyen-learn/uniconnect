@@ -33,6 +33,7 @@ export interface CollectionLayoutProps {
   onSortChange?: (value: string) => void;
 
   extraFilters?: React.ReactNode;
+  filterPanel?: React.ReactNode;
 
   // Loading & Empty States
   loading?: boolean;
@@ -62,6 +63,7 @@ export default function CollectionLayout({
   sortValue,
   onSortChange,
   extraFilters,
+  filterPanel,
   loading = false,
   loadingMessage = 'Đang tải...',
   isEmpty = false,
@@ -133,6 +135,9 @@ export default function CollectionLayout({
           )}
         </div>
       )}
+
+      {/* Filter Panel / Sub-controls (rendered full-width outside of the grid) */}
+      {filterPanel}
 
       {/* Grid / Content Area */}
       {loading ? (

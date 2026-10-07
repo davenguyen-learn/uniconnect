@@ -82,27 +82,32 @@ async def list_active(
 
     now = datetime.now(timezone.utc)
 
-    # Base access filter: Public activity OR activity not in a group OR user is in host group OR user is in co-host group
+    # Base access filter: Public activity OR (Private activity AND user is host or member of host/co-host group)
     if user_id:
         access_filter = or_(
             Activity.privacy == ActivityPrivacy.public,
-            Activity.group_id.is_(None),
-            Activity.group_id.in_(
-                select(GroupMember.group_id).where(GroupMember.user_id == user_id)
-            ),
-            Activity.id.in_(
-                select(ActivityCoHost.activity_id).where(
-                    ActivityCoHost.group_id.in_(
-                        select(GroupMember.group_id).where(GroupMember.user_id == user_id)
-                    )
-                )
+            and_(
+                Activity.privacy == ActivityPrivacy.private,
+                or_(
+                    Activity.host_id == user_id,
+                    and_(
+                        Activity.group_id.isnot(None),
+                        Activity.group_id.in_(
+                            select(GroupMember.group_id).where(GroupMember.user_id == user_id)
+                        ),
+                    ),
+                    Activity.id.in_(
+                        select(ActivityCoHost.activity_id).where(
+                            ActivityCoHost.group_id.in_(
+                                select(GroupMember.group_id).where(GroupMember.user_id == user_id)
+                            )
+                        )
+                    ),
+                ),
             ),
         )
     else:
-        access_filter = or_(
-            Activity.privacy == ActivityPrivacy.public,
-            Activity.group_id.is_(None),
-        )
+        access_filter = Activity.privacy == ActivityPrivacy.public
 
     time_filter = Activity.end_time > now if not include_past else True
     base_filter = and_(
@@ -199,27 +204,32 @@ async def find_within_radius(
     now = datetime.now(timezone.utc)
     point = ST_SetSRID(ST_MakePoint(lng, lat), 4326)
 
-    # Base access filter: Public activity OR activity not in a group OR user is in host group OR user is in co-host group
+    # Base access filter: Public activity OR (Private activity AND user is host or member of host/co-host group)
     if user_id:
         access_filter = or_(
             Activity.privacy == ActivityPrivacy.public,
-            Activity.group_id.is_(None),
-            Activity.group_id.in_(
-                select(GroupMember.group_id).where(GroupMember.user_id == user_id)
-            ),
-            Activity.id.in_(
-                select(ActivityCoHost.activity_id).where(
-                    ActivityCoHost.group_id.in_(
-                        select(GroupMember.group_id).where(GroupMember.user_id == user_id)
-                    )
-                )
+            and_(
+                Activity.privacy == ActivityPrivacy.private,
+                or_(
+                    Activity.host_id == user_id,
+                    and_(
+                        Activity.group_id.isnot(None),
+                        Activity.group_id.in_(
+                            select(GroupMember.group_id).where(GroupMember.user_id == user_id)
+                        ),
+                    ),
+                    Activity.id.in_(
+                        select(ActivityCoHost.activity_id).where(
+                            ActivityCoHost.group_id.in_(
+                                select(GroupMember.group_id).where(GroupMember.user_id == user_id)
+                            )
+                        )
+                    ),
+                ),
             ),
         )
     else:
-        access_filter = or_(
-            Activity.privacy == ActivityPrivacy.public,
-            Activity.group_id.is_(None),
-        )
+        access_filter = Activity.privacy == ActivityPrivacy.public
 
     base_filter = and_(
         Activity.is_deleted == False,  # noqa: E712
@@ -383,18 +393,30 @@ async def list_hosted_activities(
     offset: int = 0,
 ) -> tuple[list[Activity], int]:
     """List all activities hosted by the user (both past and upcoming), sorted newest first."""
-    base_filter = and_(
-        Activity.is_deleted == False,
-        Activity.host_id == user_id,
-    )
-    if status_filter == "upcoming":
-        base_filter = and_(base_filter, Activity.end_time >= func.now())
+    if status_filter == "cancelled":
+        base_filter = and_(
+            Activity.is_deleted == True,
+            Activity.host_id == user_id,
+        )
+        order_clause = Activity.created_at.desc()
+    elif status_filter == "upcoming":
+        base_filter = and_(
+            Activity.is_deleted == False,
+            Activity.host_id == user_id,
+            Activity.end_time >= func.now(),
+        )
         order_clause = Activity.start_time.asc()
     elif status_filter == "past":
-        base_filter = and_(base_filter, Activity.end_time < func.now())
+        base_filter = and_(
+            Activity.is_deleted == False,
+            Activity.host_id == user_id,
+            Activity.end_time < func.now(),
+        )
         order_clause = Activity.start_time.desc()
     else:
-        order_clause = Activity.start_time.desc()
+        # Return all hosted activities by the user (including deleted/cancelled)
+        base_filter = Activity.host_id == user_id
+        order_clause = Activity.created_at.desc()
 
     count_q = select(func.count()).select_from(Activity).where(base_filter)
     total = (await db.execute(count_q)).scalar() or 0
@@ -419,9 +441,13 @@ async def list_joined_activities(
     status_filter: str | None = None,
     limit: int = 50,
     offset: int = 0,
-) -> tuple[list[Activity], int]:
+) -> tuple[list[Activity], int, dict, dict, dict]:
     """List all activities the user has joined (both past and upcoming), sorted newest first."""
     from app.modules.participation.models import JoinRequest, RequestStatus
+    from app.modules.participation.repository import auto_expire_pending_requests
+
+    # Automatically decline pending requests for activities that have already started
+    await auto_expire_pending_requests(db)
 
     if status_filter == "upcoming":
         base_filter = and_(
@@ -452,7 +478,6 @@ async def list_joined_activities(
         base_filter = and_(
             Activity.is_deleted == False,
             JoinRequest.user_id == user_id,
-            JoinRequest.status.in_([RequestStatus.pending, RequestStatus.approved]),
         )
         order_clause = JoinRequest.created_at.desc()
 
@@ -460,7 +485,7 @@ async def list_joined_activities(
     total = (await db.execute(count_q)).scalar() or 0
 
     query = (
-        select(Activity, JoinRequest.attendance_confirmed, JoinRequest.created_at)
+        select(Activity, JoinRequest.attendance_confirmed, JoinRequest.created_at, JoinRequest.status)
         .join(JoinRequest, Activity.id == JoinRequest.activity_id)
         .options(joinedload(Activity.host))
         .where(base_filter)
@@ -474,4 +499,15 @@ async def list_joined_activities(
     attendance_map = {r[0].id: bool(r[1]) for r in rows}
     joined_at_map = {r[0].id: r[2] for r in rows}
 
-    return activities, total, attendance_map, joined_at_map
+    now_utc = datetime.now(timezone.utc)
+    status_map = {}
+    for r in rows:
+        act = r[0]
+        st = r[3].value if hasattr(r[3], 'value') else str(r[3])
+        if st == 'pending' and act.start_time:
+            st_time = act.start_time if act.start_time.tzinfo else act.start_time.replace(tzinfo=timezone.utc)
+            if st_time <= now_utc:
+                st = 'declined'
+        status_map[act.id] = st
+
+    return activities, total, attendance_map, joined_at_map, status_map

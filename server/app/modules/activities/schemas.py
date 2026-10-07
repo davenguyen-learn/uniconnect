@@ -111,6 +111,8 @@ class ActivityResponse(BaseModel):
     conflict_info: ConflictInfo | None = None
     attendance_confirmed: bool | None = None
     joined_at: datetime | None = None
+    registration_status: str | None = None
+    is_deleted: bool = False
 
     model_config = {"from_attributes": True}
 

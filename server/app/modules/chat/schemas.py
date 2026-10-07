@@ -39,6 +39,7 @@ class BusySlotItem(BaseModel):
 class UserScheduleToolResult(BaseModel):
     busy_slots: list[BusySlotItem]
     total_busy_slots: int
+    current_date: str = ""
 
 
 class GroupSearchToolItem(BaseModel):
@@ -52,6 +53,33 @@ class GroupSearchToolItem(BaseModel):
 class GroupSearchToolResult(BaseModel):
     items: list[GroupSearchToolItem]
     total: int
+
+
+class AddBusySlotToolResult(BaseModel):
+    success: bool
+    slot_id: str | None = None
+    title: str
+    start_time: str
+    end_time: str
+    recurrence: str = "none"
+    message: str
+    has_conflict: bool = False
+
+
+class CreateSchedulePlanItemResult(BaseModel):
+    success: bool
+    title: str
+    start_time: str
+    end_time: str
+    recurrence: str = "none"
+    message: str
+
+
+class CreateSchedulePlanToolResult(BaseModel):
+    success: bool
+    total_slots_created: int
+    slots: list[CreateSchedulePlanItemResult]
+    message: str
 
 
 # ── Chat Request & Response Schemas ──

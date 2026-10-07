@@ -8,7 +8,7 @@ import time
 import logging
 from datetime import datetime, timezone, timedelta
 
-from sqlalchemy import update, select, func
+from sqlalchemy import update, select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
@@ -62,6 +62,37 @@ async def request_to_join(
     # Host cannot join their own activity
     if str(activity.host_id) == user_id:
         raise ValidationError("You cannot join your own activity.")
+
+    # Check access control for private activities
+    from app.modules.activities.models import ActivityPrivacy
+    is_private = (
+        activity.privacy == ActivityPrivacy.private
+        or str(activity.privacy).lower() in ("activityprivacy.private", "private")
+    )
+    if is_private:
+        is_authorized = False
+        if activity.group_id:
+            from app.modules.groups.repository import is_member
+            if await is_member(db, activity.group_id, uid):
+                is_authorized = True
+
+        if not is_authorized:
+            from app.modules.groups.models import ActivityCoHost, GroupMember
+            cohost_res = await db.execute(
+                select(GroupMember.id).join(
+                    ActivityCoHost, ActivityCoHost.group_id == GroupMember.group_id
+                ).where(
+                    and_(
+                        ActivityCoHost.activity_id == activity_id,
+                        GroupMember.user_id == uid,
+                    )
+                )
+            )
+            if cohost_res.first():
+                is_authorized = True
+
+        if not is_authorized:
+            raise ForbiddenError("Hoạt động này là nội bộ, chỉ dành riêng cho thành viên nhóm.")
 
     # Cannot join after start time
     now = datetime.now(timezone.utc)
