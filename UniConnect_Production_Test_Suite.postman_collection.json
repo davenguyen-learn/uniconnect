@@ -1,0 +1,427 @@
+{
+	"info": {
+		"_postman_id": "a8f3b2e1-4c5d-6e7f-8a9b-0c1d2e3f4a5b",
+		"name": "UniConnect Production Test Suite & API Collection",
+		"description": "Bộ kiểm thử API và kịch bản thực nghiệm toàn diện cho hệ thống UniConnect trên môi trường Production (Render & Vercel).\nBao gồm kiểm thử xác thực, hoạt động, GPS, điểm danh, danh hiệu, chatbot AI và sức khỏe hệ thống.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "https://uniconnect-vrl7.onrender.com",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "testActivityId",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "0. Health & Observability",
+			"item": [
+				{
+					"name": "Health Check & Cold-Start Latency Probe",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test('Database is healthy', function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.status).to.eql('ok');",
+									"    pm.expect(jsonData.db).to.eql('healthy');",
+									"});",
+									"pm.test('Latency and Observability Timing Header present', function () {",
+									"    pm.response.to.have.header('X-Process-Time');",
+									"    console.log('Server Process Time: ' + pm.response.headers.get('X-Process-Time'));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/health",
+							"host": ["{{baseUrl}}"],
+							"path": ["health"]
+						},
+						"description": "Kiểm tra tình trạng server, database connectivity và đo thời gian phản hồi (Cold start probe)."
+					}
+				}
+			]
+		},
+		{
+			"name": "1. Seed Production Data (1-Click)",
+			"item": [
+				{
+					"name": "Trigger Seed Demo Data on Render",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Seed executed successfully', function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.status).to.eql('success');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/admin/seed-demo",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "admin", "seed-demo"]
+						},
+						"description": "Kích hoạt nạp 4 User mẫu, 4 CLB, 10 hoạt động sắp diễn ra và 4 danh hiệu trực tiếp trên database Render."
+					}
+				}
+			]
+		},
+		{
+			"name": "2. Authentication & Users",
+			"item": [
+				{
+					"name": "Login - Sinh viên (Student 1)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Login returns 200 with JWT', function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('access_token');",
+									"    pm.collectionVariables.set('token', jsonData.access_token);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"student1@uniconnect.vn\",\n  \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "auth", "login"]
+						}
+					}
+				},
+				{
+					"name": "Login - Quản trị viên (Admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Admin login successful', function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"admin@uniconnect.vn\",\n  \"password\": \"admin123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "auth", "login"]
+						}
+					}
+				},
+				{
+					"name": "Get Current User Profile (Me)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Profile fetched with Bearer Token', function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('email');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{token}}", "type": "string"}]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/users/me",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "users", "me"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "3. Activities & Discovery",
+			"item": [
+				{
+					"name": "Get All Upcoming Activities",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('List activities returns 200 with items', function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.items).to.be.an('array');",
+									"    if (jsonData.items.length > 0) {",
+									"        pm.collectionVariables.set('testActivityId', jsonData.items[0].id);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{token}}", "type": "string"}]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/activities?limit=20&offset=0",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "activities"],
+							"query": [
+								{"key": "limit", "value": "20"},
+								{"key": "offset", "value": "0"}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get My Activities (Upcoming)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Get my activities returns 200 without 500 error', function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('items');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{token}}", "type": "string"}]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/activities/mine?status=upcoming&limit=20",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "activities", "mine"],
+							"query": [
+								{"key": "status", "value": "upcoming"},
+								{"key": "limit", "value": "20"}
+							]
+						}
+					}
+				},
+				{
+					"name": "Discover Nearby (PostGIS Radius Search)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('PostGIS nearby search returns 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.items).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{token}}", "type": "string"}]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/activities/nearby?lat=10.929718&lng=107.250381&radius=10000&limit=20",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "activities", "nearby"],
+							"query": [
+								{"key": "lat", "value": "10.929718"},
+								{"key": "lng", "value": "107.250381"},
+								{"key": "radius", "value": "10000"},
+								{"key": "limit", "value": "20"}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "4. Groups & Clubs",
+			"item": [
+				{
+					"name": "List All Groups",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Groups list returns 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.items).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{token}}", "type": "string"}]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/groups?limit=20",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "groups"],
+							"query": [
+								{"key": "limit", "value": "20"}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "5. AI Chat Assistant & Calendar",
+			"item": [
+				{
+					"name": "Chat Assistant - Tư vấn xếp lịch ôn thi & sinh hoạt",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Chatbot responds with AI message', function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('reply');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{token}}", "type": "string"}]
+						},
+						"method": "POST",
+						"header": [
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"message\": \"10 ngày nữa là tôi thi rồi, tôi thi 4 môn, sắp xếp thời gian học tập, nghỉ ngơi và thể thao cho tôi đi\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/chat/message",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "chat", "message"]
+						}
+					}
+				},
+				{
+					"name": "Get User Smart Calendar Events",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Calendar events return 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [{"key": "token", "value": "{{token}}", "type": "string"}]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/calendar/events",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "calendar", "events"]
+						}
+					}
+				}
+			]
+		}
+	]
+}

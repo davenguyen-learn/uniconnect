@@ -360,3 +360,16 @@ async def update_group_status(
         db, group_id=group_id, new_status=data.status, admin_id=admin_id
     )
 
+
+# ── 8. Production Seed & Demo Trigger ──
+
+@router.post("/seed-demo")
+async def seed_production_demo(
+    db: AsyncSession = Depends(get_db),
+):
+    """Seed comprehensive demo data for production verification and testing.
+    Can be executed directly from Swagger UI (/docs) or Postman.
+    """
+    from app.modules.admin.seed_service import seed_demo_database
+    return await seed_demo_database(db)
+
