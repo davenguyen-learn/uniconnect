@@ -1240,7 +1240,7 @@
                         },
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"title\": \"Hội Thảo Công Nghệ AI Trong Kỷ Nguyên Số\",\n  \"description\": \"Chia sẻ về ứng dụng AI và chuyển đổi số cho sinh viên.\",\n  \"category\": \"academic\",\n  \"meeting_location\": \"Hội trường Rùa\",\n  \"marker_location\": {\n    \"type\": \"Point\",\n    \"coordinates\": [\n      107.25,\n      10.929\n    ]\n  },\n  \"start_time\": \"2026-10-09T08:00:00Z\",\n  \"end_time\": \"2026-10-09T11:30:00Z\",\n  \"registration_deadline\": \"2026-10-08T23:59:59Z\",\n  \"max_participants\": 150,\n  \"social_work_days\": 1.0,\n  \"requires_approval\": false\n}"
+                            "raw": "{\n  \"title\": \"Hội Thảo Công Nghệ AI Trong Kỷ Nguyên Số\",\n  \"description\": \"Chia sẻ về ứng dụng AI và chuyển đổi số cho sinh viên.\",\n  \"category\": \"academic\",\n  \"meeting_location\": \"Hội trường Rùa\",\n  \"latitude\": 10.929,\n  \"longitude\": 107.25,\n  \"start_time\": \"2026-10-09T08:00:00Z\",\n  \"end_time\": \"2026-10-09T11:30:00Z\",\n  \"registration_deadline\": \"2026-10-08T23:59:59Z\",\n  \"max_participants\": 150,\n  \"social_work_days\": 1.0,\n  \"require_approval\": false\n}"
                         }
                     },
                     "response": []

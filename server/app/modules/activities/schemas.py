@@ -47,6 +47,21 @@ class ActivityCreate(BaseModel):
     custom_form_id: uuid.UUID | None = None
     custom_form: "CustomFormCreate | None" = None
 
+    @model_validator(mode="before")
+    @classmethod
+    def extract_lat_lng_and_aliases(cls, data):
+        if isinstance(data, dict):
+            if "latitude" not in data or "longitude" not in data:
+                marker = data.get("marker_location")
+                if isinstance(marker, dict):
+                    coords = marker.get("coordinates")
+                    if isinstance(coords, (list, tuple)) and len(coords) >= 2:
+                        data.setdefault("longitude", coords[0])
+                        data.setdefault("latitude", coords[1])
+            if "requires_approval" in data and "require_approval" not in data:
+                data["require_approval"] = data["requires_approval"]
+        return data
+
     @model_validator(mode="after")
     def validate_times(self):
         if self.end_time <= self.start_time:
@@ -78,6 +93,21 @@ class ActivityUpdate(BaseModel):
     attendance_mode: str | None = None
     check_in_radius: int | None = Field(default=None, ge=50, le=5000)
     custom_form: "CustomFormCreate | None" = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def extract_lat_lng_and_aliases(cls, data):
+        if isinstance(data, dict):
+            if "latitude" not in data or "longitude" not in data:
+                marker = data.get("marker_location")
+                if isinstance(marker, dict):
+                    coords = marker.get("coordinates")
+                    if isinstance(coords, (list, tuple)) and len(coords) >= 2:
+                        data.setdefault("longitude", coords[0])
+                        data.setdefault("latitude", coords[1])
+            if "requires_approval" in data and "require_approval" not in data:
+                data["require_approval"] = data["requires_approval"]
+        return data
 
 
 class ActivityResponse(BaseModel):
