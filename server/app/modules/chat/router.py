@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, Request, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.dependencies import get_optional_current_user
+from app.core.dependencies import get_current_user
 from app.modules.chat import service
 from app.modules.chat.schemas import ChatRequest, ChatResponse
 
@@ -79,10 +79,10 @@ def _check_rate_limit(key: str, storage: dict[str, list[float]], max_requests: i
 async def chat_with_bot(
     request: ChatRequest,
     req: Request,
-    current_user: dict | None = Depends(get_optional_current_user),
+    current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Send a message to the AI campus assistant with pre-provider rate limiting."""
+    """Send a message to the AI campus assistant with authentication and rate limiting."""
     # Client IP is resolved by ProxyHeadersMiddleware using TRUSTED_PROXY_IPS.
     # When behind a trusted proxy (Nginx/LB), req.client.host reflects the real
     # client IP from X-Forwarded-For; untrusted sources cannot spoof this value.
@@ -97,18 +97,17 @@ async def chat_with_bot(
     )
 
     # 2. User rate limit check (for authenticated users)
-    user_id = None
-    if current_user and "sub" in current_user:
-        try:
-            user_id = uuid.UUID(current_user["sub"])
-            _check_rate_limit(
-                key=str(user_id),
-                storage=_USER_RATE_LIMITS,
-                max_requests=USER_LIMIT_PER_MINUTE,
-                error_detail="Bạn đã gửi quá nhiều tin nhắn. Vui lòng chờ 1 phút trước khi tiếp tục.",
-            )
-        except ValueError:
-            user_id = None
+    try:
+        user_id = uuid.UUID(current_user["sub"])
+    except (ValueError, KeyError):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token không hợp lệ.")
+
+    _check_rate_limit(
+        key=str(user_id),
+        storage=_USER_RATE_LIMITS,
+        max_requests=USER_LIMIT_PER_MINUTE,
+        error_detail="Bạn đã gửi quá nhiều tin nhắn. Vui lòng chờ 1 phút trước khi tiếp tục.",
+    )
 
     return await service.handle_chat(
         db=db,

@@ -218,23 +218,39 @@ def test_chat_rate_limiting_logic():
 
 @pytest.mark.asyncio
 async def test_chat_endpoints_both_route_and_alias(async_client):
-    """Verify both /api/v1/chat and /api/v1/chat/message route properly and return 200."""
-    with patch("app.modules.chat.service.handle_chat", new_callable=AsyncMock) as mock_handle:
-        from app.modules.chat.schemas import ChatResponse, ChatMessage
-        mock_handle.return_value = ChatResponse(
-            conversation_id="conv-123",
-            message=ChatMessage(role="assistant", content="Xin chào!"),
-            reply="Xin chào!",
-            suggestions=[],
-        )
+    """Verify both /api/v1/chat and /api/v1/chat/message require authentication (401 when unauthorized, 200 when authorized)."""
+    from app.main import app
+    from app.core.dependencies import get_current_user
 
-        # 1. Primary endpoint /api/v1/chat
-        res1 = await async_client.post("/api/v1/chat", json={"message": "Chào bot"})
-        assert res1.status_code == 200
-        assert res1.json()["reply"] == "Xin chào!"
+    # 1. Calling without token must return 401 Unauthorized
+    unauth_res1 = await async_client.post("/api/v1/chat", json={"message": "Chào bot"})
+    assert unauth_res1.status_code == 401
 
-        # 2. Alias endpoint /api/v1/chat/message
-        res2 = await async_client.post("/api/v1/chat/message", json={"message": "Chào bot"})
-        assert res2.status_code == 200
-        assert res2.json()["reply"] == "Xin chào!"
+    unauth_res2 = await async_client.post("/api/v1/chat/message", json={"message": "Chào bot"})
+    assert unauth_res2.status_code == 401
+
+    # 2. Calling with valid authenticated user
+    app.dependency_overrides[get_current_user] = lambda: {"sub": str(uuid.uuid4()), "role": "student"}
+    try:
+        with patch("app.modules.chat.service.handle_chat", new_callable=AsyncMock) as mock_handle:
+            from app.modules.chat.schemas import ChatResponse, ChatMessage
+            mock_handle.return_value = ChatResponse(
+                conversation_id="conv-123",
+                message=ChatMessage(role="assistant", content="Xin chào!"),
+                reply="Xin chào!",
+                suggestions=[],
+            )
+
+            # Primary endpoint /api/v1/chat
+            res1 = await async_client.post("/api/v1/chat", json={"message": "Chào bot"})
+            assert res1.status_code == 200
+            assert res1.json()["reply"] == "Xin chào!"
+
+            # Alias endpoint /api/v1/chat/message
+            res2 = await async_client.post("/api/v1/chat/message", json={"message": "Chào bot"})
+            assert res2.status_code == 200
+            assert res2.json()["reply"] == "Xin chào!"
+    finally:
+        app.dependency_overrides.pop(get_current_user, None)
+
 
