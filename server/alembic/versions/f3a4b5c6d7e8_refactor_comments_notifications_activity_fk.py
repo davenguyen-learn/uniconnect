@@ -23,6 +23,8 @@ def upgrade() -> None:
     # ── 1. COMMENTS ──
     op.add_column('comments', sa.Column('activity_id', postgresql.UUID(as_uuid=True), nullable=True))
     op.execute("UPDATE comments SET activity_id = target_id")
+    # Clean orphan comments pointing to non-existent activities
+    op.execute("DELETE FROM comments WHERE activity_id IS NULL OR activity_id NOT IN (SELECT id FROM activities)")
     op.alter_column('comments', 'activity_id', nullable=False)
     op.create_foreign_key(
         'fk_comments_activity_id', 'comments', 'activities', ['activity_id'], ['id'], ondelete='CASCADE'
@@ -38,6 +40,8 @@ def upgrade() -> None:
     # ── 2. CONTENT LIKES ──
     op.add_column('content_likes', sa.Column('activity_id', postgresql.UUID(as_uuid=True), nullable=True))
     op.execute("UPDATE content_likes SET activity_id = target_id")
+    # Clean orphan likes pointing to non-existent activities
+    op.execute("DELETE FROM content_likes WHERE activity_id IS NULL OR activity_id NOT IN (SELECT id FROM activities)")
     op.alter_column('content_likes', 'activity_id', nullable=False)
     op.create_foreign_key(
         'fk_content_likes_activity_id', 'content_likes', 'activities', ['activity_id'], ['id'], ondelete='CASCADE'
@@ -54,6 +58,8 @@ def upgrade() -> None:
     # ── 3. NOTIFICATIONS ──
     op.add_column('notifications', sa.Column('activity_id', postgresql.UUID(as_uuid=True), nullable=True))
     op.execute("UPDATE notifications SET activity_id = target_id WHERE target_type = 'activity'")
+    # Clean orphan notifications pointing to non-existent activities
+    op.execute("UPDATE notifications SET activity_id = NULL WHERE activity_id IS NOT NULL AND activity_id NOT IN (SELECT id FROM activities)")
     op.create_foreign_key(
         'fk_notifications_activity_id', 'notifications', 'activities', ['activity_id'], ['id'], ondelete='SET NULL'
     )

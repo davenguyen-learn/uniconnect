@@ -26,6 +26,7 @@ def upgrade() -> None:
     # ── 2. TROPHIES: Add activity_id FK, drop creator_id, points, icon ──
     op.add_column('trophies', sa.Column('activity_id', postgresql.UUID(as_uuid=True), nullable=True))
     op.execute("UPDATE trophies SET activity_id = a.id FROM activities a WHERE a.trophy_id = trophies.id")
+    op.execute("UPDATE trophies SET activity_id = NULL WHERE activity_id IS NOT NULL AND activity_id NOT IN (SELECT id FROM activities)")
     op.create_foreign_key(
         'fk_trophies_activity_id', 'trophies', 'activities', ['activity_id'], ['id'], ondelete='CASCADE'
     )
