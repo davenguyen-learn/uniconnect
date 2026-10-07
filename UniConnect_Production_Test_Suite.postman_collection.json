@@ -85,6 +85,21 @@
             "key": "notification_id",
             "value": "",
             "type": "string"
+        },
+        {
+            "key": "valid_act_start",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "valid_act_end",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "valid_act_deadline",
+            "value": "",
+            "type": "string"
         }
     ],
     "item": [
@@ -1216,9 +1231,25 @@
                     "response": []
                 },
                 {
-                    "id": "8c94a61c-d3dd-5b3e-b6b2-c76acb7bced5",
-                    "name": "4.7 Tạo hoạt động mới (Create Activity)",
+                    "id": "421ca5bf-4f58-5e01-9a17-2c46aca278cf",
+                    "name": "4.7 Tạo hoạt động mới thành công (Không trùng thời gian)",
                     "event": [
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "exec": [
+                                    "var now = new Date();",
+                                    "var offsetDays = 15 + Math.floor(Math.random() * 20);",
+                                    "var start = new Date(now.getTime() + offsetDays * 24 * 3600 * 1000 + Math.floor(Math.random() * 100000));",
+                                    "var end = new Date(start.getTime() + 3 * 3600 * 1000);",
+                                    "var deadline = new Date(start.getTime() - 24 * 3600 * 1000);",
+                                    "pm.collectionVariables.set(\"valid_act_start\", start.toISOString());",
+                                    "pm.collectionVariables.set(\"valid_act_end\", end.toISOString());",
+                                    "pm.collectionVariables.set(\"valid_act_deadline\", deadline.toISOString());"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        },
                         {
                             "listen": "test",
                             "script": {
@@ -1267,14 +1298,71 @@
                         },
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"title\": \"Hội Thảo Công Nghệ AI Trong Kỷ Nguyên Số\",\n  \"description\": \"Chia sẻ về ứng dụng AI và chuyển đổi số cho sinh viên.\",\n  \"category\": \"academic\",\n  \"meeting_location\": \"Hội trường Rùa\",\n  \"latitude\": 10.929,\n  \"longitude\": 107.25,\n  \"start_time\": \"2026-10-09T08:00:00Z\",\n  \"end_time\": \"2026-10-09T11:30:00Z\",\n  \"registration_deadline\": \"2026-10-08T23:59:59Z\",\n  \"max_participants\": 150,\n  \"social_work_days\": 1.0,\n  \"require_approval\": false\n}"
+                            "raw": "{\n  \"title\": \"Hội Thảo Công Nghệ AI Trong Kỷ Nguyên Số (Mới)\",\n  \"description\": \"Chia sẻ về ứng dụng AI và chuyển đổi số cho sinh viên.\",\n  \"category\": \"academic\",\n  \"meeting_location\": \"Hội trường Rùa\",\n  \"latitude\": 10.929,\n  \"longitude\": 107.25,\n  \"start_time\": \"{{valid_act_start}}\",\n  \"end_time\": \"{{valid_act_end}}\",\n  \"registration_deadline\": \"{{valid_act_deadline}}\",\n  \"max_participants\": 150,\n  \"social_work_days\": 1.0,\n  \"require_approval\": false\n}"
                         }
                     },
                     "response": []
                 },
                 {
-                    "id": "aba3b993-8bfb-54ac-b971-5e78b26ef333",
-                    "name": "4.8 Cập nhật thông tin hoạt động (Update Activity)",
+                    "id": "eebec971-4bb6-57d8-a05d-4465bd8ec077",
+                    "name": "4.8 Chặn tạo hoạt động trùng giờ Host (Conflict Check 409)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status is 409 Conflict\", function () {",
+                                    "    pm.response.to.have.status(409);",
+                                    "});",
+                                    "var json = pm.response.json();",
+                                    "pm.test(\"Conflict error message received\", function () {",
+                                    "    var errMsg = (json.error && json.error.message) ? json.error.message : (json.detail || \"\");",
+                                    "    pm.expect(errMsg).to.include(\"Bạn đang là Host của hoạt động\");",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/activities",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "activities"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{admin_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"title\": \"Hội Thảo Trùng Lịch Host Khác\",\n  \"description\": \"Thử tạo hoạt động thứ hai đè lên cùng khung giờ đang host.\",\n  \"category\": \"academic\",\n  \"meeting_location\": \"Hội trường B\",\n  \"latitude\": 10.929,\n  \"longitude\": 107.25,\n  \"start_time\": \"{{valid_act_start}}\",\n  \"end_time\": \"{{valid_act_end}}\",\n  \"registration_deadline\": \"{{valid_act_deadline}}\",\n  \"max_participants\": 50,\n  \"require_approval\": false\n}"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "id": "b635902b-b343-5c8b-8696-06eb45557b61",
+                    "name": "4.9 Cập nhật thông tin hoạt động (Update Activity)",
                     "event": [
                         {
                             "listen": "test",
@@ -1326,8 +1414,8 @@
                     "response": []
                 },
                 {
-                    "id": "3b7f3187-560d-52e3-b2d8-08a3d7f4fc6d",
-                    "name": "4.9 Danh sách ứng viên đồng tổ chức (Cohost Candidates)",
+                    "id": "c49e2c6b-a802-5b5c-8566-7138f4342c26",
+                    "name": "4.10 Danh sách ứng viên đồng tổ chức (Cohost Candidates)",
                     "event": [
                         {
                             "listen": "test",
@@ -1371,8 +1459,8 @@
                     "response": []
                 },
                 {
-                    "id": "4f273fd4-19a5-506e-ba9b-9ae130deed70",
-                    "name": "4.10 Xuất danh sách người tham gia (Export CSV)",
+                    "id": "2d5b6344-05a2-5881-9b84-cb3c8c66d0d5",
+                    "name": "4.11 Xuất danh sách người tham gia (Export CSV)",
                     "event": [
                         {
                             "listen": "test",
