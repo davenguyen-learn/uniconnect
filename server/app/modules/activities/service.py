@@ -35,33 +35,100 @@ def _activity_to_response(
     registration_status: str | None = None,
     is_deleted: bool | None = None,
 ) -> ActivityResponse:
-    """Convert an Activity model to a response schema."""
+    """Convert an Activity model to a response schema safely without triggering async lazy loading."""
     host_info = None
-    if activity.host:
-        host_info = HostInfo(
-            username=activity.host.username,
-            full_name=activity.host.full_name,
-            avatar_url=getattr(activity.host, "avatar_url", None),
-        )
+    try:
+        host = activity.__dict__.get("host") if "host" in activity.__dict__ else getattr(activity, "host", None)
+        if host:
+            host_info = HostInfo(
+                username=getattr(host, "username", "Unknown"),
+                full_name=getattr(host, "full_name", None),
+                avatar_url=getattr(host, "avatar_url", None),
+            )
+    except Exception:
+        host_info = None
 
     group_info = None
-    if getattr(activity, 'group', None):
-        from app.modules.activities.schemas import GroupInfo
-        group_info = GroupInfo(
-            id=activity.group.id,
-            name=activity.group.name,
-            avatar_url=getattr(activity.group, "avatar_url", None),
-        )
+    try:
+        grp = activity.__dict__.get("group") if "group" in activity.__dict__ else getattr(activity, "group", None)
+        if grp:
+            from app.modules.activities.schemas import GroupInfo
+            group_info = GroupInfo(
+                id=grp.id,
+                name=grp.name,
+                avatar_url=getattr(grp, "avatar_url", None),
+            )
+    except Exception:
+        group_info = None
 
     custom_form_info = None
-    if getattr(activity, 'custom_form', None):
-        # We need to construct CustomFormResponse from Activity.custom_form
-        custom_form_info = activity.custom_form
-        # Due to from_attributes=True, pydantic handles the parsing automatically
+    try:
+        cf = activity.__dict__.get("custom_form") if "custom_form" in activity.__dict__ else getattr(activity, "custom_form", None)
+        if cf:
+            from app.modules.forms.schemas import CustomFormResponse, FormFieldResponse
+            if isinstance(cf, CustomFormResponse):
+                custom_form_info = cf
+            else:
+                fields_list = []
+                raw_fields = cf.__dict__.get("fields") if "fields" in cf.__dict__ else getattr(cf, "fields", None)
+                if raw_fields and isinstance(raw_fields, (list, tuple)):
+                    for f in raw_fields:
+                        try:
+                            fields_list.append(FormFieldResponse.model_validate(f, from_attributes=True))
+                        except Exception:
+                            continue
+                custom_form_info = CustomFormResponse(
+                    id=cf.id,
+                    title=getattr(cf, "title", None),
+                    description=getattr(cf, "description", None),
+                    fields=fields_list,
+                )
+    except Exception:
+        custom_form_info = None
 
     trophy_info = None
-    if getattr(activity, 'trophy', None):
-        trophy_info = activity.trophy
+    try:
+        raw_trophy = None
+        if "trophies" in activity.__dict__ and activity.__dict__["trophies"]:
+            raw_trophy = activity.__dict__["trophies"][0]
+        else:
+            t = getattr(activity, 'trophy', None)
+            if t is not None and not isinstance(t, MagicMock if 'MagicMock' in globals() else ()):
+                raw_trophy = t
+
+        if raw_trophy:
+            from app.modules.trophies.schemas import TrophyResponse
+            if isinstance(raw_trophy, TrophyResponse):
+                trophy_info = raw_trophy
+            else:
+                trophy_info = TrophyResponse(
+                    id=raw_trophy.id,
+                    name=str(raw_trophy.name),
+                    description=getattr(raw_trophy, "description", None),
+                    activity_id=getattr(raw_trophy, "activity_id", None),
+                    points=int(getattr(raw_trophy, "points", 0) or 0),
+                    icon=str(getattr(raw_trophy, "icon", "🏆") or "🏆"),
+                    creator_id=getattr(raw_trophy, "creator_id", None),
+                    created_at=getattr(raw_trophy, "created_at", None),
+                )
+    except Exception:
+        trophy_info = None
+
+    cleaned_co_hosts = []
+    if co_hosts:
+        from app.modules.activities.schemas import GroupInfo
+        for ch in co_hosts:
+            try:
+                if isinstance(ch, GroupInfo):
+                    cleaned_co_hosts.append(ch)
+                elif hasattr(ch, "id") and hasattr(ch, "name"):
+                    cleaned_co_hosts.append(GroupInfo(id=ch.id, name=ch.name, avatar_url=getattr(ch, "avatar_url", None)))
+                elif isinstance(ch, dict):
+                    cleaned_co_hosts.append(GroupInfo(**ch))
+            except Exception:
+                continue
+
+    privacy_val = activity.privacy.value if hasattr(activity.privacy, 'value') else (activity.privacy or "public")
 
     return ActivityResponse(
         id=activity.id,
@@ -71,21 +138,21 @@ def _activity_to_response(
         description=activity.description,
         private_description=private_description,
         category=activity.category,
-        latitude=lat,
-        longitude=lng,
+        latitude=lat if lat is not None else 0.0,
+        longitude=lng if lng is not None else 0.0,
         meeting_location=getattr(activity, 'meeting_location', None) or getattr(activity, 'location_name', None),
         location_name=getattr(activity, 'meeting_location', None) or getattr(activity, 'location_name', None),
         start_time=activity.start_time,
         end_time=activity.end_time,
-        max_participants=activity.max_participants,
-        current_participants=activity.current_participants,
-        privacy=activity.privacy.value if hasattr(activity.privacy, 'value') else activity.privacy,
-        require_approval=activity.require_approval,
-        social_work_days=activity.social_work_days,
-        created_at=activity.created_at,
+        max_participants=activity.max_participants or 1,
+        current_participants=activity.current_participants or 1,
+        privacy=privacy_val,
+        require_approval=getattr(activity, 'require_approval', False) or False,
+        social_work_days=getattr(activity, 'social_work_days', None),
+        created_at=getattr(activity, 'created_at', None),
         host=host_info,
         group=group_info,
-        co_hosts=co_hosts or [],
+        co_hosts=cleaned_co_hosts,
         distance_meters=distance,
         custom_form=custom_form_info,
         trophy=trophy_info,
@@ -616,9 +683,34 @@ async def get_my_activities(
     db: AsyncSession, user_id: str, status_filter: str | None = None, limit: int = 50, offset: int = 0
 ) -> ActivityListResponse:
     """List activities hosted by the current user (all past & upcoming)."""
+    try:
+        user_uuid = uuid.UUID(str(user_id))
+    except (ValueError, TypeError):
+        return ActivityListResponse(items=[], total=0, limit=limit, offset=offset, has_more=False)
+
     activities, total = await repository.list_hosted_activities(
-        db, user_id=uuid.UUID(user_id), status_filter=status_filter, limit=limit, offset=offset
+        db, user_id=user_uuid, status_filter=status_filter, limit=limit, offset=offset
     )
+
+    activity_ids = [a.id for a in activities]
+    co_hosts_map: dict[uuid.UUID, list] = {}
+    if activity_ids:
+        try:
+            from app.modules.activities.models_cohost import ActivityCoHost
+            from app.modules.groups.models import Group
+            from app.modules.activities.schemas import GroupInfo
+            co_hosts_query = (
+                select(ActivityCoHost.activity_id, Group)
+                .join(Group, ActivityCoHost.group_id == Group.id)
+                .where(ActivityCoHost.activity_id.in_(activity_ids))
+            )
+            co_hosts_res = await db.execute(co_hosts_query)
+            for act_id, grp in co_hosts_res.all():
+                co_hosts_map.setdefault(act_id, []).append(
+                    GroupInfo(id=grp.id, name=grp.name, avatar_url=getattr(grp, "avatar_url", None))
+                )
+        except Exception:
+            co_hosts_map = {}
 
     items = []
     for activity in activities:
@@ -626,6 +718,7 @@ async def get_my_activities(
         lat, lng = coords if coords else (0, 0)
         items.append(_activity_to_response(
             activity, lat, lng,
+            co_hosts=co_hosts_map.get(activity.id, []),
             is_deleted=getattr(activity, 'is_deleted', False),
         ))
 

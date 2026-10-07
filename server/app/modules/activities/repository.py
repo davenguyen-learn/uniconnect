@@ -6,30 +6,41 @@ from datetime import datetime, timezone
 from geoalchemy2.functions import ST_DWithin, ST_Distance, ST_MakePoint, ST_SetSRID, ST_X, ST_Y
 from sqlalchemy import func, select, and_, or_
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 
 from app.modules.activities.models import Activity, ActivityPrivacy
+from app.modules.forms.models import CustomForm
+
+
+def _activity_eager_options():
+    """Return common loader options to eagerly load host, group, trophies, and custom form."""
+    return (
+        joinedload(Activity.host),
+        joinedload(Activity.group),
+        selectinload(Activity.trophies),
+        joinedload(Activity.custom_form).selectinload(CustomForm.fields),
+    )
 
 
 async def create(db: AsyncSession, activity: Activity) -> Activity:
-    """Insert a new activity and return it with host populated."""
+    """Insert a new activity and return it with relations populated."""
     db.add(activity)
     await db.flush()
 
-    # Re-fetch with host relationship
+    # Re-fetch with relationships
     result = await db.execute(
         select(Activity)
-        .options(joinedload(Activity.host))
+        .options(*_activity_eager_options())
         .where(Activity.id == activity.id)
     )
     return result.unique().scalar_one()
 
 
 async def get_by_id(db: AsyncSession, activity_id: uuid.UUID) -> Activity | None:
-    """Fetch an activity by ID with host relationship."""
+    """Fetch an activity by ID with host and related entities."""
     result = await db.execute(
         select(Activity)
-        .options(joinedload(Activity.host))
+        .options(*_activity_eager_options())
         .where(and_(Activity.id == activity_id, Activity.is_deleted == False))  # noqa: E712
     )
     return result.unique().scalar_one_or_none()
@@ -162,7 +173,7 @@ async def list_active(
 
     query = (
         select(Activity)
-        .options(joinedload(Activity.host))
+        .options(*_activity_eager_options())
         .where(base_filter)
         .order_by(*order_clauses)
         .limit(limit)
@@ -342,7 +353,7 @@ async def find_within_radius(
 
     query = (
         select(Activity, distance_col)
-        .options(joinedload(Activity.host), selectinload(Activity.trophies))
+        .options(*_activity_eager_options())
         .where(base_filter)
         .order_by(*order_clauses)
         .limit(limit)
@@ -373,15 +384,18 @@ async def get_coordinates_from_db(db: AsyncSession, activity_id: uuid.UUID) -> t
     """Query the DB to extract lat/lng from a PostGIS geography point."""
     from geoalchemy2.types import Geometry
     from sqlalchemy import cast
-    result = await db.execute(
-        select(
-            ST_Y(cast(Activity.marker_location, Geometry)).label("lat"),
-            ST_X(cast(Activity.marker_location, Geometry)).label("lng"),
-        ).where(Activity.id == activity_id)
-    )
-    row = result.one_or_none()
-    if row and row.lat is not None:
-        return (row.lat, row.lng)
+    try:
+        result = await db.execute(
+            select(
+                ST_Y(cast(Activity.marker_location, Geometry)).label("lat"),
+                ST_X(cast(Activity.marker_location, Geometry)).label("lng"),
+            ).where(Activity.id == activity_id)
+        )
+        row = result.one_or_none()
+        if row and row.lat is not None:
+            return (row.lat, row.lng)
+    except Exception:
+        return None
     return None
 
 
@@ -393,20 +407,21 @@ async def list_hosted_activities(
     offset: int = 0,
 ) -> tuple[list[Activity], int]:
     """List all activities hosted by the user (both past and upcoming), sorted newest first."""
-    if status_filter == "cancelled":
+    status = status_filter.strip().lower() if status_filter else None
+    if status == "cancelled":
         base_filter = and_(
             Activity.is_deleted == True,
             Activity.host_id == user_id,
         )
         order_clause = Activity.created_at.desc()
-    elif status_filter == "upcoming":
+    elif status == "upcoming":
         base_filter = and_(
             Activity.is_deleted == False,
             Activity.host_id == user_id,
             Activity.end_time >= func.now(),
         )
         order_clause = Activity.start_time.asc()
-    elif status_filter == "past":
+    elif status == "past":
         base_filter = and_(
             Activity.is_deleted == False,
             Activity.host_id == user_id,
@@ -423,7 +438,7 @@ async def list_hosted_activities(
 
     query = (
         select(Activity)
-        .options(joinedload(Activity.host))
+        .options(*_activity_eager_options())
         .where(base_filter)
         .order_by(order_clause)
         .limit(limit)
@@ -487,7 +502,7 @@ async def list_joined_activities(
     query = (
         select(Activity, JoinRequest.attendance_confirmed, JoinRequest.created_at, JoinRequest.status)
         .join(JoinRequest, Activity.id == JoinRequest.activity_id)
-        .options(joinedload(Activity.host))
+        .options(*_activity_eager_options())
         .where(base_filter)
         .order_by(order_clause)
         .limit(limit)

@@ -25,7 +25,7 @@ class TrophyResponse(BaseModel):
     points: int = 0
     icon: str | None = "🏆"
     creator_id: uuid.UUID | None = None
-    created_at: datetime
+    created_at: datetime | None = None
 
     model_config = {"from_attributes": True}
 

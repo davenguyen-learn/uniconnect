@@ -83,25 +83,25 @@ class ActivityUpdate(BaseModel):
 class ActivityResponse(BaseModel):
     id: uuid.UUID
     host_id: uuid.UUID
-    group_id: uuid.UUID | None
+    group_id: uuid.UUID | None = None
     title: str
-    description: str | None
+    description: str | None = None
     private_description: str | None = None
-    category: str | None
-    latitude: float
-    longitude: float
+    category: str | None = None
+    latitude: float = 0.0
+    longitude: float = 0.0
     meeting_location: str | None = None
     location_name: str | None = None  # Backward-compatible alias
     start_time: datetime
     end_time: datetime
-    max_participants: int
-    current_participants: int
-    privacy: str
-    require_approval: bool
+    max_participants: int = 1
+    current_participants: int = 1
+    privacy: str = "public"
+    require_approval: bool = False
     attendance_mode: str = "manual"
     check_in_radius: int = 300
     social_work_days: float | None = None
-    created_at: datetime
+    created_at: datetime | None = None
     host: HostInfo | None = None
     group: GroupInfo | None = None
     co_hosts: list[GroupInfo] = []

@@ -36,8 +36,8 @@ class CustomFormCreate(BaseModel):
 
 class CustomFormResponse(BaseModel):
     id: uuid.UUID
-    title: str | None
-    description: str | None
-    fields: list[FormFieldResponse]
+    title: str | None = None
+    description: str | None = None
+    fields: list[FormFieldResponse] = []
 
     model_config = {"from_attributes": True}
