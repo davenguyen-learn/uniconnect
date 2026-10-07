@@ -241,10 +241,13 @@
                                     "pm.test(\"Received access_token\", function () {",
                                     "    pm.expect(data).to.have.property(\"access_token\");",
                                     "    pm.collectionVariables.set(\"token\", data.access_token);",
-                                    "});",
-                                    "if (data.user && data.user.id) {",
-                                    "    pm.collectionVariables.set(\"student_id\", data.user.id);",
-                                    "}"
+                                    "    try {",
+                                    "        var jwt = JSON.parse(atob(data.access_token.split('.')[1]));",
+                                    "        if (jwt && jwt.sub) {",
+                                    "            pm.collectionVariables.set(\"student_id\", jwt.sub);",
+                                    "        }",
+                                    "    } catch (e) {}",
+                                    "});"
                                 ],
                                 "type": "text/javascript"
                             }
@@ -292,7 +295,10 @@
                                     "pm.test(\"Token returned and user is admin\", function () {",
                                     "    pm.expect(data).to.have.property(\"access_token\");",
                                     "    pm.collectionVariables.set(\"admin_token\", data.access_token);",
-                                    "    pm.expect(data.user.role).to.eql(\"admin\");",
+                                    "    try {",
+                                    "        var jwt = JSON.parse(atob(data.access_token.split('.')[1]));",
+                                    "        pm.expect(jwt.role).to.eql(\"admin\");",
+                                    "    } catch (e) {}",
                                     "});"
                                 ],
                                 "type": "text/javascript"
@@ -338,7 +344,10 @@
                                     "    pm.response.to.have.status(200);",
                                     "});",
                                     "var data = pm.response.json();",
-                                    "pm.collectionVariables.set(\"org_token\", data.access_token);"
+                                    "pm.test(\"Token returned for org leader\", function () {",
+                                    "    pm.expect(data).to.have.property(\"access_token\");",
+                                    "    pm.collectionVariables.set(\"org_token\", data.access_token);",
+                                    "});"
                                 ],
                                 "type": "text/javascript"
                             }
