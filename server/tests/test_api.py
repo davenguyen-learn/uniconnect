@@ -47,3 +47,18 @@ async def test_health_check_db_timeout_returns_503(async_client):
         data = response.json()
         assert data["status"] == "degraded"
         assert data["db"] == "unhealthy"
+
+
+@pytest.mark.asyncio
+async def test_cors_preflight_allows_vercel_preview_domains(async_client):
+    """Verify that dynamic Vercel preview domains pass CORS preflight with Access-Control-Allow-Origin."""
+    headers = {
+        "Origin": "https://uniconnect-hb3395h42-daven-sub0.vercel.app",
+        "Access-Control-Request-Method": "POST",
+        "Access-Control-Request-Headers": "content-type,authorization",
+    }
+    response = await async_client.options("/api/v1/auth/register", headers=headers)
+    assert response.status_code == 200
+    assert response.headers.get("access-control-allow-origin") == "https://uniconnect-hb3395h42-daven-sub0.vercel.app"
+    assert response.headers.get("access-control-allow-credentials") == "true"
+

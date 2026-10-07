@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     APP_ENV: str = "development"
     APP_DEBUG: bool = True
     CORS_ORIGINS: str = "http://localhost:5173,http://localhost:3000"
+    CORS_ORIGIN_REGEX: str = r"^(https:\/\/.*\.vercel\.app|https:\/\/.*\.onrender\.com|http:\/\/localhost:\d+|http:\/\/127\.0\.0\.1:\d+)$"
 
     # ── Server ──
     SERVER_HOST: str = "0.0.0.0"
