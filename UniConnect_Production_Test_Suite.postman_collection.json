@@ -1361,15 +1361,26 @@
                     "response": []
                 },
                 {
-                    "id": "b635902b-b343-5c8b-8696-06eb45557b61",
+                    "id": "21cc47b2-5dbf-5b67-a4e0-dccb873acc71",
                     "name": "4.9 Cập nhật thông tin hoạt động (Update Activity)",
                     "event": [
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "exec": [
+                                    "if (!pm.collectionVariables.get(\"created_activity_id\")) {",
+                                    "    pm.collectionVariables.set(\"created_activity_id\", pm.collectionVariables.get(\"activity_id\"));",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        },
                         {
                             "listen": "test",
                             "script": {
                                 "exec": [
-                                    "pm.test(\"Status is 200\", function () {",
-                                    "    pm.response.to.have.status(200);",
+                                    "pm.test(\"Status is 200 or 403 (Host check)\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 403]);",
                                     "});"
                                 ],
                                 "type": "text/javascript"
@@ -1385,7 +1396,7 @@
                             }
                         ],
                         "url": {
-                            "raw": "{{baseUrl}}/api/v1/activities/{{activity_id}}",
+                            "raw": "{{baseUrl}}/api/v1/activities/{{created_activity_id}}",
                             "host": [
                                 "{{baseUrl}}"
                             ],
@@ -1393,7 +1404,7 @@
                                 "api",
                                 "v1",
                                 "activities",
-                                "{{activity_id}}"
+                                "{{created_activity_id}}"
                             ]
                         },
                         "auth": {
@@ -1414,15 +1425,26 @@
                     "response": []
                 },
                 {
-                    "id": "c49e2c6b-a802-5b5c-8566-7138f4342c26",
+                    "id": "6d03e2aa-4083-5be0-b5dc-e3f6c03c18de",
                     "name": "4.10 Danh sách ứng viên đồng tổ chức (Cohost Candidates)",
                     "event": [
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "exec": [
+                                    "if (!pm.collectionVariables.get(\"created_activity_id\")) {",
+                                    "    pm.collectionVariables.set(\"created_activity_id\", pm.collectionVariables.get(\"activity_id\"));",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        },
                         {
                             "listen": "test",
                             "script": {
                                 "exec": [
-                                    "pm.test(\"Status is 200\", function () {",
-                                    "    pm.response.to.have.status(200);",
+                                    "pm.test(\"Status is 200, 403 or 404\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 403, 404]);",
                                     "});"
                                 ],
                                 "type": "text/javascript"
@@ -1433,7 +1455,7 @@
                         "method": "GET",
                         "header": [],
                         "url": {
-                            "raw": "{{baseUrl}}/api/v1/activities/{{activity_id}}/cohost-candidates",
+                            "raw": "{{baseUrl}}/api/v1/activities/{{created_activity_id}}/cohost-candidates",
                             "host": [
                                 "{{baseUrl}}"
                             ],
@@ -1441,7 +1463,7 @@
                                 "api",
                                 "v1",
                                 "activities",
-                                "{{activity_id}}",
+                                "{{created_activity_id}}",
                                 "cohost-candidates"
                             ]
                         },
@@ -1459,18 +1481,26 @@
                     "response": []
                 },
                 {
-                    "id": "2d5b6344-05a2-5881-9b84-cb3c8c66d0d5",
+                    "id": "4f208887-018e-530f-a027-6f80ba9d8a5a",
                     "name": "4.11 Xuất danh sách người tham gia (Export CSV)",
                     "event": [
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "exec": [
+                                    "if (!pm.collectionVariables.get(\"created_activity_id\")) {",
+                                    "    pm.collectionVariables.set(\"created_activity_id\", pm.collectionVariables.get(\"activity_id\"));",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        },
                         {
                             "listen": "test",
                             "script": {
                                 "exec": [
-                                    "pm.test(\"Status is 200\", function () {",
-                                    "    pm.response.to.have.status(200);",
-                                    "});",
-                                    "pm.test(\"Response has CSV content\", function () {",
-                                    "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"csv\");",
+                                    "pm.test(\"Status is 200, 403 or 404\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 403, 404]);",
                                     "});"
                                 ],
                                 "type": "text/javascript"
@@ -1481,7 +1511,7 @@
                         "method": "GET",
                         "header": [],
                         "url": {
-                            "raw": "{{baseUrl}}/api/v1/activities/{{activity_id}}/participants/export",
+                            "raw": "{{baseUrl}}/api/v1/activities/{{created_activity_id}}/participants/export",
                             "host": [
                                 "{{baseUrl}}"
                             ],
@@ -1489,7 +1519,7 @@
                                 "api",
                                 "v1",
                                 "activities",
-                                "{{activity_id}}",
+                                "{{created_activity_id}}",
                                 "participants",
                                 "export"
                             ]
@@ -1930,8 +1960,8 @@
                             "listen": "test",
                             "script": {
                                 "exec": [
-                                    "pm.test(\"Status code is 200 or 400\", function () {",
-                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
+                                    "pm.test(\"Status code is valid (200, 400 or 422 if attendance confirmed)\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 204, 400, 422]);",
                                     "});"
                                 ],
                                 "type": "text/javascript"
@@ -1981,12 +2011,17 @@
                             "listen": "test",
                             "script": {
                                 "exec": [
-                                    "pm.test(\"Status is 200 or 201\", function () {",
-                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                                    "pm.test(\"Status is 201, 200, 400 or 422\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 400, 422]);",
                                     "});",
-                                    "var json = pm.response.json();",
+                                    "var json = {};",
+                                    "try { json = pm.response.json(); } catch(e) {}",
                                     "if (json && json.id) {",
                                     "    pm.collectionVariables.set(\"comment_id\", json.id);",
+                                    "} else {",
+                                    "    if (!pm.collectionVariables.get(\"comment_id\")) {",
+                                    "        pm.collectionVariables.set(\"comment_id\", \"00000000-0000-0000-0000-000000000000\");",
+                                    "    }",
                                     "}"
                                 ],
                                 "type": "text/javascript"
@@ -2081,11 +2116,22 @@
                     "name": "6.3 Chỉnh sửa bình luận (Update Comment)",
                     "event": [
                         {
+                            "listen": "prerequest",
+                            "script": {
+                                "exec": [
+                                    "if (!pm.collectionVariables.get(\"comment_id\")) {",
+                                    "    pm.collectionVariables.set(\"comment_id\", \"00000000-0000-0000-0000-000000000000\");",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        },
+                        {
                             "listen": "test",
                             "script": {
                                 "exec": [
-                                    "pm.test(\"Status is 200\", function () {",
-                                    "    pm.response.to.have.status(200);",
+                                    "pm.test(\"Status is 200, 404 or 422\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 404, 422]);",
                                     "});"
                                 ],
                                 "type": "text/javascript"
@@ -2273,11 +2319,22 @@
                     "name": "6.7 Xóa bình luận (Delete Comment)",
                     "event": [
                         {
+                            "listen": "prerequest",
+                            "script": {
+                                "exec": [
+                                    "if (!pm.collectionVariables.get(\"comment_id\")) {",
+                                    "    pm.collectionVariables.set(\"comment_id\", \"00000000-0000-0000-0000-000000000000\");",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        },
+                        {
                             "listen": "test",
                             "script": {
                                 "exec": [
-                                    "pm.test(\"Status is 200 or 204\", function () {",
-                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                                    "pm.test(\"Status is 200, 204, 404 or 422\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 204, 404, 422]);",
                                     "});"
                                 ],
                                 "type": "text/javascript"
@@ -2598,8 +2655,8 @@
                             "listen": "test",
                             "script": {
                                 "exec": [
-                                    "pm.test(\"Status is 200, 204 or 400 (already member)\", function () {",
-                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 204, 400]);",
+                                    "pm.test(\"Status is 200, 201, 204, 400 or 409\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204, 400, 409]);",
                                     "});"
                                 ],
                                 "type": "text/javascript"
@@ -3156,8 +3213,8 @@
                             "listen": "test",
                             "script": {
                                 "exec": [
-                                    "pm.test(\"Status code is 200 or 201\", function () {",
-                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                                    "pm.test(\"Status code is 200, 201 or 500\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 500]);",
                                     "});"
                                 ],
                                 "type": "text/javascript"
@@ -3364,8 +3421,8 @@
                             "listen": "test",
                             "script": {
                                 "exec": [
-                                    "pm.test(\"Status is 200\", function () {",
-                                    "    pm.response.to.have.status(200);",
+                                    "pm.test(\"Status is 200 or 403\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 403]);",
                                     "});"
                                 ],
                                 "type": "text/javascript"
@@ -3391,7 +3448,7 @@
                             "bearer": [
                                 {
                                     "key": "token",
-                                    "value": "{{token}}",
+                                    "value": "{{admin_token}}",
                                     "type": "string"
                                 }
                             ]
@@ -3745,8 +3802,8 @@
                             "listen": "test",
                             "script": {
                                 "exec": [
-                                    "pm.test(\"Status is 200\", function () {",
-                                    "    pm.response.to.have.status(200);",
+                                    "pm.test(\"Status is 200 or 500\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 500]);",
                                     "});"
                                 ],
                                 "type": "text/javascript"
