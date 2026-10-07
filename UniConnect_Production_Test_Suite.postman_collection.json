@@ -2,7 +2,7 @@
     "info": {
         "_postman_id": "8f7e6d5c-4b3a-2a1f-0e9d-8c7b6a5f4e3d",
         "name": "UniConnect Production Test Suite & API Collection",
-        "description": "Bộ kiểm thử API toàn diện cho hệ thống UniConnect Production/Staging bao gồm 13 module chức năng, 71 kịch bản kiểm thử tự động, trích xuất token, liên kết dữ liệu giữa các luồng và kiểm tra hiệu năng cold-start.",
+        "description": "Bộ kiểm thử API toàn diện cho hệ thống UniConnect Production/Staging bao gồm 13 module chức năng, 72 kịch bản kiểm thử tự động, trích xuất token, liên kết dữ liệu giữa các luồng và kiểm tra hiệu năng cold-start.",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "variable": [
@@ -43,6 +43,16 @@
         },
         {
             "key": "activity_id",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "other_activity_id",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "own_activity_id",
             "value": "",
             "type": "string"
         },
@@ -480,6 +490,7 @@
                                     "    pm.expect(json).to.have.property(\"full_name\");",
                                     "    pm.expect(json).to.have.property(\"role\");",
                                     "    pm.collectionVariables.set(\"my_user_id\", json.id);",
+                                    "    pm.collectionVariables.set(\"student_id\", json.id);",
                                     "});"
                                 ],
                                 "type": "text/javascript"
@@ -872,6 +883,21 @@
                                     "    pm.expect(Array.isArray(items)).to.be.true;",
                                     "    if (items.length > 0) {",
                                     "        pm.collectionVariables.set(\"activity_id\", items[0].id);",
+                                    "        var myId = pm.collectionVariables.get(\"student_id\") || pm.collectionVariables.get(\"my_user_id\");",
+                                    "        ",
+                                    "        var other = items.find(function(it) { return it.host_id !== myId; });",
+                                    "        if (other) {",
+                                    "            pm.collectionVariables.set(\"other_activity_id\", other.id);",
+                                    "        } else {",
+                                    "            pm.collectionVariables.set(\"other_activity_id\", items[0].id);",
+                                    "        }",
+                                    "        ",
+                                    "        var own = items.find(function(it) { return it.host_id === myId; });",
+                                    "        if (own) {",
+                                    "            pm.collectionVariables.set(\"own_activity_id\", own.id);",
+                                    "        } else {",
+                                    "            pm.collectionVariables.set(\"own_activity_id\", items[0].id);",
+                                    "        }",
                                     "    }",
                                     "});"
                                 ],
@@ -1203,6 +1229,7 @@
                                     "var json = pm.response.json();",
                                     "if (json && json.id) {",
                                     "    pm.collectionVariables.set(\"created_activity_id\", json.id);",
+                                    "    pm.collectionVariables.set(\"other_activity_id\", json.id);",
                                     "}"
                                 ],
                                 "type": "text/javascript"
@@ -1399,14 +1426,73 @@
             "name": "05. Participation & Live GPS Check-in",
             "item": [
                 {
-                    "id": "e6fb6590-d56b-592b-8184-c70ea6876393",
-                    "name": "5.1 Đăng ký tham gia hoạt động (Join Activity)",
+                    "id": "5bdab82b-28b4-56b4-b169-777136718629",
+                    "name": "5.1 Chặn tham gia hoạt động do chính mình tạo (Cannot join own activity)",
                     "event": [
                         {
                             "listen": "test",
                             "script": {
                                 "exec": [
-                                    "pm.test(\"Status code is 200, 201 or 400 (already joined)\", function () {",
+                                    "pm.test(\"Status code is 400 or 422\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([400, 422]);",
+                                    "});",
+                                    "var json = pm.response.json();",
+                                    "pm.test(\"Validation error: Cannot join own activity\", function () {",
+                                    "    var errMsg = (json.error && json.error.message) ? json.error.message : (json.detail || \"\");",
+                                    "    pm.expect(errMsg).to.include(\"You cannot join your own activity\");",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/activities/{{own_activity_id}}/join",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "activities",
+                                "{{own_activity_id}}",
+                                "join"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"note\": \"Thử tham gia hoạt động của chính mình\"\n}"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "id": "58b97e95-a9a9-5b98-93a9-d9a5de63ef46",
+                    "name": "5.2 Đăng ký tham gia hoạt động của người khác (Join Other Activity)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 201 or 200 (or 400 if already joined)\", function () {",
                                     "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 400]);",
                                     "});"
                                 ],
@@ -1423,7 +1509,7 @@
                             }
                         ],
                         "url": {
-                            "raw": "{{baseUrl}}/api/v1/activities/{{activity_id}}/join",
+                            "raw": "{{baseUrl}}/api/v1/activities/{{other_activity_id}}/join",
                             "host": [
                                 "{{baseUrl}}"
                             ],
@@ -1431,7 +1517,7 @@
                                 "api",
                                 "v1",
                                 "activities",
-                                "{{activity_id}}",
+                                "{{other_activity_id}}",
                                 "join"
                             ]
                         },
@@ -1453,8 +1539,8 @@
                     "response": []
                 },
                 {
-                    "id": "7cd9aac5-6e85-55ea-961a-6c574d1de0b8",
-                    "name": "5.2 Danh sách sinh viên đăng ký (List Participants)",
+                    "id": "d87e3ca9-6d0e-5d05-9a9e-9eecf7da9e94",
+                    "name": "5.3 Danh sách sinh viên đăng ký (List Participants)",
                     "event": [
                         {
                             "listen": "test",
@@ -1472,7 +1558,7 @@
                         "method": "GET",
                         "header": [],
                         "url": {
-                            "raw": "{{baseUrl}}/api/v1/activities/{{activity_id}}/participants",
+                            "raw": "{{baseUrl}}/api/v1/activities/{{other_activity_id}}/participants",
                             "host": [
                                 "{{baseUrl}}"
                             ],
@@ -1480,7 +1566,7 @@
                                 "api",
                                 "v1",
                                 "activities",
-                                "{{activity_id}}",
+                                "{{other_activity_id}}",
                                 "participants"
                             ]
                         },
@@ -1498,8 +1584,8 @@
                     "response": []
                 },
                 {
-                    "id": "cb9714dc-aea9-53c1-8d5d-3577ecce6618",
-                    "name": "5.3 Lấy mã QR / Check-in Code",
+                    "id": "63a7dd8d-a8f6-5abd-8a2a-666118fd0ae8",
+                    "name": "5.4 Lấy mã QR / Check-in Code",
                     "event": [
                         {
                             "listen": "test",
@@ -1517,7 +1603,7 @@
                         "method": "GET",
                         "header": [],
                         "url": {
-                            "raw": "{{baseUrl}}/api/v1/activities/{{activity_id}}/check-in-code",
+                            "raw": "{{baseUrl}}/api/v1/activities/{{other_activity_id}}/check-in-code",
                             "host": [
                                 "{{baseUrl}}"
                             ],
@@ -1525,7 +1611,7 @@
                                 "api",
                                 "v1",
                                 "activities",
-                                "{{activity_id}}",
+                                "{{other_activity_id}}",
                                 "check-in-code"
                             ]
                         },
@@ -1543,8 +1629,8 @@
                     "response": []
                 },
                 {
-                    "id": "4ab6a009-6e13-54a4-8ba9-df6157a7d364",
-                    "name": "5.4 Mở phiên điểm danh trực tiếp qua GPS (Open Live Check-in)",
+                    "id": "1ee206ed-5f0e-5e90-872f-8950108985b6",
+                    "name": "5.5 Mở phiên điểm danh trực tiếp qua GPS (Open Live Check-in)",
                     "event": [
                         {
                             "listen": "test",
@@ -1555,7 +1641,7 @@
                                     "});",
                                     "var json = pm.response.json();",
                                     "pm.test(\"Session opened\", function () {",
-                                    "    pm.expect(json).to.have.property(\"is_live_active\");",
+                                    "    pm.expect(json).to.have.property(\"is_active\");",
                                     "});"
                                 ],
                                 "type": "text/javascript"
@@ -1571,7 +1657,7 @@
                             }
                         ],
                         "url": {
-                            "raw": "{{baseUrl}}/api/v1/activities/{{activity_id}}/live-checkin/open",
+                            "raw": "{{baseUrl}}/api/v1/activities/{{other_activity_id}}/live-checkin/open",
                             "host": [
                                 "{{baseUrl}}"
                             ],
@@ -1579,7 +1665,7 @@
                                 "api",
                                 "v1",
                                 "activities",
-                                "{{activity_id}}",
+                                "{{other_activity_id}}",
                                 "live-checkin",
                                 "open"
                             ]
@@ -1596,14 +1682,14 @@
                         },
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"lat\": 10.929718,\n  \"lng\": 107.250381,\n  \"radius_meters\": 100,\n  \"duration_minutes\": 60\n}"
+                            "raw": "{\n  \"latitude\": 10.929718,\n  \"longitude\": 107.250381,\n  \"radius\": 100,\n  \"duration_seconds\": 3600\n}"
                         }
                     },
                     "response": []
                 },
                 {
-                    "id": "51321319-603e-5e3e-97a0-889111a181ad",
-                    "name": "5.5 Kiểm tra trạng thái điểm danh Live GPS (Check-in Status)",
+                    "id": "906ee141-3987-5296-8aba-eb7580882ac6",
+                    "name": "5.6 Kiểm tra trạng thái điểm danh Live GPS (Check-in Status)",
                     "event": [
                         {
                             "listen": "test",
@@ -1621,7 +1707,7 @@
                         "method": "GET",
                         "header": [],
                         "url": {
-                            "raw": "{{baseUrl}}/api/v1/activities/{{activity_id}}/live-checkin/status",
+                            "raw": "{{baseUrl}}/api/v1/activities/{{other_activity_id}}/live-checkin/status",
                             "host": [
                                 "{{baseUrl}}"
                             ],
@@ -1629,7 +1715,7 @@
                                 "api",
                                 "v1",
                                 "activities",
-                                "{{activity_id}}",
+                                "{{other_activity_id}}",
                                 "live-checkin",
                                 "status"
                             ]
@@ -1648,8 +1734,8 @@
                     "response": []
                 },
                 {
-                    "id": "3bca9de3-cc31-51da-9491-132b76b99007",
-                    "name": "5.6 Xác thực điểm danh Live GPS (Verify Live GPS Check-in)",
+                    "id": "1b60ee7a-4674-5d7d-b16a-c1ad08fccc63",
+                    "name": "5.7 Xác thực điểm danh Live GPS (Verify Live GPS Check-in)",
                     "event": [
                         {
                             "listen": "test",
@@ -1672,7 +1758,7 @@
                             }
                         ],
                         "url": {
-                            "raw": "{{baseUrl}}/api/v1/activities/{{activity_id}}/live-checkin/verify",
+                            "raw": "{{baseUrl}}/api/v1/activities/{{other_activity_id}}/live-checkin/verify",
                             "host": [
                                 "{{baseUrl}}"
                             ],
@@ -1680,7 +1766,7 @@
                                 "api",
                                 "v1",
                                 "activities",
-                                "{{activity_id}}",
+                                "{{other_activity_id}}",
                                 "live-checkin",
                                 "verify"
                             ]
@@ -1697,14 +1783,14 @@
                         },
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"user_lat\": 10.92972,\n  \"user_lng\": 107.250385\n}"
+                            "raw": "{\n  \"latitude\": 10.92972,\n  \"longitude\": 107.250385\n}"
                         }
                     },
                     "response": []
                 },
                 {
-                    "id": "377a8217-20a9-5f1e-b7b7-67dcad565aa2",
-                    "name": "5.7 Đóng phiên điểm danh GPS (Close Live Check-in)",
+                    "id": "ccc95c51-4b14-5178-afcb-be45113eda63",
+                    "name": "5.8 Đóng phiên điểm danh GPS (Close Live Check-in)",
                     "event": [
                         {
                             "listen": "test",
@@ -1722,7 +1808,7 @@
                         "method": "POST",
                         "header": [],
                         "url": {
-                            "raw": "{{baseUrl}}/api/v1/activities/{{activity_id}}/live-checkin/close",
+                            "raw": "{{baseUrl}}/api/v1/activities/{{other_activity_id}}/live-checkin/close",
                             "host": [
                                 "{{baseUrl}}"
                             ],
@@ -1730,7 +1816,7 @@
                                 "api",
                                 "v1",
                                 "activities",
-                                "{{activity_id}}",
+                                "{{other_activity_id}}",
                                 "live-checkin",
                                 "close"
                             ]
@@ -1749,8 +1835,8 @@
                     "response": []
                 },
                 {
-                    "id": "3677b2b6-aab1-5dd4-b040-334854e4233a",
-                    "name": "5.8 Hủy đăng ký / Rút lui khỏi hoạt động (Leave Activity)",
+                    "id": "b755841d-6299-52a7-b4d7-731b316b094f",
+                    "name": "5.9 Hủy đăng ký / Rút lui khỏi hoạt động (Leave Activity)",
                     "event": [
                         {
                             "listen": "test",
@@ -1768,7 +1854,7 @@
                         "method": "POST",
                         "header": [],
                         "url": {
-                            "raw": "{{baseUrl}}/api/v1/activities/{{activity_id}}/leave",
+                            "raw": "{{baseUrl}}/api/v1/activities/{{other_activity_id}}/leave",
                             "host": [
                                 "{{baseUrl}}"
                             ],
@@ -1776,7 +1862,7 @@
                                 "api",
                                 "v1",
                                 "activities",
-                                "{{activity_id}}",
+                                "{{other_activity_id}}",
                                 "leave"
                             ]
                         },
@@ -1800,7 +1886,7 @@
             "name": "06. Social Interactions (Comments & Likes)",
             "item": [
                 {
-                    "id": "f2b47f35-060c-59ea-a65c-2cc7734f29b8",
+                    "id": "9e24794d-8e92-5913-bbc9-1218e1f9df17",
                     "name": "6.1 Thêm bình luận vào hoạt động (Post Comment)",
                     "event": [
                         {
@@ -1828,15 +1914,15 @@
                             }
                         ],
                         "url": {
-                            "raw": "{{baseUrl}}/api/v1/activity/{{activity_id}}/comments",
+                            "raw": "{{baseUrl}}/api/v1/activities/{{other_activity_id}}/comments",
                             "host": [
                                 "{{baseUrl}}"
                             ],
                             "path": [
                                 "api",
                                 "v1",
-                                "activity",
-                                "{{activity_id}}",
+                                "activities",
+                                "{{other_activity_id}}",
                                 "comments"
                             ]
                         },
@@ -1858,7 +1944,7 @@
                     "response": []
                 },
                 {
-                    "id": "26909df7-74c6-5aff-8e91-133520d2d88d",
+                    "id": "53c45dea-36c8-5e40-9c85-195a9281ac5e",
                     "name": "6.2 Lấy danh sách bình luận (List Comments)",
                     "event": [
                         {
@@ -1877,15 +1963,15 @@
                         "method": "GET",
                         "header": [],
                         "url": {
-                            "raw": "{{baseUrl}}/api/v1/activity/{{activity_id}}/comments",
+                            "raw": "{{baseUrl}}/api/v1/activities/{{other_activity_id}}/comments",
                             "host": [
                                 "{{baseUrl}}"
                             ],
                             "path": [
                                 "api",
                                 "v1",
-                                "activity",
-                                "{{activity_id}}",
+                                "activities",
+                                "{{other_activity_id}}",
                                 "comments"
                             ]
                         },
@@ -1956,7 +2042,7 @@
                     "response": []
                 },
                 {
-                    "id": "feb52495-b83b-55b6-b63b-1b55152b3309",
+                    "id": "d7775ab8-19d2-5fc7-8385-c9a097e9198f",
                     "name": "6.4 Bày tỏ cảm xúc / Thích hoạt động (Toggle Like)",
                     "event": [
                         {
@@ -1979,15 +2065,15 @@
                         "method": "POST",
                         "header": [],
                         "url": {
-                            "raw": "{{baseUrl}}/api/v1/activity/{{activity_id}}/like",
+                            "raw": "{{baseUrl}}/api/v1/activities/{{other_activity_id}}/like",
                             "host": [
                                 "{{baseUrl}}"
                             ],
                             "path": [
                                 "api",
                                 "v1",
-                                "activity",
-                                "{{activity_id}}",
+                                "activities",
+                                "{{other_activity_id}}",
                                 "like"
                             ]
                         },
@@ -2005,7 +2091,7 @@
                     "response": []
                 },
                 {
-                    "id": "31fff248-20eb-5250-b173-1499b6039bae",
+                    "id": "0a428252-5b19-57ac-ae5b-2a58936c6a88",
                     "name": "6.5 Lấy trạng thái tương tác & Like Status",
                     "event": [
                         {
@@ -2024,15 +2110,15 @@
                         "method": "GET",
                         "header": [],
                         "url": {
-                            "raw": "{{baseUrl}}/api/v1/activity/{{activity_id}}/like",
+                            "raw": "{{baseUrl}}/api/v1/activities/{{other_activity_id}}/like",
                             "host": [
                                 "{{baseUrl}}"
                             ],
                             "path": [
                                 "api",
                                 "v1",
-                                "activity",
-                                "{{activity_id}}",
+                                "activities",
+                                "{{other_activity_id}}",
                                 "like"
                             ]
                         },
@@ -2050,7 +2136,7 @@
                     "response": []
                 },
                 {
-                    "id": "d4fe2022-70c3-5934-aec2-6fe3ba7e744f",
+                    "id": "e7772003-84ff-5d70-8ea6-6d12c8cde3e3",
                     "name": "6.6 Lấy số liệu thống kê tương tác (Stats)",
                     "event": [
                         {
@@ -2069,15 +2155,15 @@
                         "method": "GET",
                         "header": [],
                         "url": {
-                            "raw": "{{baseUrl}}/api/v1/activity/{{activity_id}}/stats",
+                            "raw": "{{baseUrl}}/api/v1/activities/{{other_activity_id}}/stats",
                             "host": [
                                 "{{baseUrl}}"
                             ],
                             "path": [
                                 "api",
                                 "v1",
-                                "activity",
-                                "{{activity_id}}",
+                                "activities",
+                                "{{other_activity_id}}",
                                 "stats"
                             ]
                         },
@@ -2424,8 +2510,8 @@
                             "listen": "test",
                             "script": {
                                 "exec": [
-                                    "pm.test(\"Status is 200 or 400 (already member)\", function () {",
-                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
+                                    "pm.test(\"Status is 200, 204 or 400 (already member)\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 204, 400]);",
                                     "});"
                                 ],
                                 "type": "text/javascript"
@@ -2478,8 +2564,8 @@
                             "listen": "test",
                             "script": {
                                 "exec": [
-                                    "pm.test(\"Status is 200 or 400\", function () {",
-                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
+                                    "pm.test(\"Status is 200, 204 or 400\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 204, 400]);",
                                     "});"
                                 ],
                                 "type": "text/javascript"
@@ -2769,7 +2855,7 @@
                         },
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"title\": \"Ôn thi cuối kỳ môn Kiến trúc Phần mềm\",\n  \"start_time\": \"2026-10-09T14:00:00Z\",\n  \"end_time\": \"2026-10-09T17:00:00Z\",\n  \"recurrence\": \"none\"\n}"
+                            "raw": "{\n  \"title\": \"Ôn thi cuối kỳ môn Kiến trúc Phần mềm\",\n  \"start_datetime\": \"2026-10-09T14:00:00Z\",\n  \"end_datetime\": \"2026-10-09T17:00:00Z\",\n  \"recurrence\": \"none\"\n}"
                         }
                     },
                     "response": []
@@ -3021,7 +3107,7 @@
                         },
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"name\": \"Chiến Binh Mùa Hè Xanh 2026\",\n  \"description\": \"Dành cho sinh viên tích lũy trên 5 ngày CTXH trong chiến dịch hè.\",\n  \"criteria_type\": \"social_work_days\",\n  \"threshold_value\": 5.0,\n  \"badge_icon\": \"trophy-gold\"\n}"
+                            "raw": "{\n  \"name\": \"Chiến Binh Mùa Hè Xanh 2026\",\n  \"description\": \"Dành cho sinh viên tham gia phong trào tình nguyện hè xuất sắc.\",\n  \"points\": 50,\n  \"icon\": \"🏆\"\n}"
                         }
                     },
                     "response": []
