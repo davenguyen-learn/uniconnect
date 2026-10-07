@@ -1,8 +1,8 @@
 {
     "info": {
-        "_postman_id": "uniconnect-production-full-suite-v2",
-        "name": "UniConnect Production Test Suite & API Collection (Full 13 Modules)",
-        "description": "Bộ kiểm thử API toàn diện cho hệ thống UniConnect Production/Staging bao gồm 13 module chức năng, 60+ kịch bản kiểm thử tự động, trích xuất token, liên kết dữ liệu giữa các luồng và kiểm tra hiệu năng cold-start.",
+        "_postman_id": "8f7e6d5c-4b3a-2a1f-0e9d-8c7b6a5f4e3d",
+        "name": "UniConnect Production Test Suite & API Collection",
+        "description": "Bộ kiểm thử API toàn diện cho hệ thống UniConnect Production/Staging bao gồm 13 module chức năng, 71 kịch bản kiểm thử tự động, trích xuất token, liên kết dữ liệu giữa các luồng và kiểm tra hiệu năng cold-start.",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "variable": [
@@ -79,25 +79,12 @@
     ],
     "item": [
         {
+            "id": "ef82f3a2-728b-54de-862f-0cd621b28b37",
             "name": "00. Observability & Cold Start",
             "item": [
                 {
+                    "id": "65f4bacc-61f9-545f-a494-d3f2919fa7a0",
                     "name": "0.1 Health Check (Cold Start & DB Probe)",
-                    "request": {
-                        "method": "GET",
-                        "header": [],
-                        "url": {
-                            "raw": "{{baseUrl}}/health",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "health"
-                            ]
-                        },
-                        "description": "Kiểm tra trạng thái máy chủ, đo thời gian phản hồi khi cold-start và độ trễ database."
-                    },
-                    "response": [],
                     "event": [
                         {
                             "listen": "test",
@@ -120,10 +107,38 @@
                                 "type": "text/javascript"
                             }
                         }
-                    ]
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/health",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "health"
+                            ]
+                        }
+                    },
+                    "response": []
                 },
                 {
+                    "id": "23f5dbf4-1255-5dd4-8fd4-8c833896f4cd",
                     "name": "0.2 API v1 Health Check",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
                     "request": {
                         "method": "GET",
                         "header": [],
@@ -137,69 +152,19 @@
                                 "v1",
                                 "health"
                             ]
-                        },
-                        "description": "Endpoint health check nằm dưới tiền tố /api/v1/health."
-                    },
-                    "response": [],
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "pm.test(\"Status code is 200\", function () {",
-                                    "    pm.response.to.have.status(200);",
-                                    "});"
-                                ],
-                                "type": "text/javascript"
-                            }
                         }
-                    ]
+                    },
+                    "response": []
                 }
             ]
         },
         {
+            "id": "ce80c547-d7c9-5b72-a5f9-06d2f86aa0df",
             "name": "01. Demo Seed Setup",
             "item": [
                 {
+                    "id": "dbd553fa-00bc-5e0d-9eff-eeed4862757b",
                     "name": "1.1 Seed Production Demo Dataset",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json",
-                                "type": "text"
-                            }
-                        ],
-                        "url": {
-                            "raw": "{{baseUrl}}/api/v1/admin/seed-demo",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "admin",
-                                "seed-demo"
-                            ]
-                        },
-                        "description": "Seed 20 hoạt động mới (trong 4 ngày tới) và thiết lập tài khoản mẫu sẵn sàng kiểm thử.",
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{admin_token}}",
-                                    "type": "string"
-                                }
-                            ]
-                        },
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"count\": 20,\n  \"with_awards_count\": 4,\n  \"days_ahead\": 4\n}"
-                        }
-                    },
-                    "response": [],
                     "event": [
                         {
                             "listen": "test",
@@ -217,43 +182,53 @@
                                 "type": "text/javascript"
                             }
                         }
-                    ]
-                }
-            ]
-        },
-        {
-            "name": "02. Authentication & Security",
-            "item": [
-                {
-                    "name": "2.1 Login - Sinh viên 1 (Lưu token & id)",
+                    ],
                     "request": {
                         "method": "POST",
                         "header": [
                             {
                                 "key": "Content-Type",
-                                "value": "application/json",
-                                "type": "text"
+                                "value": "application/json"
                             }
                         ],
                         "url": {
-                            "raw": "{{baseUrl}}/api/v1/auth/login",
+                            "raw": "{{baseUrl}}/api/v1/admin/seed-demo",
                             "host": [
                                 "{{baseUrl}}"
                             ],
                             "path": [
                                 "api",
                                 "v1",
-                                "auth",
-                                "login"
+                                "admin",
+                                "seed-demo"
                             ]
                         },
-                        "description": "Đăng nhập tài khoản sinh viên 1 và trích xuất token cho các request tiếp theo.",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{admin_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"email\": \"student1@ctu.edu.vn\",\n  \"password\": \"Password123!\"\n}"
+                            "raw": "{\n  \"count\": 20,\n  \"with_awards_count\": 4,\n  \"days_ahead\": 4\n}"
                         }
                     },
-                    "response": [],
+                    "response": []
+                }
+            ]
+        },
+        {
+            "id": "02184213-dc0e-52e0-b753-ae926b5fbe58",
+            "name": "02. Authentication & Security",
+            "item": [
+                {
+                    "id": "cf7eaf2a-c48f-5289-ac1e-22040323405f",
+                    "name": "2.1 Login - Sinh viên 1 (Lưu token & id)",
                     "event": [
                         {
                             "listen": "test",
@@ -274,17 +249,13 @@
                                 "type": "text/javascript"
                             }
                         }
-                    ]
-                },
-                {
-                    "name": "2.2 Login - Quản trị viên (Admin)",
+                    ],
                     "request": {
                         "method": "POST",
                         "header": [
                             {
                                 "key": "Content-Type",
-                                "value": "application/json",
-                                "type": "text"
+                                "value": "application/json"
                             }
                         ],
                         "url": {
@@ -299,13 +270,16 @@
                                 "login"
                             ]
                         },
-                        "description": "Đăng nhập tài khoản Quản trị viên để lấy quyền admin_token.",
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"email\": \"admin@uniconnect.edu.vn\",\n  \"password\": \"Password123!\"\n}"
+                            "raw": "{\n  \"email\": \"student1@uniconnect.vn\",\n  \"password\": \"password123\"\n}"
                         }
                     },
-                    "response": [],
+                    "response": []
+                },
+                {
+                    "id": "db8d5ce2-99d6-549b-98a9-49b971b26b49",
+                    "name": "2.2 Login - Quản trị viên (Admin)",
                     "event": [
                         {
                             "listen": "test",
@@ -324,17 +298,13 @@
                                 "type": "text/javascript"
                             }
                         }
-                    ]
-                },
-                {
-                    "name": "2.3 Login - Trưởng CLB / Ban tổ chức (Club Leader)",
+                    ],
                     "request": {
                         "method": "POST",
                         "header": [
                             {
                                 "key": "Content-Type",
-                                "value": "application/json",
-                                "type": "text"
+                                "value": "application/json"
                             }
                         ],
                         "url": {
@@ -349,40 +319,37 @@
                                 "login"
                             ]
                         },
-                        "description": "Đăng nhập tài khoản đại diện câu lạc bộ để quản lý hoạt động.",
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"email\": \"leader@clb.ctu.edu.vn\",\n  \"password\": \"Password123!\"\n}"
+                            "raw": "{\n  \"email\": \"admin@uniconnect.vn\",\n  \"password\": \"admin123\"\n}"
                         }
                     },
-                    "response": [],
+                    "response": []
+                },
+                {
+                    "id": "236ad57d-faae-5b86-a248-6814a8a51909",
+                    "name": "2.3 Login - Trưởng CLB / Ban tổ chức (Club Leader)",
                     "event": [
                         {
                             "listen": "test",
                             "script": {
                                 "exec": [
-                                    "pm.test(\"Status code is 200 or 401 if not seeded\", function () {",
-                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 401]);",
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
                                     "});",
-                                    "if (pm.response.code === 200) {",
-                                    "    var data = pm.response.json();",
-                                    "    pm.collectionVariables.set(\"org_token\", data.access_token);",
-                                    "}"
+                                    "var data = pm.response.json();",
+                                    "pm.collectionVariables.set(\"org_token\", data.access_token);"
                                 ],
                                 "type": "text/javascript"
                             }
                         }
-                    ]
-                },
-                {
-                    "name": "2.4 Login Thất bại - Sai mật khẩu (Security 401 Check)",
+                    ],
                     "request": {
                         "method": "POST",
                         "header": [
                             {
                                 "key": "Content-Type",
-                                "value": "application/json",
-                                "type": "text"
+                                "value": "application/json"
                             }
                         ],
                         "url": {
@@ -397,13 +364,16 @@
                                 "login"
                             ]
                         },
-                        "description": "Xác thực hệ thống chặn đăng nhập sai thông tin và phản hồi mã lỗi 401 Unauthorized.",
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"email\": \"student1@ctu.edu.vn\",\n  \"password\": \"WrongPassword999!\"\n}"
+                            "raw": "{\n  \"email\": \"club_lead@uniconnect.vn\",\n  \"password\": \"password123\"\n}"
                         }
                     },
-                    "response": [],
+                    "response": []
+                },
+                {
+                    "id": "a7358158-e327-5492-864b-f42a103b5d0d",
+                    "name": "2.4 Login Thất bại - Sai mật khẩu (Security 401 Check)",
                     "event": [
                         {
                             "listen": "test",
@@ -416,10 +386,50 @@
                                 "type": "text/javascript"
                             }
                         }
-                    ]
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/auth/login",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "login"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"student1@uniconnect.vn\",\n  \"password\": \"WrongPassword999!\"\n}"
+                        }
+                    },
+                    "response": []
                 },
                 {
+                    "id": "954b7a89-51b2-5a76-a33f-d587ec520e61",
                     "name": "2.5 Chặn truy cập trái phép không token (Auth Guard 401)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status is 401 Unauthorized\", function () {",
+                                    "    pm.response.to.have.status(401);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
                     "request": {
                         "method": "GET",
                         "header": [],
@@ -434,59 +444,19 @@
                                 "users",
                                 "me"
                             ]
-                        },
-                        "description": "Gọi endpoint bảo mật mà không kèm Authorization Bearer token."
-                    },
-                    "response": [],
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "pm.test(\"Status is 401 Unauthorized\", function () {",
-                                    "    pm.response.to.have.status(401);",
-                                    "});"
-                                ],
-                                "type": "text/javascript"
-                            }
                         }
-                    ]
+                    },
+                    "response": []
                 }
             ]
         },
         {
+            "id": "e61fb10d-b062-5d55-80e5-e8760d0c5c30",
             "name": "03. User Profile & Social Graph",
             "item": [
                 {
+                    "id": "c1e979fe-528c-51d4-aba4-54f5a4a897bb",
                     "name": "3.1 Lấy thông tin cá nhân (Get Me)",
-                    "request": {
-                        "method": "GET",
-                        "header": [],
-                        "url": {
-                            "raw": "{{baseUrl}}/api/v1/users/me",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "users",
-                                "me"
-                            ]
-                        },
-                        "description": "Lấy chi tiết hồ sơ người dùng đang đăng nhập.",
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{token}}",
-                                    "type": "string"
-                                }
-                            ]
-                        }
-                    },
-                    "response": [],
                     "event": [
                         {
                             "listen": "test",
@@ -506,19 +476,10 @@
                                 "type": "text/javascript"
                             }
                         }
-                    ]
-                },
-                {
-                    "name": "3.2 Cập nhật hồ sơ (Update Profile)",
+                    ],
                     "request": {
-                        "method": "PATCH",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json",
-                                "type": "text"
-                            }
-                        ],
+                        "method": "GET",
+                        "header": [],
                         "url": {
                             "raw": "{{baseUrl}}/api/v1/users/me",
                             "host": [
@@ -531,7 +492,6 @@
                                 "me"
                             ]
                         },
-                        "description": "Cập nhật tiểu sử và danh sách sở thích hoạt động.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -541,13 +501,13 @@
                                     "type": "string"
                                 }
                             ]
-                        },
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"bio\": \"Sinh viên nhiệt tình tham gia công tác xã hội và hoạt động tình nguyện.\",\n  \"interests\": [\n    \"Tình nguyện\",\n    \"Thể thao\",\n    \"Hội thảo\"\n  ]\n}"
                         }
                     },
-                    "response": [],
+                    "response": []
+                },
+                {
+                    "id": "8d95e7c6-807f-53ac-8a10-739c883ca707",
+                    "name": "3.2 Cập nhật hồ sơ (Update Profile)",
                     "event": [
                         {
                             "listen": "test",
@@ -564,10 +524,60 @@
                                 "type": "text/javascript"
                             }
                         }
-                    ]
+                    ],
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/users/me",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "users",
+                                "me"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"bio\": \"Sinh viên nhiệt tình tham gia công tác xã hội và hoạt động tình nguyện.\",\n  \"interests\": [\n    \"Tình nguyện\",\n    \"Thể thao\",\n    \"Hội thảo\"\n  ]\n}"
+                        }
+                    },
+                    "response": []
                 },
                 {
+                    "id": "013d3fd8-2c2e-5c84-9647-564a4d035467",
                     "name": "3.3 Lấy thống kê cá nhân (Get My Stats)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
                     "request": {
                         "method": "GET",
                         "header": [],
@@ -584,7 +594,6 @@
                                 "stats"
                             ]
                         },
-                        "description": "Thống kê số ngày CTXH tích lũy, số hoạt động tham gia, điểm danh.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -596,7 +605,11 @@
                             ]
                         }
                     },
-                    "response": [],
+                    "response": []
+                },
+                {
+                    "id": "4c87b839-c793-52fc-93c8-4a9b70ecdbdf",
+                    "name": "3.4 Tìm kiếm người dùng (Search Users)",
                     "event": [
                         {
                             "listen": "test",
@@ -604,15 +617,16 @@
                                 "exec": [
                                     "pm.test(\"Status is 200\", function () {",
                                     "    pm.response.to.have.status(200);",
-                                    "});"
+                                    "});",
+                                    "var json = pm.response.json();",
+                                    "if (Array.isArray(json) && json.length > 0) {",
+                                    "    pm.collectionVariables.set(\"other_user_id\", json[0].id);",
+                                    "}"
                                 ],
                                 "type": "text/javascript"
                             }
                         }
-                    ]
-                },
-                {
-                    "name": "3.4 Tìm kiếm người dùng (Search Users)",
+                    ],
                     "request": {
                         "method": "GET",
                         "header": [],
@@ -634,7 +648,6 @@
                                 }
                             ]
                         },
-                        "description": "Tìm kiếm sinh viên theo tên hoặc email.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -646,7 +659,11 @@
                             ]
                         }
                     },
-                    "response": [],
+                    "response": []
+                },
+                {
+                    "id": "0cbe5d4d-fd6f-5e22-90c9-5a5ef8758727",
+                    "name": "3.5 Xem hồ sơ công khai của sinh viên khác",
                     "event": [
                         {
                             "listen": "test",
@@ -654,19 +671,12 @@
                                 "exec": [
                                     "pm.test(\"Status is 200\", function () {",
                                     "    pm.response.to.have.status(200);",
-                                    "});",
-                                    "var json = pm.response.json();",
-                                    "if (Array.isArray(json) && json.length > 0) {",
-                                    "    pm.collectionVariables.set(\"other_user_id\", json[0].id);",
-                                    "}"
+                                    "});"
                                 ],
                                 "type": "text/javascript"
                             }
                         }
-                    ]
-                },
-                {
-                    "name": "3.5 Xem hồ sơ công khai của sinh viên khác",
+                    ],
                     "request": {
                         "method": "GET",
                         "header": [],
@@ -682,7 +692,6 @@
                                 "{{student_id}}"
                             ]
                         },
-                        "description": "Xem trang cá nhân của bạn học.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -694,23 +703,24 @@
                             ]
                         }
                     },
-                    "response": [],
+                    "response": []
+                },
+                {
+                    "id": "72917ace-3439-55af-9539-1f8343f901eb",
+                    "name": "3.6 Theo dõi người dùng (Follow User)",
                     "event": [
                         {
                             "listen": "test",
                             "script": {
                                 "exec": [
-                                    "pm.test(\"Status is 200\", function () {",
-                                    "    pm.response.to.have.status(200);",
+                                    "pm.test(\"Status code is 200 or 400\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
                                     "});"
                                 ],
                                 "type": "text/javascript"
                             }
                         }
-                    ]
-                },
-                {
-                    "name": "3.6 Theo dõi người dùng (Follow User)",
+                    ],
                     "request": {
                         "method": "POST",
                         "header": [],
@@ -727,7 +737,6 @@
                                 "follow"
                             ]
                         },
-                        "description": "Theo dõi người dùng khác để nhận thông báo hoạt động.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -739,23 +748,24 @@
                             ]
                         }
                     },
-                    "response": [],
+                    "response": []
+                },
+                {
+                    "id": "2b27530d-d63d-5866-8a3d-979478332018",
+                    "name": "3.7 Kiểm tra trạng thái theo dõi (Follow Status)",
                     "event": [
                         {
                             "listen": "test",
                             "script": {
                                 "exec": [
-                                    "pm.test(\"Status code is 200 or 400\", function () {",
-                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
+                                    "pm.test(\"Status is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
                                     "});"
                                 ],
                                 "type": "text/javascript"
                             }
                         }
-                    ]
-                },
-                {
-                    "name": "3.7 Kiểm tra trạng thái theo dõi (Follow Status)",
+                    ],
                     "request": {
                         "method": "GET",
                         "header": [],
@@ -772,7 +782,6 @@
                                 "follow-status"
                             ]
                         },
-                        "description": "Kiểm tra đã follow đối phương hay chưa.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -784,7 +793,11 @@
                             ]
                         }
                     },
-                    "response": [],
+                    "response": []
+                },
+                {
+                    "id": "7777cfe7-8b6d-504b-a879-8ea1709c2915",
+                    "name": "3.8 Danh sách người theo dõi (Followers)",
                     "event": [
                         {
                             "listen": "test",
@@ -797,10 +810,7 @@
                                 "type": "text/javascript"
                             }
                         }
-                    ]
-                },
-                {
-                    "name": "3.8 Danh sách người theo dõi (Followers)",
+                    ],
                     "request": {
                         "method": "GET",
                         "header": [],
@@ -817,7 +827,6 @@
                                 "followers"
                             ]
                         },
-                        "description": "Lấy danh sách người đang theo dõi sinh viên này.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -829,7 +838,17 @@
                             ]
                         }
                     },
-                    "response": [],
+                    "response": []
+                }
+            ]
+        },
+        {
+            "id": "c209f011-03b3-5bc6-8b44-d79727abf847",
+            "name": "04. Activities Discovery & Management",
+            "item": [
+                {
+                    "id": "464c63d7-9522-5c96-a907-b0d29ab168fd",
+                    "name": "4.1 Danh sách tất cả hoạt động sắp tới",
                     "event": [
                         {
                             "listen": "test",
@@ -837,20 +856,20 @@
                                 "exec": [
                                     "pm.test(\"Status is 200\", function () {",
                                     "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "var json = pm.response.json();",
+                                    "var items = json.items || json;",
+                                    "pm.test(\"Items array exists\", function () {",
+                                    "    pm.expect(Array.isArray(items)).to.be.true;",
+                                    "    if (items.length > 0) {",
+                                    "        pm.collectionVariables.set(\"activity_id\", items[0].id);",
+                                    "    }",
                                     "});"
                                 ],
                                 "type": "text/javascript"
                             }
                         }
-                    ]
-                }
-            ]
-        },
-        {
-            "name": "04. Activities Discovery & Management",
-            "item": [
-                {
-                    "name": "4.1 Danh sách tất cả hoạt động sắp tới",
+                    ],
                     "request": {
                         "method": "GET",
                         "header": [],
@@ -875,7 +894,6 @@
                                 }
                             ]
                         },
-                        "description": "Lấy danh sách hoạt động sắp diễn ra kèm phân trang.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -887,7 +905,11 @@
                             ]
                         }
                     },
-                    "response": [],
+                    "response": []
+                },
+                {
+                    "id": "5089e1fd-c4ed-52af-8034-a2942e99b1b4",
+                    "name": "4.2 Khám phá hoạt động gần tôi (PostGIS Radius Search)",
                     "event": [
                         {
                             "listen": "test",
@@ -896,27 +918,21 @@
                                     "pm.test(\"Status is 200\", function () {",
                                     "    pm.response.to.have.status(200);",
                                     "});",
-                                    "var json = pm.response.json();",
-                                    "var items = json.items || json;",
-                                    "pm.test(\"Items array exists\", function () {",
+                                    "pm.test(\"Response is array of activities\", function () {",
+                                    "    var json = pm.response.json();",
+                                    "    var items = json.items || json;",
                                     "    pm.expect(Array.isArray(items)).to.be.true;",
-                                    "    if (items.length > 0) {",
-                                    "        pm.collectionVariables.set(\"activity_id\", items[0].id);",
-                                    "    }",
                                     "});"
                                 ],
                                 "type": "text/javascript"
                             }
                         }
-                    ]
-                },
-                {
-                    "name": "4.2 Khám phá hoạt động gần tôi (PostGIS Radius Search)",
+                    ],
                     "request": {
                         "method": "GET",
                         "header": [],
                         "url": {
-                            "raw": "{{baseUrl}}/api/v1/activities/nearby?lat=10.7769&lng=106.7009&radius_km=15",
+                            "raw": "{{baseUrl}}/api/v1/activities/nearby?lat=10.929718&lng=107.250381&radius=25000&limit=20",
                             "host": [
                                 "{{baseUrl}}"
                             ],
@@ -929,19 +945,22 @@
                             "query": [
                                 {
                                     "key": "lat",
-                                    "value": "10.7769"
+                                    "value": "10.929718"
                                 },
                                 {
                                     "key": "lng",
-                                    "value": "106.7009"
+                                    "value": "107.250381"
                                 },
                                 {
-                                    "key": "radius_km",
-                                    "value": "15"
+                                    "key": "radius",
+                                    "value": "25000"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "20"
                                 }
                             ]
                         },
-                        "description": "Tìm kiếm hoạt động trong bán kính GPS sử dụng không gian địa lý PostGIS ST_DWithin.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -953,7 +972,11 @@
                             ]
                         }
                     },
-                    "response": [],
+                    "response": []
+                },
+                {
+                    "id": "ead07149-67b6-5a56-ac0f-87d51d254ab7",
+                    "name": "4.3 Tìm kiếm hoạt động theo từ khóa & bộ lọc",
                     "event": [
                         {
                             "listen": "test",
@@ -961,24 +984,17 @@
                                 "exec": [
                                     "pm.test(\"Status is 200\", function () {",
                                     "    pm.response.to.have.status(200);",
-                                    "});",
-                                    "pm.test(\"Response is array of activities\", function () {",
-                                    "    var json = pm.response.json();",
-                                    "    pm.expect(Array.isArray(json)).to.be.true;",
                                     "});"
                                 ],
                                 "type": "text/javascript"
                             }
                         }
-                    ]
-                },
-                {
-                    "name": "4.3 Tìm kiếm hoạt động theo từ khóa & bộ lọc",
+                    ],
                     "request": {
                         "method": "GET",
                         "header": [],
                         "url": {
-                            "raw": "{{baseUrl}}/api/v1/activities?search=Hội thảo&category=academic&limit=10",
+                            "raw": "{{baseUrl}}/api/v1/activities?search=Hội thảo&limit=10",
                             "host": [
                                 "{{baseUrl}}"
                             ],
@@ -993,16 +1009,11 @@
                                     "value": "Hội thảo"
                                 },
                                 {
-                                    "key": "category",
-                                    "value": "academic"
-                                },
-                                {
                                     "key": "limit",
                                     "value": "10"
                                 }
                             ]
                         },
-                        "description": "Tìm kiếm theo từ khóa 'Hội thảo' và chuyên mục 'academic'.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -1014,51 +1025,11 @@
                             ]
                         }
                     },
-                    "response": [],
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "pm.test(\"Status is 200\", function () {",
-                                    "    pm.response.to.have.status(200);",
-                                    "});"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        }
-                    ]
+                    "response": []
                 },
                 {
+                    "id": "b860c5cb-dd75-5ff0-99f6-e98f5197a798",
                     "name": "4.4 Chi tiết hoạt động theo ID",
-                    "request": {
-                        "method": "GET",
-                        "header": [],
-                        "url": {
-                            "raw": "{{baseUrl}}/api/v1/activities/{{activity_id}}",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "activities",
-                                "{{activity_id}}"
-                            ]
-                        },
-                        "description": "Lấy chi tiết hoạt động gồm thời gian, địa điểm gặp mặt, tọa độ marker bản đồ, quyền hạn.",
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{token}}",
-                                    "type": "string"
-                                }
-                            ]
-                        }
-                    },
-                    "response": [],
                     "event": [
                         {
                             "listen": "test",
@@ -1077,10 +1048,56 @@
                                 "type": "text/javascript"
                             }
                         }
-                    ]
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/activities/{{activity_id}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "activities",
+                                "{{activity_id}}"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
                 },
                 {
+                    "id": "5422f6b4-7e89-524d-87a2-2ceb46f7fc38",
                     "name": "4.5 Hoạt động do tôi quản lý (Activities Mine)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status is 200 OK (No 500 error)\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "var json = pm.response.json();",
+                                    "pm.test(\"Mine activities list returned properly\", function () {",
+                                    "    var items = json.items || json;",
+                                    "    pm.expect(Array.isArray(items)).to.be.true;",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
                     "request": {
                         "method": "GET",
                         "header": [],
@@ -1106,7 +1123,6 @@
                                 }
                             ]
                         },
-                        "description": "Endpoint lấy danh sách hoạt động tôi làm BTC/Host (vừa được khắc phục lỗi eager loading).",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -1118,28 +1134,24 @@
                             ]
                         }
                     },
-                    "response": [],
+                    "response": []
+                },
+                {
+                    "id": "51bdd263-a2a1-5146-8da5-d47c4539a6c5",
+                    "name": "4.6 Hoạt động tôi đã đăng ký tham gia (Joined Activities)",
                     "event": [
                         {
                             "listen": "test",
                             "script": {
                                 "exec": [
-                                    "pm.test(\"Status is 200 OK (No 500 error)\", function () {",
+                                    "pm.test(\"Status is 200\", function () {",
                                     "    pm.response.to.have.status(200);",
-                                    "});",
-                                    "var json = pm.response.json();",
-                                    "pm.test(\"Mine activities list returned properly\", function () {",
-                                    "    var items = json.items || json;",
-                                    "    pm.expect(Array.isArray(items)).to.be.true;",
                                     "});"
                                 ],
                                 "type": "text/javascript"
                             }
                         }
-                    ]
-                },
-                {
-                    "name": "4.6 Hoạt động tôi đã đăng ký tham gia (Joined Activities)",
+                    ],
                     "request": {
                         "method": "GET",
                         "header": [],
@@ -1155,7 +1167,6 @@
                                 "joined"
                             ]
                         },
-                        "description": "Lấy danh sách các hoạt động sinh viên đã ghi danh thành công.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -1167,60 +1178,11 @@
                             ]
                         }
                     },
-                    "response": [],
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "pm.test(\"Status is 200\", function () {",
-                                    "    pm.response.to.have.status(200);",
-                                    "});"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        }
-                    ]
+                    "response": []
                 },
                 {
+                    "id": "8c94a61c-d3dd-5b3e-b6b2-c76acb7bced5",
                     "name": "4.7 Tạo hoạt động mới (Create Activity)",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json",
-                                "type": "text"
-                            }
-                        ],
-                        "url": {
-                            "raw": "{{baseUrl}}/api/v1/activities",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "activities"
-                            ]
-                        },
-                        "description": "Ban tổ chức hoặc Admin tạo hoạt động mới.",
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{admin_token}}",
-                                    "type": "string"
-                                }
-                            ]
-                        },
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"title\": \"Hội Thảo Công Nghệ AI Trong Kỷ Nguyên Số\",\n  \"description\": \"Chia sẻ về ứng dụng AI và chuyển đổi số cho sinh viên.\",\n  \"category\": \"academic\",\n  \"meeting_location\": \"Hội trường Rùa, ĐH Cần Thơ\",\n  \"marker_location\": {\n    \"type\": \"Point\",\n    \"coordinates\": [\n      105.769,\n      10.031\n    ]\n  },\n  \"start_time\": \"2026-10-08T08:00:00Z\",\n  \"end_time\": \"2026-10-08T11:30:00Z\",\n  \"registration_deadline\": \"2026-10-07T23:59:59Z\",\n  \"max_participants\": 150,\n  \"social_work_days\": 1.0,\n  \"requires_approval\": false\n}"
-                        }
-                    },
-                    "response": [],
                     "event": [
                         {
                             "listen": "test",
@@ -1237,17 +1199,65 @@
                                 "type": "text/javascript"
                             }
                         }
-                    ]
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/activities",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "activities"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{admin_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"title\": \"Hội Thảo Công Nghệ AI Trong Kỷ Nguyên Số\",\n  \"description\": \"Chia sẻ về ứng dụng AI và chuyển đổi số cho sinh viên.\",\n  \"category\": \"academic\",\n  \"meeting_location\": \"Hội trường Rùa\",\n  \"marker_location\": {\n    \"type\": \"Point\",\n    \"coordinates\": [\n      107.25,\n      10.929\n    ]\n  },\n  \"start_time\": \"2026-10-09T08:00:00Z\",\n  \"end_time\": \"2026-10-09T11:30:00Z\",\n  \"registration_deadline\": \"2026-10-08T23:59:59Z\",\n  \"max_participants\": 150,\n  \"social_work_days\": 1.0,\n  \"requires_approval\": false\n}"
+                        }
+                    },
+                    "response": []
                 },
                 {
+                    "id": "aba3b993-8bfb-54ac-b971-5e78b26ef333",
                     "name": "4.8 Cập nhật thông tin hoạt động (Update Activity)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
                     "request": {
                         "method": "PATCH",
                         "header": [
                             {
                                 "key": "Content-Type",
-                                "value": "application/json",
-                                "type": "text"
+                                "value": "application/json"
                             }
                         ],
                         "url": {
@@ -1262,7 +1272,6 @@
                                 "{{activity_id}}"
                             ]
                         },
-                        "description": "Cập nhật địa điểm hoặc thông tin chương trình.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -1278,7 +1287,11 @@
                             "raw": "{\n  \"meeting_location\": \"Hội trường Lớn - Đã cập nhật phòng\"\n}"
                         }
                     },
-                    "response": [],
+                    "response": []
+                },
+                {
+                    "id": "3b7f3187-560d-52e3-b2d8-08a3d7f4fc6d",
+                    "name": "4.9 Danh sách ứng viên đồng tổ chức (Cohost Candidates)",
                     "event": [
                         {
                             "listen": "test",
@@ -1291,10 +1304,7 @@
                                 "type": "text/javascript"
                             }
                         }
-                    ]
-                },
-                {
-                    "name": "4.9 Danh sách ứng viên đồng tổ chức (Cohost Candidates)",
+                    ],
                     "request": {
                         "method": "GET",
                         "header": [],
@@ -1311,7 +1321,6 @@
                                 "cohost-candidates"
                             ]
                         },
-                        "description": "Tìm các câu lạc bộ hoặc tổ chức có thể mời làm đồng tổ chức.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -1323,7 +1332,11 @@
                             ]
                         }
                     },
-                    "response": [],
+                    "response": []
+                },
+                {
+                    "id": "4f273fd4-19a5-506e-ba9b-9ae130deed70",
+                    "name": "4.10 Xuất danh sách người tham gia (Export CSV)",
                     "event": [
                         {
                             "listen": "test",
@@ -1331,15 +1344,15 @@
                                 "exec": [
                                     "pm.test(\"Status is 200\", function () {",
                                     "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "pm.test(\"Response has CSV content\", function () {",
+                                    "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"csv\");",
                                     "});"
                                 ],
                                 "type": "text/javascript"
                             }
                         }
-                    ]
-                },
-                {
-                    "name": "4.10 Xuất danh sách người tham gia (Export CSV)",
+                    ],
                     "request": {
                         "method": "GET",
                         "header": [],
@@ -1357,7 +1370,6 @@
                                 "export"
                             ]
                         },
-                        "description": "Xuất danh sách sinh viên tham gia ra định dạng CSV/Excel.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -1369,38 +1381,36 @@
                             ]
                         }
                     },
-                    "response": [],
+                    "response": []
+                }
+            ]
+        },
+        {
+            "id": "880cf7fe-b1d3-5224-b3e2-408f4ef60d6b",
+            "name": "05. Participation & Live GPS Check-in",
+            "item": [
+                {
+                    "id": "e6fb6590-d56b-592b-8184-c70ea6876393",
+                    "name": "5.1 Đăng ký tham gia hoạt động (Join Activity)",
                     "event": [
                         {
                             "listen": "test",
                             "script": {
                                 "exec": [
-                                    "pm.test(\"Status is 200\", function () {",
-                                    "    pm.response.to.have.status(200);",
-                                    "});",
-                                    "pm.test(\"Response has CSV content\", function () {",
-                                    "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"csv\");",
+                                    "pm.test(\"Status code is 200, 201 or 400 (already joined)\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 400]);",
                                     "});"
                                 ],
                                 "type": "text/javascript"
                             }
                         }
-                    ]
-                }
-            ]
-        },
-        {
-            "name": "05. Participation & Live GPS Check-in",
-            "item": [
-                {
-                    "name": "5.1 Đăng ký tham gia hoạt động (Join Activity)",
+                    ],
                     "request": {
                         "method": "POST",
                         "header": [
                             {
                                 "key": "Content-Type",
-                                "value": "application/json",
-                                "type": "text"
+                                "value": "application/json"
                             }
                         ],
                         "url": {
@@ -1416,7 +1426,6 @@
                                 "join"
                             ]
                         },
-                        "description": "Sinh viên đăng ký ghi danh vào hoạt động.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -1432,23 +1441,24 @@
                             "raw": "{\n  \"note\": \"Em đăng ký tham gia chương trình\"\n}"
                         }
                     },
-                    "response": [],
+                    "response": []
+                },
+                {
+                    "id": "7cd9aac5-6e85-55ea-961a-6c574d1de0b8",
+                    "name": "5.2 Danh sách sinh viên đăng ký (List Participants)",
                     "event": [
                         {
                             "listen": "test",
                             "script": {
                                 "exec": [
-                                    "pm.test(\"Status code is 200, 201 or 400 (already joined)\", function () {",
-                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 400]);",
+                                    "pm.test(\"Status is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
                                     "});"
                                 ],
                                 "type": "text/javascript"
                             }
                         }
-                    ]
-                },
-                {
-                    "name": "5.2 Danh sách sinh viên đăng ký (List Participants)",
+                    ],
                     "request": {
                         "method": "GET",
                         "header": [],
@@ -1465,7 +1475,6 @@
                                 "participants"
                             ]
                         },
-                        "description": "Xem danh sách người tham dự và trạng thái phê duyệt.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -1477,7 +1486,11 @@
                             ]
                         }
                     },
-                    "response": [],
+                    "response": []
+                },
+                {
+                    "id": "cb9714dc-aea9-53c1-8d5d-3577ecce6618",
+                    "name": "5.3 Lấy mã QR / Check-in Code",
                     "event": [
                         {
                             "listen": "test",
@@ -1490,10 +1503,7 @@
                                 "type": "text/javascript"
                             }
                         }
-                    ]
-                },
-                {
-                    "name": "5.3 Lấy mã QR / Check-in Code",
+                    ],
                     "request": {
                         "method": "GET",
                         "header": [],
@@ -1510,7 +1520,6 @@
                                 "check-in-code"
                             ]
                         },
-                        "description": "Ban tổ chức lấy mã số điểm danh cho sự kiện.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -1522,63 +1531,11 @@
                             ]
                         }
                     },
-                    "response": [],
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "pm.test(\"Status is 200\", function () {",
-                                    "    pm.response.to.have.status(200);",
-                                    "});"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        }
-                    ]
+                    "response": []
                 },
                 {
+                    "id": "4ab6a009-6e13-54a4-8ba9-df6157a7d364",
                     "name": "5.4 Mở phiên điểm danh trực tiếp qua GPS (Open Live Check-in)",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json",
-                                "type": "text"
-                            }
-                        ],
-                        "url": {
-                            "raw": "{{baseUrl}}/api/v1/activities/{{activity_id}}/live-checkin/open",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "activities",
-                                "{{activity_id}}",
-                                "live-checkin",
-                                "open"
-                            ]
-                        },
-                        "description": "Mở phiên điểm danh Live GPS với bán kính quy định (VD: 100m).",
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{admin_token}}",
-                                    "type": "string"
-                                }
-                            ]
-                        },
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"lat\": 10.031,\n  \"lng\": 105.769,\n  \"radius_meters\": 100,\n  \"duration_minutes\": 60\n}"
-                        }
-                    },
-                    "response": [],
                     "event": [
                         {
                             "listen": "test",
@@ -1595,10 +1552,62 @@
                                 "type": "text/javascript"
                             }
                         }
-                    ]
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/activities/{{activity_id}}/live-checkin/open",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "activities",
+                                "{{activity_id}}",
+                                "live-checkin",
+                                "open"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{admin_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"lat\": 10.929718,\n  \"lng\": 107.250381,\n  \"radius_meters\": 100,\n  \"duration_minutes\": 60\n}"
+                        }
+                    },
+                    "response": []
                 },
                 {
+                    "id": "51321319-603e-5e3e-97a0-889111a181ad",
                     "name": "5.5 Kiểm tra trạng thái điểm danh Live GPS (Check-in Status)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
                     "request": {
                         "method": "GET",
                         "header": [],
@@ -1616,7 +1625,6 @@
                                 "status"
                             ]
                         },
-                        "description": "Sinh viên kiểm tra xem ban tổ chức đã mở điểm danh chưa.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -1628,30 +1636,30 @@
                             ]
                         }
                     },
-                    "response": [],
+                    "response": []
+                },
+                {
+                    "id": "3bca9de3-cc31-51da-9491-132b76b99007",
+                    "name": "5.6 Xác thực điểm danh Live GPS (Verify Live GPS Check-in)",
                     "event": [
                         {
                             "listen": "test",
                             "script": {
                                 "exec": [
-                                    "pm.test(\"Status is 200\", function () {",
-                                    "    pm.response.to.have.status(200);",
+                                    "pm.test(\"Status code is 200 or 400 (if outside boundary)\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
                                     "});"
                                 ],
                                 "type": "text/javascript"
                             }
                         }
-                    ]
-                },
-                {
-                    "name": "5.6 Xác thực điểm danh Live GPS (Verify Live GPS Check-in)",
+                    ],
                     "request": {
                         "method": "POST",
                         "header": [
                             {
                                 "key": "Content-Type",
-                                "value": "application/json",
-                                "type": "text"
+                                "value": "application/json"
                             }
                         ],
                         "url": {
@@ -1668,7 +1676,6 @@
                                 "verify"
                             ]
                         },
-                        "description": "Sinh viên gửi tọa độ GPS hiện tại để hệ thống tính khoảng cách và xác thực có mặt.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -1681,26 +1688,27 @@
                         },
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"user_lat\": 10.03105,\n  \"user_lng\": 105.76905\n}"
+                            "raw": "{\n  \"user_lat\": 10.92972,\n  \"user_lng\": 107.250385\n}"
                         }
                     },
-                    "response": [],
+                    "response": []
+                },
+                {
+                    "id": "377a8217-20a9-5f1e-b7b7-67dcad565aa2",
+                    "name": "5.7 Đóng phiên điểm danh GPS (Close Live Check-in)",
                     "event": [
                         {
                             "listen": "test",
                             "script": {
                                 "exec": [
-                                    "pm.test(\"Status code is 200 or 400 (if outside boundary)\", function () {",
-                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
+                                    "pm.test(\"Status is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
                                     "});"
                                 ],
                                 "type": "text/javascript"
                             }
                         }
-                    ]
-                },
-                {
-                    "name": "5.7 Đóng phiên điểm danh GPS (Close Live Check-in)",
+                    ],
                     "request": {
                         "method": "POST",
                         "header": [],
@@ -1718,7 +1726,6 @@
                                 "close"
                             ]
                         },
-                        "description": "Ban tổ chức đóng cửa phiên điểm danh khi hết giờ.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -1730,23 +1737,24 @@
                             ]
                         }
                     },
-                    "response": [],
+                    "response": []
+                },
+                {
+                    "id": "3677b2b6-aab1-5dd4-b040-334854e4233a",
+                    "name": "5.8 Hủy đăng ký / Rút lui khỏi hoạt động (Leave Activity)",
                     "event": [
                         {
                             "listen": "test",
                             "script": {
                                 "exec": [
-                                    "pm.test(\"Status is 200\", function () {",
-                                    "    pm.response.to.have.status(200);",
+                                    "pm.test(\"Status code is 200 or 400\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
                                     "});"
                                 ],
                                 "type": "text/javascript"
                             }
                         }
-                    ]
-                },
-                {
-                    "name": "5.8 Hủy đăng ký / Rút lui khỏi hoạt động (Leave Activity)",
+                    ],
                     "request": {
                         "method": "POST",
                         "header": [],
@@ -1763,7 +1771,6 @@
                                 "leave"
                             ]
                         },
-                        "description": "Sinh viên xin rút khỏi danh sách tham gia hoạt động.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -1775,67 +1782,17 @@
                             ]
                         }
                     },
-                    "response": [],
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "pm.test(\"Status code is 200 or 400\", function () {",
-                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
-                                    "});"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        }
-                    ]
+                    "response": []
                 }
             ]
         },
         {
+            "id": "2ac9d66c-a058-5b24-945c-938696cd69b1",
             "name": "06. Social Interactions (Comments & Likes)",
             "item": [
                 {
+                    "id": "f2b47f35-060c-59ea-a65c-2cc7734f29b8",
                     "name": "6.1 Thêm bình luận vào hoạt động (Post Comment)",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json",
-                                "type": "text"
-                            }
-                        ],
-                        "url": {
-                            "raw": "{{baseUrl}}/api/v1/activity/{{activity_id}}/comments",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "activity",
-                                "{{activity_id}}",
-                                "comments"
-                            ]
-                        },
-                        "description": "Đăng thảo luận / hỏi đáp về hoạt động.",
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{token}}",
-                                    "type": "string"
-                                }
-                            ]
-                        },
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"content\": \"Hoạt động này rất ý nghĩa, các bạn nhớ chuẩn bị đồng phục thể thao nhé!\"\n}"
-                        }
-                    },
-                    "response": [],
                     "event": [
                         {
                             "listen": "test",
@@ -1852,10 +1809,61 @@
                                 "type": "text/javascript"
                             }
                         }
-                    ]
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/activity/{{activity_id}}/comments",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "activity",
+                                "{{activity_id}}",
+                                "comments"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"content\": \"Hoạt động này rất ý nghĩa, các bạn nhớ chuẩn bị đồng phục thể thao nhé!\"\n}"
+                        }
+                    },
+                    "response": []
                 },
                 {
+                    "id": "26909df7-74c6-5aff-8e91-133520d2d88d",
                     "name": "6.2 Lấy danh sách bình luận (List Comments)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
                     "request": {
                         "method": "GET",
                         "header": [],
@@ -1872,7 +1880,6 @@
                                 "comments"
                             ]
                         },
-                        "description": "Tải các bình luận phân cấp của hoạt động.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -1884,7 +1891,11 @@
                             ]
                         }
                     },
-                    "response": [],
+                    "response": []
+                },
+                {
+                    "id": "ef22ca7d-2d5c-503f-9e14-377353b70821",
+                    "name": "6.3 Chỉnh sửa bình luận (Update Comment)",
                     "event": [
                         {
                             "listen": "test",
@@ -1897,17 +1908,13 @@
                                 "type": "text/javascript"
                             }
                         }
-                    ]
-                },
-                {
-                    "name": "6.3 Chỉnh sửa bình luận (Update Comment)",
+                    ],
                     "request": {
                         "method": "PATCH",
                         "header": [
                             {
                                 "key": "Content-Type",
-                                "value": "application/json",
-                                "type": "text"
+                                "value": "application/json"
                             }
                         ],
                         "url": {
@@ -1922,7 +1929,6 @@
                                 "{{comment_id}}"
                             ]
                         },
-                        "description": "Người dùng chỉnh sửa bình luận của chính mình.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -1938,52 +1944,11 @@
                             "raw": "{\n  \"content\": \"Nội dung bình luận đã được chỉnh sửa bổ sung thông tin.\"\n}"
                         }
                     },
-                    "response": [],
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "pm.test(\"Status is 200\", function () {",
-                                    "    pm.response.to.have.status(200);",
-                                    "});"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        }
-                    ]
+                    "response": []
                 },
                 {
+                    "id": "feb52495-b83b-55b6-b63b-1b55152b3309",
                     "name": "6.4 Bày tỏ cảm xúc / Thích hoạt động (Toggle Like)",
-                    "request": {
-                        "method": "POST",
-                        "header": [],
-                        "url": {
-                            "raw": "{{baseUrl}}/api/v1/activity/{{activity_id}}/like",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "activity",
-                                "{{activity_id}}",
-                                "like"
-                            ]
-                        },
-                        "description": "Thích hoặc bỏ thích hoạt động.",
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{token}}",
-                                    "type": "string"
-                                }
-                            ]
-                        }
-                    },
-                    "response": [],
                     "event": [
                         {
                             "listen": "test",
@@ -2000,10 +1965,52 @@
                                 "type": "text/javascript"
                             }
                         }
-                    ]
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/activity/{{activity_id}}/like",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "activity",
+                                "{{activity_id}}",
+                                "like"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
                 },
                 {
+                    "id": "31fff248-20eb-5250-b173-1499b6039bae",
                     "name": "6.5 Lấy trạng thái tương tác & Like Status",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
                     "request": {
                         "method": "GET",
                         "header": [],
@@ -2020,7 +2027,6 @@
                                 "like"
                             ]
                         },
-                        "description": "Kiểm tra trạng thái đã like hay chưa.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -2032,7 +2038,11 @@
                             ]
                         }
                     },
-                    "response": [],
+                    "response": []
+                },
+                {
+                    "id": "d4fe2022-70c3-5934-aec2-6fe3ba7e744f",
+                    "name": "6.6 Lấy số liệu thống kê tương tác (Stats)",
                     "event": [
                         {
                             "listen": "test",
@@ -2045,10 +2055,7 @@
                                 "type": "text/javascript"
                             }
                         }
-                    ]
-                },
-                {
-                    "name": "6.6 Lấy số liệu thống kê tương tác (Stats)",
+                    ],
                     "request": {
                         "method": "GET",
                         "header": [],
@@ -2065,7 +2072,6 @@
                                 "stats"
                             ]
                         },
-                        "description": "Xem tổng lượt like, lượt xem và số bình luận.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -2077,23 +2083,24 @@
                             ]
                         }
                     },
-                    "response": [],
+                    "response": []
+                },
+                {
+                    "id": "40de47b3-2519-5df7-a286-c9ff2de78af3",
+                    "name": "6.7 Xóa bình luận (Delete Comment)",
                     "event": [
                         {
                             "listen": "test",
                             "script": {
                                 "exec": [
-                                    "pm.test(\"Status is 200\", function () {",
-                                    "    pm.response.to.have.status(200);",
+                                    "pm.test(\"Status is 200 or 204\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
                                     "});"
                                 ],
                                 "type": "text/javascript"
                             }
                         }
-                    ]
-                },
-                {
-                    "name": "6.7 Xóa bình luận (Delete Comment)",
+                    ],
                     "request": {
                         "method": "DELETE",
                         "header": [],
@@ -2109,7 +2116,6 @@
                                 "{{comment_id}}"
                             ]
                         },
-                        "description": "Xóa bình luận khỏi hệ thống.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -2121,56 +2127,17 @@
                             ]
                         }
                     },
-                    "response": [],
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "pm.test(\"Status is 200 or 204\", function () {",
-                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
-                                    "});"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        }
-                    ]
+                    "response": []
                 }
             ]
         },
         {
+            "id": "b7fa2ed0-d2fc-5b32-b3fa-bc8dc7807fbd",
             "name": "07. Groups & Student Clubs",
             "item": [
                 {
+                    "id": "ad1c0404-c74d-53a7-b924-186161f3e78d",
                     "name": "7.1 Khám phá danh sách CLB & Nhóm (Discover Groups)",
-                    "request": {
-                        "method": "GET",
-                        "header": [],
-                        "url": {
-                            "raw": "{{baseUrl}}/api/v1/groups/discover",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "groups",
-                                "discover"
-                            ]
-                        },
-                        "description": "Khám phá các câu lạc bộ, đội, nhóm sinh viên công khai.",
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{token}}",
-                                    "type": "string"
-                                }
-                            ]
-                        }
-                    },
-                    "response": [],
                     "event": [
                         {
                             "listen": "test",
@@ -2188,10 +2155,51 @@
                                 "type": "text/javascript"
                             }
                         }
-                    ]
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/groups/discover",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "groups",
+                                "discover"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
                 },
                 {
+                    "id": "997aa753-fd2d-5738-b304-5bb29d10cabd",
                     "name": "7.2 Xem danh sách nhóm của tôi (My Groups)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
                     "request": {
                         "method": "GET",
                         "header": [],
@@ -2207,7 +2215,6 @@
                                 "my"
                             ]
                         },
-                        "description": "Danh sách các nhóm mà người dùng đang là thành viên hoặc quản lý.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -2219,7 +2226,11 @@
                             ]
                         }
                     },
-                    "response": [],
+                    "response": []
+                },
+                {
+                    "id": "fc1c8a4a-8325-526d-8538-fd48854a979e",
+                    "name": "7.3 Xem chi tiết câu lạc bộ theo ID",
                     "event": [
                         {
                             "listen": "test",
@@ -2232,10 +2243,7 @@
                                 "type": "text/javascript"
                             }
                         }
-                    ]
-                },
-                {
-                    "name": "7.3 Xem chi tiết câu lạc bộ theo ID",
+                    ],
                     "request": {
                         "method": "GET",
                         "header": [],
@@ -2251,7 +2259,6 @@
                                 "{{group_id}}"
                             ]
                         },
-                        "description": "Chi tiết câu lạc bộ, người sáng lập, số thành viên.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -2263,7 +2270,11 @@
                             ]
                         }
                     },
-                    "response": [],
+                    "response": []
+                },
+                {
+                    "id": "f7c3c1de-4391-5ce3-a03c-dd1cfb9d540a",
+                    "name": "7.4 Danh sách thành viên CLB (Members)",
                     "event": [
                         {
                             "listen": "test",
@@ -2276,10 +2287,7 @@
                                 "type": "text/javascript"
                             }
                         }
-                    ]
-                },
-                {
-                    "name": "7.4 Danh sách thành viên CLB (Members)",
+                    ],
                     "request": {
                         "method": "GET",
                         "header": [],
@@ -2296,7 +2304,6 @@
                                 "members"
                             ]
                         },
-                        "description": "Xem danh sách ban chủ nhiệm và thành viên CLB.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -2308,7 +2315,11 @@
                             ]
                         }
                     },
-                    "response": [],
+                    "response": []
+                },
+                {
+                    "id": "9cfcb181-4d5d-53bf-af01-3cdb905ac46b",
+                    "name": "7.5 Danh sách hoạt động do CLB tổ chức",
                     "event": [
                         {
                             "listen": "test",
@@ -2321,10 +2332,7 @@
                                 "type": "text/javascript"
                             }
                         }
-                    ]
-                },
-                {
-                    "name": "7.5 Danh sách hoạt động do CLB tổ chức",
+                    ],
                     "request": {
                         "method": "GET",
                         "header": [],
@@ -2341,7 +2349,6 @@
                                 "activities"
                             ]
                         },
-                        "description": "Lấy các sự kiện do CLB này chủ trì hoặc đồng tổ chức.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -2353,7 +2360,11 @@
                             ]
                         }
                     },
-                    "response": [],
+                    "response": []
+                },
+                {
+                    "id": "8627587b-820b-5fe5-92bb-a4c7fc03b5d8",
+                    "name": "7.6 Thống kê hoạt động của CLB (Stats)",
                     "event": [
                         {
                             "listen": "test",
@@ -2366,10 +2377,7 @@
                                 "type": "text/javascript"
                             }
                         }
-                    ]
-                },
-                {
-                    "name": "7.6 Thống kê hoạt động của CLB (Stats)",
+                    ],
                     "request": {
                         "method": "GET",
                         "header": [],
@@ -2386,7 +2394,6 @@
                                 "stats"
                             ]
                         },
-                        "description": "Tổng số sự kiện đã tổ chức, thành viên tham dự.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -2398,30 +2405,30 @@
                             ]
                         }
                     },
-                    "response": [],
+                    "response": []
+                },
+                {
+                    "id": "d980a407-1a9b-50cd-9e8c-76ccfa86caaf",
+                    "name": "7.7 Gia nhập câu lạc bộ (Join Group)",
                     "event": [
                         {
                             "listen": "test",
                             "script": {
                                 "exec": [
-                                    "pm.test(\"Status is 200\", function () {",
-                                    "    pm.response.to.have.status(200);",
+                                    "pm.test(\"Status is 200 or 400 (already member)\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
                                     "});"
                                 ],
                                 "type": "text/javascript"
                             }
                         }
-                    ]
-                },
-                {
-                    "name": "7.7 Gia nhập câu lạc bộ (Join Group)",
+                    ],
                     "request": {
                         "method": "POST",
                         "header": [
                             {
                                 "key": "Content-Type",
-                                "value": "application/json",
-                                "type": "text"
+                                "value": "application/json"
                             }
                         ],
                         "url": {
@@ -2437,7 +2444,6 @@
                                 "join"
                             ]
                         },
-                        "description": "Gửi yêu cầu tham gia hoặc gia nhập nhóm công khai.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -2453,23 +2459,24 @@
                             "raw": "{\n  \"reason\": \"Em muốn tham gia giao lưu và học hỏi kiến thức mới.\"\n}"
                         }
                     },
-                    "response": [],
+                    "response": []
+                },
+                {
+                    "id": "61925680-abf2-5dca-8ba6-df632b24f621",
+                    "name": "7.8 Rời câu lạc bộ (Leave Group)",
                     "event": [
                         {
                             "listen": "test",
                             "script": {
                                 "exec": [
-                                    "pm.test(\"Status is 200 or 400 (already member)\", function () {",
+                                    "pm.test(\"Status is 200 or 400\", function () {",
                                     "    pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
                                     "});"
                                 ],
                                 "type": "text/javascript"
                             }
                         }
-                    ]
-                },
-                {
-                    "name": "7.8 Rời câu lạc bộ (Leave Group)",
+                    ],
                     "request": {
                         "method": "POST",
                         "header": [],
@@ -2486,7 +2493,6 @@
                                 "leave"
                             ]
                         },
-                        "description": "Rút khỏi danh sách thành viên của nhóm.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -2498,65 +2504,17 @@
                             ]
                         }
                     },
-                    "response": [],
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "pm.test(\"Status is 200 or 400\", function () {",
-                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
-                                    "});"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        }
-                    ]
+                    "response": []
                 }
             ]
         },
         {
+            "id": "59d7f2c3-f242-52ba-9353-d6951a2d7ab2",
             "name": "08. AI Chat Assistant & Smart Calendar",
             "item": [
                 {
+                    "id": "7b4a6360-be27-5920-9346-34616f6991b3",
                     "name": "8.1 Chat AI Trợ Lý - Gợi ý sự kiện & Lập lịch (/chat)",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json",
-                                "type": "text"
-                            }
-                        ],
-                        "url": {
-                            "raw": "{{baseUrl}}/api/v1/chat",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "chat"
-                            ]
-                        },
-                        "description": "Chat với trợ lý thông minh theo route chuẩn /api/v1/chat.",
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{token}}",
-                                    "type": "string"
-                                }
-                            ]
-                        },
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"message\": \"10 ngày nữa là tôi thi rồi, tôi thi 4 môn, hãy sắp xếp thời gian học tập, nghỉ ngơi và gợi ý sự kiện thể thao cho tôi.\"\n}"
-                        }
-                    },
-                    "response": [],
                     "event": [
                         {
                             "listen": "test",
@@ -2572,17 +2530,67 @@
                                 "type": "text/javascript"
                             }
                         }
-                    ]
-                },
-                {
-                    "name": "8.2 Chat AI Trợ Lý - Route Alias (/chat/message)",
+                    ],
                     "request": {
                         "method": "POST",
                         "header": [
                             {
                                 "key": "Content-Type",
-                                "value": "application/json",
-                                "type": "text"
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/chat",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "chat"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"message\": \"10 ngày nữa là tôi thi rồi, tôi thi 4 môn, hãy sắp xếp thời gian học tập, nghỉ ngơi và gợi ý sự kiện thể thao cho tôi.\"\n}"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "id": "46709b75-b027-5921-ac44-ea8095321864",
+                    "name": "8.2 Chat AI Trợ Lý - Route Alias (/chat/message)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Chat alias responds with 200 OK\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.have.property(\"reply\");",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
                             }
                         ],
                         "url": {
@@ -2597,7 +2605,6 @@
                                 "message"
                             ]
                         },
-                        "description": "Chat qua endpoint alias /api/v1/chat/message vừa được bổ sung.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -2613,25 +2620,66 @@
                             "raw": "{\n  \"message\": \"Tuần này trường mình có hoạt động công tác xã hội nào không?\"\n}"
                         }
                     },
-                    "response": [],
+                    "response": []
+                },
+                {
+                    "id": "f5829b21-5650-5af1-a298-350b2dbe4269",
+                    "name": "8.3 Chặn truy cập Chatbot khi không có Token (401 Check)",
                     "event": [
                         {
                             "listen": "test",
                             "script": {
                                 "exec": [
-                                    "pm.test(\"Chat alias responds with 200 OK\", function () {",
-                                    "    pm.response.to.have.status(200);",
-                                    "    var jsonData = pm.response.json();",
-                                    "    pm.expect(jsonData).to.have.property(\"reply\");",
+                                    "pm.test(\"Status is 401 Unauthorized\", function () {",
+                                    "    pm.response.to.have.status(401);",
                                     "});"
                                 ],
                                 "type": "text/javascript"
                             }
                         }
-                    ]
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/chat",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "chat"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"message\": \"Chào bot\"\n}"
+                        }
+                    },
+                    "response": []
                 },
                 {
-                    "name": "8.3 Lấy lịch biểu thông minh cá nhân (Get Calendar Events)",
+                    "id": "4cc2f575-b282-5702-a6b9-b3a619ef4759",
+                    "name": "8.4 Lấy lịch biểu thông minh cá nhân (Get Calendar Events)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Calendar events return 200 OK\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
                     "request": {
                         "method": "GET",
                         "header": [],
@@ -2647,7 +2695,6 @@
                                 "events"
                             ]
                         },
-                        "description": "Tổng hợp lịch cá nhân gồm: sự kiện đã đăng ký + các khoảng thời gian bận (busy slots).",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -2659,61 +2706,11 @@
                             ]
                         }
                     },
-                    "response": [],
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "pm.test(\"Calendar events return 200 OK\", function () {",
-                                    "    pm.response.to.have.status(200);",
-                                    "});"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        }
-                    ]
+                    "response": []
                 },
                 {
-                    "name": "8.4 Tạo khoảng thời gian bận cá nhân (Create Busy Slot)",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json",
-                                "type": "text"
-                            }
-                        ],
-                        "url": {
-                            "raw": "{{baseUrl}}/api/v1/calendar/busy-slots",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "calendar",
-                                "busy-slots"
-                            ]
-                        },
-                        "description": "Thêm thời gian bận vào lịch để trợ lý AI cảnh báo xung đột khi đăng ký hoạt động.",
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{token}}",
-                                    "type": "string"
-                                }
-                            ]
-                        },
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"title\": \"Ôn thi cuối kỳ môn Kiến trúc Phần mềm\",\n  \"start_time\": \"2026-10-09T14:00:00Z\",\n  \"end_time\": \"2026-10-09T17:00:00Z\",\n  \"recurrence\": \"none\"\n}"
-                        }
-                    },
-                    "response": [],
+                    "id": "1fa8878f-a40e-5580-b1d3-9cd736e4d724",
+                    "name": "8.5 Tạo khoảng thời gian bận cá nhân (Create Busy Slot)",
                     "event": [
                         {
                             "listen": "test",
@@ -2730,21 +2727,17 @@
                                 "type": "text/javascript"
                             }
                         }
-                    ]
-                },
-                {
-                    "name": "8.5 Kiểm tra xung đột lịch (Check Schedule Conflict)",
+                    ],
                     "request": {
                         "method": "POST",
                         "header": [
                             {
                                 "key": "Content-Type",
-                                "value": "application/json",
-                                "type": "text"
+                                "value": "application/json"
                             }
                         ],
                         "url": {
-                            "raw": "{{baseUrl}}/api/v1/calendar/check-conflict",
+                            "raw": "{{baseUrl}}/api/v1/calendar/busy-slots",
                             "host": [
                                 "{{baseUrl}}"
                             ],
@@ -2752,10 +2745,9 @@
                                 "api",
                                 "v1",
                                 "calendar",
-                                "check-conflict"
+                                "busy-slots"
                             ]
                         },
-                        "description": "Kiểm tra xem khung giờ dự định tham gia có bị trùng lịch học/lịch bận hay không.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -2768,10 +2760,14 @@
                         },
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"start_time\": \"2026-10-09T15:00:00Z\",\n  \"end_time\": \"2026-10-09T16:00:00Z\"\n}"
+                            "raw": "{\n  \"title\": \"Ôn thi cuối kỳ môn Kiến trúc Phần mềm\",\n  \"start_time\": \"2026-10-09T14:00:00Z\",\n  \"end_time\": \"2026-10-09T17:00:00Z\",\n  \"recurrence\": \"none\"\n}"
                         }
                     },
-                    "response": [],
+                    "response": []
+                },
+                {
+                    "id": "7f66494f-b408-5460-80eb-228b2db0f709",
+                    "name": "8.6 Kiểm tra xung đột lịch (Check Schedule Conflict)",
                     "event": [
                         {
                             "listen": "test",
@@ -2788,10 +2784,60 @@
                                 "type": "text/javascript"
                             }
                         }
-                    ]
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/calendar/check-conflict",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "calendar",
+                                "check-conflict"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"start_time\": \"2026-10-09T15:00:00Z\",\n  \"end_time\": \"2026-10-09T16:00:00Z\"\n}"
+                        }
+                    },
+                    "response": []
                 },
                 {
-                    "name": "8.6 Danh sách các khoảng bận (List Busy Slots)",
+                    "id": "89bb6db9-72d7-59ae-953e-ef13f18b703f",
+                    "name": "8.7 Danh sách các khoảng bận (List Busy Slots)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
                     "request": {
                         "method": "GET",
                         "header": [],
@@ -2807,7 +2853,6 @@
                                 "busy-slots"
                             ]
                         },
-                        "description": "Lấy danh sách các mốc bận cá nhân.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -2819,55 +2864,17 @@
                             ]
                         }
                     },
-                    "response": [],
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "pm.test(\"Status is 200\", function () {",
-                                    "    pm.response.to.have.status(200);",
-                                    "});"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        }
-                    ]
+                    "response": []
                 }
             ]
         },
         {
+            "id": "ba96d272-b6ac-5c90-bde1-c031fabc4230",
             "name": "09. Trophies & Gamification",
             "item": [
                 {
+                    "id": "2a6fc5f4-86a0-5152-85bb-7ae9c27538b2",
                     "name": "9.1 Danh sách danh hiệu / Huy hiệu (List Trophies)",
-                    "request": {
-                        "method": "GET",
-                        "header": [],
-                        "url": {
-                            "raw": "{{baseUrl}}/api/v1/trophies",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "trophies"
-                            ]
-                        },
-                        "description": "Lấy danh mục các huy hiệu thi đua sinh viên.",
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{token}}",
-                                    "type": "string"
-                                }
-                            ]
-                        }
-                    },
-                    "response": [],
                     "event": [
                         {
                             "listen": "test",
@@ -2885,10 +2892,50 @@
                                 "type": "text/javascript"
                             }
                         }
-                    ]
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/trophies",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "trophies"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
                 },
                 {
+                    "id": "77e25c72-5660-531d-8146-dd067b18139a",
                     "name": "9.2 Lấy danh hiệu của sinh viên (User Trophies)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
                     "request": {
                         "method": "GET",
                         "header": [],
@@ -2905,7 +2952,6 @@
                                 "{{student_id}}"
                             ]
                         },
-                        "description": "Xem bộ sưu tập huy hiệu đã đạt được của sinh viên.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -2917,30 +2963,30 @@
                             ]
                         }
                     },
-                    "response": [],
+                    "response": []
+                },
+                {
+                    "id": "34e3191e-f168-521d-9a28-9e0fd094614c",
+                    "name": "9.3 Tạo danh hiệu mới (Admin Create Trophy)",
                     "event": [
                         {
                             "listen": "test",
                             "script": {
                                 "exec": [
-                                    "pm.test(\"Status is 200\", function () {",
-                                    "    pm.response.to.have.status(200);",
+                                    "pm.test(\"Status code is 200 or 201\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
                                     "});"
                                 ],
                                 "type": "text/javascript"
                             }
                         }
-                    ]
-                },
-                {
-                    "name": "9.3 Tạo danh hiệu mới (Admin Create Trophy)",
+                    ],
                     "request": {
                         "method": "POST",
                         "header": [
                             {
                                 "key": "Content-Type",
-                                "value": "application/json",
-                                "type": "text"
+                                "value": "application/json"
                             }
                         ],
                         "url": {
@@ -2954,7 +3000,6 @@
                                 "trophies"
                             ]
                         },
-                        "description": "Admin hoặc Đoàn trường thiết lập tiêu chí danh hiệu mới.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -2970,55 +3015,17 @@
                             "raw": "{\n  \"name\": \"Chiến Binh Mùa Hè Xanh 2026\",\n  \"description\": \"Dành cho sinh viên tích lũy trên 5 ngày CTXH trong chiến dịch hè.\",\n  \"criteria_type\": \"social_work_days\",\n  \"threshold_value\": 5.0,\n  \"badge_icon\": \"trophy-gold\"\n}"
                         }
                     },
-                    "response": [],
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "pm.test(\"Status code is 200 or 201\", function () {",
-                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
-                                    "});"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        }
-                    ]
+                    "response": []
                 }
             ]
         },
         {
+            "id": "e686dc08-8a65-5a69-88b8-b5b6ae280969",
             "name": "10. Notifications & Alerts",
             "item": [
                 {
+                    "id": "fc334360-527b-5963-9abe-140a96d867d8",
                     "name": "10.1 Danh sách thông báo (List Notifications)",
-                    "request": {
-                        "method": "GET",
-                        "header": [],
-                        "url": {
-                            "raw": "{{baseUrl}}/api/v1/notifications",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "notifications"
-                            ]
-                        },
-                        "description": "Lấy danh sách thông báo về hoạt động, duyệt tham gia, nhắc nhở điểm danh.",
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{token}}",
-                                    "type": "string"
-                                }
-                            ]
-                        }
-                    },
-                    "response": [],
                     "event": [
                         {
                             "listen": "test",
@@ -3036,10 +3043,50 @@
                                 "type": "text/javascript"
                             }
                         }
-                    ]
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/notifications",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "notifications"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
                 },
                 {
+                    "id": "a55fa3c2-44f8-57c5-bfb1-583f9b178496",
                     "name": "10.2 Đánh dấu tất cả thông báo là đã đọc (Read All)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
                     "request": {
                         "method": "PATCH",
                         "header": [],
@@ -3055,7 +3102,6 @@
                                 "read-all"
                             ]
                         },
-                        "description": "Đánh dấu tất cả thông báo chưa đọc thành đã đọc.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -3067,35 +3113,36 @@
                             ]
                         }
                     },
-                    "response": [],
+                    "response": []
+                }
+            ]
+        },
+        {
+            "id": "850a49d5-8ccd-5bd9-8b67-fbef54bfc5a5",
+            "name": "11. Reports & Moderation",
+            "item": [
+                {
+                    "id": "14658b88-3d30-5a1d-bacf-ee871c7482f3",
+                    "name": "11.1 Gửi báo cáo vi phạm (Create Report)",
                     "event": [
                         {
                             "listen": "test",
                             "script": {
                                 "exec": [
-                                    "pm.test(\"Status is 200\", function () {",
-                                    "    pm.response.to.have.status(200);",
+                                    "pm.test(\"Status code is 200 or 201\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
                                     "});"
                                 ],
                                 "type": "text/javascript"
                             }
                         }
-                    ]
-                }
-            ]
-        },
-        {
-            "name": "11. Reports & Moderation",
-            "item": [
-                {
-                    "name": "11.1 Gửi báo cáo vi phạm (Create Report)",
+                    ],
                     "request": {
                         "method": "POST",
                         "header": [
                             {
                                 "key": "Content-Type",
-                                "value": "application/json",
-                                "type": "text"
+                                "value": "application/json"
                             }
                         ],
                         "url": {
@@ -3109,7 +3156,6 @@
                                 "reports"
                             ]
                         },
-                        "description": "Sinh viên báo cáo bài đăng hoặc hoạt động không phù hợp.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -3125,23 +3171,24 @@
                             "raw": "{\n  \"target_type\": \"activity\",\n  \"target_id\": \"{{activity_id}}\",\n  \"reason\": \"Hoạt động có dấu hiệu sai thông tin địa điểm\",\n  \"description\": \"Địa điểm thực tế khác với thông tin mô tả ban đầu.\"\n}"
                         }
                     },
-                    "response": [],
+                    "response": []
+                },
+                {
+                    "id": "04da7120-7c95-5255-82e8-3a2f3b20f981",
+                    "name": "11.2 Danh sách báo cáo của tôi (My Reports)",
                     "event": [
                         {
                             "listen": "test",
                             "script": {
                                 "exec": [
-                                    "pm.test(\"Status code is 200 or 201\", function () {",
-                                    "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                                    "pm.test(\"Status is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
                                     "});"
                                 ],
                                 "type": "text/javascript"
                             }
                         }
-                    ]
-                },
-                {
-                    "name": "11.2 Danh sách báo cáo của tôi (My Reports)",
+                    ],
                     "request": {
                         "method": "GET",
                         "header": [],
@@ -3156,7 +3203,6 @@
                                 "reports"
                             ]
                         },
-                        "description": "Kiểm tra lịch sử các báo cáo đã gửi.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -3168,56 +3214,17 @@
                             ]
                         }
                     },
-                    "response": [],
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "pm.test(\"Status is 200\", function () {",
-                                    "    pm.response.to.have.status(200);",
-                                    "});"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        }
-                    ]
+                    "response": []
                 }
             ]
         },
         {
+            "id": "2a01518f-6a71-59be-927a-10f112c842a5",
             "name": "12. Admin Command Center",
             "item": [
                 {
+                    "id": "55a45627-4ca4-50e7-b302-f88bd4c9234e",
                     "name": "12.1 Thống kê tổng quan hệ thống (Admin Stats)",
-                    "request": {
-                        "method": "GET",
-                        "header": [],
-                        "url": {
-                            "raw": "{{baseUrl}}/api/v1/admin/stats",
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "path": [
-                                "api",
-                                "v1",
-                                "admin",
-                                "stats"
-                            ]
-                        },
-                        "description": "Số lượng sinh viên, hoạt động, tỉ lệ điểm danh thành công.",
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{admin_token}}",
-                                    "type": "string"
-                                }
-                            ]
-                        }
-                    },
-                    "response": [],
                     "event": [
                         {
                             "listen": "test",
@@ -3235,10 +3242,51 @@
                                 "type": "text/javascript"
                             }
                         }
-                    ]
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/admin/stats",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "admin",
+                                "stats"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{admin_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
                 },
                 {
+                    "id": "46d4e395-3900-577b-9d95-ff9f86c496c3",
                     "name": "12.2 Chỉ số thời gian thực (Admin Metrics)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
                     "request": {
                         "method": "GET",
                         "header": [],
@@ -3254,7 +3302,6 @@
                                 "metrics"
                             ]
                         },
-                        "description": "CPU, memory, thời gian xử lý request p95/p99.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -3266,7 +3313,11 @@
                             ]
                         }
                     },
-                    "response": [],
+                    "response": []
+                },
+                {
+                    "id": "a0d7c2fe-6778-50ae-b53f-a7b261a62daa",
+                    "name": "12.3 Quản lý danh sách người dùng (List Users)",
                     "event": [
                         {
                             "listen": "test",
@@ -3279,10 +3330,7 @@
                                 "type": "text/javascript"
                             }
                         }
-                    ]
-                },
-                {
-                    "name": "12.3 Quản lý danh sách người dùng (List Users)",
+                    ],
                     "request": {
                         "method": "GET",
                         "header": [],
@@ -3304,7 +3352,6 @@
                                 }
                             ]
                         },
-                        "description": "Admin tra cứu tất cả tài khoản người dùng trên hệ thống.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -3316,7 +3363,11 @@
                             ]
                         }
                     },
-                    "response": [],
+                    "response": []
+                },
+                {
+                    "id": "33e1c578-202f-5233-b71f-629cb0dc1460",
+                    "name": "12.4 Quản lý hoạt động toàn trường (List All Activities)",
                     "event": [
                         {
                             "listen": "test",
@@ -3329,10 +3380,7 @@
                                 "type": "text/javascript"
                             }
                         }
-                    ]
-                },
-                {
-                    "name": "12.4 Quản lý hoạt động toàn trường (List All Activities)",
+                    ],
                     "request": {
                         "method": "GET",
                         "header": [],
@@ -3354,7 +3402,6 @@
                                 }
                             ]
                         },
-                        "description": "Duyệt và kiểm soát các hoạt động đăng tải.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -3366,7 +3413,11 @@
                             ]
                         }
                     },
-                    "response": [],
+                    "response": []
+                },
+                {
+                    "id": "7b8241d8-c952-58aa-8608-2a00098ae1a9",
+                    "name": "12.5 Quản lý tất cả câu lạc bộ (List All Groups)",
                     "event": [
                         {
                             "listen": "test",
@@ -3379,10 +3430,7 @@
                                 "type": "text/javascript"
                             }
                         }
-                    ]
-                },
-                {
-                    "name": "12.5 Quản lý tất cả câu lạc bộ (List All Groups)",
+                    ],
                     "request": {
                         "method": "GET",
                         "header": [],
@@ -3404,7 +3452,6 @@
                                 }
                             ]
                         },
-                        "description": "Kiểm tra trạng thái hoạt động của các CLB.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -3416,7 +3463,11 @@
                             ]
                         }
                     },
-                    "response": [],
+                    "response": []
+                },
+                {
+                    "id": "397d164b-67e0-5624-9794-9662f43b2d2a",
+                    "name": "12.6 Xử lý báo cáo vi phạm (Admin List Reports)",
                     "event": [
                         {
                             "listen": "test",
@@ -3429,10 +3480,7 @@
                                 "type": "text/javascript"
                             }
                         }
-                    ]
-                },
-                {
-                    "name": "12.6 Xử lý báo cáo vi phạm (Admin List Reports)",
+                    ],
                     "request": {
                         "method": "GET",
                         "header": [],
@@ -3448,7 +3496,6 @@
                                 "reports"
                             ]
                         },
-                        "description": "Danh sách các tố cáo cần xử lý.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -3460,7 +3507,11 @@
                             ]
                         }
                     },
-                    "response": [],
+                    "response": []
+                },
+                {
+                    "id": "3b8ad486-113f-5cbe-9083-d5b38cf57184",
+                    "name": "12.7 Xuất dữ liệu sinh viên & ngày CTXH (Export Students CSV)",
                     "event": [
                         {
                             "listen": "test",
@@ -3473,10 +3524,7 @@
                                 "type": "text/javascript"
                             }
                         }
-                    ]
-                },
-                {
-                    "name": "12.7 Xuất dữ liệu sinh viên & ngày CTXH (Export Students CSV)",
+                    ],
                     "request": {
                         "method": "GET",
                         "header": [],
@@ -3493,7 +3541,6 @@
                                 "export"
                             ]
                         },
-                        "description": "Xuất báo cáo tổng kết ngày CTXH cho Phòng Công tác Sinh viên.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -3505,7 +3552,11 @@
                             ]
                         }
                     },
-                    "response": [],
+                    "response": []
+                },
+                {
+                    "id": "cb55ecb3-f142-57bb-843d-68a820114173",
+                    "name": "12.8 Nhật ký kiểm toán hệ thống (Audit Logs)",
                     "event": [
                         {
                             "listen": "test",
@@ -3518,10 +3569,7 @@
                                 "type": "text/javascript"
                             }
                         }
-                    ]
-                },
-                {
-                    "name": "12.8 Nhật ký kiểm toán hệ thống (Audit Logs)",
+                    ],
                     "request": {
                         "method": "GET",
                         "header": [],
@@ -3537,7 +3585,6 @@
                                 "audit-logs"
                             ]
                         },
-                        "description": "Tra cứu lịch sử thao tác của quản trị viên và người tổ chức.",
                         "auth": {
                             "type": "bearer",
                             "bearer": [
@@ -3549,20 +3596,7 @@
                             ]
                         }
                     },
-                    "response": [],
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "pm.test(\"Status is 200\", function () {",
-                                    "    pm.response.to.have.status(200);",
-                                    "});"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        }
-                    ]
+                    "response": []
                 }
             ]
         }
