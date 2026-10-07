@@ -214,3 +214,27 @@ def test_chat_rate_limiting_logic():
 
     assert exc_info.value.status_code == 429
     assert "Rate limit exceeded" in exc_info.value.detail
+
+
+@pytest.mark.asyncio
+async def test_chat_endpoints_both_route_and_alias(async_client):
+    """Verify both /api/v1/chat and /api/v1/chat/message route properly and return 200."""
+    with patch("app.modules.chat.service.handle_chat", new_callable=AsyncMock) as mock_handle:
+        from app.modules.chat.schemas import ChatResponse, ChatMessage
+        mock_handle.return_value = ChatResponse(
+            conversation_id="conv-123",
+            message=ChatMessage(role="assistant", content="Xin chào!"),
+            reply="Xin chào!",
+            suggestions=[],
+        )
+
+        # 1. Primary endpoint /api/v1/chat
+        res1 = await async_client.post("/api/v1/chat", json={"message": "Chào bot"})
+        assert res1.status_code == 200
+        assert res1.json()["reply"] == "Xin chào!"
+
+        # 2. Alias endpoint /api/v1/chat/message
+        res2 = await async_client.post("/api/v1/chat/message", json={"message": "Chào bot"})
+        assert res2.status_code == 200
+        assert res2.json()["reply"] == "Xin chào!"
+

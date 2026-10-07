@@ -74,6 +74,8 @@ def _check_rate_limit(key: str, storage: dict[str, list[float]], max_requests: i
 
 
 @router.post("", response_model=ChatResponse)
+@router.post("/", response_model=ChatResponse)
+@router.post("/message", response_model=ChatResponse)
 async def chat_with_bot(
     request: ChatRequest,
     req: Request,
